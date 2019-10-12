@@ -5,8 +5,7 @@
 
 | One df funs | Two df funs |
 |-------------+-------------|
-| [[#filter()][filter()]]    |             |
-|             |             |
+| [[#filter][filter()]]    |             |
 
 * Load library and check version
 
