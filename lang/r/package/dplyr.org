@@ -9,6 +9,9 @@ library(dplyr)
 
 * Dataset
 
+- ~{tidyquant}~ に収録されている ~FANG~ データセットを利用する
+- Facebook, Amazon, Netflix, Goolge の株価データ
+
 #+begin_src R :results value :colnames yes
 library(tidyquant)
 data(FANG)
@@ -26,6 +29,8 @@ head(FANG, n = 3)
 ** Manipulate Rows
 *** Extract Rows
 **** ~filter()~
+
+
 **** ~distinct()~
 *** Summarise Rows
 *** Group Rows
@@ -40,23 +45,6 @@ head(FANG, n = 3)
 * DB Functions
 * Imported Functions
 * Deprecated Functions
-* Reference
-
-- [[https://dplyr.tidyverse.org/][公式サイト]]
-- [[https://cran.r-project.org/web/packages/dplyr/index.html][CRAN]]
-- [[https://github.com/tidyverse/dplyr][github repo]]
-- [[https://github.com/rstudio/cheatsheets/raw/master/data-transformation.pdf][Cheatsheet(PDF)]]
-- [[https://dplyr.tidyverse.org/reference/se-deprecated.html][Deprecated SE versions of main verbs.]]
-- [[https://notchained.hatenablog.com/entry/2017/03/24/225154][メモ：dplyr が Standard evaluation を deprecated にしようとしている理由]]
-- [[https://notchained.hatenablog.com/entry/2017/11/15/212117][do()とかrowwise()は今から覚える必要はない（たぶん）]]
-- [[https://cran.r-project.org/web/packages/dplyr/dplyr.pdf][Reference Manual]]
-- Vignette
-  - [[https://cran.r-project.org/web/packages/dplyr/vignettes/compatibility.html][dplyr compatibility]]
-  - [[https://cran.r-project.org/web/packages/dplyr/vignettes/dplyr.html][Introduction to dplyr]] ([[https://qiita.com/yutannihilation/items/7a78d897810446dd6a3b][和訳@Qiita]])
-  - [[https://cran.r-project.org/web/packages/dplyr/vignettes/programming.html][Programming with dplyr]]
-  - [[https://cran.r-project.org/web/packages/dplyr/vignettes/two-table.html][Two-table verbs]]
-  - [[https://cran.r-project.org/web/packages/dplyr/vignettes/window-functions.html][Window functions]]
-
 * Session Info
 
 #+begin_src R :results output
@@ -100,4 +88,21 @@ loaded via a namespace (and not attached):
 [25] stringi_1.4.3    compiler_3.6.1   pillar_1.4.2     backports_1.1.5 
 [29] jsonlite_1.6     pkgconfig_2.0.3
 #+end_example
+
+* Reference
+
+- [[https://dplyr.tidyverse.org/][公式サイト]]
+- [[https://cran.r-project.org/web/packages/dplyr/index.html][CRAN]]
+- [[https://github.com/tidyverse/dplyr][github repo]]
+- [[https://github.com/rstudio/cheatsheets/raw/master/data-transformation.pdf][Cheatsheet(PDF)]]
+- [[https://dplyr.tidyverse.org/reference/se-deprecated.html][Deprecated SE versions of main verbs.]]
+- [[https://notchained.hatenablog.com/entry/2017/03/24/225154][メモ：dplyr が Standard evaluation を deprecated にしようとしている理由]]
+- [[https://notchained.hatenablog.com/entry/2017/11/15/212117][do()とかrowwise()は今から覚える必要はない（たぶん）]]
+- [[https://cran.r-project.org/web/packages/dplyr/dplyr.pdf][Reference Manual]]
+- Vignette
+  - [[https://cran.r-project.org/web/packages/dplyr/vignettes/compatibility.html][dplyr compatibility]]
+  - [[https://cran.r-project.org/web/packages/dplyr/vignettes/dplyr.html][Introduction to dplyr]] ([[https://qiita.com/yutannihilation/items/7a78d897810446dd6a3b][和訳@Qiita]])
+  - [[https://cran.r-project.org/web/packages/dplyr/vignettes/programming.html][Programming with dplyr]]
+  - [[https://cran.r-project.org/web/packages/dplyr/vignettes/two-table.html][Two-table verbs]]
+  - [[https://cran.r-project.org/web/packages/dplyr/vignettes/window-functions.html][Window functions]]
 

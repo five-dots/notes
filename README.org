@@ -4,6 +4,8 @@
 ** R
 *** Base
 *** Finance
+- [[file:lang/r/finance/dataset.org][Dataset]]
+ 
 *** Package
 - [[file:lang/r/package/dplyr.org][dplyr]]
 
