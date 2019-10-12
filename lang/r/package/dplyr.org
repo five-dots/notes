@@ -1,6 +1,12 @@
 #+STARTUP: folded indent inlineimages latexpreview
 #+PROPERTY: header-args:R :results value :colnames yes :session *R:dplyr*
 
+* Index
+| One df funs | Two df funs |
+|-------------+-------------|
+| [[ ~filter()~ ]]  |             |
+|             |             |
+
 * Load library and check version
 
 #+begin_src R :results silent
@@ -113,7 +119,8 @@ FANG %>% filter(symbol == .GlobalEnv$symbol, .data$date == "2013-01-02")
 | GOOG   | 2013-01-02 | 719.42 |  727 | 716.55 | 723.25 | 5101500 |   361.26 |
 \\
 
-**** ~distinct()~
+*** ~distinct()~
+
 *** Summarise rows
 *** Group rows
 ** Manipulate variables
