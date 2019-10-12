@@ -7,30 +7,30 @@
 |-------------+-------------|
 | [[#filter][filter()]]    |             |
 
-* Load library and check version
+* Load library and check version                                        :TOC:
+- [[#index][Index]]
+- [[#dataset][Dataset]]
+- [[#one-dataframe-functions][One ~data.frame~ functions]]
+  - [[#manipulate-rows][Manipulate rows]]
+    - [[#filter][~filter()~]]
+    - [[#distinct][~distinct()~]]
+    - [[#summarise-rows][Summarise rows]]
+    - [[#group-rows][Group rows]]
+  - [[#manipulate-variables][Manipulate variables]]
+  - [[#manipulate-groups][Manipulate groups]]
+- [[#two-dataframe-functions][Two ~data.frame~ functions]]
+  - [[#set-operations][Set Operations]]
+  - [[#join-operations][Join Operations]]
+- [[#helper-functions][Helper functions]]
+  - [[#vector-functions][Vector Functions]]
+  - [[#summary-functions][Summary Functions]]
+- [[#db-functions][DB functions]]
+- [[#imported-functions][Imported functions]]
+- [[#deprecated-functions][Deprecated functions]]
+- [[#session-info][Session info]]
+- [[#reference][Reference]]
 
-#+begin_src R :results silent
-library(dplyr)
-#+end_src
-
-- バージョンの確認
-
-#+begin_src R :results output :exports both
-packageVersion("dplyr")
-#+end_src
-
-#+RESULTS:
-: [1] ‘0.8.3’
-
-- 関数の収録数
-#+begin_src R :results output :exports both
-length(ls("package:dplyr"))
-#+end_src
-
-#+RESULTS:
-: [1] 267
-
-* Dataset
+* Dataset                                                               :TOC:
 
 - ~{tidyquant}~ に収録されている ~FANG~ データセットを利用する
 - Facebook, Amazon, Netflix, Goolge の株価データ
@@ -51,7 +51,7 @@ head(FANG, n = 3)
 | FB     | 2013-01-04 | 28.01 | 28.93 | 27.83 | 28.76 | 72715400 |    28.76 |
 \\
 
-* One ~data.frame~ functions
+* One ~data.frame~ functions                                              :TOC:
 ** Manipulate rows
 *** ~filter()~
 
@@ -66,6 +66,18 @@ FANG %>% filter(symbol == "GOOG" & date == "2013-01-02")
 |--------+------------+--------+------+--------+--------+---------+----------|
 | GOOG   | 2013-01-02 | 719.42 |  727 | 716.55 | 723.25 | 5101500 |   361.26 |
 \\
+
+- base R の機能で同様のことを書くと若干冗長になる
+
+#+begin_src R
+FANG[FANG$symbol == "GOOG" & FANG$date == "2013-01-02", ]
+#+end_src
+
+#+RESULTS:
+| symbol |       date |   open | high |    low |  close |  volume | adjusted |
+|--------+------------+--------+------+--------+--------+---------+----------|
+| GOOG   | 2013-01-02 | 719.42 |  727 | 716.55 | 723.25 | 5101500 |   361.26 |
+
 
 - AND 条件は、「,」で繋げて書くことができる
 #+begin_src R
@@ -125,16 +137,16 @@ FANG %>% filter(symbol == .GlobalEnv$symbol, .data$date == "2013-01-02")
 *** Group rows
 ** Manipulate variables
 ** Manipulate groups
-* Two ~data.frame~ functions
+* Two ~data.frame~ functions                                              :TOC:
 ** Set Operations
 ** Join Operations
-* Helper functions
+* Helper functions                                                      :TOC:
 ** Vector Functions
 ** Summary Functions
-* DB functions
-* Imported functions
-* Deprecated functions
-* Session info
+* DB functions                                                          :TOC:
+* Imported functions                                                    :TOC:
+* Deprecated functions                                                  :TOC:
+* Session info                                                          :TOC:
 
 #+begin_src R :results output :exports both
 sessionInfo()
@@ -179,7 +191,7 @@ loaded via a namespace (and not attached):
 [29] pkgconfig_2.0.3
 #+end_example
 
-* Reference
+* Reference                                                             :TOC:
 
 - [[https://dplyr.tidyverse.org/][公式サイト]]
 - [[https://cran.r-project.org/web/packages/dplyr/index.html][CRAN]]
