@@ -1,7 +1,7 @@
 #+STARTUP: folded indent inlineimages latexpreview
 #+PROPERTY: header-args:R :results value :colnames yes :session *R:dplyr*
 
-* Load Library and Check Version
+* Load library and check version
 
 #+begin_src R :results silent
 library(dplyr)
@@ -45,10 +45,9 @@ head(FANG, n = 3)
 | FB     | 2013-01-04 | 28.01 | 28.93 | 27.83 | 28.76 | 72715400 |    28.76 |
 \\
 
-* One ~data.frame~ Functions
-** Manipulate Rows
-*** Extract Rows
-**** ~filter()~
+* One ~data.frame~ functions
+** Manipulate rows
+*** ~filter()~
 
 - 条件に合致する行を抽出
 
@@ -71,6 +70,7 @@ FANG %>% filter(symbol == "GOOG", date == "2013-01-02")
 | symbol |       date |   open | high |    low |  close |  volume | adjusted |
 |--------+------------+--------+------+--------+--------+---------+----------|
 | GOOG   | 2013-01-02 | 719.42 |  727 | 716.55 | 723.25 | 5101500 |   361.26 |
+\\
 
 - GlobalEnv に存在する変数でフィルタしようとするとうまくいかない
 - ~.GlobalEnv$symbol~ ではなく ~.data$symbol~ が使われてしまうため
@@ -88,6 +88,7 @@ FANG %>% filter(symbol == symbol, .data$date == "2013-01-02")
 | AMZN   | 2013-01-02 | 256.08 | 258.1 | 253.26 | 257.31 |  3271000 |   257.31 |
 | NFLX   | 2013-01-02 |  95.21 | 95.81 |  90.69 |  92.01 | 19431300 |    13.14 |
 | GOOG   | 2013-01-02 | 719.42 |   727 | 716.55 | 723.25 |  5101500 |   361.26 |
+\\
 
 - 対策としては、3つ存在する
   1. .GlobalEnv を指定する
@@ -110,22 +111,23 @@ FANG %>% filter(symbol == .GlobalEnv$symbol, .data$date == "2013-01-02")
 | symbol |       date |   open | high |    low |  close |  volume | adjusted |
 |--------+------------+--------+------+--------+--------+---------+----------|
 | GOOG   | 2013-01-02 | 719.42 |  727 | 716.55 | 723.25 | 5101500 |   361.26 |
+\\
 
 **** ~distinct()~
-*** Summarise Rows
-*** Group Rows
-** Manipulate Variables
-** Manipulate Groups
-* Two ~data.frame~ Functions
+*** Summarise rows
+*** Group rows
+** Manipulate variables
+** Manipulate groups
+* Two ~data.frame~ functions
 ** Set Operations
 ** Join Operations
-* Helper Functions
+* Helper functions
 ** Vector Functions
 ** Summary Functions
-* DB Functions
-* Imported Functions
-* Deprecated Functions
-* Session Info
+* DB functions
+* Imported functions
+* Deprecated functions
+* Session info
 
 #+begin_src R :results output :exports both
 sessionInfo()
