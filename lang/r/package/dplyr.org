@@ -7,7 +7,12 @@
 - [[#dataset][Dataset]]
 - [[#one-dataframe-functions][One ~data.frame~ functions]]
   - [[#manipulate-rows][Manipulate rows]]
-    - [[#filter][filter()]]
+    - [[#filterdata--preserve--false][filter(.data, ..., .preserve = FALSE)]]
+    - [[#slicedata--preserve--false][slice(.data, ..., .preserve = FALSE)]]
+    - [[#top_nx-n-wt][top_n(x, n, wt)]]
+    - [[#top_fracx-n-wt][top_frac(x, n, wt)]]
+    - [[#sample_ntbl-size-replace--false-weight--null-env--null-][sample_n(tbl, size, replace = FALSE, weight = NULL, .env = NULL, ...)]]
+    - [[#sample_fractbl-size--1-replace--false-weight--null-env--null-][sample_frac(tbl, size = 1, replace = FALSE, weight = NULL, .env = NULL, ...)]]
     - [[#distinct][distinct()]]
     - [[#summarise-rows][Summarise rows]]
     - [[#group-rows][Group rows]]
@@ -62,9 +67,10 @@ head(FANG, n = 3)
 
 * One ~data.frame~ functions
 ** Manipulate rows
-*** filter()
+*** filter(.data, ..., .preserve = FALSE)
 
 - 条件に合致する行を抽出
+- ~grouped_df~ に対する処理の際に ~.preserve = TRUE~ にすると、処理前のグループ情報がそのまま保持される (仮にそのグループに属する行がゼロになったとしても保持される)
 
 #+begin_src R
 FANG %>% filter(symbol == "GOOG" & date == "2013-01-02")
@@ -86,7 +92,7 @@ FANG[FANG$symbol == "GOOG" & FANG$date == "2013-01-02", ]
 | symbol |       date |   open | high |    low |  close |  volume | adjusted |
 |--------+------------+--------+------+--------+--------+---------+----------|
 | GOOG   | 2013-01-02 | 719.42 |  727 | 716.55 | 723.25 | 5101500 |   361.26 |
-
+\\
 
 - AND 条件は、「,」で繋げて書くことができる
 #+begin_src R
@@ -101,7 +107,7 @@ FANG %>% filter(symbol == "GOOG", date == "2013-01-02")
 
 - GlobalEnv に存在する変数でフィルタしようとするとうまくいかない
 - ~.GlobalEnv$symbol~ ではなく ~.data$symbol~ が使われてしまうため
-- ~.data~ は *pronoun* (=代名詞) と呼ばれ ~{dplyr}~ の関数に渡された ~data.frame~ 自体を参照できる
+- ~.data~ は *pronoun* (=代名詞) と呼ばれ ~{dplyr}~ の関数に渡された ~data.frame~ 自体を参照するためのもの
 
 #+begin_src R
 symbol = "GOOG"
@@ -118,9 +124,9 @@ FANG %>% filter(symbol == symbol, .data$date == "2013-01-02")
 \\
 
 - 対策としては、3つ存在する
-  1. .GlobalEnv を指定する
-  2. unquote(~!!~) する
-  3. ~rlang::syms()~ でシンボル化した後に、unquote-splicing(~!!!~) する
+  1. ~.GlobalEnv~ を指定する
+  2. *unquote* (~!!~) する
+  3. ~rlang::syms()~ でシンボル化した後に *unquote-splicing* (~!!!~) する
 
 #+begin_src R
 symbol = "GOOG"
@@ -140,8 +146,186 @@ FANG %>% filter(symbol == .GlobalEnv$symbol, .data$date == "2013-01-02")
 | GOOG   | 2013-01-02 | 719.42 |  727 | 716.55 | 723.25 | 5101500 |   361.26 |
 \\
 
-*** distinct()
+*** slice(.data, ..., .preserve = FALSE)
 
+- 行番号で抽出する
+- 1 〜 4, 10, 15 行を抽出する場合
+
+#+begin_src R
+FANG %>% slice(1:4, 10, 15)
+#+end_src
+
+#+RESULTS:
+| symbol |       date |  open |  high |   low | close |    volume | adjusted |
+|--------+------------+-------+-------+-------+-------+-----------+----------|
+| FB     | 2013-01-02 | 27.44 | 28.18 | 27.42 |    28 |  69846400 |       28 |
+| FB     | 2013-01-03 | 27.88 | 28.47 | 27.59 | 27.77 |  63140600 |    27.77 |
+| FB     | 2013-01-04 | 28.01 | 28.93 | 27.83 | 28.76 |  72715400 |    28.76 |
+| FB     | 2013-01-07 | 28.69 | 29.79 | 28.65 | 29.42 |  83781800 |    29.42 |
+| FB     | 2013-01-15 | 30.64 | 31.71 | 29.88 |  30.1 | 173242600 |     30.1 |
+| FB     | 2013-01-23 |  31.1 |  31.5 |  30.8 | 30.82 |  48899800 |    30.82 |
+\\
+
+- 総行数を表す ~n()~ と組み合わせて、末尾から抽出する
+
+#+begin_src R
+FANG %>% slice((n()-9):n())
+#+end_src
+
+#+RESULTS:
+| symbol |       date |   open |   high |    low |  close |  volume | adjusted |
+|--------+------------+--------+--------+--------+--------+---------+----------|
+| GOOG   | 2016-12-16 |  800.4 | 800.86 | 790.29 |  790.8 | 2428300 |    790.8 |
+| GOOG   | 2016-12-19 | 790.22 | 797.66 | 786.27 |  794.2 | 1225900 |    794.2 |
+| GOOG   | 2016-12-20 | 796.76 | 798.65 | 793.27 | 796.42 |  925100 |   796.42 |
+| GOOG   | 2016-12-21 | 795.84 | 796.68 |  787.1 | 794.56 | 1208700 |   794.56 |
+| GOOG   | 2016-12-22 | 792.36 | 793.32 | 788.58 | 791.26 |  969100 |   791.26 |
+| GOOG   | 2016-12-23 |  790.9 | 792.74 | 787.28 | 789.91 |  623400 |   789.91 |
+| GOOG   | 2016-12-27 | 790.68 | 797.86 | 787.66 | 791.55 |  789100 |   791.55 |
+| GOOG   | 2016-12-28 |  793.7 | 794.23 |  783.2 | 785.05 | 1132700 |   785.05 |
+| GOOG   | 2016-12-29 | 783.33 | 785.93 | 778.92 | 782.79 |  742200 |   782.79 |
+| GOOG   | 2016-12-30 | 782.75 | 782.78 | 770.41 | 771.82 | 1760200 |   771.82 |
+\\
+
+- マイナスで指定行だけ削除もできる
+- symbol 毎に ~lag()~ を使って収益率を計算する例
+- group の最初の行が ~NA~ になってしまうので ~slice(-1)~ で削除する
+
+#+begin_src R
+FANG %>%
+  group_by(symbol) %>%
+  mutate(return = log(adjusted) - lag(log(adjusted))) %>%
+  slice(-1) %>%
+  ungroup() %>%
+  head()
+#+end_src
+
+#+RESULTS:
+| symbol |       date |   open |   high |    low |  close |  volume | adjusted |                return |
+|--------+------------+--------+--------+--------+--------+---------+----------+-----------------------|
+| AMZN   | 2013-01-03 | 257.27 | 260.88 | 256.37 | 258.48 | 2750900 |   258.48 |     0.004536737845803 |
+| AMZN   | 2013-01-04 | 257.58 |  259.8 | 256.65 | 259.15 | 1874200 |   259.15 |   0.00258872311947211 |
+| AMZN   | 2013-01-07 | 262.97 | 269.73 | 262.67 | 268.46 | 4910000 |   268.46 |    0.0352948824237744 |
+| AMZN   | 2013-01-08 | 267.07 | 268.98 | 263.57 | 266.38 | 3010700 |   266.38 |  -0.00777806628660471 |
+| AMZN   | 2013-01-09 | 268.17 |  269.5 |  265.4 | 266.35 | 2265600 |   266.35 | -0.000112627409876609 |
+| AMZN   | 2013-01-10 | 268.54 | 268.74 |  262.3 | 265.34 | 2863400 |   265.34 |  -0.00379921087423796 |
+\\
+
+*** top_n(x, n, wt)
+
+- 上位・下位 n 番目までを抽出する
+- プラスで指定すれば上位から、マイナスで指定すれば下位から抽出する
+- ~min_rank()~ -> ~filter()~ のラッパー
+
+#+begin_src R
+FANG %>%
+  group_by(symbol) %>%
+  # 対数収益率を計算
+  mutate(return = log(adjusted) - lag(log(adjusted))) %>%
+  # シンボル毎に上位3つを抽出する
+  top_n(3, return) %>%
+  ungroup() %>%
+  select(symbol, date, return)
+#+end_src
+
+#+RESULTS:
+| symbol |       date |             return |
+|--------+------------+--------------------|
+| FB     | 2013-07-25 |  0.259371076815121 |
+| FB     | 2014-01-30 |  0.131942235945142 |
+| FB     | 2016-01-28 |  0.144285953719488 |
+| AMZN   | 2015-01-30 |  0.128495157741183 |
+| AMZN   | 2015-04-24 |  0.132177878252494 |
+| AMZN   | 2015-07-24 | 0.0934645793755555 |
+| NFLX   | 2013-01-24 |  0.352326520182322 |
+| NFLX   | 2013-04-23 |  0.218717875211057 |
+| NFLX   | 2016-10-18 |   0.17418904498403 |
+| GOOG   | 2013-10-18 |     0.129242446998 |
+| GOOG   | 2015-07-17 |  0.148871862945331 |
+| GOOG   | 2015-08-26 | 0.0769534053916816 |
+\\
+
+*** top_frac(x, n, wt)
+
+- 上位・下位を整数ではなく、パーセントで指定する
+- それ以外は ~top_n()~ と同じ使い方
+
+#+begin_src R
+FANG %>%
+  group_by(symbol) %>%
+  # 対数収益率を計算
+  mutate(return = log(adjusted) - lag(log(adjusted))) %>%
+  # シンボル毎に下位0.2% を抽出する
+  top_frac(-0.002, return) %>%
+  ungroup() %>%
+  select(symbol, date, return)
+#+end_src
+
+#+RESULTS:
+| symbol |       date |              return |
+|--------+------------+---------------------|
+| FB     | 2013-10-08 | -0.0692473999743055 |
+| FB     | 2014-03-26 | -0.0718700003132673 |
+| AMZN   | 2014-01-31 |  -0.116502869834937 |
+| AMZN   | 2014-04-25 |  -0.104059600717207 |
+| NFLX   | 2014-10-16 |  -0.215254960461011 |
+| NFLX   | 2016-07-19 |  -0.140713715884429 |
+| GOOG   | 2015-08-21 | -0.0545672199920357 |
+| GOOG   | 2016-04-22 |  -0.054644795802778 |
+\\
+
+*** sample_n(tbl, size, replace = FALSE, weight = NULL, .env = NULL, ...)
+
+- ランダムに指定行を抽出する
+- 重み付けは ~weight~ を指定 (非負でデータと同じ長さのベクトル)
+- ~replace~ は使い方不明
+- ~.env~, ~...~ は現在使われていない
+
+#+begin_src R
+FANG %>%
+  # グループ毎に 2行ずつ抽出する
+  group_by(symbol) %>% sample_n(2, weight = adjusted)
+#+end_src
+
+#+RESULTS:
+| symbol |       date |   open |   high |    low |  close |   volume | adjusted |
+|--------+------------+--------+--------+--------+--------+----------+----------|
+| AMZN   | 2016-09-02 | 774.11 |    776 |  771.7 | 772.44 |  2181800 |   772.44 |
+| AMZN   | 2013-06-13 |  271.5 |  276.8 | 270.29 | 275.79 |  2649800 |   275.79 |
+| FB     | 2016-05-23 | 117.42 |  117.6 | 115.94 | 115.97 | 20441000 |   115.97 |
+| FB     | 2016-07-14 |  117.5 | 117.64 |  116.7 | 117.29 | 14579700 |   117.29 |
+| GOOG   | 2016-04-07 | 745.37 |    747 | 736.28 | 740.28 |  1453200 |   740.28 |
+| GOOG   | 2015-03-13 |  553.5 |  558.4 | 544.22 | 547.32 |  1703500 |   547.32 |
+| NFLX   | 2013-02-25 | 180.99 |  187.1 | 175.45 | 179.32 | 52164700 |    25.62 |
+| NFLX   | 2016-07-05 |   95.2 | 101.27 |  93.31 |  97.91 | 25879400 |    97.91 |
+\\
+
+*** sample_frac(tbl, size = 1, replace = FALSE, weight = NULL, .env = NULL, ...)
+
+#+begin_src R
+FANG %>%
+  # グループ毎に 0.3% ずつ抽出する
+  group_by(symbol) %>% sample_frac(0.003)
+#+end_src
+
+#+RESULTS:
+| symbol |       date |   open |   high |    low |  close |   volume | adjusted |
+|--------+------------+--------+--------+--------+--------+----------+----------|
+| AMZN   | 2016-02-24 | 545.75 | 554.27 | 533.15 | 554.04 |  6231700 |   554.04 |
+| AMZN   | 2013-07-01 |    279 | 283.29 | 277.16 |  282.1 |  2888200 |    282.1 |
+| AMZN   | 2014-12-24 | 306.38 |    307 | 302.88 | 303.03 |  1513800 |   303.03 |
+| FB     | 2013-03-21 |  25.66 |  26.11 |  25.56 |  25.74 | 24336100 |    25.74 |
+| FB     | 2014-09-11 |  77.13 |  78.36 |  77.05 |  77.92 | 32219000 |    77.92 |
+| FB     | 2014-04-23 |  63.45 |  63.48 |  61.26 |  61.36 | 95908700 |    61.36 |
+| GOOG   | 2015-07-17 |    649 | 674.47 |    645 | 672.93 | 11164900 |   672.93 |
+| GOOG   | 2015-08-21 | 639.78 | 640.05 | 612.33 | 612.48 |  4265200 |   612.48 |
+| GOOG   | 2016-06-30 | 685.47 | 692.32 | 683.65 |  692.1 |  1597700 |    692.1 |
+| NFLX   | 2015-12-14 | 119.77 |  120.9 | 114.66 | 120.67 | 18679300 |   120.67 |
+| NFLX   | 2015-01-02 | 344.06 | 352.32 | 341.12 | 348.94 | 13475000 |    49.85 |
+| NFLX   | 2014-12-03 | 351.55 | 355.12 | 344.27 | 355.12 | 13819400 |    50.73 |
+\\
+
+*** TODO distinct()
 *** Summarise rows
 *** Group rows
 ** Manipulate variables
@@ -204,17 +388,20 @@ loaded via a namespace (and not attached):
 
 - [[https://dplyr.tidyverse.org/][公式サイト]]
 - [[https://cran.r-project.org/web/packages/dplyr/index.html][CRAN]]
-- [[https://github.com/tidyverse/dplyr][github repo]]
-- [[https://github.com/rstudio/cheatsheets/raw/master/data-transformation.pdf][Cheatsheet(PDF)]]
-- [[https://heavywatal.github.io/rstats/dplyr.html][dplyr — 高速data.frame処理]]
-- [[https://dplyr.tidyverse.org/reference/se-deprecated.html][Deprecated SE versions of main verbs.]]
-- [[https://notchained.hatenablog.com/entry/2017/03/24/225154][メモ：dplyr が Standard evaluation を deprecated にしようとしている理由]]
-- [[https://notchained.hatenablog.com/entry/2017/11/15/212117][do()とかrowwise()は今から覚える必要はない（たぶん）]]
 - [[https://cran.r-project.org/web/packages/dplyr/dplyr.pdf][Reference Manual]]
+- [[https://github.com/tidyverse/dplyr][github repo]]
+- [[https://dplyr.tidyverse.org/reference/][dplyr reference]] (分類の参考になる)
+- [[https://github.com/rstudio/cheatsheets/raw/master/data-transformation.pdf][Cheatsheet(PDF)]]
+- [[https://dplyr.tidyverse.org/reference/se-deprecated.html][Deprecated SE versions of main verbs.]]
 - Vignette
   - [[https://cran.r-project.org/web/packages/dplyr/vignettes/compatibility.html][dplyr compatibility]]
   - [[https://cran.r-project.org/web/packages/dplyr/vignettes/dplyr.html][Introduction to dplyr]] ([[https://qiita.com/yutannihilation/items/7a78d897810446dd6a3b][和訳@Qiita]])
   - [[https://cran.r-project.org/web/packages/dplyr/vignettes/programming.html][Programming with dplyr]]
   - [[https://cran.r-project.org/web/packages/dplyr/vignettes/two-table.html][Two-table verbs]]
   - [[https://cran.r-project.org/web/packages/dplyr/vignettes/window-functions.html][Window functions]]
+- Blog
+  - [[https://heavywatal.github.io/rstats/dplyr.html][dplyr — 高速data.frame処理@Heavy Watal]]
+  - [[https://notchained.hatenablog.com/entry/2018/12/09/120553][dplyr 0.8.0を使ってみた（group_by()のbreaking changes編）@Technically, technophobic.]]
+  - [[https://notchained.hatenablog.com/entry/2017/03/24/225154][メモ：dplyr が Standard evaluation を deprecated にしようとしている理由@Technically, technophobic.]]
+  - [[https://notchained.hatenablog.com/entry/2017/11/15/212117][do()とかrowwise()は今から覚える必要はない（たぶん）@Technically, technophobic.]]
 
