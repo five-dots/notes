@@ -2,9 +2,10 @@
 #+PROPERTY: header-args:R :results value :colnames yes :session *R:dplyr*
 
 * Index
+
 | One df funs | Two df funs |
 |-------------+-------------|
-| [[ ~filter()~ ]]  |             |
+| [[filter()]]    |             |
 |             |             |
 
 * Load library and check version
