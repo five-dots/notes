@@ -1,16 +1,28 @@
 #+STARTUP: folded indent inlineimages latexpreview
-#+PROPERTY: header-args:R :results value :colnames yes :exports both :session *R:dplyr*
+#+PROPERTY: header-args:R :results value :colnames yes :session *R:dplyr*
 
 * Load Library and Check Version
 
-#+begin_src R :results output :exports both
+#+begin_src R :results silent
 library(dplyr)
+#+end_src
+
+- バージョンの確認
+
+#+begin_src R :results output :exports both
 packageVersion("dplyr")
 #+end_src
 
 #+RESULTS:
-: 
 : [1] ‘0.8.3’
+
+- 関数の収録数
+#+begin_src R :results output :exports both
+length(ls("package:dplyr"))
+#+end_src
+
+#+RESULTS:
+: [1] 267
 
 * Dataset
 
@@ -31,8 +43,7 @@ head(FANG, n = 3)
 | FB     | 2013-01-02 | 27.44 | 28.18 | 27.42 |    28 | 69846400 |       28 |
 | FB     | 2013-01-03 | 27.88 | 28.47 | 27.59 | 27.77 | 63140600 |    27.77 |
 | FB     | 2013-01-04 | 28.01 | 28.93 | 27.83 | 28.76 | 72715400 |    28.76 |
-
-
+  
 * One ~data.frame~ Functions
 ** Manipulate Rows
 *** Extract Rows
@@ -114,7 +125,7 @@ FANG %>% filter(symbol == .GlobalEnv$symbol, .data$date == "2013-01-02")
 * Deprecated Functions
 * Session Info
 
-#+begin_src R :results output
+#+begin_src R :results output :exports both
 sessionInfo()
 #+end_src
 
