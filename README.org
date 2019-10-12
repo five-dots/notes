@@ -1,5 +1,50 @@
 #+STARTUP: content indent
 
+個人の技術メモをまとめたリポジトリです。すべてのメモを Emacs の [[https://orgmode.org/ja/][org-mode]] で記載しています。ソースコードは、[[https://orgmode.org/worg/org-contrib/babel/][Babel]] を利用して実際に実行したものを掲載していますので、クローンして手元で試していただくことが可能です。(各メモの末尾に実行環境を掲載するようにしています。)
+
+#+begin_src shell
+git clone https://github.com/five-dots/notes.git
+#+end_src
+
+このメモを通して、Babel の実行に必要な ~org-babel-load-language~ の設定を記載します。
+
+#+begin_src emacs-lisp
+(org-babel-do-load-languages 'org-babel-load-languages
+  '((emacs-lisp . t)
+    (shell . t)
+    (R . t)
+    (stan . t)
+    (C . t)
+    (python . t)))
+#+end_src
+
+* Table of contents                                                     :TOC:
+- [[#installation][Installation]]
+- [[#programming-language][Programming Language]]
+  - [[#r][R]]
+    - [[#base][Base]]
+    - [[#finance][Finance]]
+    - [[#package][Package]]
+    - [[#statistics][Statistics]]
+  - [[#python][Python]]
+  - [[#emacs-lisp][Emacs Lisp]]
+
+* Installation
+
+#+begin_src shell
+git clone https://github.com/five-dots/notes.git
+#+end_src
+
+#+begin_src emacs-lisp
+(org-babel-do-load-languages 'org-babel-load-languages
+  '((emacs-lisp . t)
+    (shell . t)
+    (R . t)
+    (stan . t)
+    (C . t)
+    (python . t)))
+#+end_src
+
 * Programming Language
 ** R
 *** Base
@@ -10,3 +55,7 @@
 - [[file:lang/r/package/dplyr.org][dplyr]]
 
 *** Statistics
+- Models
+- Probability distributions
+** Python
+** Emacs Lisp

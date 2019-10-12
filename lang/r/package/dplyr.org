@@ -414,6 +414,7 @@ FANG %>%
 | FB     | 40007883.8293651 |
 | GOOG   | 2644114.88095238 |
 | NFLX   | 19565909.8214286 |
+\\
 
 *** Grouping rows
 **** group_by(.data, ..., add = FALSE, .drop = group_by_drop_default(.data)), ungroup(x, ...)
