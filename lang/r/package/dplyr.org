@@ -15,9 +15,12 @@
       - [[#sample_ntbl-size-replace--false-weight--null-env--null-][sample_n(tbl, size, replace = FALSE, weight = NULL, .env = NULL, ...)]]
       - [[#sample_fractbl-size--1-replace--false-weight--null-env--null-][sample_frac(tbl, size = 1, replace = FALSE, weight = NULL, .env = NULL, ...)]]
       - [[#distinctdata--keep_all--false][distinct(.data, ..., .keep_all = FALSE)]]
-    - [[#arrangedata-][arrange(.data, ...)]]
-    - [[#summarisedata-][summarise(.data, ...)]]
-    - [[#group_bydata--add--false-drop--group_by_drop_defaultdata-ungroupx-][group_by(.data, ..., add = FALSE, .drop = group_by_drop_default(.data)), ungroup(x, ...)]]
+    - [[#sort-rows][Sort rows]]
+      - [[#arrangedata-][arrange(.data, ...)]]
+    - [[#summarise-rows][Summarise rows]]
+      - [[#summarisedata-][summarise(.data, ...)]]
+    - [[#grouping-rows][Grouping rows]]
+      - [[#group_bydata--add--false-drop--group_by_drop_defaultdata-ungroupx-][group_by(.data, ..., add = FALSE, .drop = group_by_drop_default(.data)), ungroup(x, ...)]]
   - [[#manipulate-variables][Manipulate variables]]
   - [[#manipulate-groups][Manipulate groups]]
 - [[#two-dataframe-functions][Two ~data.frame~ functions]]
@@ -45,6 +48,7 @@ packageVersion("dplyr")
 
 #+RESULTS:
 : [1] ‘0.8.3’
+\\
 
 * Dataset
 
@@ -354,8 +358,10 @@ distinct(df)
 | 1 | 1 |
 | 2 | 2 |
 | 3 | 3 |
+\\
 
-*** arrange(.data, ...)
+*** Sort rows
+**** arrange(.data, ...)
 
 - 指定した列の値で並び替え
 
@@ -370,6 +376,7 @@ FANG %>% arrange(volume) %>% head(4)
 | GOOG   | 2014-03-31 | 566.89 |    567 | 556.93 | 556.97 |  10800 |   556.97 |
 | GOOG   | 2014-03-27 |    568 |    568 | 552.92 | 558.46 |  13100 |   558.46 |
 | GOOG   | 2014-03-28 |  561.2 | 566.43 | 558.67 | 559.99 |  41200 |   559.99 |
+\\
 
 - デフォルトは昇順なので、降順には ~desc()~ を使う
 
@@ -384,9 +391,32 @@ FANG %>% arrange(desc(volume)) %>% head(4)
 | FB     | 2013-10-31 |  47.16 |     52 |   46.5 |  50.21 | 248809000 |    50.21 |
 | FB     | 2013-12-20 |  54.93 |  55.15 |  54.23 |  55.12 | 239824000 |    55.12 |
 | NFLX   | 2013-01-25 | 145.67 | 172.68 | 145.61 | 169.56 | 191445800 |    24.22 |
+\\
 
-*** summarise(.data, ...)
-*** group_by(.data, ..., add = FALSE, .drop = group_by_drop_default(.data)), ungroup(x, ...)
+*** Summarise rows
+**** summarise(.data, ...)
+
+- ~summarise()~ (アメリカ英語) と ~summarize()~ (イギリス英語) は同じもの
+- 変数のベクトルをスカラ値に要約する
+- vector を引数に取って、スカラ値を返す関数を ~summarise()~ の中で利用する
+
+#+begin_src R
+FANG %>%
+  group_by(symbol) %>%
+  # 銘柄毎に平均出来高を算出
+  summarise(mean_volume = mean(volume))
+#+end_src
+
+#+RESULTS:
+| symbol |      mean_volume |
+|--------+------------------|
+| AMZN   | 3741086.11111111 |
+| FB     | 40007883.8293651 |
+| GOOG   | 2644114.88095238 |
+| NFLX   | 19565909.8214286 |
+
+*** Grouping rows
+**** group_by(.data, ..., add = FALSE, .drop = group_by_drop_default(.data)), ungroup(x, ...)
 ** Manipulate variables
 ** Manipulate groups
 * Two ~data.frame~ functions
