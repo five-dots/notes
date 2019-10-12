@@ -1,6 +1,6 @@
 #+STARTUP: content indent
 
-* Language
+* Programming Language
 ** R
 *** Base
 *** Finance
