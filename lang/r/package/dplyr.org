@@ -1,0 +1,103 @@
+#+STARTUP: folded indent inlineimages latexpreview
+#+PROPERTY: header-args:R :results value :colnames yes :exports both :session *R:dplyr*
+
+* library
+
+#+begin_src R :results silent
+library(dplyr)
+#+end_src
+
+* Dataset
+
+#+begin_src R :results value :colnames yes
+library(tidyquant)
+data(FANG)
+head(FANG, n = 3)
+#+end_src
+
+#+RESULTS:
+| symbol |       date |      open |      high |   low | close |   volume | adjusted |
+|--------+------------+-----------+-----------+-------+-------+----------+----------|
+| FB     | 2013-01-02 | 27.440001 |     28.18 | 27.42 |    28 | 69846400 |       28 |
+| FB     | 2013-01-03 | 27.879999 | 28.469999 | 27.59 | 27.77 | 63140600 |    27.77 |
+| FB     | 2013-01-04 |     28.01 |     28.93 | 27.83 | 28.76 | 72715400 |    28.76 |
+
+* One ~data.frame~ Functions
+** Manipulate Rows
+*** Extract Rows
+**** ~filter()~
+**** ~distinct()~
+*** Summarise Rows
+*** Group Rows
+** Manipulate Variables
+** Manipulate Groups
+* Two ~data.frame~ Functions
+** Set Operations
+** Join Operations
+* Helper Functions
+** Vector Functions
+** Summary Functions
+* DB Functions
+* Imported Functions
+* Deprecated Functions
+* Reference
+
+- [[https://dplyr.tidyverse.org/][公式サイト]]
+- [[https://cran.r-project.org/web/packages/dplyr/index.html][CRAN]]
+- [[https://github.com/tidyverse/dplyr][github repo]]
+- [[https://github.com/rstudio/cheatsheets/raw/master/data-transformation.pdf][Cheatsheet(PDF)]]
+- [[https://dplyr.tidyverse.org/reference/se-deprecated.html][Deprecated SE versions of main verbs.]]
+- [[https://notchained.hatenablog.com/entry/2017/03/24/225154][メモ：dplyr が Standard evaluation を deprecated にしようとしている理由]]
+- [[https://notchained.hatenablog.com/entry/2017/11/15/212117][do()とかrowwise()は今から覚える必要はない（たぶん）]]
+- [[https://cran.r-project.org/web/packages/dplyr/dplyr.pdf][Reference Manual]]
+- Vignette
+  - [[https://cran.r-project.org/web/packages/dplyr/vignettes/compatibility.html][dplyr compatibility]]
+  - [[https://cran.r-project.org/web/packages/dplyr/vignettes/dplyr.html][Introduction to dplyr]] ([[https://qiita.com/yutannihilation/items/7a78d897810446dd6a3b][和訳@Qiita]])
+  - [[https://cran.r-project.org/web/packages/dplyr/vignettes/programming.html][Programming with dplyr]]
+  - [[https://cran.r-project.org/web/packages/dplyr/vignettes/two-table.html][Two-table verbs]]
+  - [[https://cran.r-project.org/web/packages/dplyr/vignettes/window-functions.html][Window functions]]
+
+* Session Info
+
+#+begin_src R :results output
+sessionInfo()
+#+end_src
+
+#+RESULTS:
+#+begin_example
+R version 3.6.1 (2019-07-05)
+Platform: x86_64-pc-linux-gnu (64-bit)
+Running under: Ubuntu 18.04.3 LTS
+
+Matrix products: default
+BLAS:   /usr/lib/x86_64-linux-gnu/blas/libblas.so.3.7.1
+LAPACK: /usr/lib/x86_64-linux-gnu/lapack/liblapack.so.3.7.1
+
+locale:
+ [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C              
+ [3] LC_TIME=en_US.UTF-8        LC_COLLATE=en_US.UTF-8    
+ [5] LC_MONETARY=en_US.UTF-8    LC_MESSAGES=en_US.UTF-8   
+ [7] LC_PAPER=en_US.UTF-8       LC_NAME=C                 
+ [9] LC_ADDRESS=C               LC_TELEPHONE=C            
+[11] LC_MEASUREMENT=en_US.UTF-8 LC_IDENTIFICATION=C       
+
+attached base packages:
+[1] stats     graphics  grDevices utils     datasets  methods   base     
+
+other attached packages:
+[1] tidyquant_0.5.7            quantmod_0.4-15           
+[3] TTR_0.23-5                 PerformanceAnalytics_1.5.3
+[5] xts_0.11-2                 zoo_1.8-6                 
+[7] lubridate_1.7.4            dplyr_0.8.3               
+
+loaded via a namespace (and not attached):
+ [1] Rcpp_1.0.2       rstudioapi_0.10  magrittr_1.5     tidyselect_0.2.5
+ [5] lattice_0.20-38  R6_2.4.0         rlang_0.4.0      quadprog_1.5-7  
+ [9] fansi_0.4.0      httr_1.4.1       stringr_1.4.0    tools_3.6.1     
+[13] grid_3.6.1       utf8_1.1.4       cli_1.1.0        assertthat_0.2.1
+[17] tibble_2.1.3     crayon_1.3.4     purrr_0.3.2      vctrs_0.2.0     
+[21] zeallot_0.1.0    curl_3.3         Quandl_2.10.0    glue_1.3.1      
+[25] stringi_1.4.3    compiler_3.6.1   pillar_1.4.2     backports_1.1.5 
+[29] jsonlite_1.6     pkgconfig_2.0.3
+#+end_example
+

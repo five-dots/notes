@@ -1,0 +1,10 @@
+#+STARTUP: content indent
+
+* Language
+** R
+*** Base
+*** Finance
+*** Package
+- [[file:lang/r/package/dplyr.org][dplyr]]
+
+*** Statistics
