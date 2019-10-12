@@ -1,22 +1,27 @@
 #+STARTUP: folded indent inlineimages latexpreview
 #+PROPERTY: header-args:R :results value :colnames yes :exports both :session *R:dplyr*
 
-* library
+* Load Library and Check Version
 
-#+begin_src R :results silent
+#+begin_src R :results output
 library(dplyr)
+packageVersion("dplyr")
 #+end_src
+
+#+RESULTS:
+: 
+: [1] ‘0.8.3’
 
 * Dataset
 
 - ~{tidyquant}~ に収録されている ~FANG~ データセットを利用する
 - Facebook, Amazon, Netflix, Goolge の株価データ
-- 表示を見やすくするために、小数点以下第二位までにしておく
 
 #+begin_src R :results value :colnames yes
 library(tidyquant)
 data(FANG)
-FANG <- mutate_if(FANG, is.numeric, round, digit = 2)
+# 表示を見やすくするために、小数点以下第二位までにしておく
+FANG <- FANG %>% mutate_if(is.numeric, round, digit = 2)
 head(FANG, n = 3)
 #+end_src
 
