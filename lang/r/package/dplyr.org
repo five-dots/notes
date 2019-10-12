@@ -7,15 +7,17 @@
 - [[#dataset][Dataset]]
 - [[#one-dataframe-functions][One ~data.frame~ functions]]
   - [[#manipulate-rows][Manipulate rows]]
-    - [[#filterdata--preserve--false][filter(.data, ..., .preserve = FALSE)]]
-    - [[#slicedata--preserve--false][slice(.data, ..., .preserve = FALSE)]]
-    - [[#top_nx-n-wt][top_n(x, n, wt)]]
-    - [[#top_fracx-n-wt][top_frac(x, n, wt)]]
-    - [[#sample_ntbl-size-replace--false-weight--null-env--null-][sample_n(tbl, size, replace = FALSE, weight = NULL, .env = NULL, ...)]]
-    - [[#sample_fractbl-size--1-replace--false-weight--null-env--null-][sample_frac(tbl, size = 1, replace = FALSE, weight = NULL, .env = NULL, ...)]]
-    - [[#distinct][distinct()]]
-    - [[#summarise-rows][Summarise rows]]
-    - [[#group-rows][Group rows]]
+    - [[#extractreduce-rows][Extract/Reduce rows]]
+      - [[#filterdata--preserve--false][filter(.data, ..., .preserve = FALSE)]]
+      - [[#slicedata--preserve--false][slice(.data, ..., .preserve = FALSE)]]
+      - [[#top_nx-n-wt][top_n(x, n, wt)]]
+      - [[#top_fracx-n-wt][top_frac(x, n, wt)]]
+      - [[#sample_ntbl-size-replace--false-weight--null-env--null-][sample_n(tbl, size, replace = FALSE, weight = NULL, .env = NULL, ...)]]
+      - [[#sample_fractbl-size--1-replace--false-weight--null-env--null-][sample_frac(tbl, size = 1, replace = FALSE, weight = NULL, .env = NULL, ...)]]
+      - [[#distinctdata--keep_all--false][distinct(.data, ..., .keep_all = FALSE)]]
+    - [[#arrangedata-][arrange(.data, ...)]]
+    - [[#summarisedata-][summarise(.data, ...)]]
+    - [[#group_bydata--add--false-drop--group_by_drop_defaultdata-ungroupx-][group_by(.data, ..., add = FALSE, .drop = group_by_drop_default(.data)), ungroup(x, ...)]]
   - [[#manipulate-variables][Manipulate variables]]
   - [[#manipulate-groups][Manipulate groups]]
 - [[#two-dataframe-functions][Two ~data.frame~ functions]]
@@ -67,7 +69,8 @@ head(FANG, n = 3)
 
 * One ~data.frame~ functions
 ** Manipulate rows
-*** filter(.data, ..., .preserve = FALSE)
+*** Extract/Reduce rows
+**** filter(.data, ..., .preserve = FALSE)
 
 - 条件に合致する行を抽出
 - ~grouped_df~ に対する処理の際に ~.preserve = TRUE~ にすると、処理前のグループ情報がそのまま保持される (仮にそのグループに属する行がゼロになったとしても保持される)
@@ -146,45 +149,50 @@ FANG %>% filter(symbol == .GlobalEnv$symbol, .data$date == "2013-01-02")
 | GOOG   | 2013-01-02 | 719.42 |  727 | 716.55 | 723.25 | 5101500 |   361.26 |
 \\
 
-*** slice(.data, ..., .preserve = FALSE)
+**** slice(.data, ..., .preserve = FALSE)
 
 - 行番号で抽出する
 - 1 〜 4, 10, 15 行を抽出する場合
 
 #+begin_src R
-FANG %>% slice(1:4, 10, 15)
+FANG %>%
+  # 結果がわかりやすいように行番号を列に変換する
+  tibble::rownames_to_column() %>%
+  slice(1:4, 10, 15)
 #+end_src
 
 #+RESULTS:
-| symbol |       date |  open |  high |   low | close |    volume | adjusted |
-|--------+------------+-------+-------+-------+-------+-----------+----------|
-| FB     | 2013-01-02 | 27.44 | 28.18 | 27.42 |    28 |  69846400 |       28 |
-| FB     | 2013-01-03 | 27.88 | 28.47 | 27.59 | 27.77 |  63140600 |    27.77 |
-| FB     | 2013-01-04 | 28.01 | 28.93 | 27.83 | 28.76 |  72715400 |    28.76 |
-| FB     | 2013-01-07 | 28.69 | 29.79 | 28.65 | 29.42 |  83781800 |    29.42 |
-| FB     | 2013-01-15 | 30.64 | 31.71 | 29.88 |  30.1 | 173242600 |     30.1 |
-| FB     | 2013-01-23 |  31.1 |  31.5 |  30.8 | 30.82 |  48899800 |    30.82 |
+| rowname | symbol |       date |  open |  high |   low | close |    volume | adjusted |
+|---------+--------+------------+-------+-------+-------+-------+-----------+----------|
+|       1 | FB     | 2013-01-02 | 27.44 | 28.18 | 27.42 |    28 |  69846400 |       28 |
+|       2 | FB     | 2013-01-03 | 27.88 | 28.47 | 27.59 | 27.77 |  63140600 |    27.77 |
+|       3 | FB     | 2013-01-04 | 28.01 | 28.93 | 27.83 | 28.76 |  72715400 |    28.76 |
+|       4 | FB     | 2013-01-07 | 28.69 | 29.79 | 28.65 | 29.42 |  83781800 |    29.42 |
+|      10 | FB     | 2013-01-15 | 30.64 | 31.71 | 29.88 |  30.1 | 173242600 |     30.1 |
+|      15 | FB     | 2013-01-23 |  31.1 |  31.5 |  30.8 | 30.82 |  48899800 |    30.82 |
 \\
 
 - 総行数を表す ~n()~ と組み合わせて、末尾から抽出する
 
 #+begin_src R
-FANG %>% slice((n()-9):n())
+FANG %>%
+  tibble::rownames_to_column() %>%
+  slice((n()-9):n())
 #+end_src
 
 #+RESULTS:
-| symbol |       date |   open |   high |    low |  close |  volume | adjusted |
-|--------+------------+--------+--------+--------+--------+---------+----------|
-| GOOG   | 2016-12-16 |  800.4 | 800.86 | 790.29 |  790.8 | 2428300 |    790.8 |
-| GOOG   | 2016-12-19 | 790.22 | 797.66 | 786.27 |  794.2 | 1225900 |    794.2 |
-| GOOG   | 2016-12-20 | 796.76 | 798.65 | 793.27 | 796.42 |  925100 |   796.42 |
-| GOOG   | 2016-12-21 | 795.84 | 796.68 |  787.1 | 794.56 | 1208700 |   794.56 |
-| GOOG   | 2016-12-22 | 792.36 | 793.32 | 788.58 | 791.26 |  969100 |   791.26 |
-| GOOG   | 2016-12-23 |  790.9 | 792.74 | 787.28 | 789.91 |  623400 |   789.91 |
-| GOOG   | 2016-12-27 | 790.68 | 797.86 | 787.66 | 791.55 |  789100 |   791.55 |
-| GOOG   | 2016-12-28 |  793.7 | 794.23 |  783.2 | 785.05 | 1132700 |   785.05 |
-| GOOG   | 2016-12-29 | 783.33 | 785.93 | 778.92 | 782.79 |  742200 |   782.79 |
-| GOOG   | 2016-12-30 | 782.75 | 782.78 | 770.41 | 771.82 | 1760200 |   771.82 |
+| rowname | symbol |       date |   open |   high |    low |  close |  volume | adjusted |
+|---------+--------+------------+--------+--------+--------+--------+---------+----------|
+|    4023 | GOOG   | 2016-12-16 |  800.4 | 800.86 | 790.29 |  790.8 | 2428300 |    790.8 |
+|    4024 | GOOG   | 2016-12-19 | 790.22 | 797.66 | 786.27 |  794.2 | 1225900 |    794.2 |
+|    4025 | GOOG   | 2016-12-20 | 796.76 | 798.65 | 793.27 | 796.42 |  925100 |   796.42 |
+|    4026 | GOOG   | 2016-12-21 | 795.84 | 796.68 |  787.1 | 794.56 | 1208700 |   794.56 |
+|    4027 | GOOG   | 2016-12-22 | 792.36 | 793.32 | 788.58 | 791.26 |  969100 |   791.26 |
+|    4028 | GOOG   | 2016-12-23 |  790.9 | 792.74 | 787.28 | 789.91 |  623400 |   789.91 |
+|    4029 | GOOG   | 2016-12-27 | 790.68 | 797.86 | 787.66 | 791.55 |  789100 |   791.55 |
+|    4030 | GOOG   | 2016-12-28 |  793.7 | 794.23 |  783.2 | 785.05 | 1132700 |   785.05 |
+|    4031 | GOOG   | 2016-12-29 | 783.33 | 785.93 | 778.92 | 782.79 |  742200 |   782.79 |
+|    4032 | GOOG   | 2016-12-30 | 782.75 | 782.78 | 770.41 | 771.82 | 1760200 |   771.82 |
 \\
 
 - マイナスで指定行だけ削除もできる
@@ -211,11 +219,11 @@ FANG %>%
 | AMZN   | 2013-01-10 | 268.54 | 268.74 |  262.3 | 265.34 | 2863400 |   265.34 |  -0.00379921087423796 |
 \\
 
-*** top_n(x, n, wt)
+**** top_n(x, n, wt)
 
 - 上位・下位 n 番目までを抽出する
 - プラスで指定すれば上位から、マイナスで指定すれば下位から抽出する
-- ~min_rank()~ -> ~filter()~ のラッパー
+- ~arrange()~ -> ~slice()~ でも同様のことが実現できるが、より簡潔に実現したいことを表現できる
 
 #+begin_src R
 FANG %>%
@@ -245,7 +253,7 @@ FANG %>%
 | GOOG   | 2015-08-26 | 0.0769534053916816 |
 \\
 
-*** top_frac(x, n, wt)
+**** top_frac(x, n, wt)
 
 - 上位・下位を整数ではなく、パーセントで指定する
 - それ以外は ~top_n()~ と同じ使い方
@@ -274,7 +282,7 @@ FANG %>%
 | GOOG   | 2016-04-22 |  -0.054644795802778 |
 \\
 
-*** sample_n(tbl, size, replace = FALSE, weight = NULL, .env = NULL, ...)
+**** sample_n(tbl, size, replace = FALSE, weight = NULL, .env = NULL, ...)
 
 - ランダムに指定行を抽出する
 - 重み付けは ~weight~ を指定 (非負でデータと同じ長さのベクトル)
@@ -300,7 +308,7 @@ FANG %>%
 | NFLX   | 2016-07-05 |   95.2 | 101.27 |  93.31 |  97.91 | 25879400 |    97.91 |
 \\
 
-*** sample_frac(tbl, size = 1, replace = FALSE, weight = NULL, .env = NULL, ...)
+**** sample_frac(tbl, size = 1, replace = FALSE, weight = NULL, .env = NULL, ...)
 
 #+begin_src R
 FANG %>%
@@ -325,9 +333,60 @@ FANG %>%
 | NFLX   | 2014-12-03 | 351.55 | 355.12 | 344.27 | 355.12 | 13819400 |    50.73 |
 \\
 
-*** TODO distinct()
-*** Summarise rows
-*** Group rows
+**** distinct(.data, ..., .keep_all = FALSE)
+
+- 重複を削除する
+- ~...~ で重複を判断する列を指定 (省略すれば全列を利用)
+- FANG データでは理解が難しいので、単純な ~data.frame~ を作成する
+
+#+begin_src R
+df <- tibble(
+  x = c(1, 2, 3, 1, 2, 3),
+  y = c(1, 2, 3, 1, 2, 3))
+
+# 後半3行は重複 
+distinct(df)
+#+end_src
+
+#+RESULTS:
+| x | y |
+|---+---|
+| 1 | 1 |
+| 2 | 2 |
+| 3 | 3 |
+
+*** arrange(.data, ...)
+
+- 指定した列の値で並び替え
+
+#+begin_src R
+FANG %>% arrange(volume) %>% head(4)
+#+end_src
+
+#+RESULTS:
+| symbol |       date |   open |   high |    low |  close | volume | adjusted |
+|--------+------------+--------+--------+--------+--------+--------+----------|
+| GOOG   | 2014-04-01 | 558.71 | 568.45 | 558.71 | 567.16 |   7900 |   567.16 |
+| GOOG   | 2014-03-31 | 566.89 |    567 | 556.93 | 556.97 |  10800 |   556.97 |
+| GOOG   | 2014-03-27 |    568 |    568 | 552.92 | 558.46 |  13100 |   558.46 |
+| GOOG   | 2014-03-28 |  561.2 | 566.43 | 558.67 | 559.99 |  41200 |   559.99 |
+
+- デフォルトは昇順なので、降順には ~desc()~ を使う
+
+#+begin_src R
+FANG %>% arrange(desc(volume)) %>% head(4)
+#+end_src
+
+#+RESULTS:
+| symbol |       date |   open |   high |    low |  close |    volume | adjusted |
+|--------+------------+--------+--------+--------+--------+-----------+----------|
+| FB     | 2013-07-25 |  33.54 |  34.88 |  32.75 |  34.36 | 365457900 |    34.36 |
+| FB     | 2013-10-31 |  47.16 |     52 |   46.5 |  50.21 | 248809000 |    50.21 |
+| FB     | 2013-12-20 |  54.93 |  55.15 |  54.23 |  55.12 | 239824000 |    55.12 |
+| NFLX   | 2013-01-25 | 145.67 | 172.68 | 145.61 | 169.56 | 191445800 |    24.22 |
+
+*** summarise(.data, ...)
+*** group_by(.data, ..., add = FALSE, .drop = group_by_drop_default(.data)), ungroup(x, ...)
 ** Manipulate variables
 ** Manipulate groups
 * Two ~data.frame~ functions
