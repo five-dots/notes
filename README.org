@@ -1,12 +1,14 @@
 #+STARTUP: content indent
 
-個人の技術メモをまとめたリポジトリです。すべてのメモを Emacs の [[https://orgmode.org/ja/][org-mode]] で記載しています。ソースコードは、[[https://orgmode.org/worg/org-contrib/babel/][Babel]] を利用して実際に実行したものを掲載していますので、クローンして手元で試していただくことが可能です。(各メモの末尾に実行環境を掲載するようにしています。)
+* Tech notes by Emacs org-mode and Babel
+
+個人の技術メモをまとめたリポジトリです。すべてのメモを Emacs の [[https://orgmode.org/ja/][org-mode]] で記載しています。ソースコードは、[[https://orgmode.org/worg/org-contrib/babel/][Babel]] を利用して実際に実行したものを掲載していますので、clone をして手元で試していただくことが可能です。(各メモの末尾に実行環境を掲載するようにしています。)
 
 #+begin_src shell
 git clone https://github.com/five-dots/notes.git
 #+end_src
 
-このメモを通して、Babel の実行に必要な ~org-babel-load-language~ の設定を記載します。
+Babel の実行には適切な ~org-babel-load-language~ の設定が必要です。
 
 #+begin_src emacs-lisp
 (org-babel-do-load-languages 'org-babel-load-languages
@@ -18,7 +20,9 @@ git clone https://github.com/five-dots/notes.git
     (python . t)))
 #+end_src
 
-* Table of contents                                                     :TOC:
+* Table of contents                                               :TOC:QUOTE:
+#+BEGIN_QUOTE
+- [[#tech-notes-by-emacs-org-mode-and-babel][Tech notes by Emacs org-mode and Babel]]
 - [[#installation][Installation]]
 - [[#programming-language][Programming Language]]
   - [[#r][R]]
@@ -28,6 +32,7 @@ git clone https://github.com/five-dots/notes.git
     - [[#statistics][Statistics]]
   - [[#python][Python]]
   - [[#emacs-lisp][Emacs Lisp]]
+#+END_QUOTE
 
 * Installation
 
