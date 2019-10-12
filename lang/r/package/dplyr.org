@@ -3,7 +3,7 @@
 
 * Load Library and Check Version
 
-#+begin_src R :results html
+#+begin_src R :results output :exports both
 library(dplyr)
 packageVersion("dplyr")
 #+end_src
