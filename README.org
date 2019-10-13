@@ -1,44 +1,23 @@
 #+STARTUP: content indent
 
-* Tech notes by Emacs org-mode and Babel
-
-個人の技術メモをまとめたリポジトリです。すべてのメモを Emacs の [[https://orgmode.org/ja/][org-mode]] で記載しています。ソースコードは、[[https://orgmode.org/worg/org-contrib/babel/][Babel]] を利用して実際に実行したものを掲載していますので、clone をして手元で試していただくことが可能です。(各メモの末尾に実行環境を掲載するようにしています。)
-
-#+begin_src shell
-git clone https://github.com/five-dots/notes.git
-#+end_src
-
-Babel の実行には適切な ~org-babel-load-language~ の設定が必要です。
-
-#+begin_src emacs-lisp
-(org-babel-do-load-languages 'org-babel-load-languages
-  '((emacs-lisp . t)
-    (shell . t)
-    (R . t)
-    (stan . t)
-    (C . t)
-    (python . t)))
-#+end_src
-
-* Table of contents                                               :TOC:QUOTE:
+* 目次                                                            :TOC_2:QUOTE:
 #+BEGIN_QUOTE
-- [[#tech-notes-by-emacs-org-mode-and-babel][Tech notes by Emacs org-mode and Babel]]
-- [[#installation][Installation]]
-- [[#programming-language][Programming Language]]
+- [[#org-mode--babel-による技術ノート集][org-mode + babel による技術ノート集]]
+- [[#プログラミング言語][プログラミング言語]]
   - [[#r][R]]
-    - [[#base][Base]]
-    - [[#finance][Finance]]
-    - [[#package][Package]]
-    - [[#statistics][Statistics]]
   - [[#python][Python]]
   - [[#emacs-lisp][Emacs Lisp]]
 #+END_QUOTE
 
-* Installation
+* org-mode + babel による技術ノート集
+
+個人の技術ノートをまとめたリポジトリです。すべてのノートを Emacs の [[https://orgmode.org/ja/][org-mode]] で記載しています。ソースコードは、[[https://orgmode.org/worg/org-contrib/babel/][Babel]] を利用して実際に実行したものを掲載していますので、clone をして手元で試していただくことが可能です。(各ノートの末尾に実行環境を掲載するようにしています。)
 
 #+begin_src shell
 git clone https://github.com/five-dots/notes.git
 #+end_src
+
+Babel の実行には適切な ~org-babel-load-language~ の設定が必要です。このノートでは、以下の言語を利用しています。
 
 #+begin_src emacs-lisp
 (org-babel-do-load-languages 'org-babel-load-languages
@@ -50,7 +29,7 @@ git clone https://github.com/five-dots/notes.git
     (python . t)))
 #+end_src
 
-* Programming Language
+* プログラミング言語
 ** R
 *** Base
 *** Finance
