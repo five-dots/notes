@@ -22,17 +22,216 @@
       - [[#tallyx-wt-sort--false-name--n][tally(x, wt, sort = FALSE, name = "n")]]
       - [[#countx--wt--null-sort--false-name--n-drop--group_dropsx][count(x, ..., wt = NULL, sort = FALSE, name = "n", .drop = group_drops(x))]]
     - [[#行のグループ化][行のグループ化]]
-      - [[#group_bydata--add--false-drop--group_by_drop_defaultdata-ungroupx-][group_by(.data, ..., add = FALSE, .drop = group_by_drop_default(.data)), ungroup(x, ...)]]
+      - [[#group_bydata--add--false-drop--group_by_drop_defaultdata][group_by(.data, ..., add = FALSE, .drop = group_by_drop_default(.data))]]
+      - [[#ungroupx-][ungroup(x, ...)]]
+      - [[#group_splittbl--keep--true][group_split(.tbl, ..., keep = TRUE)]]
+      - [[#group_nesttbl--key--data-keep--false][group_nest(.tbl, ..., .key = "data", keep = FALSE)]]
   - [[#列の操作][列の操作]]
+    - [[#列の追加][列の追加]]
+      - [[#mutatedata-][mutate(.data, ...)]]
+      - [[#transmutedata-][transmute(.data, ...)]]
+      - [[#add_tallyx-wt-sort--false-name--n][add_tally(x, wt, sort = FALSE, name = "n")]]
+      - [[#add_countx--wt--null-sort--false-name--n][add_count(x, ..., wt = NULL, sort = FALSE, name = "n")]]
+    - [[#列の抽出][列の抽出]]
+      - [[#selectdata-][select(.data, ...)]]
+      - [[#pulldata-var---1][pull(.data, var = -1)]]
+    - [[#列の名前変更][列の名前変更]]
+      - [[#renamedata-][rename(.data, ...)]]
   - [[#グループの操作][グループの操作]]
+    - [[#グループへの関数適応][グループへの関数適応]]
+      - [[#group_maptbl-f--keep--false][group_map(.tbl, .f, ..., keep = FALSE)]]
+      - [[#group_modifytbl-f--keep--false][group_modify(.tbl, .f, ..., keep = FALSE)]]
+      - [[#group_walktbl-f-][group_walk(.tbl, .f, ...)]]
+    - [[#グループ情報の抽出][グループ情報の抽出]]
+      - [[#group_datadata][group_data(.data)]]
+      - [[#group_keystbl-][group_keys(.tbl, ...)]]
+      - [[#group_rowsdata][group_rows(.data)]]
+      - [[#group_indicesdata-][group_indices(.data, ...)]]
+  - [[#grouped_df][grouped_df]]
+    - [[#grouped_df-1][grouped_df]]
+    - [[#is_grouped_df][is_grouped_df()]]
+    - [[#isgrouped_df][is.grouped_df()]]
+    - [[#new_grouped_df][new_grouped_df()]]
+    - [[#validate_grouped_df][validate_grouped_df()]]
 - [[#2-つの-dataframe-を操作する関数群][2 つの ~data.frame~ を操作する関数群]]
   - [[#集合演算][集合演算]]
+    - [[#データセット-1][データセット]]
+    - [[#intersectx-y-][intersect(x, y, ...)]]
+    - [[#unionx-y-][union(x, y, ...)]]
+    - [[#union_allx-y-][union_all(x, y, ...)]]
+    - [[#setdiffx-y-][setdiff(x, y, ...)]]
+    - [[#setequalx-y-][setequal(x, y, ...)]]
   - [[#結合演算][結合演算]]
+    - [[#mutating-join][Mutating join]]
+      - [[#inner_joinx-y-by--null-copy--false-suffix--cx-y-][inner_join(x, y, by = NULL, copy = FALSE, suffix = c(".x", ".y"), ...)]]
+      - [[#left_joinx-y-by--null-copy--false-suffix--cx-y-][left_join(x, y, by = NULL, copy = FALSE, suffix = c(".x", ".y"), ...)]]
+      - [[#right_joinx-y-by--null-copy--false-suffix--cx-y-][right_join(x, y, by = NULL, copy = FALSE, suffix = c(".x", ".y"), ...)]]
+      - [[#full_joinx-y-by--null-copy--false-suffix--cx-y-][full_join(x, y, by = NULL, copy = FALSE, suffix = c(".x", ".y"), ...)]]
+    - [[#filtering-join][Filtering join]]
+      - [[#semi_joinx-y-by--null-copy--false-][semi_join(x, y, by = NULL, copy = FALSE, ...)]]
+      - [[#nest_joinx-y-by--null-copy--false-keep--false-name--null-][nest_join(x, y, by = NULL, copy = FALSE, keep = FALSE, name = NULL, ...)]]
+      - [[#anti_joinx-y-by--null-copy--false-][anti_join(x, y, by = NULL, copy = FALSE, ...)]]
+    - [[#bind-tables][Bind tables]]
+      - [[#bind_rows-id--null][bind_rows(..., .id = NULL)]]
+      - [[#bind_cols][bind_cols(...)]]
 - [[#ヘルパー関数群][ヘルパー関数群]]
   - [[#ベクトル関数][ベクトル関数]]
+    - [[#ランキング][ランキング]]
+      - [[#cume_dist][cume_dist()]]
+      - [[#dense_rank][dense_rank()]]
+      - [[#min_rank][min_rank()]]
+      - [[#ntile][ntile()]]
+      - [[#percent_rank][percent_rank()]]
+      - [[#row_number][row_number()]]
+    - [[#累積関数][累積関数]]
+      - [[#cumall][cumall()]]
+      - [[#cumany][cumany()]]
+      - [[#cummean][cummean()]]
+    - [[#条件][条件]]
+      - [[#between][between()]]
+      - [[#case_when][case_when()]]
+      - [[#coalesce][coalesce()]]
+      - [[#if_else][if_else()]]
+      - [[#recode][recode()]]
+      - [[#recode_factor][recode_factor()]]
+    - [[#その他][その他]]
+      - [[#lag][lag()]]
+      - [[#lead][lead()]]
+      - [[#na_if][na_if()]]
+      - [[#near][near()]]
+      - [[#desc][desc()]]
+      - [[#id][id()]]
+      - [[#group_cols][group_cols()]]
+      - [[#group_trim][group_trim()]]
+      - [[#groups][groups()]]
+      - [[#group_vars][group_vars()]]
+      - [[#last_col][last_col()]]
+      - [[#vars][vars()]]
+      - [[#all_equal][all_equal()]]
+      - [[#all_vars][all_vars()]]
+      - [[#ny_vars][ny_vars()]]
+      - [[#changes][changes()]]
+      - [[#combine][combine()]]
+      - [[#common_by][common_by()]]
+      - [[#dim_desc][dim_desc()]]
+      - [[#dr_dplyr][dr_dplyr()]]
+      - [[#hybrid_call][hybrid_call()]]
+      - [[#location][location()]]
+      - [[#order_by][order_by()]]
+      - [[#tbl_nongroup_vars][tbl_nongroup_vars()]]
+      - [[#tbl_vars][tbl_vars()]]
+      - [[#with_order][with_order()]]
+      - [[#progress_estimated][progress_estimated()]]
   - [[#サマリー関数][サマリー関数]]
+    - [[#first][first()]]
+    - [[#group_size][group_size()]]
+    - [[#last][last()]]
+    - [[#n][n()]]
+    - [[#n_distinct][n_distinct()]]
+    - [[#n_groups][n_groups()]]
+    - [[#nth][nth()]]
 - [[#db-functions][DB functions]]
+  - [[#external-data-source][External data source]]
+    - [[#astbl][as.tbl()]]
+    - [[#astbl_cube][as.tbl_cube()]]
+    - [[#issrc][is.src()]]
+    - [[#istbl][is.tbl()]]
+    - [[#src][src()]]
+    - [[#src_df][src_df()]]
+    - [[#src_local][src_local()]]
+    - [[#src_tbls][src_tbls()]]
+    - [[#tbl][tbl()]]
+    - [[#tbl_cube][tbl_cube()]]
+    - [[#make_tbl][make_tbl()]]
+  - [[#sql][SQL]]
+    - [[#sql-1][sql()]]
+    - [[#sql_escape_ident][sql_escape_ident()]]
+    - [[#sql_escape_string][sql_escape_string()]]
+    - [[#sql_join][sql_join()]]
+    - [[#sql_select][sql_select()]]
+    - [[#sql_semi_join][sql_semi_join()]]
+    - [[#sql_set_op][sql_set_op()]]
+    - [[#sql_subquery][sql_subquery()]]
+    - [[#sql_translate_env][sql_translate_env()]]
+    - [[#src_mysql][src_mysql]]
+    - [[#src_sqlite][src_sqlite]]
+  - [[#db][DB]]
+    - [[#db_analyze][db_analyze()]]
+    - [[#db_begin][db_begin()]]
+    - [[#db_commit][db_commit()]]
+    - [[#db_create_index][db_create_index()]]
+    - [[#db_create_indexes][db_create_indexes()]]
+    - [[#db_create_table][db_create_table()]]
+    - [[#db_data_type][db_data_type()]]
+    - [[#db_desc][db_desc()]]
+    - [[#db_drop_table][db_drop_table()]]
+    - [[#db_explain][db_explain()]]
+    - [[#db_has_table][db_has_table()]]
+    - [[#db_insert_into][db_insert_into()]]
+    - [[#db_list_tables][db_list_tables()]]
+    - [[#db_query_fields][db_query_fields()]]
+    - [[#db_query_rows][db_query_rows()]]
+    - [[#db_rollback][db_rollback()]]
+    - [[#db_save_query][db_save_query()]]
+    - [[#db_write_table][db_write_table()]]
+  - [[#utilty][Utilty]]
+    - [[#auto_copy][auto_copy()]]
+    - [[#bench_tbls][bench_tbls()]]
+    - [[#check_dbplyr][check_dbplyr()]]
+    - [[#collapse][collapse()]]
+    - [[#collect][collect()]]
+    - [[#compare_tbls][compare_tbls()]]
+    - [[#compare_tbls2][compare_tbls2()]]
+    - [[#compute][compute()]]
+    - [[#copy_to][copy_to()]]
+    - [[#eval_tbls][eval_tbls()]]
+    - [[#eval_tbls2][eval_tbls2()]]
+    - [[#explain][explain()]]
+    - [[#ident][ident()]]
+    - [[#show_query][show_query()]]
+    - [[#wrap_dbplyr_obj][wrap_dbplyr_obj()]]
+    - [[#same_src][same_src()]]
 - [[#インポートされた関数群][インポートされた関数群]]
+  - [[#magrittr][{magrittr}]]
+    - [[#][%>%]]
+  - [[#rlang][{rlang}]]
+    - [[#as_label][as_label()]]
+    - [[#enexpr][enexpr()]]
+    - [[#enexprs][enexprs()]]
+    - [[#enquo][enquo()]]
+    - [[#enquos][enquos()]]
+    - [[#ensym][ensym()]]
+    - [[#ensyms][ensyms()]]
+    - [[#expr][expr()]]
+    - [[#quo][quo()]]
+    - [[#quo_name][quo_name()]]
+    - [[#quos][quos()]]
+    - [[#sym][sym()]]
+    - [[#syms][syms()]]
+  - [[#tibble][{tibble}]]
+    - [[#add_row][add_row()]]
+    - [[#as_data_frame][as_data_frame()]]
+    - [[#as_tibble][as_tibble()]]
+    - [[#data_frame][data_frame()]]
+    - [[#data_frame_][data_frame_()]]
+    - [[#frame_data][frame_data()]]
+    - [[#glimpse][glimpse()]]
+    - [[#lst][lst()]]
+    - [[#lst_][lst_()]]
+    - [[#tbl_sum][tbl_sum()]]
+    - [[#tibble-1][tibble()]]
+    - [[#tribble][tribble()]]
+    - [[#trunc_mat][trunc_mat()]]
+    - [[#type_sum][type_sum()]]
+  - [[#tidyselect][{tidyselect}]]
+    - [[#contains][contains()]]
+    - [[#ends_with][ends_with()]]
+    - [[#everything][everything()]]
+    - [[#last_col-1][last_col()]]
+    - [[#matches][matches()]]
+    - [[#num_range][num_range()]]
+    - [[#one_of][one_of()]]
+    - [[#starts_with][starts_with()]]
 - [[#非推奨とされている関数群][非推奨とされている関数群]]
 - [[#実行環境][実行環境]]
 - [[#参考リンク][参考リンク]]
@@ -41,9 +240,7 @@
 * ライブラリの読み込みとバージョンの確認
 
 #+begin_src R :results silent
-# まだインストールしていなければ
 # install.packages("dplyr")
-
 library(dplyr)
 #+end_src
 
@@ -424,24 +621,834 @@ FANG %>%
 
 **** tally(x, wt, sort = FALSE, name = "n")
 
-- tally => summarize wrapper, n() or sum() を利用する場合
-- クロス集計表を作るのに便利
+- ~summarise()~ -> ~n()~ や ~sum(n)~ のラッパー関数
+- 列を指定しなければ、総行数を集計してくれる (= ~n()~)
 
+#+begin_src R
+FANG %>% group_by(symbol) %>% tally()
+
+# 上記と同じ
+## FANG %>% group_by(symbol) %>% summarise(n = n())
+#+end_src
+
+#+RESULTS:
+| symbol | nrow |
+|--------+------|
+| AMZN   | 1008 |
+| FB     | 1008 |
+| GOOG   | 1008 |
+| NFLX   | 1008 |
+\\
+
+- 列を指定した場合は、その列の合計値を算出する
+
+#+begin_src R
+FANG %>% group_by(symbol) %>% tally(volume, sort = TRUE, name = "total_volume")
+#+end_src
+
+#+RESULTS:
+| symbol | total_volume |
+|--------+--------------|
+| FB     |  40327946900 |
+| NFLX   |  19722437100 |
+| AMZN   |   3771014800 |
+| GOOG   |   2665267800 |
+\\
+
+- クロス集計表を作るのに便利
+- 銘柄・年ごとの総出来高
+
+#+begin_src R
+FANG %>%
+  group_by(symbol, year = lubridate::year(date)) %>%
+  tally(volume) %>%
+  # pivot_wider() は spread() の後継機能
+  tidyr::pivot_wider(values_from = n, names_from = year)
+#+end_src
+
+#+RESULTS:
+| symbol |        2013 |        2014 |       2015 |       2016 |
+|--------+-------------+-------------+------------+------------|
+| AMZN   |   747905700 |  1029066700 |  956936800 | 1037105600 |
+| FB     | 15143182600 | 11977699100 | 6792708200 | 6414357000 |
+| GOOG   |  1055967100 |   626733500 |  521446300 |  461120900 |
+| NFLX   |  6915790700 |  4898415200 | 4679881700 | 3228349500 |
+\\
 
 **** count(x, ..., wt = NULL, sort = FALSE, name = "n", .drop = group_drops(x))
+
+- ~tally()~ と似ているが、事前に ~group_by()~ してくれる
+
+#+begin_src R
+FANG %>% count(symbol)
+#+end_src
+
+#+RESULTS:
+| symbol |    n |
+|--------+------|
+| AMZN   | 1008 |
+| FB     | 1008 |
+| GOOG   | 1008 |
+| NFLX   | 1008 |
+
 *** 行のグループ化
-**** group_by(.data, ..., add = FALSE, .drop = group_by_drop_default(.data)), ungroup(x, ...)
+**** group_by(.data, ..., add = FALSE, .drop = group_by_drop_default(.data))
+
+- 指定した列でグループ化された ~grouped_df~ を作成する
+- ~ungroup()~ でグループ化を解除
+- ~.drop = TRUE~ の場合は、空のグループを削除する
+
+#+begin_src R :results output
+FANG %>% group_by(symbol) %>% class()
+#+end_src
+
+#+RESULTS:
+: [1] "grouped_df" "tbl_df"     "tbl"        "data.frame"
+
+**** ungroup(x, ...)
+
+- グループ化を解除する
+
+#+begin_src R :results output
+FANG %>% group_by(symbol) %>% ungroup() %>% class()
+#+end_src
+
+#+RESULTS:
+: [1] "tbl_df"     "tbl"        "data.frame"
+
+**** group_split(.tbl, ..., keep = TRUE)
+
+- 指定した列で ~data.frame~ を *list of data.frame* に分割する
+- list に分割し ~purrr::map()~ で関数を適応するフローが強力
+
+#+begin_src R :results output
+FANG_l <- FANG %>% group_split(symbol)
+class(FANG_l)
+length(FANG_l)
+#+end_src
+
+#+RESULTS:
+: 
+: [1] "list"
+: 
+: [1] 4
+
+**** group_nest(.tbl, ..., .key = "data", keep = FALSE)
+
+- グループ毎のネストされた ~data.frame~ を作成する
+
+#+begin_src R :results output
+FANG %>% group_nest(symbol)
+#+end_src
+
+#+RESULTS:
+: # A tibble: 4 x 2
+:   symbol data                
+:   <chr>  <list>
+: 1 AMZN   <tibble [1,008 × 7]>
+: 2 FB     <tibble [1,008 × 7]>
+: 3 GOOG   <tibble [1,008 × 7]>
+: 4 NFLX   <tibble [1,008 × 7]>
+
+- ~tidyr::nest()~ と同じ機能
+
+#+begin_src R :results output
+FANG %>% tidyr::nest(-symbol)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+# A tibble: 4 x 2
+  symbol           data
+  <
+ <list<df[,7]>>
+1 FB        [1,008 × 7]
+2 AMZN      [1,008 × 7]
+3 NFLX      [1,008 × 7]
+4 GOOG      [1,008 × 7]
+Warning message:
+All elements of `...` must be named.
+Did you want `data = c(date, open, high, low, close, volume, adjusted)`?
+#+end_example
+
 ** 列の操作
+*** 列の追加
+**** mutate(.data, ...)
+
+- 新しい列を追加する
+- Name-Value のペアを引数とする
+- _Value は評価結果がスカラ値か、長さがデータと同じベクトルである必要がある_
+
+#+begin_src R
+FANG %>%
+  mutate(return = log(adjusted) - lag(log(adjusted))) %>%
+  head(4)
+#+end_src
+
+#+RESULTS:
+| symbol |       date |  open |  high |   low | close |   volume | adjusted |               return |
+|--------+------------+-------+-------+-------+-------+----------+----------+----------------------|
+| FB     | 2013-01-02 | 27.44 | 28.18 | 27.42 |    28 | 69846400 |       28 |                  nil |
+| FB     | 2013-01-03 | 27.88 | 28.47 | 27.59 | 27.77 | 63140600 |    27.77 | -0.00824820885649569 |
+| FB     | 2013-01-04 | 28.01 | 28.93 | 27.83 | 28.76 | 72715400 |    28.76 |   0.0350292315341378 |
+| FB     | 2013-01-07 | 28.69 | 29.79 | 28.65 | 29.42 | 83781800 |    29.42 |   0.0226891823204456 |
+\\
+
+**** transmute(.data, ...)
+
+- 新しい列を作成し、その他の列を削除する
+
+#+begin_src R
+FANG %>%
+  transmute(return = log(adjusted) - lag(log(adjusted))) %>%
+  head(4)
+#+end_src
+
+#+RESULTS:
+|               return |
+|----------------------|
+|                  nil |
+| -0.00824820885649569 |
+|   0.0350292315341378 |
+|   0.0226891823204456 |
+\\
+
+**** add_tally(x, wt, sort = FALSE, name = "n")
+
+- ~tally()~ と同様の機能だが、行を要約するのではなく、単純に列を追加するだけ
+
+#+begin_src R
+FANG %>% add_tally() %>% head(4)
+#+end_src
+
+#+RESULTS:
+| symbol |       date |  open |  high |   low | close |   volume | adjusted |    n |
+|--------+------------+-------+-------+-------+-------+----------+----------+------|
+| FB     | 2013-01-02 | 27.44 | 28.18 | 27.42 |    28 | 69846400 |       28 | 4032 |
+| FB     | 2013-01-03 | 27.88 | 28.47 | 27.59 | 27.77 | 63140600 |    27.77 | 4032 |
+| FB     | 2013-01-04 | 28.01 | 28.93 | 27.83 | 28.76 | 72715400 |    28.76 | 4032 |
+| FB     | 2013-01-07 | 28.69 | 29.79 | 28.65 | 29.42 | 83781800 |    29.42 | 4032 |
+\\
+
+**** add_count(x, ..., wt = NULL, sort = FALSE, name = "n")
+
+- ~count()~ と同様の機能だが、行を要約するのではなく、単純に列を追加するだけ
+
+#+begin_src R
+FANG %>% add_count() %>% head(4)
+#+end_src
+
+#+RESULTS:
+| symbol |       date |  open |  high |   low | close |   volume | adjusted |    n |
+|--------+------------+-------+-------+-------+-------+----------+----------+------|
+| FB     | 2013-01-02 | 27.44 | 28.18 | 27.42 |    28 | 69846400 |       28 | 4032 |
+| FB     | 2013-01-03 | 27.88 | 28.47 | 27.59 | 27.77 | 63140600 |    27.77 | 4032 |
+| FB     | 2013-01-04 | 28.01 | 28.93 | 27.83 | 28.76 | 72715400 |    28.76 | 4032 |
+| FB     | 2013-01-07 | 28.69 | 29.79 | 28.65 | 29.42 | 83781800 |    29.42 | 4032 |
+\\
+
+*** 列の抽出
+**** select(.data, ...)
+
+- 列の選択
+- 1 列のみであっても、ベクトルにはならず ~data.frame~ のまま抽出できる
+- 列の指定方法
+
+#+begin_src R
+# 1. 列名
+FANG %>% select(symbol, date, adjusted) %>% head(4)
+
+# 2. 列の文字列ベクトル (結果は同じ)
+## FANG %>% select(c("symbol", "date", "adjusted")) %>% head(4)
+
+# 3. 列のインデックス (結果は同じ)
+## FANG %>% select(1, 2, 8) %>% head(4)
+
+# 4. 列名のマイナス指定 (結果は同じ)
+## FANG %>% select(-open, -high, -low, -close, -volume) %>% head(4)
+
+# 4. 列インデックスのマイナス指定 (結果は同じ)
+## FANG %>% select(-(3:6)) %>% head(4)
+#+end_src
+
+#+RESULTS:
+| symbol |       date |   volume | adjusted |
+|--------+------------+----------+----------|
+| FB     | 2013-01-02 | 69846400 |       28 |
+| FB     | 2013-01-03 | 63140600 |    27.77 |
+| FB     | 2013-01-04 | 72715400 |    28.76 |
+| FB     | 2013-01-07 | 83781800 |    29.42 |
+\\
+
+**** pull(.data, var = -1)
+
+- 列をベクトルとして抽出する
+
+#+begin_src R
+FANG %>% pull(adjusted) %>% head(4)
+
+# インデックスで指定 (結果は同じ)
+## FANG %>% pull(-1) %>% head(4)
+#+end_src
+
+#+RESULTS:
+|     x |
+|-------|
+|    28 |
+| 27.77 |
+| 28.76 |
+| 29.42 |
+\\
+
+- 以下のように書いても同様だが ~pull()~ を使った方がより意図が明確になる
+
+#+begin_src R
+FANG %>% .$adjusted %>% head(4)
+#+end_src
+
+#+RESULTS:
+|     x |
+|-------|
+|    28 |
+| 27.77 |
+| 28.76 |
+| 29.42 |
+\\
+
+*** 列の名前変更
+**** rename(.data, ...)
+
+- new = old の形式で列の名前を変更できる
+- 全ての列名を変更したい場合は ~rlang::set_names()~ や ~stats::setNames()~ にベクトルを渡すほうが簡単
+
+#+begin_src R
+FANG %>%
+  select(symbol, date, adjusted) %>%
+  rename(adj_close = adjusted) %>%
+  head(4)
+#+end_src
+
+#+RESULTS:
+| symbol |       date | adj_close |
+|--------+------------+-----------|
+| FB     | 2013-01-02 |        28 |
+| FB     | 2013-01-03 |     27.77 |
+| FB     | 2013-01-04 |     28.76 |
+| FB     | 2013-01-07 |     29.42 |
+\\
+
+- 名前の指定に変数を利用する場合
+
+#+begin_src R
+new_name <- "adj_close"
+old_name <- "adjusted"
+FANG %>%
+  select(symbol, date, adjusted) %>%
+  rename(!!new_name := !!old_name) %>%
+  head(4)
+#+end_src
+
+#+RESULTS:
+| symbol |       date | adj_close |
+|--------+------------+-----------|
+| FB     | 2013-01-02 |        28 |
+| FB     | 2013-01-03 |     27.77 |
+| FB     | 2013-01-04 |     28.76 |
+| FB     | 2013-01-07 |     29.42 |
+\\
+
 ** グループの操作
+*** グループへの関数適応
+**** group_map(.tbl, .f, ..., keep = FALSE)
+
+- ~{purrr}~ と同様のスタイルで ~grouped_df~ に ~.f~ 関数を適応できる
+- ~keep = TRUE~ でグループ変数に ~.x~ からアクセスできる
+- ~group_by()~ -> ~group_map()~ のフローが頻出
+- 結果を ~list~ で返す
+- ~purrrlyr::by_slice()~ は ~group_map()~ と似ているが *list of data.frame* で返す点が異なる
+
+- グループ毎の ~lm()~ の回帰係数を ~list~ で返す例
+#+begin_src R :results output
+FANG %>%
+  group_by(symbol) %>%
+  group_map(~ {
+    lm_fit <- lm(adjusted ~ volume, data = .x)
+    coef(lm_fit)
+  })
+#+end_src
+
+#+RESULTS:
+#+begin_example
+[[1]]
+ (Intercept)       volume 
+4.312711e+02 5.557190e-06 
+
+[[2]]
+ (Intercept)       volume 
+ 9.67234e+01 -4.80164e-07 
+
+[[3]]
+  (Intercept)        volume 
+ 6.675434e+02 -3.036972e-05 
+
+[[4]]
+  (Intercept)        volume 
+ 8.429586e+01 -6.451335e-07
+#+end_example
+\\
+
+**** group_modify(.tbl, .f, ..., keep = FALSE)
+
+- ~.f~ は ~data.frame~ を返す必要がある
+- グループ毎の ~lm()~ の結果を ~{broom}~ で ~data.frame~ にして返す例
+
+#+begin_src R
+FANG %>%
+  group_by(symbol) %>%
+  group_modify(~ {
+    lm_fit <- lm(adjusted ~ volume, data = .x)
+    broom::glance(lm_fit)[, c("r.squared", "p.value", "logLik", "AIC")]
+  })
+#+end_src
+
+#+RESULTS:
+| symbol |           r.squared |              p.value |            logLik |              AIC |
+|--------+---------------------+----------------------+-------------------+------------------|
+| AMZN   | 0.00503224044132785 |   0.0243055858574906 | -6636.55373969206 | 13279.1074793841 |
+| FB     |   0.199686711490091 | 1.22586513487227e-50 |  -4784.6044866744 | 9575.20897334879 |
+| GOOG   |   0.199159670604448 | 1.70931646465457e-50 | -6142.15846499808 | 12290.3169299962 |
+| NFLX   |   0.105343657901732 | 3.70454569826428e-26 | -4813.48163450679 | 9632.96326901357 |
+
+**** group_walk(.tbl, .f, ...)
+
+- 副作用目的の関数を適応
+- 返り値は ~invisible~ で入力の ~data.frame~ を返す
+
+#+begin_src R :results output
+df <- FANG %>%
+  group_by(symbol) %>%
+  group_walk(~ print(mean(.x$volume)))
+#+end_src
+
+#+RESULTS:
+: 
+: [1] 3741086
+: [1] 40007884
+: [1] 2644115
+: [1] 19565910
+\\
+
+*** グループ情報の抽出
+**** group_data(.data)
+
+- ~grouped_df~ から グループのキーと元の ~data.frame~ に対する行インデックスを取得できる
+
+#+begin_src R :results output
+FANG %>% group_by(symbol) %>% group_data()
+#+end_src
+
+#+RESULTS:
+: # A tibble: 4 x 2
+:   symbol .rows        
+:   <chr>  <list>
+: 1 AMZN   <int [1,008]>
+: 2 FB     <int [1,008]>
+: 3 GOOG   <int [1,008]>
+: 4 NFLX   <int [1,008]>
+\\
+
+**** group_keys(.tbl, ...)
+
+- ~group_data()~ のグループキーのみを返すバージョン
+
+#+begin_src R
+FANG %>% group_keys(symbol)
+#+end_src
+
+#+RESULTS:
+| symbol |
+|--------|
+| AMZN   |
+| FB     |
+| GOOG   |
+| NFLX   |
+\\
+
+**** group_rows(.data)
+
+- ~group_data()~ の行インデックスのみを返すバージョン
+
+#+begin_src R :results output
+FANG_l <- FANG %>% group_by(symbol) %>% group_rows()
+class(FANG_l)
+#+end_src
+
+#+RESULTS:
+: 
+: [1] "list"
+\\
+
+**** group_indices(.data, ...)
+
+- グループ毎のユニーク ID を生成する
+
+#+begin_src R :results output
+gid <- FANG %>% group_indices(symbol)
+class(gid)
+length(gid)
+head(gid)
+#+end_src
+
+#+RESULTS:
+: 
+: [1] "integer"
+: 
+: [1] 4032
+: 
+: [1] 2 2 2 2 2 2
+
+** grouped_df
+*** grouped_df
+*** is_grouped_df()
+*** is.grouped_df()
+*** new_grouped_df()
+*** validate_grouped_df()
 * 2 つの ~data.frame~ を操作する関数群
 ** 集合演算
+*** データセット
+
+- x, y は同じ列で構成された ~data.frame~ である必要あり
+- ~{base}~, ~{dplyr}~, ~{data.table}~ に同名の関数あり
+- FANG ではなく、より単純なデータを用意する
+
+#+begin_src R
+x <- data.frame(fruit = c("apple", "banana", "peach"),
+                vegetable = c("carrot", "potato", "tomato"))
+#+end_src
+
+#+RESULTS:
+| fruit  | vegetable |
+|--------+-----------|
+| apple  | carrot    |
+| banana | potato    |
+| peach  | tomato    |
+\\
+
+#+begin_src R
+y <- data.frame(fruit = c("apple", "banana", "grape"),
+                vegetable = c("carrot", "potato", "radish"))
+#+end_src
+
+#+RESULTS:
+| fruit  | vegetable |
+|--------+-----------|
+| apple  | carrot    |
+| banana | potato    |
+| grape  | radish    |
+\\
+
+*** intersect(x, y, ...)
+
+- *積集合* = x, y の両方にある列を抜き出す
+
+#+begin_src R
+dplyr::intersect(x, y)
+#+end_src
+
+#+RESULTS:
+| fruit  | vegetable |
+|--------+-----------|
+| apple  | carrot    |
+| banana | potato    |
+\\
+
+*** union(x, y, ...)
+
+- *和集合* = x, y を連結し、重複を削除
+
+#+begin_src R
+dplyr::union(x, y)
+#+end_src
+
+#+RESULTS:
+| fruit  | vegetable |
+|--------+-----------|
+| apple  | carrot    |
+| banana | potato    |
+| peach  | tomato    |
+| grape  | radish    |
+\\
+
+*** union_all(x, y, ...)
+
+- *和集合* = x, y を連結し、重複を削除 _しない_
+
+#+begin_src R
+dplyr::union_all(x, y)
+#+end_src
+
+#+RESULTS:
+| fruit  | vegetable |
+|--------+-----------|
+| apple  | carrot    |
+| banana | potato    |
+| peach  | tomato    |
+| apple  | carrot    |
+| banana | potato    |
+| grape  | radish    |
+\\
+
+- ~bind_rows()~ と同じ？
+- [[https://stackoverflow.com/questions/39709487/is-there-a-way-to-use-dplyrbind-rows-without-collecting-data-frames-from-the-d][ここ]] によると DB を利用する場合に違いがでる模様 (要調査)
+
+#+begin_src R
+bind_rows(x, y)
+#+end_src
+
+#+RESULTS:
+| fruit  | vegetable |
+|--------+-----------|
+| apple  | carrot    |
+| banana | potato    |
+| peach  | tomato    |
+| apple  | carrot    |
+| banana | potato    |
+| grape  | radish    |
+\\
+
+*** setdiff(x, y, ...)
+
+- *差集合* = y にはない x の行を返す
+
+#+begin_src R
+dplyr::setdiff(x, y)
+#+end_src
+
+#+RESULTS:
+| fruit | vegetable |
+|-------+-----------|
+| peach | tomato    |
+\\
+
+*** setequal(x, y, ...)
+
+- 同じ集合かどうかを判断する
+
+#+begin_src R :results output
+dplyr::setequal(x, y)
+#+end_src
+
+#+RESULTS:
+: [1] FALSE
+
 ** 結合演算
+*** Mutating join
+**** inner_join(x, y, by = NULL, copy = FALSE, suffix = c(".x", ".y"), ...)
+
+- x, y の両方に by が存在する場合に結合する
+
+**** left_join(x, y, by = NULL, copy = FALSE, suffix = c(".x", ".y"), ...)
+
+- x は全て利用し、by が一致する y があれば結合する
+
+**** right_join(x, y, by = NULL, copy = FALSE, suffix = c(".x", ".y"), ...)
+
+- left_join の x, y が逆のバージョン
+
+**** full_join(x, y, by = NULL, copy = FALSE, suffix = c(".x", ".y"), ...)
+
+- x, y の全てを利用し、マッチしない部分を NA とする
+
+*** Filtering join
+**** semi_join(x, y, by = NULL, copy = FALSE, ...)
+
+- x をフィルタリングする条件として、y の列を利用する
+
+**** nest_join(x, y, by = NULL, copy = FALSE, keep = FALSE, name = NULL, ...)
+**** anti_join(x, y, by = NULL, copy = FALSE, ...)
+
+- semi_join の否定形。y とマッチしなかった行を抜き出す
+
+*** Bind tables
+**** bind_rows(..., .id = NULL)
+**** bind_cols(...)
 * ヘルパー関数群
 ** ベクトル関数
+*** ランキング
+**** cume_dist()
+**** dense_rank()
+**** min_rank()
+**** ntile()
+**** percent_rank()
+**** row_number()
+*** 累積関数
+**** cumall()
+**** cumany()
+**** cummean()
+*** 条件
+**** between()
+**** case_when()
+**** coalesce()
+**** if_else()
+**** recode()
+**** recode_factor()
+*** その他
+**** lag()
+**** lead()
+**** na_if()
+**** near()
+**** desc()
+**** id()
+**** group_cols()
+**** group_trim()
+**** groups()
+**** group_vars()
+**** last_col()
+**** vars()
+**** all_equal()
+**** all_vars()
+**** ny_vars()
+**** changes()
+**** combine()
+**** common_by()
+**** dim_desc()
+**** dr_dplyr()
+**** hybrid_call()
+**** location()
+**** order_by()
+**** tbl_nongroup_vars()
+**** tbl_vars()
+**** with_order()
+**** progress_estimated()
 ** サマリー関数
+*** first()
+*** group_size()
+*** last()
+*** n()
+*** n_distinct()
+*** n_groups()
+*** nth()
 * DB functions
+** External data source
+*** as.tbl()
+*** as.tbl_cube()
+*** is.src()
+*** is.tbl()
+*** src()
+*** src_df()
+*** src_local()
+*** src_tbls()
+*** tbl()
+*** tbl_cube()
+*** make_tbl()
+** SQL
+*** sql()
+*** sql_escape_ident()
+*** sql_escape_string()
+*** sql_join()
+*** sql_select()
+*** sql_semi_join()
+*** sql_set_op()
+*** sql_subquery()
+*** sql_translate_env()
+*** src_mysql
+*** src_sqlite
+** DB
+*** db_analyze()
+*** db_begin()
+*** db_commit()
+*** db_create_index()
+*** db_create_indexes()
+*** db_create_table()
+*** db_data_type()
+*** db_desc()
+*** db_drop_table()
+*** db_explain()
+*** db_has_table()
+*** db_insert_into()
+*** db_list_tables()
+*** db_query_fields()
+*** db_query_rows()
+*** db_rollback()
+*** db_save_query()
+*** db_write_table()
+** Utilty
+*** auto_copy()
+*** bench_tbls()
+*** check_dbplyr()
+*** collapse()
+*** collect()
+*** compare_tbls()
+*** compare_tbls2()
+*** compute()
+*** copy_to()
+*** eval_tbls()
+*** eval_tbls2()
+*** explain()
+*** ident()
+*** show_query()
+*** wrap_dbplyr_obj()
+*** same_src()
+
 * インポートされた関数群
+** {magrittr}
+*** %>%
+** {rlang}
+*** as_label()
+*** enexpr()
+*** enexprs()
+*** enquo()
+*** enquos()
+*** ensym()
+*** ensyms()
+*** expr()
+*** quo()
+*** quo_name()
+*** quos()
+*** sym()
+*** syms()
+** {tibble}
+*** add_row()
+*** as_data_frame()
+*** as_tibble()
+*** data_frame()
+*** data_frame_()
+*** frame_data()
+*** glimpse()
+*** lst()
+*** lst_()
+*** tbl_sum()
+*** tibble()
+*** tribble()
+*** trunc_mat()
+*** type_sum()
+** {tidyselect}
+*** contains()
+*** ends_with()
+*** everything()
+*** last_col()
+*** matches()
+*** num_range()
+*** one_of()
+*** starts_with()
+
 * 非推奨とされている関数群
+
+| dplyr function                | sucesssor                                          |
+|-------------------------------+----------------------------------------------------|
+| ~add_rownames()~                | ~tibble::rownames_to_column()~                       |
+| ~current_vars()~                |                                                    |
+| ~do()~, ~do_()~                   |                                                    |
+| ~failwith()~                    | ~purrr::possibly()~                                  |
+| ~funs()~, ~funs_()~               | ~~~, ~list()~                                          |
+| ~rbind_all()~                   | ~bind_rows()~                                        |
+| ~rbind_list()~                  | ~bind_rows()~                                        |
+| ~rename_vars()~, ~rename_vars_()~ | ~tidyselect::vars_rename()~                          |
+| ~rowwise()~                     |                                                    |
+| ~select_var()~                  | ~tidyselect::vars_select()~, ~tidyselect::vars_pull()~ |
+| ~select_vars()~, ~select_vars_()~ | ~tidyselect::vars_select()~, ~tidyselect::vars_pull()~ |
+| ~tbl_df()~                      | ~tibble::as_tibble()~                                |
+
 * 実行環境
 
 #+begin_src R :results output :exports both
