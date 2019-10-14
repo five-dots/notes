@@ -4,8 +4,8 @@
 * 目次                                                               :TOC:QUOTE:
 #+BEGIN_QUOTE
 - [[#ライブラリの読み込みとバージョンの確認][ライブラリの読み込みとバージョンの確認]]
-- [[#データセット][データセット]]
 - [[#1-つの-dataframe-を操作する関数群][1 つの ~data.frame~ を操作する関数群]]
+  - [[#データセット][データセット]]
   - [[#行の操作][行の操作]]
     - [[#行の抽出削減][行の抽出・削減]]
       - [[#filterdata--preserve--false][filter(.data, ..., .preserve = FALSE)]]
@@ -21,11 +21,6 @@
       - [[#summarisedata-][summarise(.data, ...)]]
       - [[#tallyx-wt-sort--false-name--n][tally(x, wt, sort = FALSE, name = "n")]]
       - [[#countx--wt--null-sort--false-name--n-drop--group_dropsx][count(x, ..., wt = NULL, sort = FALSE, name = "n", .drop = group_drops(x))]]
-    - [[#行のグループ化][行のグループ化]]
-      - [[#group_bydata--add--false-drop--group_by_drop_defaultdata][group_by(.data, ..., add = FALSE, .drop = group_by_drop_default(.data))]]
-      - [[#ungroupx-][ungroup(x, ...)]]
-      - [[#group_splittbl--keep--true][group_split(.tbl, ..., keep = TRUE)]]
-      - [[#group_nesttbl--key--data-keep--false][group_nest(.tbl, ..., .key = "data", keep = FALSE)]]
   - [[#列の操作][列の操作]]
     - [[#列の追加][列の追加]]
       - [[#mutatedata-][mutate(.data, ...)]]
@@ -38,6 +33,11 @@
     - [[#列の名前変更][列の名前変更]]
       - [[#renamedata-][rename(.data, ...)]]
   - [[#グループの操作][グループの操作]]
+    - [[#グループの作成][グループの作成]]
+      - [[#group_bydata--add--false-drop--group_by_drop_defaultdata][group_by(.data, ..., add = FALSE, .drop = group_by_drop_default(.data))]]
+      - [[#ungroupx-][ungroup(x, ...)]]
+      - [[#group_splittbl--keep--true][group_split(.tbl, ..., keep = TRUE)]]
+      - [[#group_nesttbl--key--data-keep--false][group_nest(.tbl, ..., .key = "data", keep = FALSE)]]
     - [[#グループへの関数適応][グループへの関数適応]]
       - [[#group_maptbl-f--keep--false][group_map(.tbl, .f, ..., keep = FALSE)]]
       - [[#group_modifytbl-f--keep--false][group_modify(.tbl, .f, ..., keep = FALSE)]]
@@ -54,184 +54,87 @@
     - [[#new_grouped_df][new_grouped_df()]]
     - [[#validate_grouped_df][validate_grouped_df()]]
 - [[#2-つの-dataframe-を操作する関数群][2 つの ~data.frame~ を操作する関数群]]
+  - [[#データセット-1][データセット]]
   - [[#集合演算][集合演算]]
-    - [[#データセット-1][データセット]]
-    - [[#intersectx-y-][intersect(x, y, ...)]]
-    - [[#unionx-y-][union(x, y, ...)]]
-    - [[#union_allx-y-][union_all(x, y, ...)]]
-    - [[#setdiffx-y-][setdiff(x, y, ...)]]
-    - [[#setequalx-y-][setequal(x, y, ...)]]
+    - [[#積集合][積集合]]
+      - [[#intersectx-y-][intersect(x, y, ...)]]
+    - [[#和集合][和集合]]
+      - [[#unionx-y-][union(x, y, ...)]]
+      - [[#union_allx-y-][union_all(x, y, ...)]]
+    - [[#差集合][差集合]]
+      - [[#setdiffx-y-][setdiff(x, y, ...)]]
+    - [[#同値][同値]]
+      - [[#setequalx-y-][setequal(x, y, ...)]]
   - [[#結合演算][結合演算]]
     - [[#mutating-join][Mutating join]]
       - [[#inner_joinx-y-by--null-copy--false-suffix--cx-y-][inner_join(x, y, by = NULL, copy = FALSE, suffix = c(".x", ".y"), ...)]]
       - [[#left_joinx-y-by--null-copy--false-suffix--cx-y-][left_join(x, y, by = NULL, copy = FALSE, suffix = c(".x", ".y"), ...)]]
       - [[#right_joinx-y-by--null-copy--false-suffix--cx-y-][right_join(x, y, by = NULL, copy = FALSE, suffix = c(".x", ".y"), ...)]]
       - [[#full_joinx-y-by--null-copy--false-suffix--cx-y-][full_join(x, y, by = NULL, copy = FALSE, suffix = c(".x", ".y"), ...)]]
+      - [[#nest_joinx-y-by--null-copy--false-keep--false-name--null-][nest_join(x, y, by = NULL, copy = FALSE, keep = FALSE, name = NULL, ...)]]
     - [[#filtering-join][Filtering join]]
       - [[#semi_joinx-y-by--null-copy--false-][semi_join(x, y, by = NULL, copy = FALSE, ...)]]
-      - [[#nest_joinx-y-by--null-copy--false-keep--false-name--null-][nest_join(x, y, by = NULL, copy = FALSE, keep = FALSE, name = NULL, ...)]]
       - [[#anti_joinx-y-by--null-copy--false-][anti_join(x, y, by = NULL, copy = FALSE, ...)]]
     - [[#bind-tables][Bind tables]]
       - [[#bind_rows-id--null][bind_rows(..., .id = NULL)]]
       - [[#bind_cols][bind_cols(...)]]
 - [[#ヘルパー関数群][ヘルパー関数群]]
   - [[#ベクトル関数][ベクトル関数]]
+    - [[#データセット-2][データセット]]
     - [[#ランキング][ランキング]]
-      - [[#cume_dist][cume_dist()]]
-      - [[#dense_rank][dense_rank()]]
-      - [[#min_rank][min_rank()]]
-      - [[#ntile][ntile()]]
-      - [[#percent_rank][percent_rank()]]
-      - [[#row_number][row_number()]]
+      - [[#row_numberx][row_number(x)]]
+      - [[#ntilex--row_number-n][ntile(x = row_number(), n)]]
+      - [[#min_rankx][min_rank(x)]]
+      - [[#dense_rankx][dense_rank(x)]]
+      - [[#percent_rankx][percent_rank(x)]]
+      - [[#cume_distx][cume_dist(x)]]
     - [[#累積関数][累積関数]]
-      - [[#cumall][cumall()]]
-      - [[#cumany][cumany()]]
-      - [[#cummean][cummean()]]
+      - [[#cumallx][cumall(x)]]
+      - [[#cumanyx][cumany(x)]]
+      - [[#cummeanx][cummean(x)]]
     - [[#条件][条件]]
-      - [[#between][between()]]
-      - [[#case_when][case_when()]]
-      - [[#coalesce][coalesce()]]
-      - [[#if_else][if_else()]]
-      - [[#recode][recode()]]
-      - [[#recode_factor][recode_factor()]]
+      - [[#betweenx-left-right][between(x, left, right)]]
+      - [[#case_when][case_when(...)]]
+      - [[#if_elsecondition-true-false-missing--null][if_else(condition, true, false, missing = NULL)]]
+      - [[#recodex--default--null-missing--null][recode(.x, ..., .default = NULL, .missing = NULL)]]
+      - [[#recode_factorx--default--null-missing--null-ordered--false][recode_factor(.x, ..., .default = NULL, .missing = NULL, .ordered = FALSE)]]
+    - [[#オフセット][オフセット]]
+      - [[#leadx-n--1l-default--na-order_by--null-][lead(x, n = 1L, default = NA, order_by = NULL, ...)]]
+      - [[#lagx-n--1l-default--na-order_by--null-][lag(x, n = 1L, default = NA, order_by = NULL, ...)]]
+    - [[#na][NA]]
+      - [[#coalesce][coalesce(...)]]
+      - [[#na_ifx-y][na_if(x, y)]]
     - [[#その他][その他]]
-      - [[#lag][lag()]]
-      - [[#lead][lead()]]
-      - [[#na_if][na_if()]]
-      - [[#near][near()]]
-      - [[#desc][desc()]]
-      - [[#id][id()]]
-      - [[#group_cols][group_cols()]]
-      - [[#group_trim][group_trim()]]
-      - [[#groups][groups()]]
-      - [[#group_vars][group_vars()]]
-      - [[#last_col][last_col()]]
-      - [[#vars][vars()]]
-      - [[#all_equal][all_equal()]]
-      - [[#all_vars][all_vars()]]
-      - [[#ny_vars][ny_vars()]]
-      - [[#changes][changes()]]
-      - [[#combine][combine()]]
-      - [[#common_by][common_by()]]
-      - [[#dim_desc][dim_desc()]]
+      - [[#nearx-y-tol--machinedoubleeps05][near(x, y, tol = .Machine$double.eps^0.5)]]
+      - [[#descx][desc(x)]]
+      - [[#idvariables-drop--false][id(.variables, drop = FALSE)]]
+      - [[#group_colsvars--peek_vars][group_cols(vars = peek_vars())]]
+      - [[#group_trimtbl-drop--group_by_drop_defaulttbl][group_trim(.tbl, .drop = group_by_drop_default(.tbl))]]
+      - [[#groupsx][groups(x)]]
+      - [[#group_varsx][group_vars(x)]]
+      - [[#vars][vars(...)]]
+      - [[#all_equaltarget-current-ignore_col_order--true-ignore_row_order--true-convert--false-][all_equal(target, current, ignore_col_order = TRUE, ignore_row_order = TRUE, convert = FALSE, ...)]]
+      - [[#all_varsexpr][all_vars(expr)]]
+      - [[#any_varsexpr][any_vars(expr)]]
+      - [[#changesx-y][changes(x, y)]]
+      - [[#locationdf][location(df)]]
+      - [[#combine][combine(...)]]
+      - [[#common_byby--null-x-y][common_by(by = NULL, x, y)]]
+      - [[#dim_descx][dim_desc(x)]]
       - [[#dr_dplyr][dr_dplyr()]]
-      - [[#hybrid_call][hybrid_call()]]
-      - [[#location][location()]]
-      - [[#order_by][order_by()]]
-      - [[#tbl_nongroup_vars][tbl_nongroup_vars()]]
-      - [[#tbl_vars][tbl_vars()]]
-      - [[#with_order][with_order()]]
-      - [[#progress_estimated][progress_estimated()]]
+      - [[#hybrid_calldata-expr][hybrid_call(.data, expr)]]
+      - [[#order_byorder_by-call][order_by(order_by, call)]]
+      - [[#tbl_varsx][tbl_vars(x)]]
+      - [[#tbl_nongroup_varsx][tbl_nongroup_vars(x)]]
+      - [[#with_orderorder_by-fun-x-][with_order(order_by, fun, x, ...)]]
+      - [[#progress_estimatedn-min_time--0][progress_estimated(n, min_time = 0)]]
   - [[#サマリー関数][サマリー関数]]
-    - [[#first][first()]]
-    - [[#group_size][group_size()]]
-    - [[#last][last()]]
-    - [[#n][n()]]
-    - [[#n_distinct][n_distinct()]]
-    - [[#n_groups][n_groups()]]
-    - [[#nth][nth()]]
-- [[#db-functions][DB functions]]
-  - [[#external-data-source][External data source]]
-    - [[#astbl][as.tbl()]]
-    - [[#astbl_cube][as.tbl_cube()]]
-    - [[#issrc][is.src()]]
-    - [[#istbl][is.tbl()]]
-    - [[#src][src()]]
-    - [[#src_df][src_df()]]
-    - [[#src_local][src_local()]]
-    - [[#src_tbls][src_tbls()]]
-    - [[#tbl][tbl()]]
-    - [[#tbl_cube][tbl_cube()]]
-    - [[#make_tbl][make_tbl()]]
-  - [[#sql][SQL]]
-    - [[#sql-1][sql()]]
-    - [[#sql_escape_ident][sql_escape_ident()]]
-    - [[#sql_escape_string][sql_escape_string()]]
-    - [[#sql_join][sql_join()]]
-    - [[#sql_select][sql_select()]]
-    - [[#sql_semi_join][sql_semi_join()]]
-    - [[#sql_set_op][sql_set_op()]]
-    - [[#sql_subquery][sql_subquery()]]
-    - [[#sql_translate_env][sql_translate_env()]]
-    - [[#src_mysql][src_mysql]]
-    - [[#src_sqlite][src_sqlite]]
-  - [[#db][DB]]
-    - [[#db_analyze][db_analyze()]]
-    - [[#db_begin][db_begin()]]
-    - [[#db_commit][db_commit()]]
-    - [[#db_create_index][db_create_index()]]
-    - [[#db_create_indexes][db_create_indexes()]]
-    - [[#db_create_table][db_create_table()]]
-    - [[#db_data_type][db_data_type()]]
-    - [[#db_desc][db_desc()]]
-    - [[#db_drop_table][db_drop_table()]]
-    - [[#db_explain][db_explain()]]
-    - [[#db_has_table][db_has_table()]]
-    - [[#db_insert_into][db_insert_into()]]
-    - [[#db_list_tables][db_list_tables()]]
-    - [[#db_query_fields][db_query_fields()]]
-    - [[#db_query_rows][db_query_rows()]]
-    - [[#db_rollback][db_rollback()]]
-    - [[#db_save_query][db_save_query()]]
-    - [[#db_write_table][db_write_table()]]
-  - [[#utilty][Utilty]]
-    - [[#auto_copy][auto_copy()]]
-    - [[#bench_tbls][bench_tbls()]]
-    - [[#check_dbplyr][check_dbplyr()]]
-    - [[#collapse][collapse()]]
-    - [[#collect][collect()]]
-    - [[#compare_tbls][compare_tbls()]]
-    - [[#compare_tbls2][compare_tbls2()]]
-    - [[#compute][compute()]]
-    - [[#copy_to][copy_to()]]
-    - [[#eval_tbls][eval_tbls()]]
-    - [[#eval_tbls2][eval_tbls2()]]
-    - [[#explain][explain()]]
-    - [[#ident][ident()]]
-    - [[#show_query][show_query()]]
-    - [[#wrap_dbplyr_obj][wrap_dbplyr_obj()]]
-    - [[#same_src][same_src()]]
-- [[#インポートされた関数群][インポートされた関数群]]
-  - [[#magrittr][{magrittr}]]
-    - [[#][%>%]]
-  - [[#rlang][{rlang}]]
-    - [[#as_label][as_label()]]
-    - [[#enexpr][enexpr()]]
-    - [[#enexprs][enexprs()]]
-    - [[#enquo][enquo()]]
-    - [[#enquos][enquos()]]
-    - [[#ensym][ensym()]]
-    - [[#ensyms][ensyms()]]
-    - [[#expr][expr()]]
-    - [[#quo][quo()]]
-    - [[#quo_name][quo_name()]]
-    - [[#quos][quos()]]
-    - [[#sym][sym()]]
-    - [[#syms][syms()]]
-  - [[#tibble][{tibble}]]
-    - [[#add_row][add_row()]]
-    - [[#as_data_frame][as_data_frame()]]
-    - [[#as_tibble][as_tibble()]]
-    - [[#data_frame][data_frame()]]
-    - [[#data_frame_][data_frame_()]]
-    - [[#frame_data][frame_data()]]
-    - [[#glimpse][glimpse()]]
-    - [[#lst][lst()]]
-    - [[#lst_][lst_()]]
-    - [[#tbl_sum][tbl_sum()]]
-    - [[#tibble-1][tibble()]]
-    - [[#tribble][tribble()]]
-    - [[#trunc_mat][trunc_mat()]]
-    - [[#type_sum][type_sum()]]
-  - [[#tidyselect][{tidyselect}]]
-    - [[#contains][contains()]]
-    - [[#ends_with][ends_with()]]
-    - [[#everything][everything()]]
-    - [[#last_col-1][last_col()]]
-    - [[#matches][matches()]]
-    - [[#num_range][num_range()]]
-    - [[#one_of][one_of()]]
-    - [[#starts_with][starts_with()]]
+    - [[#nthx-n-order_by--null-default--default_missingx][nth(x, n, order_by = NULL, default = default_missing(x))]]
+    - [[#firstx-order_by--null-default--default_missingx][first(x, order_by = NULL, default = default_missing(x))]]
+    - [[#lastx-order_by--null-default--default_missingx][last(x, order_by = NULL, default = default_missing(x))]]
+    - [[#n_distinct-narm--false][n_distinct(..., na.rm = FALSE)]]
+    - [[#group_sizex][group_size(x)]]
+    - [[#n_groupsx][n_groups(x)]]
 - [[#非推奨とされている関数群][非推奨とされている関数群]]
 - [[#実行環境][実行環境]]
 - [[#参考リンク][参考リンク]]
@@ -252,7 +155,8 @@ packageVersion("dplyr")
 : [1] ‘0.8.3’
 \\
 
-* データセット
+* 1 つの ~data.frame~ を操作する関数群
+** データセット
 
 - ~{tidyquant}~ に収録されている ~FANG~ データセットを利用する
 - Facebook, Amazon, Netflix, Goolge の株価データ
@@ -273,7 +177,6 @@ head(FANG, n = 3)
 | FB     | 2013-01-04 | 28.01 | 28.93 | 27.83 | 28.76 | 72715400 |    28.76 |
 \\
 
-* 1 つの ~data.frame~ を操作する関数群
 ** 行の操作
 *** 行の抽出・削減
 **** filter(.data, ..., .preserve = FALSE)
@@ -691,86 +594,6 @@ FANG %>% count(symbol)
 | GOOG   | 1008 |
 | NFLX   | 1008 |
 
-*** 行のグループ化
-**** group_by(.data, ..., add = FALSE, .drop = group_by_drop_default(.data))
-
-- 指定した列でグループ化された ~grouped_df~ を作成する
-- ~ungroup()~ でグループ化を解除
-- ~.drop = TRUE~ の場合は、空のグループを削除する
-
-#+begin_src R :results output
-FANG %>% group_by(symbol) %>% class()
-#+end_src
-
-#+RESULTS:
-: [1] "grouped_df" "tbl_df"     "tbl"        "data.frame"
-
-**** ungroup(x, ...)
-
-- グループ化を解除する
-
-#+begin_src R :results output
-FANG %>% group_by(symbol) %>% ungroup() %>% class()
-#+end_src
-
-#+RESULTS:
-: [1] "tbl_df"     "tbl"        "data.frame"
-
-**** group_split(.tbl, ..., keep = TRUE)
-
-- 指定した列で ~data.frame~ を *list of data.frame* に分割する
-- list に分割し ~purrr::map()~ で関数を適応するフローが強力
-
-#+begin_src R :results output
-FANG_l <- FANG %>% group_split(symbol)
-class(FANG_l)
-length(FANG_l)
-#+end_src
-
-#+RESULTS:
-: 
-: [1] "list"
-: 
-: [1] 4
-
-**** group_nest(.tbl, ..., .key = "data", keep = FALSE)
-
-- グループ毎のネストされた ~data.frame~ を作成する
-
-#+begin_src R :results output
-FANG %>% group_nest(symbol)
-#+end_src
-
-#+RESULTS:
-: # A tibble: 4 x 2
-:   symbol data                
-:   <chr>  <list>
-: 1 AMZN   <tibble [1,008 × 7]>
-: 2 FB     <tibble [1,008 × 7]>
-: 3 GOOG   <tibble [1,008 × 7]>
-: 4 NFLX   <tibble [1,008 × 7]>
-
-- ~tidyr::nest()~ と同じ機能
-
-#+begin_src R :results output
-FANG %>% tidyr::nest(-symbol)
-#+end_src
-
-#+RESULTS:
-#+begin_example
-# A tibble: 4 x 2
-  symbol           data
-  <
- <list<df[,7]>>
-1 FB        [1,008 × 7]
-2 AMZN      [1,008 × 7]
-3 NFLX      [1,008 × 7]
-4 GOOG      [1,008 × 7]
-Warning message:
-All elements of `...` must be named.
-Did you want `data = c(date, open, high, low, close, volume, adjusted)`?
-#+end_example
-
 ** 列の操作
 *** 列の追加
 **** mutate(.data, ...)
@@ -958,6 +781,87 @@ FANG %>%
 \\
 
 ** グループの操作
+*** グループの作成
+**** group_by(.data, ..., add = FALSE, .drop = group_by_drop_default(.data))
+
+- 指定した列でグループ化された ~grouped_df~ を作成する
+- ~ungroup()~ でグループ化を解除
+- ~.drop = TRUE~ の場合は、空のグループを削除する
+
+#+begin_src R :results output
+FANG %>% group_by(symbol) %>% class()
+#+end_src
+
+#+RESULTS:
+: [1] "grouped_df" "tbl_df"     "tbl"        "data.frame"
+
+**** ungroup(x, ...)
+
+- グループ化を解除する
+
+#+begin_src R :results output
+FANG %>% group_by(symbol) %>% ungroup() %>% class()
+#+end_src
+
+#+RESULTS:
+: [1] "tbl_df"     "tbl"        "data.frame"
+
+**** group_split(.tbl, ..., keep = TRUE)
+
+- 指定した列で ~data.frame~ を *list of data.frame* に分割する
+- list に分割し ~purrr::map()~ で関数を適応するフローが強力
+
+#+begin_src R :results output
+FANG_l <- FANG %>% group_split(symbol)
+class(FANG_l)
+length(FANG_l)
+#+end_src
+
+#+RESULTS:
+: 
+: [1] "list"
+: 
+: [1] 4
+
+**** group_nest(.tbl, ..., .key = "data", keep = FALSE)
+
+- グループ毎のネストされた ~data.frame~ を作成する
+- ネストされたデータに対して ~purrr::map()~ を ~mutate()~ で使うことが多い
+
+#+begin_src R :results output
+FANG %>% group_nest(symbol)
+#+end_src
+
+#+RESULTS:
+: # A tibble: 4 x 2
+:   symbol data                
+:   <chr>  <list>
+: 1 AMZN   <tibble [1,008 × 7]>
+: 2 FB     <tibble [1,008 × 7]>
+: 3 GOOG   <tibble [1,008 × 7]>
+: 4 NFLX   <tibble [1,008 × 7]>
+
+- ~tidyr::nest()~ と同じ機能
+
+#+begin_src R :results output
+FANG %>% tidyr::nest(-symbol)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+# A tibble: 4 x 2
+  symbol           data
+  <
+ <list<df[,7]>>
+1 FB        [1,008 × 7]
+2 AMZN      [1,008 × 7]
+3 NFLX      [1,008 × 7]
+4 GOOG      [1,008 × 7]
+Warning message:
+All elements of `...` must be named.
+Did you want `data = c(date, open, high, low, close, volume, adjusted)`?
+#+end_example
+
 *** グループへの関数適応
 **** group_map(.tbl, .f, ..., keep = FALSE)
 
@@ -1114,8 +1018,7 @@ head(gid)
 *** new_grouped_df()
 *** validate_grouped_df()
 * 2 つの ~data.frame~ を操作する関数群
-** 集合演算
-*** データセット
+** データセット
 
 - x, y は同じ列で構成された ~data.frame~ である必要あり
 - ~{base}~, ~{dplyr}~, ~{data.table}~ に同名の関数あり
@@ -1123,7 +1026,8 @@ head(gid)
 
 #+begin_src R
 x <- data.frame(fruit = c("apple", "banana", "peach"),
-                vegetable = c("carrot", "potato", "tomato"))
+                vegetable = c("carrot", "potato", "tomato"),
+                stringsAsFactors = FALSE)
 #+end_src
 
 #+RESULTS:
@@ -1136,7 +1040,8 @@ x <- data.frame(fruit = c("apple", "banana", "peach"),
 
 #+begin_src R
 y <- data.frame(fruit = c("apple", "banana", "grape"),
-                vegetable = c("carrot", "potato", "radish"))
+                vegetable = c("carrot", "potato", "radish"),
+                stringsAsFactors = FALSE)
 #+end_src
 
 #+RESULTS:
@@ -1147,7 +1052,9 @@ y <- data.frame(fruit = c("apple", "banana", "grape"),
 | grape  | radish    |
 \\
 
-*** intersect(x, y, ...)
+** 集合演算
+*** 積集合
+**** intersect(x, y, ...)
 
 - *積集合* = x, y の両方にある列を抜き出す
 
@@ -1162,7 +1069,8 @@ dplyr::intersect(x, y)
 | banana | potato    |
 \\
 
-*** union(x, y, ...)
+*** 和集合
+**** union(x, y, ...)
 
 - *和集合* = x, y を連結し、重複を削除
 
@@ -1179,7 +1087,7 @@ dplyr::union(x, y)
 | grape  | radish    |
 \\
 
-*** union_all(x, y, ...)
+**** union_all(x, y, ...)
 
 - *和集合* = x, y を連結し、重複を削除 _しない_
 
@@ -1216,7 +1124,8 @@ bind_rows(x, y)
 | grape  | radish    |
 \\
 
-*** setdiff(x, y, ...)
+*** 差集合
+**** setdiff(x, y, ...)
 
 - *差集合* = y にはない x の行を返す
 
@@ -1230,7 +1139,8 @@ dplyr::setdiff(x, y)
 | peach | tomato    |
 \\
 
-*** setequal(x, y, ...)
+*** 同値
+**** setequal(x, y, ...)
 
 - 同じ集合かどうかを判断する
 
@@ -1240,95 +1150,678 @@ dplyr::setequal(x, y)
 
 #+RESULTS:
 : [1] FALSE
+\\
 
 ** 結合演算
 *** Mutating join
 **** inner_join(x, y, by = NULL, copy = FALSE, suffix = c(".x", ".y"), ...)
 
 - x, y の両方に by が存在する場合に結合する
+- ~by~ の指定方法
+  - ~by = "hoge"~
+  - ~by = c("hoge" = "fuga")~ 列名が異なる場合
+  - ~by = c("hoge" = "fuga", "foo" = "bar")~ 複数の列にマッチさせる場合
+
+#+begin_src R
+inner_join(x, y, by = "fruit")
+#+end_src
+
+#+RESULTS:
+| fruit  | vegetable.x | vegetable.y |
+|--------+-------------+-------------|
+| apple  | carrot      | carrot      |
+| banana | potato      | potato      |
+\\
 
 **** left_join(x, y, by = NULL, copy = FALSE, suffix = c(".x", ".y"), ...)
 
 - x は全て利用し、by が一致する y があれば結合する
+- y の欠損値は ~NA~ になる
+
+#+begin_src R
+left_join(x, y, by = "fruit")
+#+end_src
+
+#+RESULTS:
+| fruit  | vegetable.x | vegetable.y |
+|--------+-------------+-------------|
+| apple  | carrot      | carrot      |
+| banana | potato      | potato      |
+| peach  | tomato      | nil         |
+\\
 
 **** right_join(x, y, by = NULL, copy = FALSE, suffix = c(".x", ".y"), ...)
 
 - left_join の x, y が逆のバージョン
 
+#+begin_src R
+right_join(x, y, by = "fruit")
+#+end_src
+
+#+RESULTS:
+| fruit  | vegetable.x | vegetable.y |
+|--------+-------------+-------------|
+| apple  | carrot      | carrot      |
+| banana | potato      | potato      |
+| grape  | nil         | radish      |
+\\
+
 **** full_join(x, y, by = NULL, copy = FALSE, suffix = c(".x", ".y"), ...)
 
-- x, y の全てを利用し、マッチしない部分を NA とする
+- x, y の全てを利用し、マッチしない部分を ~NA~ とする
+
+#+begin_src R
+full_join(x, y, by = "fruit")
+#+end_src
+
+#+RESULTS:
+| fruit  | vegetable.x | vegetable.y |
+|--------+-------------+-------------|
+| apple  | carrot      | carrot      |
+| banana | potato      | potato      |
+| peach  | tomato      | nil         |
+| grape  | nil         | radish      |
+\\
+
+**** TODO nest_join(x, y, by = NULL, copy = FALSE, keep = FALSE, name = NULL, ...)
+
+- ~full_join()~ 以外を一般的に扱うことができる
+
+#+begin_src R
+nest_join(x, y, by = "fruit")
+#+end_src
 
 *** Filtering join
 **** semi_join(x, y, by = NULL, copy = FALSE, ...)
 
-- x をフィルタリングする条件として、y の列を利用する
+- x をフィルタリングする条件として、y の ~by~ 列を利用する
 
-**** nest_join(x, y, by = NULL, copy = FALSE, keep = FALSE, name = NULL, ...)
+#+begin_src R
+semi_join(x, y, by = "fruit")
+#+end_src
+
+#+RESULTS:
+| fruit  | vegetable |
+|--------+-----------|
+| apple  | carrot    |
+| banana | potato    |
+\\
+
 **** anti_join(x, y, by = NULL, copy = FALSE, ...)
 
 - semi_join の否定形。y とマッチしなかった行を抜き出す
 
+#+begin_src R
+anti_join(x, y, by = "fruit")
+#+end_src
+
+#+RESULTS:
+| fruit | vegetable |
+|-------+-----------|
+| peach | tomato    |
+\\
+
 *** Bind tables
 **** bind_rows(..., .id = NULL)
+
+- 行の結合
+- ~rbind~ よりも高速
+
+#+begin_src R
+bind_rows(x, y)
+#+end_src
+
+#+RESULTS:
+| fruit  | vegetable |
+|--------+-----------|
+| apple  | carrot    |
+| banana | potato    |
+| peach  | tomato    |
+| apple  | carrot    |
+| banana | potato    |
+| grape  | radish    |
+\\
+
+- 引数は ~list of data.frames~ でもよい
+
+#+begin_src R
+bind_rows(list(x, y))
+#+end_src
+
+#+RESULTS:
+| fruit  | vegetable |
+|--------+-----------|
+| apple  | carrot    |
+| banana | potato    |
+| peach  | tomato    |
+| apple  | carrot    |
+| banana | potato    |
+| grape  | radish    |
+\\
+
+- ~do.call()~ を使ったイディオムを置き換えるもの
+
+#+begin_src R
+do.call(rbind, list(x, y))
+#+end_src
+
+#+RESULTS:
+| fruit  | vegetable |
+|--------+-----------|
+| apple  | carrot    |
+| banana | potato    |
+| peach  | tomato    |
+| apple  | carrot    |
+| banana | potato    |
+| grape  | radish    |
+\\
+
+- ~.id = "column_name"~ で結合前のテーブル毎に id をつけてくれる
+#+begin_src R
+bind_rows(x, y, .id = "src")
+#+end_src
+
+#+RESULTS:
+| src | fruit  | vegetable |
+|-----+--------+-----------|
+|   1 | apple  | carrot    |
+|   1 | banana | potato    |
+|   1 | peach  | tomato    |
+|   2 | apple  | carrot    |
+|   2 | banana | potato    |
+|   2 | grape  | radish    |
+\\
+
 **** bind_cols(...)
+
+- 列の結合
+- ~bind_rows()~ 同様に ~do.call(cbind, dfs)~ を置き換えるもの
+
+#+begin_src R
+bind_cols(x, y)
+#+end_src
+
+#+RESULTS:
+| fruit  | vegetable | fruit1 | vegetable1 |
+|--------+-----------+--------+------------|
+| apple  | carrot    | apple  | carrot     |
+| banana | potato    | banana | potato     |
+| peach  | tomato    | grape  | radish     |
+
 * ヘルパー関数群
 ** ベクトル関数
+*** データセット
+
+#+begin_src R
+set.seed(1)
+# 重複データを追加しておく
+x_vec <- rnorm(9) %>% round(3) %>% c(0.33)
+x_df <- data.frame(x = x_vec)
+#+end_src
+
+#+RESULTS:
+|      x |
+|--------|
+| -0.626 |
+|  0.184 |
+| -0.836 |
+|  1.595 |
+|   0.33 |
+|  -0.82 |
+|  0.487 |
+|  0.738 |
+|  0.576 |
+|   0.33 |
+
 *** ランキング
-**** cume_dist()
-**** dense_rank()
-**** min_rank()
-**** ntile()
-**** percent_rank()
-**** row_number()
+**** row_number(x)
+
+ • equivalent to ~rank(ties.method = "first")~
+ 
+#+begin_src R
+x_df %>% 
+  mutate(dplyr_rank = row_number(x),
+         base_rank = rank(x, ties.method = "first")) %>%
+  arrange(dplyr_rank)
+#+end_src
+
+#+RESULTS:
+|      x | dplyr_rank | base_rank |
+|--------+------------+-----------|
+| -0.836 |          1 |         1 |
+|  -0.82 |          2 |         2 |
+| -0.626 |          3 |         3 |
+|  0.184 |          4 |         4 |
+|   0.33 |          5 |         5 |
+|   0.33 |          6 |         6 |
+|  0.487 |          7 |         7 |
+|  0.576 |          8 |         8 |
+|  0.738 |          9 |         9 |
+|  1.595 |         10 |        10 |
+\\
+
+- _vector in, vector out_ の関数
+
+#+begin_src R :results output
+row_number(x_vec)
+#+end_src
+
+#+RESULTS:
+:  [1]  3  5  1 10  6  2  7  9  8  4
+\\
+
+**** ntile(x = row_number(), n)
+
+- n 等分に分割する
+
+#+begin_src R
+# 5等分に分けてみる
+x_df %>%
+  mutate(dplyr_rank = ntile(x, n = 5)) %>%
+  arrange(dplyr_rank)
+#+end_src
+
+#+RESULTS:
+|      x | dplyr_rank |
+|--------+------------|
+| -0.836 |          1 |
+|  -0.82 |          1 |
+| -0.626 |          2 |
+|  0.184 |          2 |
+|   0.33 |          3 |
+|   0.33 |          3 |
+|  0.487 |          4 |
+|  0.576 |          4 |
+|  1.595 |          5 |
+|  0.738 |          5 |
+
+**** min_rank(x)
+
+• equivalent to ~rank(ties.method = "min")~
+- タイがある場合、その次の順位はギャップが発生する (~dense_rank()~ は発生しない)
+
+#+begin_src R
+x_df %>% 
+  mutate(dplyr_rank = min_rank(x),
+         base_rank = rank(x, ties.method = "min")) %>%
+  arrange(dplyr_rank)
+#+end_src
+
+#+RESULTS:
+|      x | dplyr_rank | base_rank |
+|--------+------------+-----------|
+| -0.836 |          1 |         1 |
+|  -0.82 |          2 |         2 |
+| -0.626 |          3 |         3 |
+|  0.184 |          4 |         4 |
+|   0.33 |          5 |         5 |
+|   0.33 |          5 |         5 |
+|  0.487 |          7 |         7 |
+|  0.576 |          8 |         8 |
+|  0.738 |          9 |         9 |
+|  1.595 |         10 |        10 |
+\\
+
+**** dense_rank(x)
+
+• ~min_rank()~ と似ているが、タイがある場合、ギャップが発生しない
+
+#+begin_src R
+x_df %>% 
+  mutate(dplyr_rank = dense_rank(x)) %>%
+  arrange(dplyr_rank)
+#+end_src
+
+#+RESULTS:
+|      x | dplyr_rank |
+|--------+------------|
+| -0.836 |          1 |
+|  -0.82 |          2 |
+| -0.626 |          3 |
+|  0.184 |          4 |
+|   0.33 |          5 |
+|   0.33 |          5 |
+|  0.487 |          6 |
+|  0.576 |          7 |
+|  0.738 |          8 |
+|  1.595 |          9 |
+
+**** percent_rank(x)
+ 
+• ~min_rank()~ の結果を 0 - 1 に変換
+ 
+#+begin_src R
+x_df %>% 
+  mutate(dplyr_rank = percent_rank(x)) %>%
+  arrange(dplyr_rank)
+#+end_src
+
+#+RESULTS:
+|      x |        dplyr_rank |
+|--------+-------------------|
+| -0.836 |                 0 |
+|  -0.82 | 0.111111111111111 |
+| -0.626 | 0.222222222222222 |
+|  0.184 | 0.333333333333333 |
+|   0.33 | 0.444444444444444 |
+|   0.33 | 0.444444444444444 |
+|  0.487 | 0.666666666666667 |
+|  0.576 | 0.777777777777778 |
+|  0.738 | 0.888888888888889 |
+|  1.595 |                 1 |
+
+**** cume_dist(x)
+ 
+• cume_dist = 累積割合
+ 
+#+begin_src R
+x_df %>% 
+  mutate(dplyr_rank = cume_dist(x)) %>%
+  arrange(dplyr_rank)
+#+end_src
+
+#+RESULTS:
+|      x | dplyr_rank |
+|--------+------------|
+| -0.836 |        0.1 |
+|  -0.82 |        0.2 |
+| -0.626 |        0.3 |
+|  0.184 |        0.4 |
+|   0.33 |        0.6 |
+|   0.33 |        0.6 |
+|  0.487 |        0.7 |
+|  0.576 |        0.8 |
+|  0.738 |        0.9 |
+|  1.595 |          1 |
+
 *** 累積関数
-**** cumall()
-**** cumany()
-**** cummean()
+
+- base に収録されている累積関数 (~cummax()~, ~cummin()~ ~cumsum()~, ~cumprod()~) を補完する
+
+**** cumall(x)
+
+- ~all()~ をインデックスを 1 つずつずらしながら実行する
+- 入力と同じ長さの logical vector を返す
+- ~filter()~ の中などで利用する
+
+#+begin_src R :results output
+cumall(x_vec < 0)
+#+end_src
+
+#+RESULTS:
+:  [1]  TRUE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE
+\\
+
+**** cumany(x)
+
+- ~any()~ をインデックスを 1 つずつずらしながら実行する
+
+#+begin_src R :results output
+cumany(x_vec > 0)
+#+end_src
+
+#+RESULTS:
+:  [1] FALSE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE
+
+**** cummean(x)
+
+- ~mean()~ をインデックスを 1 つずつずらしながら実行する
+
+#+begin_src R :results output
+cummean(x_vec)
+#+end_src
+
+#+RESULTS:
+:  [1] -0.62600000 -0.22100000 -0.42600000  0.07925000  0.12940000 -0.02883333
+:  [7]  0.04485714  0.13150000  0.18088889  0.19580000
+\\
+
+- 上記と同じ結果
+
+#+begin_src R :results output
+cumsum(x_vec) / seq_along(x_vec)
+#+end_src
+
+#+RESULTS:
+:  [1] -0.62600000 -0.22100000 -0.42600000  0.07925000  0.12940000 -0.02883333
+:  [7]  0.04485714  0.13150000  0.18088889  0.19580000
+\\
+
 *** 条件
-**** between()
-**** case_when()
-**** coalesce()
-**** if_else()
-**** recode()
-**** recode_factor()
+**** between(x, left, right)
+
+- shortcut for ~x >= left & x <= right~
+
+#+begin_src R :results output
+between(x_vec, -0.7, 0.4)
+#+end_src
+
+#+RESULTS:
+:  [1]  TRUE  TRUE FALSE FALSE  TRUE FALSE FALSE FALSE FALSE  TRUE
+
+**** case_when(...)
+
+- Multi-case ~if_else()~
+- ~LHS ~ RHS~ の形式
+  - LHS と RHS は同じ長さである必要あり (1 or ~n()~)
+  - LHS: どの値にマッチさせるか 
+    - LHS は logical vector である必要
+  - RHS: 置換する値
+    - RHS は全て同じ型である必要 (~NA_real_~ などを使う)
+
+- FizzBuzz 問題
+#+begin_src R :results output
+x <- 1:50
+case_when(
+  x %% 15 == 0 ~ "fizz buzz",
+  x %% 3 == 0 ~ "fizz",
+  x %% 5 == 0 ~ "buzz",
+  TRUE ~ as.character(x)
+)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+ [1] "1"         "2"         "fizz"      "4"         "buzz"      "fizz"     
+ [7] "7"         "8"         "fizz"      "buzz"      "11"        "fizz"     
+[13] "13"        "14"        "fizz buzz" "16"        "17"        "fizz"     
+[19] "19"        "buzz"      "fizz"      "22"        "23"        "fizz"     
+[25] "buzz"      "26"        "fizz"      "28"        "29"        "fizz buzz"
+[31] "31"        "32"        "fizz"      "34"        "buzz"      "fizz"     
+[37] "37"        "38"        "fizz"      "buzz"      "41"        "fizz"     
+[43] "43"        "44"        "fizz buzz" "46"        "47"        "fizz"     
+[49] "49"        "buzz"
+#+end_example
+
+**** if_else(condition, true, false, missing = NULL)
+
+- TRUE/FALSE の型が同じかどうかをチェックするため、base ~ifelse()~ よりも厳格なバージョン
+
+#+begin_src R :results output
+x <- c(-5:5, NA)
+if_else(x < 0, NA_integer_, x)
+
+# NA_integer を NA にするとエラーになる
+# Error: `false` must be a logical vector, not an integer vector
+# if_else(x < 0, NA, x)
+#+end_src
+
+#+RESULTS:
+: 
+:  [1] NA NA NA NA NA  0  1  2  3  4  5  0
+\\
+
+**** recode(.x, ..., .default = NULL, .missing = NULL)
+     
+- Vectorized ~switch()~ (~switch()~ ではスカラ値しか扱えない)
+- character or factor = 名前で指定
+- numeric = ポジションで指定
+
+#+begin_src R
+char_vec <- sample(c("a", "b", "c"), 10, replace = TRUE)
+recode(char_vec,
+       a = "Apple",
+       b = "Banana")
+#+end_src
+
+#+RESULTS:
+| x      |
+|--------|
+| Apple  |
+| c      |
+| c      |
+| Banana |
+| c      |
+| c      |
+| Banana |
+| c      |
+| c      |
+| Apple  |
+
+**** TODO recode_factor(.x, ..., .default = NULL, .missing = NULL, .ordered = FALSE)
+*** オフセット
+**** lead(x, n = 1L, default = NA, order_by = NULL, ...)
+
+- 前のインデックスのデータを見たいとき
+- 末尾が ~NA~ になる
+#+begin_src R :results output
+lead(1:10, 1)
+#+end_src
+
+#+RESULTS:
+:  [1]  2  3  4  5  6  7  8  9 10 NA
+
+#+begin_src R :results output
+lead(1:10, 3)
+#+end_src
+
+#+RESULTS:
+:  [1]  4  5  6  7  8  9 10 NA NA NA
+
+**** lag(x, n = 1L, default = NA, order_by = NULL, ...)
+
+- 後ろのインデックスのデータを見たいとき
+- 先頭が ~NA~ になる
+
+#+begin_src R :results output
+lag(1:10, 1)
+#+end_src
+
+#+RESULTS:
+:  [1] NA  1  2  3  4  5  6  7  8  9
+
+*** NA
+**** coalesce(...)
+
+- 複数のベクトルの中から、最初の非 NA 値を抜き出す
+- 全てのベクトルは、第 1 引数と同じ長さか、長さ 1 である必要あり
+
+- Example のコード (1)
+#+begin_src R :results output
+# 全ての NA を 0 で置き換える
+x <- sample(c(1:5, NA, NA, NA))
+coalesce(x, 0L)
+#+end_src
+
+#+RESULTS:
+: 
+: [1] 1 4 3 2 5 0 0 0
+\\
+
+- ただ、上記のケースであれば ~tidyr::replace_na()~ の方がわかりやすい
+#+begin_src R :results output
+tidyr::replace_na(x, 0L)
+#+end_src
+
+#+RESULTS:
+: [1] 1 4 3 2 5 0 0 0
+\\
+
+- Example のコード (2)
+- NA を 2 つ目のベクトルの値で置き換える
+#+begin_src R :results output
+y <- c(1, 2, NA, NA, 5)
+z <- c(NA, NA, 3, 4, 5)
+coalesce(y, z)
+#+end_src
+
+#+RESULTS:
+: 
+: [1] 1 2 3 4 5
+\\
+
+- Example のコード (3) (結果は 2 と同じ)
+- ~list~ で複数のベクトルを与えて ~!!!~ で評価する
+#+begin_src R :results output
+# Supply lists by splicing them into dots:
+vecs <- list(
+  c(1, 2, NA, NA, 5),
+  c(NA, NA, 3, 4, 5))
+coalesce(!!!vecs)
+#+end_src
+
+#+RESULTS:
+: 
+: [1] 1 2 3 4 5
+\\          
+
+**** na_if(x, y)
+
+- 特定の値を ~NA~ に置き換える
+- 不正な値を ~NA~ にして、除外する際に使う
+
+- ~x~: 対象となるベクトル
+- ~y~: ~NA~ に置換するベクトル
+
+#+begin_src R :results output
+na_if(1:5, 5:1)
+#+end_src
+
+#+RESULTS:
+: [1]  1  2 NA  4  5
+\\
+
+- 上記と同じ
+#+begin_src R :results output
+na_if(1:5, 3)
+#+end_src
+
+#+RESULTS:
+: [1]  1  2 NA  4  5
+
 *** その他
-**** lag()
-**** lead()
-**** na_if()
-**** near()
-**** desc()
-**** id()
-**** group_cols()
-**** group_trim()
-**** groups()
-**** group_vars()
-**** last_col()
-**** vars()
-**** all_equal()
-**** all_vars()
-**** ny_vars()
-**** changes()
-**** combine()
-**** common_by()
-**** dim_desc()
+**** near(x, y, tol = .Machine$double.eps^0.5)
+**** desc(x)
+**** id(.variables, drop = FALSE)
+**** group_cols(vars = peek_vars())
+**** group_trim(.tbl, .drop = group_by_drop_default(.tbl))
+**** groups(x)
+**** group_vars(x)
+**** vars(...)
+**** all_equal(target, current, ignore_col_order = TRUE, ignore_row_order = TRUE, convert = FALSE, ...)
+**** all_vars(expr)
+**** any_vars(expr)
+**** changes(x, y)
+**** location(df)
+**** combine(...)
+**** common_by(by = NULL, x, y)
+**** dim_desc(x)
 **** dr_dplyr()
-**** hybrid_call()
-**** location()
-**** order_by()
-**** tbl_nongroup_vars()
-**** tbl_vars()
-**** with_order()
-**** progress_estimated()
+**** hybrid_call(.data, expr)
+**** order_by(order_by, call)
+**** tbl_vars(x)
+**** tbl_nongroup_vars(x)
+**** with_order(order_by, fun, x, ...)
+**** progress_estimated(n, min_time = 0)
 ** サマリー関数
-*** first()
-*** group_size()
-*** last()
-*** n()
-*** n_distinct()
-*** n_groups()
-*** nth()
-* DB functions
+*** nth(x, n, order_by = NULL, default = default_missing(x))
+*** first(x, order_by = NULL, default = default_missing(x))
+*** last(x, order_by = NULL, default = default_missing(x))
+*** n_distinct(..., na.rm = FALSE)
+*** group_size(x)
+*** n_groups(x)
+* DB functions                                                     :noexport:
 ** External data source
 *** as.tbl()
 *** as.tbl_cube()
@@ -1390,7 +1883,7 @@ dplyr::setequal(x, y)
 *** wrap_dbplyr_obj()
 *** same_src()
 
-* インポートされた関数群
+* インポートされた関数群                                           :noexport:
 ** {magrittr}
 *** %>%
 ** {rlang}
@@ -1448,6 +1941,7 @@ dplyr::setequal(x, y)
 | ~select_var()~                  | ~tidyselect::vars_select()~, ~tidyselect::vars_pull()~ |
 | ~select_vars()~, ~select_vars_()~ | ~tidyselect::vars_select()~, ~tidyselect::vars_pull()~ |
 | ~tbl_df()~                      | ~tibble::as_tibble()~                                |
+\\
 
 * 実行環境
 
@@ -1493,6 +1987,7 @@ loaded via a namespace (and not attached):
 [25] compiler_3.6.1   pillar_1.4.2     backports_1.1.5  jsonlite_1.6    
 [29] pkgconfig_2.0.3
 #+end_example
+\\
 
 * 参考リンク
 
@@ -1503,12 +1998,14 @@ loaded via a namespace (and not attached):
 - [[https://dplyr.tidyverse.org/reference/][dplyr reference]] (分類の参考になる)
 - [[https://github.com/rstudio/cheatsheets/raw/master/data-transformation.pdf][Cheatsheet(PDF)]]
 - [[https://dplyr.tidyverse.org/reference/se-deprecated.html][Deprecated SE versions of main verbs.]]
+\\
 - Vignette
   - [[https://cran.r-project.org/web/packages/dplyr/vignettes/compatibility.html][dplyr compatibility]]
   - [[https://cran.r-project.org/web/packages/dplyr/vignettes/dplyr.html][Introduction to dplyr]] ([[https://qiita.com/yutannihilation/items/7a78d897810446dd6a3b][和訳@Qiita]])
   - [[https://cran.r-project.org/web/packages/dplyr/vignettes/programming.html][Programming with dplyr]]
   - [[https://cran.r-project.org/web/packages/dplyr/vignettes/two-table.html][Two-table verbs]]
   - [[https://cran.r-project.org/web/packages/dplyr/vignettes/window-functions.html][Window functions]]
+\\
 - Blog
   - [[https://heavywatal.github.io/rstats/dplyr.html][dplyr — 高速data.frame処理@Heavy Watal]]
   - [[https://notchained.hatenablog.com/entry/2018/12/09/120553][dplyr 0.8.0を使ってみた（group_by()のbreaking changes編）@Technically, technophobic.]]
