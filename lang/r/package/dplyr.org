@@ -803,7 +803,7 @@ FANG %>% group_by(symbol) %>% class()
 
 - グループ化を解除する
 
-#+begin_src R :results output :export both
+#+begin_src R :results output :exports both
 FANG %>% group_by(symbol) %>% ungroup() %>% class()
 #+end_src
 
@@ -816,7 +816,7 @@ FANG %>% group_by(symbol) %>% ungroup() %>% class()
 - 指定した列で ~data.frame~ を *list of data.frame* に分割する
 - list に分割し ~purrr::map()~ で関数を適応するフローが強力
 
-#+begin_src R :results output :export both
+#+begin_src R :results output :exports both
 FANG_l <- FANG %>% group_split(symbol)
 class(FANG_l)
 length(FANG_l)
@@ -832,7 +832,7 @@ length(FANG_l)
 **** group_nest(.tbl, ..., .key = "data", keep = FALSE)
 
 - グループ毎のネストされた ~data.frame~ を作成する
-- ネストされたデータに対して ~purrr::map()~ を ~mutate()~ で使うことが多い
+- ネストされたデータに対して ~purrr::map()~ を ~mutate()~ 内で使って操作することが多い
 
 #+begin_src R :results output :exports both
 FANG %>% group_nest(symbol)
@@ -858,8 +858,7 @@ FANG %>% tidyr::nest(-symbol)
 #+begin_example
 # A tibble: 4 x 2
   symbol           data
-  <
- <list<df[,7]>>
+  <chr>  <list<df[,7]>>
 1 FB        [1,008 × 7]
 2 AMZN      [1,008 × 7]
 3 NFLX      [1,008 × 7]
@@ -873,12 +872,12 @@ Did you want `data = c(date, open, high, low, close, volume, adjusted)`?
 *** グループへの関数適応
 **** group_map(.tbl, .f, ..., keep = FALSE)
 
-- ~{purrr}~ と同様のスタイルで ~grouped_df~ に ~.f~ 関数を適応できる
-- ~keep = TRUE~ でグループ変数に ~.x~ からアクセスできる
-- ~group_by()~ -> ~group_map()~ のフローが頻出
+- ~{purrr}~ と同様のスタイルで ~grouped_df~ のグループ毎に ~.f~ 関数を適応できる
 - 結果を ~list~ で返す
+- ~keep = TRUE~ でグループ変数に ~.x~ からアクセスできる
 - ~purrrlyr::by_slice()~ は ~group_map()~ と似ているが *list of data.frame* で返す点が異なる
-
+\\
+- ~group_by()~ -> ~group_map()~ -> モデリング のフローが頻出
 - グループ毎の ~lm()~ の回帰係数を ~list~ で返す例
 #+begin_src R :results output :exports both
 FANG %>%
@@ -919,7 +918,8 @@ FANG %>%
   group_by(symbol) %>%
   group_modify(~ {
     lm_fit <- lm(adjusted ~ volume, data = .x)
-    broom::glance(lm_fit)[, c("r.squared", "p.value", "logLik", "AIC")]
+    broom::glance(lm_fit) %>%
+      select(r.squared, p.value, logLik, AIC)
   })
 #+end_src
 
@@ -1019,6 +1019,7 @@ head(gid)
 : [1] 4032
 : 
 : [1] 2 2 2 2 2 2
+\\
 
 ** grouped_df
 *** grouped_df
@@ -1030,7 +1031,6 @@ head(gid)
 ** データセット
 
 - x, y は同じ列で構成された ~data.frame~ である必要あり
-- ~{base}~, ~{dplyr}~, ~{data.table}~ に同名の関数あり
 - FANG ではなく、より単純なデータを用意する
 
 #+begin_src R
@@ -1062,6 +1062,10 @@ y <- data.frame(fruit = c("apple", "banana", "grape"),
 \\
 
 ** 集合演算
+
+- ~{base}~, ~{dplyr}~, ~{data.table}~ に同名の関数あり
+- 絶対参照にして利用したほうが、誤解がなくて無難
+
 *** 積集合
 **** intersect(x, y, ...)
 
@@ -1098,7 +1102,7 @@ dplyr::union(x, y)
 
 **** union_all(x, y, ...)
 
-- *和集合* = x, y を連結し、重複を削除 _しない_
+- *和集合* = x, y を連結し、重複を削除 *しない*
 
 #+begin_src R
 dplyr::union_all(x, y)
@@ -1153,7 +1157,7 @@ dplyr::setdiff(x, y)
 
 - 同じ集合かどうかを判断する
 
-#+begin_src R :results output
+#+begin_src R :results output :exports both
 dplyr::setequal(x, y)
 #+end_src
 
@@ -1167,7 +1171,7 @@ dplyr::setequal(x, y)
 
 - x, y の両方に by が存在する場合に結合する
 - ~by~ の指定方法
-  - ~by = "hoge"~
+  - =by = "hoge"=
   - ~by = c("hoge" = "fuga")~ 列名が異なる場合
   - ~by = c("hoge" = "fuga", "foo" = "bar")~ 複数の列にマッチさせる場合
 
@@ -1239,6 +1243,8 @@ full_join(x, y, by = "fruit")
 #+begin_src R
 nest_join(x, y, by = "fruit")
 #+end_src
+
+\\
 
 *** Filtering join
 **** semi_join(x, y, by = NULL, copy = FALSE, ...)
@@ -1325,7 +1331,7 @@ do.call(rbind, list(x, y))
 | grape  | radish    |
 \\
 
-- ~.id = "column_name"~ で結合前のテーブル毎に id をつけてくれる
+- =.id = "column_name"= で結合前のテーブル毎に id をつけてくれる
 #+begin_src R
 bind_rows(x, y, .id = "src")
 #+end_src
@@ -1356,6 +1362,7 @@ bind_cols(x, y)
 | apple  | carrot    | apple  | carrot     |
 | banana | potato    | banana | potato     |
 | peach  | tomato    | grape  | radish     |
+\\
 
 * ヘルパー関数群
 ** ベクトル関数
@@ -1443,6 +1450,7 @@ x_df %>%
 |  0.576 |          4 |
 |  1.595 |          5 |
 |  0.738 |          5 |
+\\
 
 **** min_rank(x)
 
@@ -1494,6 +1502,7 @@ x_df %>%
 |  0.576 |          7 |
 |  0.738 |          8 |
 |  1.595 |          9 |
+\\
 
 **** percent_rank(x)
  
@@ -1518,6 +1527,7 @@ x_df %>%
 |  0.576 | 0.777777777777778 |
 |  0.738 | 0.888888888888889 |
 |  1.595 |                 1 |
+\\
 
 **** cume_dist(x)
  
@@ -1542,6 +1552,7 @@ x_df %>%
 |  0.576 |        0.8 |
 |  0.738 |        0.9 |
 |  1.595 |          1 |
+\\
 
 *** 累積関数
 
@@ -1571,6 +1582,7 @@ cumany(x_vec > 0)
 
 #+RESULTS:
 :  [1] FALSE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE
+\\
 
 **** cummean(x)
 
@@ -1607,6 +1619,7 @@ between(x_vec, -0.7, 0.4)
 
 #+RESULTS:
 :  [1]  TRUE  TRUE FALSE FALSE  TRUE FALSE FALSE FALSE FALSE  TRUE
+\\
 
 **** case_when(...)
 
@@ -1700,6 +1713,7 @@ lead(1:10, 1)
 
 #+RESULTS:
 :  [1]  2  3  4  5  6  7  8  9 10 NA
+\\
 
 #+begin_src R :results output :exports both
 lead(1:10, 3)
@@ -1707,6 +1721,7 @@ lead(1:10, 3)
 
 #+RESULTS:
 :  [1]  4  5  6  7  8  9 10 NA NA NA
+\\
 
 **** lag(x, n = 1L, default = NA, order_by = NULL, ...)
 
@@ -1719,6 +1734,7 @@ lag(1:10, 1)
 
 #+RESULTS:
 :  [1] NA  1  2  3  4  5  6  7  8  9
+\\
 
 *** NA
 **** coalesce(...)
@@ -1798,6 +1814,7 @@ na_if(1:5, 3)
 
 #+RESULTS:
 : [1]  1  2 NA  4  5
+\\
 
 *** その他
 **** near(x, y, tol = .Machine$double.eps^0.5)
