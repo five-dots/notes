@@ -236,7 +236,7 @@ FANG %>% filter(symbol == symbol, .data$date == "2013-01-02")
 | GOOG   | 2013-01-02 | 719.42 |   727 | 716.55 | 723.25 |  5101500 |   361.26 |
 \\
 
-- 対策としては、3つ存在する
+- 変数を使う場合、対策としては、3つ存在する
   1. ~.GlobalEnv~ を指定する
   2. *unquote* (~!!~) する
   3. ~rlang::syms()~ でシンボル化した後に *unquote-splicing* (~!!!~) する
@@ -394,7 +394,7 @@ FANG %>%
 
 **** sample_n(tbl, size, replace = FALSE, weight = NULL, .env = NULL, ...)
 
-- ランダムに指定行を抽出する
+- ランダムに指定した行数を抽出する
 - 重み付けは ~weight~ を指定 (非負でデータと同じ長さのベクトル)
 - ~replace~ は使い方不明
 - ~.env~, ~...~ は現在使われていない
@@ -419,6 +419,8 @@ FANG %>%
 \\
 
 **** sample_frac(tbl, size = 1, replace = FALSE, weight = NULL, .env = NULL, ...)
+
+- ~sample_n()~ の指定行数をパーセントで指定できる亜種
 
 #+begin_src R
 FANG %>%
@@ -503,8 +505,7 @@ FANG %>% arrange(desc(volume)) %>% head(4)
 **** summarise(.data, ...)
 
 - ~summarise()~ (アメリカ英語) と ~summarize()~ (イギリス英語) は同じもの
-- 変数のベクトルをスカラ値に要約する
-- vector を引数に取って、スカラ値を返す関数を ~summarise()~ の中で利用する
+- _vector を引数に取って、スカラ値を返す関数_ (~sum()~ や ~mean()~)を ~summarise()~ の中で利用する
 
 #+begin_src R
 FANG %>%
@@ -558,11 +559,12 @@ FANG %>% group_by(symbol) %>% tally(volume, sort = TRUE, name = "total_volume")
 | GOOG   |   2665267800 |
 \\
 
-- クロス集計表を作るのに便利
+- ~tidyr::pivot_wider()~ と組み合わせて、クロス集計表を作るのに便利
 - 銘柄・年ごとの総出来高
 
 #+begin_src R
 FANG %>%
+  # date から年のみを抜き出して、グループ変数として使う
   group_by(symbol, year = lubridate::year(date)) %>%
   tally(volume) %>%
   # pivot_wider() は spread() の後継機能
@@ -593,6 +595,7 @@ FANG %>% count(symbol)
 | FB     | 1008 |
 | GOOG   | 1008 |
 | NFLX   | 1008 |
+\\
 
 ** 列の操作
 *** 列の追加
@@ -742,7 +745,7 @@ FANG %>% .$adjusted %>% head(4)
 **** rename(.data, ...)
 
 - new = old の形式で列の名前を変更できる
-- 全ての列名を変更したい場合は ~rlang::set_names()~ や ~stats::setNames()~ にベクトルを渡すほうが簡単
+- 全ての列名を一括で変更したい場合は ~rlang::set_names()~ や ~stats::setNames()~ に列名の文字列ベクトルを渡すほうが簡単
 
 #+begin_src R
 FANG %>%
@@ -788,30 +791,32 @@ FANG %>%
 - ~ungroup()~ でグループ化を解除
 - ~.drop = TRUE~ の場合は、空のグループを削除する
 
-#+begin_src R :results output
+#+begin_src R :results output :exports both
 FANG %>% group_by(symbol) %>% class()
 #+end_src
 
 #+RESULTS:
 : [1] "grouped_df" "tbl_df"     "tbl"        "data.frame"
+\\
 
 **** ungroup(x, ...)
 
 - グループ化を解除する
 
-#+begin_src R :results output
+#+begin_src R :results output :export both
 FANG %>% group_by(symbol) %>% ungroup() %>% class()
 #+end_src
 
 #+RESULTS:
 : [1] "tbl_df"     "tbl"        "data.frame"
+\\
 
 **** group_split(.tbl, ..., keep = TRUE)
 
 - 指定した列で ~data.frame~ を *list of data.frame* に分割する
 - list に分割し ~purrr::map()~ で関数を適応するフローが強力
 
-#+begin_src R :results output
+#+begin_src R :results output :export both
 FANG_l <- FANG %>% group_split(symbol)
 class(FANG_l)
 length(FANG_l)
@@ -822,13 +827,14 @@ length(FANG_l)
 : [1] "list"
 : 
 : [1] 4
+\\
 
 **** group_nest(.tbl, ..., .key = "data", keep = FALSE)
 
 - グループ毎のネストされた ~data.frame~ を作成する
 - ネストされたデータに対して ~purrr::map()~ を ~mutate()~ で使うことが多い
 
-#+begin_src R :results output
+#+begin_src R :results output :exports both
 FANG %>% group_nest(symbol)
 #+end_src
 
@@ -840,10 +846,11 @@ FANG %>% group_nest(symbol)
 : 2 FB     <tibble [1,008 × 7]>
 : 3 GOOG   <tibble [1,008 × 7]>
 : 4 NFLX   <tibble [1,008 × 7]>
+\\
 
 - ~tidyr::nest()~ と同じ機能
 
-#+begin_src R :results output
+#+begin_src R :results output :exports both
 FANG %>% tidyr::nest(-symbol)
 #+end_src
 
@@ -861,6 +868,7 @@ Warning message:
 All elements of `...` must be named.
 Did you want `data = c(date, open, high, low, close, volume, adjusted)`?
 #+end_example
+\\
 
 *** グループへの関数適応
 **** group_map(.tbl, .f, ..., keep = FALSE)
@@ -872,7 +880,7 @@ Did you want `data = c(date, open, high, low, close, volume, adjusted)`?
 - ~purrrlyr::by_slice()~ は ~group_map()~ と似ているが *list of data.frame* で返す点が異なる
 
 - グループ毎の ~lm()~ の回帰係数を ~list~ で返す例
-#+begin_src R :results output
+#+begin_src R :results output :exports both
 FANG %>%
   group_by(symbol) %>%
   group_map(~ {
@@ -922,13 +930,14 @@ FANG %>%
 | FB     |   0.199686711490091 | 1.22586513487227e-50 |  -4784.6044866744 | 9575.20897334879 |
 | GOOG   |   0.199159670604448 | 1.70931646465457e-50 | -6142.15846499808 | 12290.3169299962 |
 | NFLX   |   0.105343657901732 | 3.70454569826428e-26 | -4813.48163450679 | 9632.96326901357 |
+\\
 
 **** group_walk(.tbl, .f, ...)
 
 - 副作用目的の関数を適応
 - 返り値は ~invisible~ で入力の ~data.frame~ を返す
 
-#+begin_src R :results output
+#+begin_src R :results output :exports both
 df <- FANG %>%
   group_by(symbol) %>%
   group_walk(~ print(mean(.x$volume)))
@@ -947,7 +956,7 @@ df <- FANG %>%
 
 - ~grouped_df~ から グループのキーと元の ~data.frame~ に対する行インデックスを取得できる
 
-#+begin_src R :results output
+#+begin_src R :results output :exports both
 FANG %>% group_by(symbol) %>% group_data()
 #+end_src
 
@@ -965,7 +974,7 @@ FANG %>% group_by(symbol) %>% group_data()
 
 - ~group_data()~ のグループキーのみを返すバージョン
 
-#+begin_src R
+#+begin_src R :exports both
 FANG %>% group_keys(symbol)
 #+end_src
 
@@ -982,7 +991,7 @@ FANG %>% group_keys(symbol)
 
 - ~group_data()~ の行インデックスのみを返すバージョン
 
-#+begin_src R :results output
+#+begin_src R :results output :exports both
 FANG_l <- FANG %>% group_by(symbol) %>% group_rows()
 class(FANG_l)
 #+end_src
@@ -996,7 +1005,7 @@ class(FANG_l)
 
 - グループ毎のユニーク ID を生成する
 
-#+begin_src R :results output
+#+begin_src R :results output :exports both
 gid <- FANG %>% group_indices(symbol)
 class(gid)
 length(gid)
@@ -1402,7 +1411,7 @@ x_df %>%
 
 - _vector in, vector out_ の関数
 
-#+begin_src R :results output
+#+begin_src R :results output :exports both
 row_number(x_vec)
 #+end_src
 
@@ -1544,7 +1553,7 @@ x_df %>%
 - 入力と同じ長さの logical vector を返す
 - ~filter()~ の中などで利用する
 
-#+begin_src R :results output
+#+begin_src R :results output :exports both
 cumall(x_vec < 0)
 #+end_src
 
@@ -1556,7 +1565,7 @@ cumall(x_vec < 0)
 
 - ~any()~ をインデックスを 1 つずつずらしながら実行する
 
-#+begin_src R :results output
+#+begin_src R :results output :exports both
 cumany(x_vec > 0)
 #+end_src
 
@@ -1567,7 +1576,7 @@ cumany(x_vec > 0)
 
 - ~mean()~ をインデックスを 1 つずつずらしながら実行する
 
-#+begin_src R :results output
+#+begin_src R :results output :exports both
 cummean(x_vec)
 #+end_src
 
@@ -1578,7 +1587,7 @@ cummean(x_vec)
 
 - 上記と同じ結果
 
-#+begin_src R :results output
+#+begin_src R :results output :exports both
 cumsum(x_vec) / seq_along(x_vec)
 #+end_src
 
@@ -1592,7 +1601,7 @@ cumsum(x_vec) / seq_along(x_vec)
 
 - shortcut for ~x >= left & x <= right~
 
-#+begin_src R :results output
+#+begin_src R :results output :exports both
 between(x_vec, -0.7, 0.4)
 #+end_src
 
@@ -1610,7 +1619,7 @@ between(x_vec, -0.7, 0.4)
     - RHS は全て同じ型である必要 (~NA_real_~ などを使う)
 
 - FizzBuzz 問題
-#+begin_src R :results output
+#+begin_src R :results output :exports both
 x <- 1:50
 case_when(
   x %% 15 == 0 ~ "fizz buzz",
@@ -1638,7 +1647,7 @@ case_when(
 
 - TRUE/FALSE の型が同じかどうかをチェックするため、base ~ifelse()~ よりも厳格なバージョン
 
-#+begin_src R :results output
+#+begin_src R :results output :exports both
 x <- c(-5:5, NA)
 if_else(x < 0, NA_integer_, x)
 
@@ -1685,14 +1694,14 @@ recode(char_vec,
 
 - 前のインデックスのデータを見たいとき
 - 末尾が ~NA~ になる
-#+begin_src R :results output
+#+begin_src R :results output :exports both
 lead(1:10, 1)
 #+end_src
 
 #+RESULTS:
 :  [1]  2  3  4  5  6  7  8  9 10 NA
 
-#+begin_src R :results output
+#+begin_src R :results output :exports both
 lead(1:10, 3)
 #+end_src
 
@@ -1704,7 +1713,7 @@ lead(1:10, 3)
 - 後ろのインデックスのデータを見たいとき
 - 先頭が ~NA~ になる
 
-#+begin_src R :results output
+#+begin_src R :results output :exports both
 lag(1:10, 1)
 #+end_src
 
@@ -1718,7 +1727,7 @@ lag(1:10, 1)
 - 全てのベクトルは、第 1 引数と同じ長さか、長さ 1 である必要あり
 
 - Example のコード (1)
-#+begin_src R :results output
+#+begin_src R :results output :exports both
 # 全ての NA を 0 で置き換える
 x <- sample(c(1:5, NA, NA, NA))
 coalesce(x, 0L)
@@ -1730,7 +1739,7 @@ coalesce(x, 0L)
 \\
 
 - ただ、上記のケースであれば ~tidyr::replace_na()~ の方がわかりやすい
-#+begin_src R :results output
+#+begin_src R :results output :exports both
 tidyr::replace_na(x, 0L)
 #+end_src
 
@@ -1740,7 +1749,7 @@ tidyr::replace_na(x, 0L)
 
 - Example のコード (2)
 - NA を 2 つ目のベクトルの値で置き換える
-#+begin_src R :results output
+#+begin_src R :results output :exports both
 y <- c(1, 2, NA, NA, 5)
 z <- c(NA, NA, 3, 4, 5)
 coalesce(y, z)
@@ -1753,7 +1762,7 @@ coalesce(y, z)
 
 - Example のコード (3) (結果は 2 と同じ)
 - ~list~ で複数のベクトルを与えて ~!!!~ で評価する
-#+begin_src R :results output
+#+begin_src R :results output :exports both
 # Supply lists by splicing them into dots:
 vecs <- list(
   c(1, 2, NA, NA, 5),
@@ -1774,7 +1783,7 @@ coalesce(!!!vecs)
 - ~x~: 対象となるベクトル
 - ~y~: ~NA~ に置換するベクトル
 
-#+begin_src R :results output
+#+begin_src R :results output :exports both
 na_if(1:5, 5:1)
 #+end_src
 
@@ -1783,7 +1792,7 @@ na_if(1:5, 5:1)
 \\
 
 - 上記と同じ
-#+begin_src R :results output
+#+begin_src R :results output :exports both
 na_if(1:5, 3)
 #+end_src
 
