@@ -8,8 +8,8 @@
   - [[#データセット][データセット]]
   - [[#行の操作][行の操作]]
     - [[#行の抽出削減][行の抽出・削減]]
-      - [[#filterdata--preserve--false][filter(.data, ..., .preserve = FALSE)]]
-      - [[#slicedata--preserve--false][slice(.data, ..., .preserve = FALSE)]]
+      - [[#-filterdata--preserve--false][★★★ ~filter(.data, ..., .preserve = FALSE)~]]
+      - [[#-slicedata--preserve--false][★★☆ slice(.data, ..., .preserve = FALSE)]]
       - [[#top_nx-n-wt][top_n(x, n, wt)]]
       - [[#top_fracx-n-wt][top_frac(x, n, wt)]]
       - [[#sample_ntbl-size-replace--false-weight--null-env--null-][sample_n(tbl, size, replace = FALSE, weight = NULL, .env = NULL, ...)]]
@@ -179,7 +179,7 @@ head(FANG, n = 3)
 
 ** 行の操作
 *** 行の抽出・削減
-**** filter(.data, ..., .preserve = FALSE)
+**** ★★★ ~filter(.data, ..., .preserve = FALSE)~
 
 - 条件に合致する行を抽出
 - 評価結果が ~NA~ となる行は除かれる
@@ -259,7 +259,7 @@ FANG %>% filter(symbol == .GlobalEnv$symbol, .data$date == "2013-01-02")
 | GOOG   | 2013-01-02 | 719.42 |  727 | 716.55 | 723.25 | 5101500 |   361.26 |
 \\
 
-**** slice(.data, ..., .preserve = FALSE)
+**** ★★☆ slice(.data, ..., .preserve = FALSE)
 
 - 行番号で抽出する
 - 1 〜 4, 10, 15 行を抽出する場合
@@ -1171,12 +1171,12 @@ dplyr::setequal(x, y)
 
 - x, y の両方に by が存在する場合に結合する
 - ~by~ の指定方法
-  - =by = "hoge"=
+  - ~by = c("hoge")~
   - ~by = c("hoge" = "fuga")~ 列名が異なる場合
   - ~by = c("hoge" = "fuga", "foo" = "bar")~ 複数の列にマッチさせる場合
 
 #+begin_src R
-inner_join(x, y, by = "fruit")
+inner_join(x, y, by = c("fruit"))
 #+end_src
 
 #+RESULTS:
@@ -1842,6 +1842,17 @@ na_if(1:5, 3)
 **** progress_estimated(n, min_time = 0)
 ** サマリー関数
 *** nth(x, n, order_by = NULL, default = default_missing(x))
+
+- n 番目を抜き出す
+
+#+begin_src R :results output :exports both
+nth(1:10, 4)
+#+end_src
+
+#+RESULTS:
+: [1] 4
+\\
+
 *** first(x, order_by = NULL, default = default_missing(x))
 *** last(x, order_by = NULL, default = default_missing(x))
 *** n_distinct(..., na.rm = FALSE)

@@ -37,6 +37,9 @@ Babel の実行には適切な ~org-babel-load-language~ の設定が必要で�
  
 *** Package
 - [[file:lang/r/package/dplyr.org][dplyr]]
+- drake
+- rsample
+- recipes
 
 *** Statistics
 - Models
