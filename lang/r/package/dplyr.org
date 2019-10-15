@@ -9,12 +9,12 @@
   - [[#行の操作][行の操作]]
     - [[#行の抽出削減][行の抽出・削減]]
       - [[#-filterdata--preserve--false][★★★ ~filter(.data, ..., .preserve = FALSE)~.]]
-      - [[#-slicedata--preserve--false][★★☆ slice(.data, ..., .preserve = FALSE)]]
-      - [[#top_nx-n-wt][top_n(x, n, wt)]]
-      - [[#top_fracx-n-wt][top_frac(x, n, wt)]]
-      - [[#sample_ntbl-size-replace--false-weight--null-env--null-][sample_n(tbl, size, replace = FALSE, weight = NULL, .env = NULL, ...)]]
-      - [[#sample_fractbl-size--1-replace--false-weight--null-env--null-][sample_frac(tbl, size = 1, replace = FALSE, weight = NULL, .env = NULL, ...)]]
-      - [[#distinctdata--keep_all--false][distinct(.data, ..., .keep_all = FALSE)]]
+      - [[#-slicedata--preserve--false][★★☆ ~slice(.data, ..., .preserve = FALSE)~.]]
+      - [[#-distinctdata--keep_all--false][★☆☆ ~distinct(.data, ..., .keep_all = FALSE)~.]]
+      - [[#-top_nx-n-wt][★☆☆ ~top_n(x, n, wt)~.]]
+      - [[#-top_fracx-n-wt][★☆☆ ~top_frac(x, n, wt)~.]]
+      - [[#-sample_ntbl-size-replace--false-weight--null-env--null-][★☆☆ ~sample_n(tbl, size, replace = FALSE, weight = NULL, .env = NULL, ...)~.]]
+      - [[#-sample_fractbl-size--1-replace--false-weight--null-env--null-][★☆☆ ~sample_frac(tbl, size = 1, replace = FALSE, weight = NULL, .env = NULL, ...)~.]]
     - [[#行の並び替え][行の並び替え]]
       - [[#arrangedata-][arrange(.data, ...)]]
     - [[#行の要約][行の要約]]
@@ -259,7 +259,7 @@ FANG %>% filter(symbol == .GlobalEnv$symbol, .data$date == "2013-01-02")
 | GOOG   | 2013-01-02 | 719.42 |  727 | 716.55 | 723.25 | 5101500 |   361.26 |
 \\
 
-**** ★★☆ slice(.data, ..., .preserve = FALSE)
+**** ★★☆ ~slice(.data, ..., .preserve = FALSE)~.
 
 - 行番号で抽出する
 - 1 〜 4, 10, 15 行を抽出する場合
@@ -329,7 +329,30 @@ FANG %>%
 | AMZN   | 2013-01-10 | 268.54 | 268.74 |  262.3 | 265.34 | 2863400 |   265.34 |  -0.00379921087423796 |
 \\
 
-**** top_n(x, n, wt)
+**** ★☆☆ ~distinct(.data, ..., .keep_all = FALSE)~.
+
+- 重複を削除する
+- ~...~ で重複を判断する列を指定 (省略すれば全列を利用)
+- FANG データでは理解が難しいので、単純な ~data.frame~ を作成する
+
+#+begin_src R
+df <- tibble(
+  x = c(1, 2, 3, 1, 2, 3),
+  y = c(1, 2, 3, 1, 2, 3))
+
+# 後半3行は重複 
+distinct(df)
+#+end_src
+
+#+RESULTS:
+| x | y |
+|---+---|
+| 1 | 1 |
+| 2 | 2 |
+| 3 | 3 |
+\\
+
+**** ★☆☆ ~top_n(x, n, wt)~.
 
 - 上位・下位 n 番目までを抽出する
 - プラスで指定すれば上位から、マイナスで指定すれば下位から抽出する
@@ -363,7 +386,7 @@ FANG %>%
 | GOOG   | 2015-08-26 | 0.0769534053916816 |
 \\
 
-**** top_frac(x, n, wt)
+**** ★☆☆ ~top_frac(x, n, wt)~.
 
 - 上位・下位を整数ではなく、パーセントで指定する
 - それ以外は ~top_n()~ と同じ使い方
@@ -392,7 +415,7 @@ FANG %>%
 | GOOG   | 2016-04-22 |  -0.054644795802778 |
 \\
 
-**** sample_n(tbl, size, replace = FALSE, weight = NULL, .env = NULL, ...)
+**** ★☆☆ ~sample_n(tbl, size, replace = FALSE, weight = NULL, .env = NULL, ...)~.
 
 - ランダムに指定した行数を抽出する
 - 重み付けは ~weight~ を指定 (非負でデータと同じ長さのベクトル)
@@ -418,7 +441,7 @@ FANG %>%
 | NFLX   | 2016-07-05 |   95.2 | 101.27 |  93.31 |  97.91 | 25879400 |    97.91 |
 \\
 
-**** sample_frac(tbl, size = 1, replace = FALSE, weight = NULL, .env = NULL, ...)
+**** ★☆☆ ~sample_frac(tbl, size = 1, replace = FALSE, weight = NULL, .env = NULL, ...)~.
 
 - ~sample_n()~ の指定行数をパーセントで指定できる亜種
 
@@ -443,29 +466,6 @@ FANG %>%
 | NFLX   | 2015-12-14 | 119.77 |  120.9 | 114.66 | 120.67 | 18679300 |   120.67 |
 | NFLX   | 2015-01-02 | 344.06 | 352.32 | 341.12 | 348.94 | 13475000 |    49.85 |
 | NFLX   | 2014-12-03 | 351.55 | 355.12 | 344.27 | 355.12 | 13819400 |    50.73 |
-\\
-
-**** distinct(.data, ..., .keep_all = FALSE)
-
-- 重複を削除する
-- ~...~ で重複を判断する列を指定 (省略すれば全列を利用)
-- FANG データでは理解が難しいので、単純な ~data.frame~ を作成する
-
-#+begin_src R
-df <- tibble(
-  x = c(1, 2, 3, 1, 2, 3),
-  y = c(1, 2, 3, 1, 2, 3))
-
-# 後半3行は重複 
-distinct(df)
-#+end_src
-
-#+RESULTS:
-| x | y |
-|---+---|
-| 1 | 1 |
-| 2 | 2 |
-| 3 | 3 |
 \\
 
 *** 行の並び替え
