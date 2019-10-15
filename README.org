@@ -37,18 +37,12 @@ Babel の実行には適切な ~org-babel-load-language~ の設定が必要で�
  
 *** Package
 
-- tidyverse
-  - [[file:lang/r/package/dplyr.org][dplyr]]
-
-- tidymodels
-  - rsample
-  - [[file:lang/r/package/recipes.org][recipes]]
-  - parsnip
-  - yardstick
-
-- workflow: drake
+- Table data: [[file:lang/r/package/dplyr.org][{dplyr}]], {tidyr}, {purrrlyr}, {tibble}, {data.table}, {dtplyr}
+- Preprocessing: [[file:lang/r/package/recipes.org][{recipes}]]
+- parsnip
 - rsample
-- recipes
+- yardstick
+- workflow: drake
 
 *** Statistics
 - Models
