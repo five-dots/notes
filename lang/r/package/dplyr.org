@@ -1,9 +1,10 @@
 #+STARTUP: folded indent inlineimages latexpreview
 #+PROPERTY: header-args:R :results value :colnames yes :session *R:dplyr*
 
-* 目次_星の数は個人的な利用頻度                                                         :TOC:QUOTE:
+* 目次                                                            :QUOTE:TOC:
 #+BEGIN_QUOTE
 - [[#ライブラリの読み込みとバージョンの確認][ライブラリの読み込みとバージョンの確認]]
+- [[#分類方法][分類方法]]
 - [[#1-つの-dataframe-を操作する関数群][1 つの ~data.frame~ を操作する関数群]]
   - [[#データセット][データセット]]
   - [[#行の操作][行の操作]]
@@ -39,7 +40,7 @@
       - [[#-group_nesttbl--key--data-keep--false][★★☆ ~group_nest(.tbl, ..., .key = "data", keep = FALSE)~.]]
       - [[#-group_splittbl--keep--true][★★☆ ~group_split(.tbl, ..., keep = TRUE)~.]]
     - [[#グループへの関数適応][グループへの関数適応]]
-      - [[#-group_maptbl-f--keep--false][★★☆ ~group_map(.tbl, .f, ..., keep = FALSE)~.]]
+      - [[#-group_maptbl-f--keep--false][★★★ ~group_map(.tbl, .f, ..., keep = FALSE)~.]]
       - [[#-group_modifytbl-f--keep--false][★☆☆ ~group_modify(.tbl, .f, ..., keep = FALSE)~.]]
       - [[#-group_walktbl-f-][★☆☆ ~group_walk(.tbl, .f, ...)~.]]
     - [[#グループ情報の抽出][グループ情報の抽出]]
@@ -47,12 +48,68 @@
       - [[#-group_keystbl-][★☆☆ ~group_keys(.tbl, ...)~.]]
       - [[#-group_rowsdata][★☆☆ ~group_rows(.data)~.]]
       - [[#-group_indicesdata-][★☆☆ ~group_indices(.data, ...)~.]]
-  - [[#grouped_df][grouped_df]]
-    - [[#grouped_df-1][grouped_df]]
-    - [[#is_grouped_df][is_grouped_df()]]
-    - [[#isgrouped_df][is.grouped_df()]]
-    - [[#new_grouped_df][new_grouped_df()]]
-    - [[#validate_grouped_df][validate_grouped_df()]]
+      - [[#-group_colsvars--peek_vars][★☆☆ ~group_cols(vars = peek_vars())~.]]
+      - [[#-groupsx][★☆☆ ~groups(x)~.]]
+      - [[#-group_varsx][★☆☆ ~group_vars(x)~.]]
+      - [[#-group_sizex][★☆☆ ~group_size(x)~.]]
+      - [[#-n_groupsx][★☆☆ ~n_groups(x)~.]]
+    - [[#グループへのその他の操作][グループへのその他の操作]]
+      - [[#-group_trimtbl-drop--group_by_drop_defaulttbl][★☆☆ ~group_trim(.tbl, .drop = group_by_drop_default(.tbl))~.]]
+      - [[#-group_by_drop_defaulttbl][★☆☆ ~group_by_drop_default(.tbl)~.]]
+    - [[#grouped_df-の作成][grouped_df の作成]]
+      - [[#-grouped_dfdata-vars-drop--false][★☆☆ ~grouped_df(data, vars, drop = FALSE)~.]]
+      - [[#-isgrouped_dfx][★☆☆ ~is.grouped_df(x)~.]]
+      - [[#-is_grouped_dfx][★☆☆ ~is_grouped_df(x)~.]]
+      - [[#-new_grouped_dfx-groups--class--character][★☆☆ ~new_grouped_df(x, groups, ..., class = character())~.]]
+      - [[#-validate_grouped_dfx][★☆☆ ~validate_grouped_df(x)~.]]
+  - [[#scoped-verbs-の亜種][Scoped verbs の亜種]]
+    - [[#基本][基本]]
+    - [[#select-helpers][Select helpers]]
+      - [[#-starts_withmatch-ignorecase--true-vars--peek_vars][★★★ ~starts_with(match, ignore.case = TRUE, vars = peek_vars())~.]]
+      - [[#-ends_withmatch-ignorecase--true-vars--peek_vars][★★★ ~ends_with(match, ignore.case = TRUE, vars = peek_vars())~.]]
+      - [[#-containsmatch-ignorecase--true-vars--peek_vars][★★☆ ~contains(match, ignore.case = TRUE, vars = peek_vars())~.]]
+      - [[#-matchesmatch-ignorecase--true-vars--peek_vars][★☆☆ ~matches(match, ignore.case = TRUE, vars = peek_vars())~.]]
+      - [[#-num_rangeprefix-range-width--null-vars--peek_vars][★☆☆ ~num_range(prefix, range, width = NULL, vars = peek_vars())~.]]
+      - [[#-one_of-vars--peek_vars][★★☆ ~one_of(..., .vars = peek_vars())~.]]
+      - [[#-everythingvars--peek_vars][★☆☆ ~everything(vars = peek_vars())~.]]
+      - [[#-last_coloffset--0l-vars--peek_vars][★☆☆ ~last_col(offset = 0L, vars = peek_vars())~.]]
+    - [[#dplyr][dplyr]]
+      - [[#-vars][★★★ ~vars(...)~.]]
+      - [[#-all_varsexpr][★☆☆ ~all_vars(expr)~.]]
+      - [[#-any_varsexpr][★☆☆ ~any_vars(expr)~.]]
+    - [[#_all][_all]]
+      - [[#-arrange_alltbl-funs--list--by_group--false][★☆☆ ~arrange_all(.tbl, .funs = list(), ..., .by_group = FALSE)~.]]
+      - [[#-distinct_alltbl-funs--list--keep_all--false][★☆☆ ~distinct_all(.tbl, .funs = list(), ..., .keep_all = FALSE)~.]]
+      - [[#-filter_alltbl-vars_predicate-preserve--false][★☆☆ ~filter_all(.tbl, .vars_predicate, .preserve = FALSE)~.]]
+      - [[#-group_by_alltbl-funs--list--add--false-drop--group_by_drop_defaulttbl][★☆☆ ~group_by_all(.tbl, .funs = list(), ..., .add = FALSE, .drop = group_by_drop_default(.tbl))~.]]
+      - [[#-mutate_alltbl-funs-][★★☆ ~mutate_all(.tbl, .funs, ...)~.]]
+      - [[#-rename_alltbl-funs--list-][★★☆ ~rename_all(.tbl, .funs = list(), ...)~.]]
+      - [[#-select_alltbl-funs--list-][★☆☆ ~select_all(.tbl, .funs = list(), ...)~.]]
+      - [[#-summarise_alltbl-funs-][★★☆ ~summarise_all(.tbl, .funs, ...)~.]]
+      - [[#-transmute_alltbl-funs-][★☆☆ ~transmute_all(.tbl, .funs, ...)~.]]
+    - [[#_at][_at]]
+      - [[#-arrange_attbl-vars-funs--list--by_group--false][★☆☆ ~arrange_at(.tbl, .vars, .funs = list(), ..., .by_group = FALSE)~.]]
+      - [[#-distinct_attbl-vars-funs--list--keep_all--false][★☆☆ ~distinct_at(.tbl, .vars, .funs = list(), ..., .keep_all = FALSE)~.]]
+      - [[#-filter_attbl-vars-vars_predicate-preserve--false][★☆☆ ~filter_at(.tbl, .vars, .vars_predicate, .preserve = FALSE)~.]]
+      - [[#-group_by_attbl-vars-funs--list--add--false-drop--group_by_drop_defaulttbl][★☆☆ ~group_by_at(.tbl, .vars, .funs = list(), ..., .add = FALSE, .drop = group_by_drop_default(.tbl))~.]]
+      - [[#-mutate_attbl-vars-funs--cols--null][★★☆ ~mutate_at(.tbl, .vars, .funs, ..., .cols = NULL)~.]]
+      - [[#-rename_attbl-vars-funs--list-][★★☆ ~rename_at(.tbl, .vars, .funs = list(), ...)~.]]
+      - [[#-select_attbl-vars-funs--list-][★★☆ ~select_at(.tbl, .vars, .funs = list(), ...)~.]]
+      - [[#-summarise_attbl-vars-funs--cols--null][★★☆ ~summarise_at(.tbl, .vars, .funs, ..., .cols = NULL)~.]]
+      - [[#-transmute_attbl-vars-funs--cols--null][★☆☆ ~transmute_at(.tbl, .vars, .funs, ..., .cols = NULL)~.]]
+    - [[#_if][_if]]
+      - [[#-arrange_iftbl-predicate-funs--list--by_group--false][★☆☆ ~arrange_if(.tbl, .predicate, .funs = list(), ..., .by_group = FALSE)~.]]
+      - [[#-distinct_iftbl-predicate-funs--list--keep_all--false][★☆☆ ~distinct_if(.tbl, .predicate, .funs = list(), ..., .keep_all = FALSE)~.]]
+      - [[#-filter_iftbl-predicate-vars_predicate-preserve--false][★☆☆ ~filter_if(.tbl, .predicate, .vars_predicate, .preserve = FALSE)~.]]
+      - [[#-group_by_iftbl-predicate-funs--list--add--false-drop--group_by_drop_defaulttbl][★☆☆ ~group_by_if(.tbl, .predicate, .funs = list(), ..., .add = FALSE, .drop = group_by_drop_default(.tbl))~.]]
+      - [[#-mutate_iftbl-predicate-funs-][★☆☆ ~mutate_if(.tbl, .predicate, .funs, ...)~.]]
+      - [[#-rename_iftbl-predicate-funs--list-][★☆☆ ~rename_if(.tbl, .predicate, .funs = list(), ...)~.]]
+      - [[#-select_iftbl-predicate-funs--list-][★☆☆ ~select_if(.tbl, .predicate, .funs = list(), ...)~.]]
+      - [[#-summarise_iftbl-predicate-funs-][★☆☆ ~summarise_if(.tbl, .predicate, .funs, ...)~.]]
+      - [[#-transmute_iftbl-predicate-funs-][★☆☆ ~transmute_if(.tbl, .predicate, .funs, ...)~.]]
+    - [[#_prepare][_prepare]]
+      - [[#-distinct_preparedata-vars-group_vars--character-keep_all--false][★☆☆ ~distinct_prepare(.data, vars, group_vars = character(), .keep_all = FALSE)~.]]
+      - [[#-group_by_preparedata--dots--list-add--false][★☆☆ ~group_by_prepare(.data, ..., .dots = list(), add = FALSE)~.]]
 - [[#2-つの-dataframe-を操作する関数群][2 つの ~data.frame~ を操作する関数群]]
   - [[#データセット-1][データセット]]
   - [[#集合演算][集合演算]]
@@ -65,13 +122,14 @@
       - [[#-setdiffx-y-][★★☆ ~setdiff(x, y, ...)~.]]
     - [[#同値][同値]]
       - [[#-setequalx-y-][★☆☆ ~setequal(x, y, ...)~.]]
+      - [[#-all_equaltarget-current-ignore_col_order--true-ignore_row_order--true-convert--false-][★☆☆ ~all_equal(target, current, ignore_col_order = TRUE, ignore_row_order = TRUE, convert = FALSE, ...)~.]]
   - [[#結合演算][結合演算]]
     - [[#mutating-join][Mutating join]]
       - [[#-inner_joinx-y-by--null-copy--false-suffix--cx-y-][★★★ ~inner_join(x, y, by = NULL, copy = FALSE, suffix = c(".x", ".y"), ...)~.]]
       - [[#-left_joinx-y-by--null-copy--false-suffix--cx-y-][★★★ ~left_join(x, y, by = NULL, copy = FALSE, suffix = c(".x", ".y"), ...)~.]]
       - [[#-right_joinx-y-by--null-copy--false-suffix--cx-y-][★☆☆ ~right_join(x, y, by = NULL, copy = FALSE, suffix = c(".x", ".y"), ...)~.]]
       - [[#-full_joinx-y-by--null-copy--false-suffix--cx-y-][★★☆ ~full_join(x, y, by = NULL, copy = FALSE, suffix = c(".x", ".y"), ...)~.]]
-      - [[#nest_joinx-y-by--null-copy--false-keep--false-name--null-][nest_join(x, y, by = NULL, copy = FALSE, keep = FALSE, name = NULL, ...)]]
+      - [[#-nest_joinx-y-by--null-copy--false-keep--false-name--null-][★☆☆ ~nest_join(x, y, by = NULL, copy = FALSE, keep = FALSE, name = NULL, ...)~.]]
     - [[#filtering-join][Filtering join]]
       - [[#-semi_joinx-y-by--null-copy--false-][★★☆ ~semi_join(x, y, by = NULL, copy = FALSE, ...)~.]]
       - [[#-anti_joinx-y-by--null-copy--false-][★☆☆ ~anti_join(x, y, by = NULL, copy = FALSE, ...)~.]]
@@ -79,7 +137,7 @@
       - [[#-bind_rows-id--null][★★★ ~bind_rows(..., .id = NULL)~.]]
       - [[#-bind_cols][★☆☆ ~bind_cols(...)~.]]
 - [[#ヘルパー関数群][ヘルパー関数群]]
-  - [[#ベクトル関数][ベクトル関数]]
+  - [[#ベクトル関数ウィンドウ関数][ベクトル関数・ウィンドウ関数]]
     - [[#データセット-2][データセット]]
     - [[#ランキング][ランキング]]
       - [[#-row_numberx][★★☆ ~row_number(x)~.]]
@@ -92,49 +150,43 @@
       - [[#-cumallx][★☆☆ ~cumall(x)~.]]
       - [[#-cumanyx][★☆☆ ~cumany(x)~.]]
       - [[#-cummeanx][★☆☆ ~cummean(x)~.]]
-    - [[#条件][条件]]
+    - [[#比較][比較]]
       - [[#-betweenx-left-right][★★★ ~between(x, left, right)~.]]
-      - [[#-case_when][★☆☆ ~case_when(...)~.]]
+      - [[#-nearx-y-tol--machinedoubleeps05][★★☆ ~near(x, y, tol = .Machine$double.eps^0.5)~.]]
+    - [[#条件分岐][条件分岐]]
       - [[#-if_elsecondition-true-false-missing--null][★★☆ ~if_else(condition, true, false, missing = NULL)~.]]
+      - [[#-case_when][★☆☆ ~case_when(...)~.]]
       - [[#-recodex--default--null-missing--null][★☆☆ ~recode(.x, ..., .default = NULL, .missing = NULL)~.]]
-      - [[#recode_factorx--default--null-missing--null-ordered--false][recode_factor(.x, ..., .default = NULL, .missing = NULL, .ordered = FALSE)]]
+      - [[#-recode_factorx--default--null-missing--null-ordered--false][★☆☆ ~recode_factor(.x, ..., .default = NULL, .missing = NULL, .ordered = FALSE)~.]]
     - [[#オフセット][オフセット]]
-      - [[#-leadx-n--1l-default--na-order_by--null-][★☆☆ ~lead(x, n = 1L, default = NA, order_by = NULL, ...)~]]
+      - [[#-leadx-n--1l-default--na-order_by--null-][★☆☆ ~lead(x, n = 1L, default = NA, order_by = NULL, ...)~.]]
       - [[#-lagx-n--1l-default--na-order_by--null-][★★★ ~lag(x, n = 1L, default = NA, order_by = NULL, ...)~.]]
     - [[#na][NA]]
       - [[#-coalesce][★☆☆ ~coalesce(...)~.]]
       - [[#-na_ifx-y][★★☆ ~na_if(x, y)~.]]
     - [[#その他][その他]]
-      - [[#nearx-y-tol--machinedoubleeps05][near(x, y, tol = .Machine$double.eps^0.5)]]
-      - [[#descx][desc(x)]]
-      - [[#idvariables-drop--false][id(.variables, drop = FALSE)]]
-      - [[#group_colsvars--peek_vars][group_cols(vars = peek_vars())]]
-      - [[#group_trimtbl-drop--group_by_drop_defaulttbl][group_trim(.tbl, .drop = group_by_drop_default(.tbl))]]
-      - [[#groupsx][groups(x)]]
-      - [[#group_varsx][group_vars(x)]]
-      - [[#vars][vars(...)]]
-      - [[#all_equaltarget-current-ignore_col_order--true-ignore_row_order--true-convert--false-][all_equal(target, current, ignore_col_order = TRUE, ignore_row_order = TRUE, convert = FALSE, ...)]]
-      - [[#all_varsexpr][all_vars(expr)]]
-      - [[#any_varsexpr][any_vars(expr)]]
-      - [[#changesx-y][changes(x, y)]]
-      - [[#locationdf][location(df)]]
-      - [[#combine][combine(...)]]
-      - [[#common_byby--null-x-y][common_by(by = NULL, x, y)]]
-      - [[#dim_descx][dim_desc(x)]]
-      - [[#dr_dplyr][dr_dplyr()]]
-      - [[#hybrid_calldata-expr][hybrid_call(.data, expr)]]
-      - [[#order_byorder_by-call][order_by(order_by, call)]]
-      - [[#tbl_varsx][tbl_vars(x)]]
-      - [[#tbl_nongroup_varsx][tbl_nongroup_vars(x)]]
-      - [[#with_orderorder_by-fun-x-][with_order(order_by, fun, x, ...)]]
-      - [[#progress_estimatedn-min_time--0][progress_estimated(n, min_time = 0)]]
-  - [[#サマリー関数][サマリー関数]]
-    - [[#-nthx-n-order_by--null-default--default_missingx][★★☆ ~nth(x, n, order_by = NULL, default = default_missing(x))~.]]
-    - [[#firstx-order_by--null-default--default_missingx][first(x, order_by = NULL, default = default_missing(x))]]
-    - [[#lastx-order_by--null-default--default_missingx][last(x, order_by = NULL, default = default_missing(x))]]
-    - [[#n_distinct-narm--false][n_distinct(..., na.rm = FALSE)]]
-    - [[#group_sizex][group_size(x)]]
-    - [[#n_groupsx][n_groups(x)]]
+      - [[#-descx][★★☆ ~desc(x)~.]]
+      - [[#-idvariables-drop--false][★☆☆ ~id(.variables, drop = FALSE)~.]]
+      - [[#-combine][★☆☆ ~combine(...)~.]]
+      - [[#-common_byby--null-x-y][★☆☆ ~common_by(by = NULL, x, y)~.]]
+      - [[#-order_byorder_by-call][★☆☆ ~order_by(order_by, call)~.]]
+      - [[#-with_orderorder_by-fun-x-][★☆☆ ~with_order(order_by, fun, x, ...)~.]]
+  - [[#集約関数][集約関数]]
+    - [[#集計][集計]]
+      - [[#-n][★★★ ~n()~.]]
+      - [[#-n_distinct-narm--false][★★☆ ~n_distinct(..., na.rm = FALSE)~.]]
+    - [[#ポジション][ポジション]]
+      - [[#-firstx-order_by--null-default--default_missingx][★★☆ ~first(x, order_by = NULL, default = default_missing(x))~.]]
+      - [[#-lastx-order_by--null-default--default_missingx][★★☆ ~last(x, order_by = NULL, default = default_missing(x))~.]]
+      - [[#-nthx-n-order_by--null-default--default_missingx][★☆☆ ~nth(x, n, order_by = NULL, default = default_missing(x))~.]]
+  - [[#その他-1][その他]]
+    - [[#ユーティリティ][ユーティリティ]]
+      - [[#-locationdf][★☆☆ ~location(df)~.]]
+      - [[#-changesx-y][★☆☆ ~changes(x, y)~.]]
+      - [[#-dim_descx][★☆☆ ~dim_desc(x)~.]]
+      - [[#-dr_dplyr][★☆☆ ~dr_dplyr()~.]]
+      - [[#-hybrid_calldata-expr][★☆☆ ~hybrid_call(.data, expr)~.]]
+      - [[#-progress_estimatedn-min_time--0][★☆☆ ~progress_estimated(n, min_time = 0)~.]]
 - [[#非推奨とされている関数群][非推奨とされている関数群]]
 - [[#実行環境][実行環境]]
 - [[#参考リンク][参考リンク]]
@@ -154,6 +206,12 @@ packageVersion("dplyr")
 #+RESULTS:
 : [1] ‘0.8.3’
 \\
+
+* 分類方法
+
+- Deprecated
+- Experimental
+- Questining
 
 * 1 つの ~data.frame~ を操作する関数群
 ** データセット
@@ -870,7 +928,7 @@ length(FANG_l)
 \\
 
 *** グループへの関数適応
-**** ★★☆ ~group_map(.tbl, .f, ..., keep = FALSE)~.
+**** ★★★ ~group_map(.tbl, .f, ..., keep = FALSE)~.
 
 - ~{purrr}~ と同様のスタイルで ~grouped_df~ のグループ毎に ~.f~ 関数を適応できる
 - 結果を ~list~ で返す
@@ -1021,12 +1079,325 @@ head(gid)
 : [1] 2 2 2 2 2 2
 \\
 
-** TODO grouped_df
-*** grouped_df
-*** is_grouped_df()
-*** is.grouped_df()
-*** new_grouped_df()
-*** validate_grouped_df()
+**** ★☆☆ ~group_cols(vars = peek_vars())~.
+
+- グループ変数列を抜き出す
+- ~select()~ の中で、select_helpers のようにグループ変数を選択・除外したい場合に利用する
+
+#+begin_src R :exports both :results output
+FANG %>%
+  group_by(symbol) %>%
+  select(group_cols())
+#+end_src
+
+#+RESULTS:
+#+begin_example
+# A tibble: 4,032 x 1
+# Groups:   symbol [4]
+   symbol
+   <chr>
+ 1 FB    
+ 2 FB    
+ 3 FB    
+ 4 FB    
+ 5 FB    
+ 6 FB    
+ 7 FB    
+ 8 FB    
+ 9 FB    
+10 FB    
+# … with 4,022 more rows
+#+end_example
+
+**** ★☆☆ ~groups(x)~.
+
+- グループ変数の ~symbol~ を抽出する
+- 返り値は ~list~
+
+#+begin_src R :exports both :results output
+FANG %>%
+  group_by(symbol) %>%
+  groups()
+#+end_src
+
+#+RESULTS:
+: 
+: [[1]]
+: symbol
+
+**** ★☆☆ ~group_vars(x)~.
+
+- ~groups()~ と同様の機能だが ~character~ として抽出する
+
+#+begin_src R :exports both :results output
+FANG %>%
+  group_by(symbol) %>%
+  group_vars()
+#+end_src
+
+#+RESULTS:
+: 
+: [1] "symbol"
+
+**** ★☆☆ ~group_size(x)~.
+
+- grouped_df のグループ毎の列数を抽出する
+
+#+begin_src R :exports both :results output
+FANG %>%
+  group_by(symbol) %>%
+  group_size()
+#+end_src
+
+#+RESULTS:
+: [1] 1008 1008 1008 1008
+\\
+
+**** ★☆☆ ~n_groups(x)~.
+
+- grouped_df のグループ数を抽出する
+
+#+begin_src R :exports both :results output
+FANG %>%
+  group_by(symbol) %>%
+  n_groups()
+#+end_src
+
+#+RESULTS:
+: [1] 4
+\\
+
+*** グループへのその他の操作
+**** ★☆☆ ~group_trim(.tbl, .drop = group_by_drop_default(.tbl))~.
+
+- grouped_df を引数にして、グループ変数から利用されていない ~factor~ を削減する
+
+#+begin_src R :exports both :results output
+iris %>%
+  group_by(Species) %>%
+  # この時点では、Species [3]
+  filter(Species == "setosa", .preserve = TRUE) %>%
+  # この時点で、Species [1]
+  group_trim()
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+# A tibble: 50 x 5
+# Groups:   Species [1]
+   Sepal.Length Sepal.Width Petal.Length Petal.Width Species
+          <dbl>       <dbl>        <dbl>       <dbl>   <fct>
+ 1          5.1         3.5          1.4         0.2 setosa 
+ 2          4.9         3            1.4         0.2 setosa 
+ 3          4.7         3.2          1.3         0.2 setosa 
+ 4          4.6         3.1          1.5         0.2 setosa 
+ 5          5           3.6          1.4         0.2 setosa 
+ 6          5.4         3.9          1.7         0.4 setosa 
+ 7          4.6         3.4          1.4         0.3 setosa 
+ 8          5           3.4          1.5         0.2 setosa 
+ 9          4.4         2.9          1.4         0.2 setosa 
+10          4.9         3.1          1.5         0.1 setosa 
+# … with 40 more rows
+#+end_example
+\\
+
+**** TODO ★☆☆ ~group_by_drop_default(.tbl)~.
+*** TODO grouped_df の作成
+**** ★☆☆ ~grouped_df(data, vars, drop = FALSE)~.
+**** ★☆☆ ~is.grouped_df(x)~.
+**** ★☆☆ ~is_grouped_df(x)~.
+**** ★☆☆ ~new_grouped_df(x, groups, ..., class = character())~.
+**** ★☆☆ ~validate_grouped_df(x)~.
+** TODO Scoped verbs の亜種
+*** 基本
+
+- ~{dplyr}~ の *Scoped verbs* には、末尾に ~_all~, ~_at~, ~_if~ が付く亜種が存在する
+  - ~arrange()~, ~distinct()~, ~filter()~, ~group_by()~, ~mutate()~, ~rename()~, ~select()~, ~summarise()~, ~transmute()~ の計 9 つ
+
+- 亜種毎のルール
+  - ~_all~: 全ての列に ~.funs~ の関数を適応
+  - ~_at~:  ~.vars~ で列を選択し ~.funs~ の関数を適応
+  - ~_if~:  ~.predicate~ で列を選択し ~.funs~ の関数を適応
+
+- ~.funs~ の指定方法
+  - "min", min, のように文字列もしくは、シンボルで指定
+  - ~list(min, max)~ で複数の関数を指定
+  - ~list("min" = min, "max" = max)~ で列名を指定できる
+  - ~funs(min, max)~ の指定方法は *soft-deprecated*
+
+- ~.vars~ の指定方法
+  - ~vars(starts_with("hoge"))~ *select_helpers* を使う場合
+
+- ~.predicate~ の指定方法
+ 
+*** Select helpers
+
+- パッケージに ~{tidyselect}~ パッケージから import されている
+- ~_at~ 系の関数で列名を選択するために利用する
+
+**** ★★★ ~starts_with(match, ignore.case = TRUE, vars = peek_vars())~.
+
+- 列名のプレフィックスで指定
+
+#+begin_src R :exports both :results output
+col_names <- names(iris)
+tidyselect::vars_select(col_names, starts_with("Sepal"))
+#+end_src
+
+#+RESULTS:
+: 
+:   Sepal.Length    Sepal.Width 
+: "Sepal.Length"  "Sepal.Width"
+
+**** ★★★ ~ends_with(match, ignore.case = TRUE, vars = peek_vars())~.
+
+- 列名のサフィックスで指定
+
+#+begin_src R :exports both :results output
+col_names <- names(iris)
+tidyselect::vars_select(col_names, ends_with("Width"))
+#+end_src
+
+#+RESULTS:
+: 
+:   Sepal.Width   Petal.Width 
+: "Sepal.Width" "Petal.Width"
+
+**** ★★☆ ~contains(match, ignore.case = TRUE, vars = peek_vars())~.
+
+- 文字列を含む列を選択する
+
+#+begin_src R :exports both :results output
+col_names <- names(iris)
+tidyselect::vars_select(col_names, contains("etal"))
+#+end_src
+
+#+RESULTS:
+: 
+:   Petal.Length    Petal.Width 
+: "Petal.Length"  "Petal.Width"
+
+**** ★☆☆ ~matches(match, ignore.case = TRUE, vars = peek_vars())~.
+
+- 正規表現を含む列を選択する
+
+#+begin_src R :exports both :results output
+col_names <- names(iris)
+tidyselect::vars_select(col_names, matches(".t."))
+#+end_src
+
+#+RESULTS:
+: 
+:   Sepal.Length    Sepal.Width   Petal.Length    Petal.Width 
+: "Sepal.Length"  "Sepal.Width" "Petal.Length"  "Petal.Width"
+
+**** ★☆☆ ~num_range(prefix, range, width = NULL, vars = peek_vars())~.
+
+- prefix + 連番のような列名から連番の範囲を指定して抽出できる
+
+#+begin_src R :exports both :results output
+col_names <- c("col01", "col02", "col03", "col04")
+tidyselect::vars_select(col_names, num_range(prefix = "col", range = 1:3, width = 2))
+#+end_src
+
+#+RESULTS:
+:   col01   col02   col03 
+: "col01" "col02" "col03"
+
+**** ★★☆ ~one_of(..., .vars = peek_vars())~.
+
+- character vector で列を指定
+
+#+begin_src R :exports both :results output
+col_names <- names(iris)
+tidyselect::vars_select(col_names, one_of(c("Sepal.Width", "Petal.Width")))
+#+end_src
+
+#+RESULTS:
+:   Sepal.Width   Petal.Width 
+: "Sepal.Width" "Petal.Width"
+
+**** ★☆☆ ~everything(vars = peek_vars())~.
+
+- 全てにマッチする
+ 
+#+begin_src R :exports both :results output
+col_names <- names(iris)
+tidyselect::vars_select(col_names, everything())
+#+end_src
+
+#+RESULTS:
+:   Sepal.Length    Sepal.Width   Petal.Length    Petal.Width        Species 
+: "Sepal.Length"  "Sepal.Width" "Petal.Length"  "Petal.Width"      "Species"
+\\
+
+- 特定の列を先頭に持ってきたい場合に、「残り全て」を指定するために使う
+
+#+begin_src R
+FANG %>% select(date, everything()) %>% head(4)
+#+end_src
+
+#+RESULTS:
+|       date | symbol |  open |  high |   low | close |   volume | adjusted |
+|------------+--------+-------+-------+-------+-------+----------+----------|
+| 2013-01-02 | FB     | 27.44 | 28.18 | 27.42 |    28 | 69846400 |       28 |
+| 2013-01-03 | FB     | 27.88 | 28.47 | 27.59 | 27.77 | 63140600 |    27.77 |
+| 2013-01-04 | FB     | 28.01 | 28.93 | 27.83 | 28.76 | 72715400 |    28.76 |
+| 2013-01-07 | FB     | 28.69 | 29.79 | 28.65 | 29.42 | 83781800 |    29.42 |
+\\
+
+**** ★☆☆ ~last_col(offset = 0L, vars = peek_vars())~.
+
+- 後ろから offset を指定して選択
+
+#+begin_src R :exports both :results output
+col_names <- names(iris)
+tidyselect::vars_select(col_names, last_col())
+#+end_src
+
+#+RESULTS:
+: 
+:   Petal.Width 
+: "Petal.Width"
+
+*** dplyr
+**** ★★★ ~vars(...)~.
+**** ★☆☆ ~all_vars(expr)~.
+**** ★☆☆ ~any_vars(expr)~.
+*** _all
+**** ★☆☆ ~arrange_all(.tbl, .funs = list(), ..., .by_group = FALSE)~.
+**** ★☆☆ ~distinct_all(.tbl, .funs = list(), ..., .keep_all = FALSE)~.
+**** ★☆☆ ~filter_all(.tbl, .vars_predicate, .preserve = FALSE)~.
+**** ★☆☆ ~group_by_all(.tbl, .funs = list(), ..., .add = FALSE, .drop = group_by_drop_default(.tbl))~.
+**** ★★☆ ~mutate_all(.tbl, .funs, ...)~.
+**** ★★☆ ~rename_all(.tbl, .funs = list(), ...)~.
+**** ★☆☆ ~select_all(.tbl, .funs = list(), ...)~.
+**** ★★☆ ~summarise_all(.tbl, .funs, ...)~.
+**** ★☆☆ ~transmute_all(.tbl, .funs, ...)~.
+*** _at
+**** ★☆☆ ~arrange_at(.tbl, .vars, .funs = list(), ..., .by_group = FALSE)~.
+**** ★☆☆ ~distinct_at(.tbl, .vars, .funs = list(), ..., .keep_all = FALSE)~.
+**** ★☆☆ ~filter_at(.tbl, .vars, .vars_predicate, .preserve = FALSE)~.
+**** ★☆☆ ~group_by_at(.tbl, .vars, .funs = list(), ..., .add = FALSE, .drop = group_by_drop_default(.tbl))~.
+**** ★★☆ ~mutate_at(.tbl, .vars, .funs, ..., .cols = NULL)~.
+**** ★★☆ ~rename_at(.tbl, .vars, .funs = list(), ...)~.
+**** ★★☆ ~select_at(.tbl, .vars, .funs = list(), ...)~.
+**** ★★☆ ~summarise_at(.tbl, .vars, .funs, ..., .cols = NULL)~.
+**** ★☆☆ ~transmute_at(.tbl, .vars, .funs, ..., .cols = NULL)~.
+*** _if
+**** ★☆☆ ~arrange_if(.tbl, .predicate, .funs = list(), ..., .by_group = FALSE)~.
+**** ★☆☆ ~distinct_if(.tbl, .predicate, .funs = list(), ..., .keep_all = FALSE)~.
+**** ★☆☆ ~filter_if(.tbl, .predicate, .vars_predicate, .preserve = FALSE)~.
+**** ★☆☆ ~group_by_if(.tbl, .predicate, .funs = list(), ..., .add = FALSE, .drop = group_by_drop_default(.tbl))~.
+**** ★☆☆ ~mutate_if(.tbl, .predicate, .funs, ...)~.
+**** ★☆☆ ~rename_if(.tbl, .predicate, .funs = list(), ...)~.
+**** ★☆☆ ~select_if(.tbl, .predicate, .funs = list(), ...)~.
+**** ★☆☆ ~summarise_if(.tbl, .predicate, .funs, ...)~.
+**** ★☆☆ ~transmute_if(.tbl, .predicate, .funs, ...)~.
+*** _prepare
+**** ★☆☆ ~distinct_prepare(.data, vars, group_vars = character(), .keep_all = FALSE)~.
+**** ★☆☆ ~group_by_prepare(.data, ..., .dots = list(), add = FALSE)~.
 * 2 つの ~data.frame~ を操作する関数群
 ** データセット
 
@@ -1165,6 +1536,18 @@ dplyr::setequal(x, y)
 : [1] FALSE
 \\
 
+**** ★☆☆ ~all_equal(target, current, ignore_col_order = TRUE, ignore_row_order = TRUE, convert = FALSE, ...)~.
+
+- 同じ ~data.frame~ かどうかを比較
+- 同じでない場合、異なる箇所を指摘してくれる
+
+#+begin_src R :results output :exports both
+dplyr::all_equal(x, y)
+#+end_src
+
+#+RESULTS:
+: [1] "Rows in x but not y: 3. Rows in y but not x: 3. "
+
 ** 結合演算
 *** Mutating join
 **** ★★★ ~inner_join(x, y, by = NULL, copy = FALSE, suffix = c(".x", ".y"), ...)~.
@@ -1237,7 +1620,7 @@ full_join(x, y, by = "fruit")
 | grape  | nil         | radish      |
 \\
 
-**** TODO nest_join(x, y, by = NULL, copy = FALSE, keep = FALSE, name = NULL, ...)
+**** TODO ★☆☆ ~nest_join(x, y, by = NULL, copy = FALSE, keep = FALSE, name = NULL, ...)~.
 
 - ~full_join()~ 以外を一般的に扱うことができる
 
@@ -1366,7 +1749,11 @@ bind_cols(x, y)
 \\
 
 * ヘルパー関数群
-** ベクトル関数
+** ベクトル関数・ウィンドウ関数
+
+- ~mutate()~ や ~transmute()~ 内で利用する
+- ベクトルを引数に取り、新たなベクトルを返す関数
+
 *** データセット
 
 #+begin_src R
@@ -1610,7 +1997,7 @@ cumsum(x_vec) / seq_along(x_vec)
 :  [7]  0.04485714  0.13150000  0.18088889  0.19580000
 \\
 
-*** 条件
+*** 比較
 **** ★★★ ~between(x, left, right)~.
 
 - shortcut for ~x >= left & x <= right~
@@ -1621,6 +2008,48 @@ between(x_vec, -0.7, 0.4)
 
 #+RESULTS:
 :  [1]  TRUE  TRUE FALSE FALSE  TRUE FALSE FALSE FALSE FALSE  TRUE
+\\
+
+**** ★★☆ ~near(x, y, tol = .Machine$double.eps^0.5)~.
+
+- 浮動小数点の誤差を考慮した比較
+- tol で誤差の範囲を指定できる
+
+#+begin_src R :results output :exports both
+sqrt(2) ^ 2 == 2
+near(sqrt(2) ^ 2, 2)
+#+end_src
+
+#+RESULTS:
+: [1] FALSE
+: 
+: [1] TRUE
+
+- 実行環境でのデフォルト tolerance
+#+begin_src R :results output :exports both
+.Machine$double.eps * 0.5
+#+end_src
+
+#+RESULTS:
+: [1] 1.110223e-16
+
+*** 条件分岐
+**** ★★☆ ~if_else(condition, true, false, missing = NULL)~.
+
+- TRUE/FALSE の型が同じかどうかをチェックするため、base ~ifelse()~ よりも厳格なバージョン
+
+#+begin_src R :results output :exports both
+x <- c(-5:5, NA)
+if_else(x < 0, NA_integer_, x)
+
+# NA_integer を NA にするとエラーになる
+# Error: `false` must be a logical vector, not an integer vector
+# if_else(x < 0, NA, x)
+#+end_src
+
+#+RESULTS:
+: 
+:  [1] NA NA NA NA NA  0  1  2  3  4  5  0
 \\
 
 **** ★☆☆ ~case_when(...)~.
@@ -1657,23 +2086,6 @@ case_when(
 [43] "43"        "44"        "fizz buzz" "46"        "47"        "fizz"     
 [49] "49"        "buzz"
 #+end_example
-
-**** ★★☆ ~if_else(condition, true, false, missing = NULL)~.
-
-- TRUE/FALSE の型が同じかどうかをチェックするため、base ~ifelse()~ よりも厳格なバージョン
-
-#+begin_src R :results output :exports both
-x <- c(-5:5, NA)
-if_else(x < 0, NA_integer_, x)
-
-# NA_integer を NA にするとエラーになる
-# Error: `false` must be a logical vector, not an integer vector
-# if_else(x < 0, NA, x)
-#+end_src
-
-#+RESULTS:
-: 
-:  [1] NA NA NA NA NA  0  1  2  3  4  5  0
 \\
 
 **** ★☆☆ ~recode(.x, ..., .default = NULL, .missing = NULL)~.
@@ -1703,9 +2115,9 @@ recode(char_vec,
 | c      |
 | Apple  |
 
-**** TODO recode_factor(.x, ..., .default = NULL, .missing = NULL, .ordered = FALSE)
+**** TODO ★☆☆ ~recode_factor(.x, ..., .default = NULL, .missing = NULL, .ordered = FALSE)~.
 *** オフセット
-**** ★☆☆ ~lead(x, n = 1L, default = NA, order_by = NULL, ...)~
+**** ★☆☆ ~lead(x, n = 1L, default = NA, order_by = NULL, ...)~.
 
 - 前のインデックスのデータを見たいとき
 - 末尾が ~NA~ になる
@@ -1819,31 +2231,89 @@ na_if(1:5, 3)
 \\
 
 *** その他
-**** near(x, y, tol = .Machine$double.eps^0.5)
-**** desc(x)
-**** id(.variables, drop = FALSE)
-**** group_cols(vars = peek_vars())
-**** group_trim(.tbl, .drop = group_by_drop_default(.tbl))
-**** groups(x)
-**** group_vars(x)
-**** vars(...)
-**** all_equal(target, current, ignore_col_order = TRUE, ignore_row_order = TRUE, convert = FALSE, ...)
-**** all_vars(expr)
-**** any_vars(expr)
-**** changes(x, y)
-**** location(df)
-**** combine(...)
-**** common_by(by = NULL, x, y)
-**** dim_desc(x)
-**** dr_dplyr()
-**** hybrid_call(.data, expr)
-**** order_by(order_by, call)
-**** tbl_vars(x)
-**** tbl_nongroup_vars(x)
-**** with_order(order_by, fun, x, ...)
-**** progress_estimated(n, min_time = 0)
-** サマリー関数
-*** ★★☆ ~nth(x, n, order_by = NULL, default = default_missing(x))~.
+**** ★★☆ ~desc(x)~.
+
+- データを降順に並び替える
+- ~arrange()~ の中などで利用する
+
+#+begin_src R :exports both :results output
+desc(1:10)
+#+end_src
+
+#+RESULTS:
+:  [1]  -1  -2  -3  -4  -5  -6  -7  -8  -9 -10
+
+**** TODO ★☆☆ ~id(.variables, drop = FALSE)~.
+**** TODO ★☆☆ ~combine(...)~.
+**** TODO ★☆☆ ~common_by(by = NULL, x, y)~.
+**** TODO ★☆☆ ~order_by(order_by, call)~.
+**** TODO ★☆☆ ~with_order(order_by, fun, x, ...)~.
+** 集約関数
+*** 集計 
+**** ★★★ ~n()~.
+
+- グループ内の行数をカウント
+- ~summarise()~, ~mutate()~, ~filter()~ 内でのみ利用できる
+
+#+begin_src R
+FANG %>%
+  group_by(symbol) %>%
+  summarise(count = n())
+#+end_src
+
+#+RESULTS:
+| symbol | count |
+|--------+-------|
+| AMZN   |  1008 |
+| FB     |  1008 |
+| GOOG   |  1008 |
+| NFLX   |  1008 |
+\\
+
+**** ★★☆ ~n_distinct(..., na.rm = FALSE)~.
+
+- ユニークな長さ = ~length(unique(x))~
+
+#+begin_src R :exports both :results output
+x <- sample(1:10, 1e5, rep = TRUE)
+length(unique(x))
+n_distinct(x)
+#+end_src
+
+#+RESULTS:
+: 
+: [1] 10
+: 
+: [1] 10
+\\
+
+*** ポジション 
+**** ★★☆ ~first(x, order_by = NULL, default = default_missing(x))~.
+
+- 1 番目を抜き出す
+
+#+begin_src R :results output :exports both
+first(1:10)
+#+end_src
+
+#+RESULTS:
+: [1] 1
+\\
+
+**** ★★☆ ~last(x, order_by = NULL, default = default_missing(x))~.
+
+- 最後を抜き出す
+- ~length()~ + ~[~ を使うよりも直感的
+
+#+begin_src R :results output :exports both
+last(1:10)
+#+end_src
+
+#+RESULTS:
+: [1] 10
+\\
+
+**** ★☆☆ ~nth(x, n, order_by = NULL, default = default_missing(x))~.
 
 - n 番目を抜き出す
 
@@ -1855,74 +2325,174 @@ nth(1:10, 4)
 : [1] 4
 \\
 
-*** first(x, order_by = NULL, default = default_missing(x))
-*** last(x, order_by = NULL, default = default_missing(x))
-*** n_distinct(..., na.rm = FALSE)
-*** group_size(x)
-*** n_groups(x)
-* DB functions                                                     :noexport:
-** External data source
-*** as.tbl()
-*** as.tbl_cube()
-*** is.src()
-*** is.tbl()
-*** src()
-*** src_df()
-*** src_local()
-*** src_tbls()
-*** tbl()
-*** tbl_cube()
-*** make_tbl()
-** SQL
-*** sql()
-*** sql_escape_ident()
-*** sql_escape_string()
-*** sql_join()
-*** sql_select()
-*** sql_semi_join()
-*** sql_set_op()
-*** sql_subquery()
-*** sql_translate_env()
-*** src_mysql
-*** src_sqlite
-** DB
-*** db_analyze()
-*** db_begin()
-*** db_commit()
-*** db_create_index()
-*** db_create_indexes()
-*** db_create_table()
-*** db_data_type()
-*** db_desc()
-*** db_drop_table()
-*** db_explain()
-*** db_has_table()
-*** db_insert_into()
-*** db_list_tables()
-*** db_query_fields()
-*** db_query_rows()
-*** db_rollback()
-*** db_save_query()
-*** db_write_table()
-** Utilty
-*** auto_copy()
-*** bench_tbls()
-*** check_dbplyr()
-*** collapse()
-*** collect()
-*** compare_tbls()
-*** compare_tbls2()
-*** compute()
-*** copy_to()
-*** eval_tbls()
-*** eval_tbls2()
-*** explain()
-*** ident()
-*** show_query()
-*** wrap_dbplyr_obj()
-*** same_src()
+** その他
+*** ユーティリティ
+**** ★☆☆ ~location(df)~.
 
-* インポートされた関数群                                           :noexport:
+- ~data.frame~ のメモリ上の位置を確認できる
+
+#+begin_src R :exports both :results output
+location(FANG)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+<0x55cdb4e029d8>
+Variables:
+ ,* symbol:    <0x55cdb5435810>
+ ,* date:      <0x55cdb5536b30>
+ ,* open:      <0x55cdb3d30a80>
+ ,* high:      <0x55cdb51783b0>
+ ,* low:       <0x55cdb3738cb0>
+ ,* close:     <0x55cdb4d38730>
+ ,* volume:    <0x55cdb5285500>
+ ,* adjusted:  <0x55cdb37b9800>
+Attributes:
+ ,* names:     <0x55cdb4e02c78>
+ ,* class:     <0x55cdb4c1b3a8>
+ ,* row.names: <0x55cdb3f1b778>
+#+end_example
+\\
+
+**** ★☆☆ ~changes(x, y)~.
+
+- 2 つの ~data.frame~ のメモリ上の差分を表示
+
+#+begin_src R :exports both :results output
+FANG2 <- FANG %>%
+  mutate(return = log(adjusted) - lag(log(adjusted)))
+
+changes(FANG, FANG2)
+#+end_src
+
+#+RESULTS:
+: Changed variables:
+:           old     new           
+: return    <added> 0x55cdb5edecc0
+: 
+: Changed attributes:
+:           old            new           
+: names     0x55cdb4e02c78 0x55cdb57f0d48
+: row.names 0x55cdb4300708 0x55cdb4303a20
+\\
+
+**** ★☆☆ ~dim_desc(x)~.
+
+- データの次元を表示する
+
+#+begin_src R :exports both :results output
+dim_desc(FANG)
+#+end_src
+
+#+RESULTS:
+: [1] "[4,032 x 8]"
+\\
+
+**** ★☆☆ ~dr_dplyr()~.
+
+- インストールが問題ないかを確認する
+
+#+begin_src R :exports both :results output
+dr_dplyr()
+#+end_src
+
+#+RESULTS:
+: Warning message:
+: Installed Rcpp (1.0.2) different from Rcpp used to build dplyr (1.0.1).
+: Please reinstall dplyr to avoid random crashes or undefined behavior.
+\\
+
+**** ★☆☆ ~hybrid_call(.data, expr)~.
+
+#+begin_src R :exports both :results output
+hybrid_call(iris, n())
+#+end_src
+
+#+RESULTS:
+: <hybrid evaluation>
+:   call      : dplyr::n()
+:   C++ class : dplyr::hybrid::Count<dplyr::NaturalDataFrame>
+\\
+
+**** ★☆☆ ~progress_estimated(n, min_time = 0)~.
+
+- プログレスバーを表示するための R6 class
+
+#+begin_src R :exports both :results output
+p <- progress_estimated(3)
+for (i in 1:3) p$pause(0.1)$tick()$print()
+#+end_src
+
+#+RESULTS:
+: |==================                                    | 33% ~0 s remaining     
+: |====================================                  | 67% ~0 s remaining     
+: |======================================================|100% ~0 s remaining
+
+* TODO DB functions                                                :noexport:
+** External data source
+*** ★☆☆ ~tbl(src, ...)~.
+*** ★☆☆ ~is.tbl(x)~.
+*** ★☆☆ ~as.tbl(x, ...)~.
+*** ★☆☆ ~as.tbl_cube(x, ...)~.
+*** ★☆☆ ~src(subclass, ...)~.
+*** ★☆☆ ~is.src(x)~.
+*** ★☆☆ ~src_local(tbl, pkg = NULL, env = NULL)~.
+*** ★☆☆ ~src_df(pkg = NULL, env = NULL)~.
+*** ★☆☆ ~src_tbls(x)~.
+*** ★☆☆ ~tbl_cube(dimensions, measures)~.
+*** ★☆☆ ~make_tbl(subclass, ...)~.
+*** ★☆☆ ~tbl_vars(x)~.
+*** ★☆☆ ~tbl_nongroup_vars(x)~.
+** SQL
+*** ★☆☆ ~db_analyze(con, table, ...)~.
+*** ★☆☆ ~db_begin(con, ...)~.
+*** ★☆☆ ~db_commit(con, ...)~.
+*** ★☆☆ ~db_create_index(con, table, columns, name = NULL, unique = FALSE, ...)~.
+*** ★☆☆ ~db_create_indexes(con, table, indexes = NULL, unique = FALSE, ...)~.
+*** ★☆☆ ~db_create_table(con, table, types, temporary = FALSE, ...)~.
+*** ★☆☆ ~db_data_type(con, fields)~.
+*** ★☆☆ ~db_desc(x)~.
+*** ★☆☆ ~db_drop_table(con, table, force = FALSE, ...)~.
+*** ★☆☆ ~db_explain(con, sql, ...)~.
+*** ★☆☆ ~db_has_table(con, table)~.
+*** ★☆☆ ~db_insert_into(con, table, values, ...)~.
+*** ★☆☆ ~db_list_tables(con)~.
+*** ★☆☆ ~db_query_fields(con, sql, ...)~.
+*** ★☆☆ ~db_query_rows(con, sql, ...)~.
+*** ★☆☆ ~db_rollback(con, ...)~.
+*** ★☆☆ ~db_save_query(con, sql, name, temporary = TRUE, ...)~.
+*** ★☆☆ ~db_write_table(con, table, types, values, temporary = FALSE, ...)~.
+*** ★☆☆ ~sql(...)~.
+*** ★☆☆ ~sql_escape_ident(con, x)~.
+*** ★☆☆ ~sql_escape_string(con, x)~.
+*** ★☆☆ ~sql_join(con, x, y, vars, type = "inner", by = NULL, ...)~.
+*** ★☆☆ ~sql_select(con, select, from, where = NULL, group_by = NULL, having = NULL, order_by = NULL, limit = NULL, distinct = FALSE, ...)~.
+*** ★☆☆ ~sql_semi_join(con, x, y, anti = FALSE, by = NULL, ...)~.
+*** ★☆☆ ~sql_set_op(con, x, y, method)~.
+*** ★☆☆ ~sql_subquery(con, from, name = random_table_name(), ...)~.
+*** ★☆☆ ~sql_translate_env(con)~.
+** Source
+*** ★☆☆ ~src_mysql(dbname, host = NULL, port = 0L, username = "root", password = "", ...)~.
+*** ★☆☆ ~src_postgres(dbname = NULL, host = NULL, port = NULL, user = NULL, password = NULL, ...)~.
+*** ★☆☆ ~src_sqlite(path, create = FALSE)~.
+** Utilty
+*** ~auto_copy(x, y, copy = FALSE, ...)~.
+*** ~bench_tbls(tbls, op, ..., times = 10)~.
+*** ~compare_tbls(tbls, op, ref = NULL, compare = equal_data_frame, ...)~.
+*** ~compare_tbls2(tbls_x, tbls_y, op, ref = NULL, compare = equal_data_frame, ...)~.
+*** ~eval_tbls(tbls, op)~.
+*** ~eval_tbls2(tbls_x, tbls_y, op)~.
+*** ~check_dbplyr()~.
+*** ~wrap_dbplyr_obj(obj_name)~.
+*** ~compute(x, name = random_table_name(), ...)~.
+*** ~collect(x, ...)~.
+*** ~collapse(x, ...)~.
+*** ~copy_to(dest, df, name = deparse(substitute(df)), overwrite = FALSE, ...)~.
+*** ~explain(x, ...)~.
+*** ~show_query(x, ...)~.
+*** ~ident(...)~.
+*** ~same_src(x, y).~
+* TODO インポートされた関数群                                      :noexport:
 ** {magrittr}
 *** %>%
 ** {rlang}
@@ -1964,22 +2534,30 @@ nth(1:10, 4)
 *** one_of()
 *** starts_with()
 
-* 非推奨とされている関数群
+* TODO 非推奨とされている関数群
 
-| dplyr function                | sucesssor                                          |
-|-------------------------------+----------------------------------------------------|
-| ~add_rownames()~                | ~tibble::rownames_to_column()~                       |
-| ~current_vars()~                |                                                    |
-| ~do()~, ~do_()~                   |                                                    |
-| ~failwith()~                    | ~purrr::possibly()~                                  |
-| ~funs()~, ~funs_()~               | ~~~, ~list()~                                          |
-| ~rbind_all()~                   | ~bind_rows()~                                        |
-| ~rbind_list()~                  | ~bind_rows()~                                        |
-| ~rename_vars()~, ~rename_vars_()~ | ~tidyselect::vars_rename()~                          |
-| ~rowwise()~                     |                                                    |
-| ~select_var()~                  | ~tidyselect::vars_select()~, ~tidyselect::vars_pull()~ |
-| ~select_vars()~, ~select_vars_()~ | ~tidyselect::vars_select()~, ~tidyselect::vars_pull()~ |
-| ~tbl_df()~                      | ~tibble::as_tibble()~                                |
+| dplyr function    | sucesssor                                          |
+|-------------------+----------------------------------------------------|
+| ~add_rownames()~    | ~tibble::rownames_to_column()~                       |
+| ~current_vars()~    |                                                    |
+| ~do()~              |                                                    |
+| ~do()~              |                                                    |
+| ~failwith()~        | ~purrr::possibly()~                                  |
+| ~funs()~            | ~~~, ~list()~                                          |
+| ~funs_()~           |                                                    |
+| ~rbind_all()~       | ~bind_rows()~                                        |
+| ~rbind_list()~      | ~bind_rows()~                                        |
+| ~rename_vars()~     | ~tidyselect::vars_rename()~                          |
+| ~rename_vars_()~    |                                                    |
+| ~rowwise()~         |                                                    |
+| ~select_var()~      | ~tidyselect::vars_select()~, ~tidyselect::vars_pull()~ |
+| ~select_vars()~     | ~tidyselect::vars_select()~, ~tidyselect::vars_pull()~ |
+| ~select_vars_()~    |                                                    |
+| ~tbl_df()~          | ~tibble::as_tibble()~                                |
+| ~mutate_each()~     | ~mutate_*()~                                         |
+| ~mutate_each_()~    |                                                    |
+| ~summarise_each()~  | ~summarise_*()~                                      |
+| ~summarise_each_()~ |                                                    |
 \\
 
 * 実行環境
@@ -2037,14 +2615,12 @@ loaded via a namespace (and not attached):
 - [[https://dplyr.tidyverse.org/reference/][dplyr reference]] (分類の参考になる)
 - [[https://github.com/rstudio/cheatsheets/raw/master/data-transformation.pdf][Cheatsheet(PDF)]]
 - [[https://dplyr.tidyverse.org/reference/se-deprecated.html][Deprecated SE versions of main verbs.]]
-\\
 - Vignette
   - [[https://cran.r-project.org/web/packages/dplyr/vignettes/compatibility.html][dplyr compatibility]]
   - [[https://cran.r-project.org/web/packages/dplyr/vignettes/dplyr.html][Introduction to dplyr]] ([[https://qiita.com/yutannihilation/items/7a78d897810446dd6a3b][和訳@Qiita]])
   - [[https://cran.r-project.org/web/packages/dplyr/vignettes/programming.html][Programming with dplyr]]
   - [[https://cran.r-project.org/web/packages/dplyr/vignettes/two-table.html][Two-table verbs]]
   - [[https://cran.r-project.org/web/packages/dplyr/vignettes/window-functions.html][Window functions]]
-\\
 - Blog
   - [[https://heavywatal.github.io/rstats/dplyr.html][dplyr — 高速data.frame処理@Heavy Watal]]
   - [[https://notchained.hatenablog.com/entry/2018/12/09/120553][dplyr 0.8.0を使ってみた（group_by()のbreaking changes編）@Technically, technophobic.]]
