@@ -16,37 +16,37 @@
       - [[#-sample_ntbl-size-replace--false-weight--null-env--null-][★☆☆ ~sample_n(tbl, size, replace = FALSE, weight = NULL, .env = NULL, ...)~.]]
       - [[#-sample_fractbl-size--1-replace--false-weight--null-env--null-][★☆☆ ~sample_frac(tbl, size = 1, replace = FALSE, weight = NULL, .env = NULL, ...)~.]]
     - [[#行の並び替え][行の並び替え]]
-      - [[#arrangedata-][arrange(.data, ...)]]
+      - [[#-arrangedata-][★★★ ~arrange(.data, ...)~.]]
     - [[#行の要約][行の要約]]
-      - [[#summarisedata-][summarise(.data, ...)]]
-      - [[#tallyx-wt-sort--false-name--n][tally(x, wt, sort = FALSE, name = "n")]]
-      - [[#countx--wt--null-sort--false-name--n-drop--group_dropsx][count(x, ..., wt = NULL, sort = FALSE, name = "n", .drop = group_drops(x))]]
+      - [[#-summarisedata-][★★★ ~summarise(.data, ...)~.]]
+      - [[#-tallyx-wt-sort--false-name--n][★☆☆ ~tally(x, wt, sort = FALSE, name = "n")~.]]
+      - [[#-countx--wt--null-sort--false-name--n-drop--group_dropsx][★☆☆ ~count(x, ..., wt = NULL, sort = FALSE, name = "n", .drop = group_drops(x))~.]]
   - [[#列の操作][列の操作]]
     - [[#列の追加][列の追加]]
-      - [[#mutatedata-][mutate(.data, ...)]]
-      - [[#transmutedata-][transmute(.data, ...)]]
-      - [[#add_tallyx-wt-sort--false-name--n][add_tally(x, wt, sort = FALSE, name = "n")]]
-      - [[#add_countx--wt--null-sort--false-name--n][add_count(x, ..., wt = NULL, sort = FALSE, name = "n")]]
+      - [[#-mutatedata-][★★★ ~mutate(.data, ...)~.]]
+      - [[#-transmutedata-][★☆☆ ~transmute(.data, ...)~.]]
+      - [[#-add_tallyx-wt-sort--false-name--n][★★☆ ~add_tally(x, wt, sort = FALSE, name = "n")~.]]
+      - [[#-add_countx--wt--null-sort--false-name--n][★☆☆ ~add_count(x, ..., wt = NULL, sort = FALSE, name = "n")~.]]
     - [[#列の抽出][列の抽出]]
-      - [[#selectdata-][select(.data, ...)]]
-      - [[#pulldata-var---1][pull(.data, var = -1)]]
+      - [[#-selectdata-][★★★ ~select(.data, ...)~.]]
+      - [[#-pulldata-var---1][★★★ ~pull(.data, var = -1)~.]]
     - [[#列の名前変更][列の名前変更]]
-      - [[#renamedata-][rename(.data, ...)]]
+      - [[#-renamedata-][★★☆ ~rename(.data, ...)~.]]
   - [[#グループの操作][グループの操作]]
     - [[#グループの作成][グループの作成]]
-      - [[#group_bydata--add--false-drop--group_by_drop_defaultdata][group_by(.data, ..., add = FALSE, .drop = group_by_drop_default(.data))]]
-      - [[#ungroupx-][ungroup(x, ...)]]
-      - [[#group_splittbl--keep--true][group_split(.tbl, ..., keep = TRUE)]]
-      - [[#group_nesttbl--key--data-keep--false][group_nest(.tbl, ..., .key = "data", keep = FALSE)]]
+      - [[#-group_bydata--add--false-drop--group_by_drop_defaultdata][★★★ ~group_by(.data, ..., add = FALSE, .drop = group_by_drop_default(.data))~.]]
+      - [[#-ungroupx-][★★★ ~ungroup(x, ...)~.]]
+      - [[#-group_nesttbl--key--data-keep--false][★★☆ ~group_nest(.tbl, ..., .key = "data", keep = FALSE)~.]]
+      - [[#-group_splittbl--keep--true][★★☆ ~group_split(.tbl, ..., keep = TRUE)~.]]
     - [[#グループへの関数適応][グループへの関数適応]]
-      - [[#group_maptbl-f--keep--false][group_map(.tbl, .f, ..., keep = FALSE)]]
-      - [[#group_modifytbl-f--keep--false][group_modify(.tbl, .f, ..., keep = FALSE)]]
-      - [[#group_walktbl-f-][group_walk(.tbl, .f, ...)]]
+      - [[#-group_maptbl-f--keep--false][★★☆ ~group_map(.tbl, .f, ..., keep = FALSE)~.]]
+      - [[#-group_modifytbl-f--keep--false][★☆☆ ~group_modify(.tbl, .f, ..., keep = FALSE)~.]]
+      - [[#-group_walktbl-f-][★☆☆ ~group_walk(.tbl, .f, ...)~.]]
     - [[#グループ情報の抽出][グループ情報の抽出]]
-      - [[#group_datadata][group_data(.data)]]
-      - [[#group_keystbl-][group_keys(.tbl, ...)]]
-      - [[#group_rowsdata][group_rows(.data)]]
-      - [[#group_indicesdata-][group_indices(.data, ...)]]
+      - [[#-group_datadata][★☆☆ ~group_data(.data)~.]]
+      - [[#-group_keystbl-][★☆☆ ~group_keys(.tbl, ...)~.]]
+      - [[#-group_rowsdata][★☆☆ ~group_rows(.data)~.]]
+      - [[#-group_indicesdata-][★☆☆ ~group_indices(.data, ...)~.]]
   - [[#grouped_df][grouped_df]]
     - [[#grouped_df-1][grouped_df]]
     - [[#is_grouped_df][is_grouped_df()]]
@@ -57,53 +57,53 @@
   - [[#データセット-1][データセット]]
   - [[#集合演算][集合演算]]
     - [[#積集合][積集合]]
-      - [[#intersectx-y-][intersect(x, y, ...)]]
+      - [[#-intersectx-y-][★★☆ ~intersect(x, y, ...)~.]]
     - [[#和集合][和集合]]
-      - [[#unionx-y-][union(x, y, ...)]]
-      - [[#union_allx-y-][union_all(x, y, ...)]]
+      - [[#-unionx-y-][★★☆ ~union(x, y, ...)~.]]
+      - [[#-union_allx-y-][★☆☆ ~union_all(x, y, ...)~.]]
     - [[#差集合][差集合]]
-      - [[#setdiffx-y-][setdiff(x, y, ...)]]
+      - [[#-setdiffx-y-][★★☆ ~setdiff(x, y, ...)~.]]
     - [[#同値][同値]]
-      - [[#setequalx-y-][setequal(x, y, ...)]]
+      - [[#-setequalx-y-][★☆☆ ~setequal(x, y, ...)~.]]
   - [[#結合演算][結合演算]]
     - [[#mutating-join][Mutating join]]
-      - [[#inner_joinx-y-by--null-copy--false-suffix--cx-y-][inner_join(x, y, by = NULL, copy = FALSE, suffix = c(".x", ".y"), ...)]]
-      - [[#left_joinx-y-by--null-copy--false-suffix--cx-y-][left_join(x, y, by = NULL, copy = FALSE, suffix = c(".x", ".y"), ...)]]
-      - [[#right_joinx-y-by--null-copy--false-suffix--cx-y-][right_join(x, y, by = NULL, copy = FALSE, suffix = c(".x", ".y"), ...)]]
-      - [[#full_joinx-y-by--null-copy--false-suffix--cx-y-][full_join(x, y, by = NULL, copy = FALSE, suffix = c(".x", ".y"), ...)]]
+      - [[#-inner_joinx-y-by--null-copy--false-suffix--cx-y-][★★★ ~inner_join(x, y, by = NULL, copy = FALSE, suffix = c(".x", ".y"), ...)~.]]
+      - [[#-left_joinx-y-by--null-copy--false-suffix--cx-y-][★★★ ~left_join(x, y, by = NULL, copy = FALSE, suffix = c(".x", ".y"), ...)~.]]
+      - [[#-right_joinx-y-by--null-copy--false-suffix--cx-y-][★☆☆ ~right_join(x, y, by = NULL, copy = FALSE, suffix = c(".x", ".y"), ...)~.]]
+      - [[#-full_joinx-y-by--null-copy--false-suffix--cx-y-][★★☆ ~full_join(x, y, by = NULL, copy = FALSE, suffix = c(".x", ".y"), ...)~.]]
       - [[#nest_joinx-y-by--null-copy--false-keep--false-name--null-][nest_join(x, y, by = NULL, copy = FALSE, keep = FALSE, name = NULL, ...)]]
     - [[#filtering-join][Filtering join]]
-      - [[#semi_joinx-y-by--null-copy--false-][semi_join(x, y, by = NULL, copy = FALSE, ...)]]
-      - [[#anti_joinx-y-by--null-copy--false-][anti_join(x, y, by = NULL, copy = FALSE, ...)]]
+      - [[#-semi_joinx-y-by--null-copy--false-][★★☆ ~semi_join(x, y, by = NULL, copy = FALSE, ...)~.]]
+      - [[#-anti_joinx-y-by--null-copy--false-][★☆☆ ~anti_join(x, y, by = NULL, copy = FALSE, ...)~.]]
     - [[#bind-tables][Bind tables]]
-      - [[#bind_rows-id--null][bind_rows(..., .id = NULL)]]
-      - [[#bind_cols][bind_cols(...)]]
+      - [[#-bind_rows-id--null][★★★ ~bind_rows(..., .id = NULL)~.]]
+      - [[#-bind_cols][★☆☆ ~bind_cols(...)~.]]
 - [[#ヘルパー関数群][ヘルパー関数群]]
   - [[#ベクトル関数][ベクトル関数]]
     - [[#データセット-2][データセット]]
     - [[#ランキング][ランキング]]
-      - [[#row_numberx][row_number(x)]]
-      - [[#ntilex--row_number-n][ntile(x = row_number(), n)]]
-      - [[#min_rankx][min_rank(x)]]
-      - [[#dense_rankx][dense_rank(x)]]
-      - [[#percent_rankx][percent_rank(x)]]
-      - [[#cume_distx][cume_dist(x)]]
+      - [[#-row_numberx][★★☆ ~row_number(x)~.]]
+      - [[#-min_rankx][★★☆ ~min_rank(x)~.]]
+      - [[#-dense_rankx][★☆☆ ~dense_rank(x)~.]]
+      - [[#-percent_rankx][★★☆ ~percent_rank(x)~.]]
+      - [[#-ntilex--row_number-n][★☆☆ ~ntile(x = row_number(), n)~.]]
+      - [[#-cume_distx][★☆☆ ~cume_dist(x)~.]]
     - [[#累積関数][累積関数]]
-      - [[#cumallx][cumall(x)]]
-      - [[#cumanyx][cumany(x)]]
-      - [[#cummeanx][cummean(x)]]
+      - [[#-cumallx][★☆☆ ~cumall(x)~.]]
+      - [[#-cumanyx][★☆☆ ~cumany(x)~.]]
+      - [[#-cummeanx][★☆☆ ~cummean(x)~.]]
     - [[#条件][条件]]
-      - [[#betweenx-left-right][between(x, left, right)]]
-      - [[#case_when][case_when(...)]]
-      - [[#if_elsecondition-true-false-missing--null][if_else(condition, true, false, missing = NULL)]]
-      - [[#recodex--default--null-missing--null][recode(.x, ..., .default = NULL, .missing = NULL)]]
+      - [[#-betweenx-left-right][★★★ ~between(x, left, right)~.]]
+      - [[#-case_when][★☆☆ ~case_when(...)~.]]
+      - [[#-if_elsecondition-true-false-missing--null][★★☆ ~if_else(condition, true, false, missing = NULL)~.]]
+      - [[#-recodex--default--null-missing--null][★☆☆ ~recode(.x, ..., .default = NULL, .missing = NULL)~.]]
       - [[#recode_factorx--default--null-missing--null-ordered--false][recode_factor(.x, ..., .default = NULL, .missing = NULL, .ordered = FALSE)]]
     - [[#オフセット][オフセット]]
-      - [[#leadx-n--1l-default--na-order_by--null-][lead(x, n = 1L, default = NA, order_by = NULL, ...)]]
-      - [[#lagx-n--1l-default--na-order_by--null-][lag(x, n = 1L, default = NA, order_by = NULL, ...)]]
+      - [[#-leadx-n--1l-default--na-order_by--null-][★☆☆ ~lead(x, n = 1L, default = NA, order_by = NULL, ...)~]]
+      - [[#-lagx-n--1l-default--na-order_by--null-][★★★ ~lag(x, n = 1L, default = NA, order_by = NULL, ...)~.]]
     - [[#na][NA]]
-      - [[#coalesce][coalesce(...)]]
-      - [[#na_ifx-y][na_if(x, y)]]
+      - [[#-coalesce][★☆☆ ~coalesce(...)~.]]
+      - [[#-na_ifx-y][★★☆ ~na_if(x, y)~.]]
     - [[#その他][その他]]
       - [[#nearx-y-tol--machinedoubleeps05][near(x, y, tol = .Machine$double.eps^0.5)]]
       - [[#descx][desc(x)]]
@@ -129,7 +129,7 @@
       - [[#with_orderorder_by-fun-x-][with_order(order_by, fun, x, ...)]]
       - [[#progress_estimatedn-min_time--0][progress_estimated(n, min_time = 0)]]
   - [[#サマリー関数][サマリー関数]]
-    - [[#nthx-n-order_by--null-default--default_missingx][nth(x, n, order_by = NULL, default = default_missing(x))]]
+    - [[#-nthx-n-order_by--null-default--default_missingx][★★☆ ~nth(x, n, order_by = NULL, default = default_missing(x))~.]]
     - [[#firstx-order_by--null-default--default_missingx][first(x, order_by = NULL, default = default_missing(x))]]
     - [[#lastx-order_by--null-default--default_missingx][last(x, order_by = NULL, default = default_missing(x))]]
     - [[#n_distinct-narm--false][n_distinct(..., na.rm = FALSE)]]
@@ -469,7 +469,7 @@ FANG %>%
 \\
 
 *** 行の並び替え
-**** arrange(.data, ...)
+**** ★★★ ~arrange(.data, ...)~.
 
 - 指定した列の値で並び替え
 
@@ -502,7 +502,7 @@ FANG %>% arrange(desc(volume)) %>% head(4)
 \\
 
 *** 行の要約
-**** summarise(.data, ...)
+**** ★★★ ~summarise(.data, ...)~.
 
 - ~summarise()~ (アメリカ英語) と ~summarize()~ (イギリス英語) は同じもの
 - _vector を引数に取って、スカラ値を返す関数_ (~sum()~ や ~mean()~)を ~summarise()~ の中で利用する
@@ -523,7 +523,7 @@ FANG %>%
 | NFLX   | 19565909.8214286 |
 \\
 
-**** tally(x, wt, sort = FALSE, name = "n")
+**** ★☆☆ ~tally(x, wt, sort = FALSE, name = "n")~.
 
 - ~summarise()~ -> ~n()~ や ~sum(n)~ のラッパー関数
 - 列を指定しなければ、総行数を集計してくれる (= ~n()~)
@@ -580,7 +580,7 @@ FANG %>%
 | NFLX   |  6915790700 |  4898415200 | 4679881700 | 3228349500 |
 \\
 
-**** count(x, ..., wt = NULL, sort = FALSE, name = "n", .drop = group_drops(x))
+**** ★☆☆ ~count(x, ..., wt = NULL, sort = FALSE, name = "n", .drop = group_drops(x))~.
 
 - ~tally()~ と似ているが、事前に ~group_by()~ してくれる
 
@@ -599,7 +599,7 @@ FANG %>% count(symbol)
 
 ** 列の操作
 *** 列の追加
-**** mutate(.data, ...)
+**** ★★★ ~mutate(.data, ...)~.
 
 - 新しい列を追加する
 - Name-Value のペアを引数とする
@@ -620,7 +620,7 @@ FANG %>%
 | FB     | 2013-01-07 | 28.69 | 29.79 | 28.65 | 29.42 | 83781800 |    29.42 |   0.0226891823204456 |
 \\
 
-**** transmute(.data, ...)
+**** ★☆☆ ~transmute(.data, ...)~.
 
 - 新しい列を作成し、その他の列を削除する
 
@@ -639,7 +639,7 @@ FANG %>%
 |   0.0226891823204456 |
 \\
 
-**** add_tally(x, wt, sort = FALSE, name = "n")
+**** ★★☆ ~add_tally(x, wt, sort = FALSE, name = "n")~.
 
 - ~tally()~ と同様の機能だが、行を要約するのではなく、単純に列を追加するだけ
 
@@ -656,7 +656,7 @@ FANG %>% add_tally() %>% head(4)
 | FB     | 2013-01-07 | 28.69 | 29.79 | 28.65 | 29.42 | 83781800 |    29.42 | 4032 |
 \\
 
-**** add_count(x, ..., wt = NULL, sort = FALSE, name = "n")
+**** ★☆☆ ~add_count(x, ..., wt = NULL, sort = FALSE, name = "n")~.
 
 - ~count()~ と同様の機能だが、行を要約するのではなく、単純に列を追加するだけ
 
@@ -674,7 +674,7 @@ FANG %>% add_count() %>% head(4)
 \\
 
 *** 列の抽出
-**** select(.data, ...)
+**** ★★★ ~select(.data, ...)~.
 
 - 列の選択
 - 1 列のみであっても、ベクトルにはならず ~data.frame~ のまま抽出できる
@@ -706,7 +706,7 @@ FANG %>% select(symbol, date, adjusted) %>% head(4)
 | FB     | 2013-01-07 | 83781800 |    29.42 |
 \\
 
-**** pull(.data, var = -1)
+**** ★★★ ~pull(.data, var = -1)~.
 
 - 列をベクトルとして抽出する
 
@@ -742,7 +742,7 @@ FANG %>% .$adjusted %>% head(4)
 \\
 
 *** 列の名前変更
-**** rename(.data, ...)
+**** ★★☆ ~rename(.data, ...)~.
 
 - new = old の形式で列の名前を変更できる
 - 全ての列名を一括で変更したい場合は ~rlang::set_names()~ や ~stats::setNames()~ に列名の文字列ベクトルを渡すほうが簡単
@@ -785,7 +785,7 @@ FANG %>%
 
 ** グループの操作
 *** グループの作成
-**** group_by(.data, ..., add = FALSE, .drop = group_by_drop_default(.data))
+**** ★★★ ~group_by(.data, ..., add = FALSE, .drop = group_by_drop_default(.data))~.
 
 - 指定した列でグループ化された ~grouped_df~ を作成する
 - ~ungroup()~ でグループ化を解除
@@ -799,7 +799,7 @@ FANG %>% group_by(symbol) %>% class()
 : [1] "grouped_df" "tbl_df"     "tbl"        "data.frame"
 \\
 
-**** ungroup(x, ...)
+**** ★★★ ~ungroup(x, ...)~.
 
 - グループ化を解除する
 
@@ -811,28 +811,10 @@ FANG %>% group_by(symbol) %>% ungroup() %>% class()
 : [1] "tbl_df"     "tbl"        "data.frame"
 \\
 
-**** group_split(.tbl, ..., keep = TRUE)
-
-- 指定した列で ~data.frame~ を *list of data.frame* に分割する
-- list に分割し ~purrr::map()~ で関数を適応するフローが強力
-
-#+begin_src R :results output :exports both
-FANG_l <- FANG %>% group_split(symbol)
-class(FANG_l)
-length(FANG_l)
-#+end_src
-
-#+RESULTS:
-: 
-: [1] "list"
-: 
-: [1] 4
-\\
-
-**** group_nest(.tbl, ..., .key = "data", keep = FALSE)
+**** ★★☆ ~group_nest(.tbl, ..., .key = "data", keep = FALSE)~.
 
 - グループ毎のネストされた ~data.frame~ を作成する
-- ネストされたデータに対して ~purrr::map()~ を ~mutate()~ 内で使って操作することが多い
+- ネストされたデータに対して ~purrr::map()~ を ~mutate()~ 内で使ってモデリング等の操作することが多い
 
 #+begin_src R :results output :exports both
 FANG %>% group_nest(symbol)
@@ -869,8 +851,26 @@ Did you want `data = c(date, open, high, low, close, volume, adjusted)`?
 #+end_example
 \\
 
+**** ★★☆ ~group_split(.tbl, ..., keep = TRUE)~.
+
+- 指定した列で ~data.frame~ を *list of data.frame* に分割する
+- list に分割し ~purrr::map()~ で関数を適応するフローが強力
+
+#+begin_src R :results output :exports both
+FANG_l <- FANG %>% group_split(symbol)
+class(FANG_l)
+length(FANG_l)
+#+end_src
+
+#+RESULTS:
+: 
+: [1] "list"
+: 
+: [1] 4
+\\
+
 *** グループへの関数適応
-**** group_map(.tbl, .f, ..., keep = FALSE)
+**** ★★☆ ~group_map(.tbl, .f, ..., keep = FALSE)~.
 
 - ~{purrr}~ と同様のスタイルで ~grouped_df~ のグループ毎に ~.f~ 関数を適応できる
 - 結果を ~list~ で返す
@@ -908,7 +908,7 @@ FANG %>%
 #+end_example
 \\
 
-**** group_modify(.tbl, .f, ..., keep = FALSE)
+**** ★☆☆ ~group_modify(.tbl, .f, ..., keep = FALSE)~.
 
 - ~.f~ は ~data.frame~ を返す必要がある
 - グループ毎の ~lm()~ の結果を ~{broom}~ で ~data.frame~ にして返す例
@@ -932,7 +932,7 @@ FANG %>%
 | NFLX   |   0.105343657901732 | 3.70454569826428e-26 | -4813.48163450679 | 9632.96326901357 |
 \\
 
-**** group_walk(.tbl, .f, ...)
+**** ★☆☆ ~group_walk(.tbl, .f, ...)~.
 
 - 副作用目的の関数を適応
 - 返り値は ~invisible~ で入力の ~data.frame~ を返す
@@ -952,7 +952,7 @@ df <- FANG %>%
 \\
 
 *** グループ情報の抽出
-**** group_data(.data)
+**** ★☆☆ ~group_data(.data)~.
 
 - ~grouped_df~ から グループのキーと元の ~data.frame~ に対する行インデックスを取得できる
 
@@ -970,7 +970,7 @@ FANG %>% group_by(symbol) %>% group_data()
 : 4 NFLX   <int [1,008]>
 \\
 
-**** group_keys(.tbl, ...)
+**** ★☆☆ ~group_keys(.tbl, ...)~.
 
 - ~group_data()~ のグループキーのみを返すバージョン
 
@@ -987,7 +987,7 @@ FANG %>% group_keys(symbol)
 | NFLX   |
 \\
 
-**** group_rows(.data)
+**** ★☆☆ ~group_rows(.data)~.
 
 - ~group_data()~ の行インデックスのみを返すバージョン
 
@@ -1001,7 +1001,7 @@ class(FANG_l)
 : [1] "list"
 \\
 
-**** group_indices(.data, ...)
+**** ★☆☆ ~group_indices(.data, ...)~.
 
 - グループ毎のユニーク ID を生成する
 
@@ -1021,7 +1021,7 @@ head(gid)
 : [1] 2 2 2 2 2 2
 \\
 
-** grouped_df
+** TODO grouped_df
 *** grouped_df
 *** is_grouped_df()
 *** is.grouped_df()
@@ -1067,7 +1067,7 @@ y <- data.frame(fruit = c("apple", "banana", "grape"),
 - 絶対参照にして利用したほうが、誤解がなくて無難
 
 *** 積集合
-**** intersect(x, y, ...)
+**** ★★☆ ~intersect(x, y, ...)~.
 
 - *積集合* = x, y の両方にある列を抜き出す
 
@@ -1083,7 +1083,7 @@ dplyr::intersect(x, y)
 \\
 
 *** 和集合
-**** union(x, y, ...)
+**** ★★☆ ~union(x, y, ...)~.
 
 - *和集合* = x, y を連結し、重複を削除
 
@@ -1100,7 +1100,7 @@ dplyr::union(x, y)
 | grape  | radish    |
 \\
 
-**** union_all(x, y, ...)
+**** ★☆☆ ~union_all(x, y, ...)~.
 
 - *和集合* = x, y を連結し、重複を削除 *しない*
 
@@ -1138,7 +1138,7 @@ bind_rows(x, y)
 \\
 
 *** 差集合
-**** setdiff(x, y, ...)
+**** ★★☆ ~setdiff(x, y, ...)~.
 
 - *差集合* = y にはない x の行を返す
 
@@ -1153,7 +1153,7 @@ dplyr::setdiff(x, y)
 \\
 
 *** 同値
-**** setequal(x, y, ...)
+**** ★☆☆ ~setequal(x, y, ...)~.
 
 - 同じ集合かどうかを判断する
 
@@ -1167,7 +1167,7 @@ dplyr::setequal(x, y)
 
 ** 結合演算
 *** Mutating join
-**** inner_join(x, y, by = NULL, copy = FALSE, suffix = c(".x", ".y"), ...)
+**** ★★★ ~inner_join(x, y, by = NULL, copy = FALSE, suffix = c(".x", ".y"), ...)~.
 
 - x, y の両方に by が存在する場合に結合する
 - ~by~ の指定方法
@@ -1186,7 +1186,7 @@ inner_join(x, y, by = c("fruit"))
 | banana | potato      | potato      |
 \\
 
-**** left_join(x, y, by = NULL, copy = FALSE, suffix = c(".x", ".y"), ...)
+**** ★★★ ~left_join(x, y, by = NULL, copy = FALSE, suffix = c(".x", ".y"), ...)~.
 
 - x は全て利用し、by が一致する y があれば結合する
 - y の欠損値は ~NA~ になる
@@ -1203,9 +1203,10 @@ left_join(x, y, by = "fruit")
 | peach  | tomato      | nil         |
 \\
 
-**** right_join(x, y, by = NULL, copy = FALSE, suffix = c(".x", ".y"), ...)
+**** ★☆☆ ~right_join(x, y, by = NULL, copy = FALSE, suffix = c(".x", ".y"), ...)~.
 
-- left_join の x, y が逆のバージョン
+- ~left_join()~ の x, y が逆のバージョン
+- 基本的には ~left_join()~ の方が直感的にわかりやすいので利用しない
 
 #+begin_src R
 right_join(x, y, by = "fruit")
@@ -1219,7 +1220,7 @@ right_join(x, y, by = "fruit")
 | grape  | nil         | radish      |
 \\
 
-**** full_join(x, y, by = NULL, copy = FALSE, suffix = c(".x", ".y"), ...)
+**** ★★☆ ~full_join(x, y, by = NULL, copy = FALSE, suffix = c(".x", ".y"), ...)~.
 
 - x, y の全てを利用し、マッチしない部分を ~NA~ とする
 
@@ -1247,7 +1248,7 @@ nest_join(x, y, by = "fruit")
 \\
 
 *** Filtering join
-**** semi_join(x, y, by = NULL, copy = FALSE, ...)
+**** ★★☆ ~semi_join(x, y, by = NULL, copy = FALSE, ...)~.
 
 - x をフィルタリングする条件として、y の ~by~ 列を利用する
 
@@ -1262,7 +1263,7 @@ semi_join(x, y, by = "fruit")
 | banana | potato    |
 \\
 
-**** anti_join(x, y, by = NULL, copy = FALSE, ...)
+**** ★☆☆ ~anti_join(x, y, by = NULL, copy = FALSE, ...)~.
 
 - semi_join の否定形。y とマッチしなかった行を抜き出す
 
@@ -1277,7 +1278,7 @@ anti_join(x, y, by = "fruit")
 \\
 
 *** Bind tables
-**** bind_rows(..., .id = NULL)
+**** ★★★ ~bind_rows(..., .id = NULL)~.
 
 - 行の結合
 - ~rbind~ よりも高速
@@ -1347,7 +1348,7 @@ bind_rows(x, y, .id = "src")
 |   2 | grape  | radish    |
 \\
 
-**** bind_cols(...)
+**** ★☆☆ ~bind_cols(...)~.
 
 - 列の結合
 - ~bind_rows()~ 同様に ~do.call(cbind, dfs)~ を置き換えるもの
@@ -1390,9 +1391,10 @@ x_df <- data.frame(x = x_vec)
 |   0.33 |
 
 *** ランキング
-**** row_number(x)
+**** ★★☆ ~row_number(x)~.
 
- • equivalent to ~rank(ties.method = "first")~
+• equivalent to ~rank(ties.method = "first")~
+- タイがあった場合は、タイにせずにデータ順でランキングする
  
 #+begin_src R
 x_df %>% 
@@ -1426,33 +1428,7 @@ row_number(x_vec)
 :  [1]  3  5  1 10  6  2  7  9  8  4
 \\
 
-**** ntile(x = row_number(), n)
-
-- n 等分に分割する
-
-#+begin_src R
-# 5等分に分けてみる
-x_df %>%
-  mutate(dplyr_rank = ntile(x, n = 5)) %>%
-  arrange(dplyr_rank)
-#+end_src
-
-#+RESULTS:
-|      x | dplyr_rank |
-|--------+------------|
-| -0.836 |          1 |
-|  -0.82 |          1 |
-| -0.626 |          2 |
-|  0.184 |          2 |
-|   0.33 |          3 |
-|   0.33 |          3 |
-|  0.487 |          4 |
-|  0.576 |          4 |
-|  1.595 |          5 |
-|  0.738 |          5 |
-\\
-
-**** min_rank(x)
+**** ★★☆ ~min_rank(x)~.
 
 • equivalent to ~rank(ties.method = "min")~
 - タイがある場合、その次の順位はギャップが発生する (~dense_rank()~ は発生しない)
@@ -1479,7 +1455,7 @@ x_df %>%
 |  1.595 |         10 |        10 |
 \\
 
-**** dense_rank(x)
+**** ★☆☆ ~dense_rank(x)~.
 
 • ~min_rank()~ と似ているが、タイがある場合、ギャップが発生しない
 
@@ -1504,7 +1480,7 @@ x_df %>%
 |  1.595 |          9 |
 \\
 
-**** percent_rank(x)
+**** ★★☆ ~percent_rank(x)~.
  
 • ~min_rank()~ の結果を 0 - 1 に変換
  
@@ -1529,7 +1505,33 @@ x_df %>%
 |  1.595 |                 1 |
 \\
 
-**** cume_dist(x)
+**** ★☆☆ ~ntile(x = row_number(), n)~.
+
+- n 等分に分割する
+
+#+begin_src R
+# 5等分に分けてみる
+x_df %>%
+  mutate(dplyr_rank = ntile(x, n = 5)) %>%
+  arrange(dplyr_rank)
+#+end_src
+
+#+RESULTS:
+|      x | dplyr_rank |
+|--------+------------|
+| -0.836 |          1 |
+|  -0.82 |          1 |
+| -0.626 |          2 |
+|  0.184 |          2 |
+|   0.33 |          3 |
+|   0.33 |          3 |
+|  0.487 |          4 |
+|  0.576 |          4 |
+|  1.595 |          5 |
+|  0.738 |          5 |
+\\
+
+**** ★☆☆ ~cume_dist(x)~.
  
 • cume_dist = 累積割合
  
@@ -1558,7 +1560,7 @@ x_df %>%
 
 - base に収録されている累積関数 (~cummax()~, ~cummin()~ ~cumsum()~, ~cumprod()~) を補完する
 
-**** cumall(x)
+**** ★☆☆ ~cumall(x)~.
 
 - ~all()~ をインデックスを 1 つずつずらしながら実行する
 - 入力と同じ長さの logical vector を返す
@@ -1572,7 +1574,7 @@ cumall(x_vec < 0)
 :  [1]  TRUE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE
 \\
 
-**** cumany(x)
+**** ★☆☆ ~cumany(x)~.
 
 - ~any()~ をインデックスを 1 つずつずらしながら実行する
 
@@ -1584,7 +1586,7 @@ cumany(x_vec > 0)
 :  [1] FALSE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE
 \\
 
-**** cummean(x)
+**** ★☆☆ ~cummean(x)~.
 
 - ~mean()~ をインデックスを 1 つずつずらしながら実行する
 
@@ -1609,7 +1611,7 @@ cumsum(x_vec) / seq_along(x_vec)
 \\
 
 *** 条件
-**** between(x, left, right)
+**** ★★★ ~between(x, left, right)~.
 
 - shortcut for ~x >= left & x <= right~
 
@@ -1621,7 +1623,7 @@ between(x_vec, -0.7, 0.4)
 :  [1]  TRUE  TRUE FALSE FALSE  TRUE FALSE FALSE FALSE FALSE  TRUE
 \\
 
-**** case_when(...)
+**** ★☆☆ ~case_when(...)~.
 
 - Multi-case ~if_else()~
 - ~LHS ~ RHS~ の形式
@@ -1656,7 +1658,7 @@ case_when(
 [49] "49"        "buzz"
 #+end_example
 
-**** if_else(condition, true, false, missing = NULL)
+**** ★★☆ ~if_else(condition, true, false, missing = NULL)~.
 
 - TRUE/FALSE の型が同じかどうかをチェックするため、base ~ifelse()~ よりも厳格なバージョン
 
@@ -1674,7 +1676,7 @@ if_else(x < 0, NA_integer_, x)
 :  [1] NA NA NA NA NA  0  1  2  3  4  5  0
 \\
 
-**** recode(.x, ..., .default = NULL, .missing = NULL)
+**** ★☆☆ ~recode(.x, ..., .default = NULL, .missing = NULL)~.
      
 - Vectorized ~switch()~ (~switch()~ ではスカラ値しか扱えない)
 - character or factor = 名前で指定
@@ -1703,7 +1705,7 @@ recode(char_vec,
 
 **** TODO recode_factor(.x, ..., .default = NULL, .missing = NULL, .ordered = FALSE)
 *** オフセット
-**** lead(x, n = 1L, default = NA, order_by = NULL, ...)
+**** ★☆☆ ~lead(x, n = 1L, default = NA, order_by = NULL, ...)~
 
 - 前のインデックスのデータを見たいとき
 - 末尾が ~NA~ になる
@@ -1723,7 +1725,7 @@ lead(1:10, 3)
 :  [1]  4  5  6  7  8  9 10 NA NA NA
 \\
 
-**** lag(x, n = 1L, default = NA, order_by = NULL, ...)
+**** ★★★ ~lag(x, n = 1L, default = NA, order_by = NULL, ...)~.
 
 - 後ろのインデックスのデータを見たいとき
 - 先頭が ~NA~ になる
@@ -1737,7 +1739,7 @@ lag(1:10, 1)
 \\
 
 *** NA
-**** coalesce(...)
+**** ★☆☆ ~coalesce(...)~.
 
 - 複数のベクトルの中から、最初の非 NA 値を抜き出す
 - 全てのベクトルは、第 1 引数と同じ長さか、長さ 1 である必要あり
@@ -1791,7 +1793,7 @@ coalesce(!!!vecs)
 : [1] 1 2 3 4 5
 \\          
 
-**** na_if(x, y)
+**** ★★☆ ~na_if(x, y)~.
 
 - 特定の値を ~NA~ に置き換える
 - 不正な値を ~NA~ にして、除外する際に使う
@@ -1841,7 +1843,7 @@ na_if(1:5, 3)
 **** with_order(order_by, fun, x, ...)
 **** progress_estimated(n, min_time = 0)
 ** サマリー関数
-*** nth(x, n, order_by = NULL, default = default_missing(x))
+*** ★★☆ ~nth(x, n, order_by = NULL, default = default_missing(x))~.
 
 - n 番目を抜き出す
 
