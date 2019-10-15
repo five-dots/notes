@@ -20,7 +20,7 @@
       - [[#-arrangedata-][★★★ ~arrange(.data, ...)~.]]
     - [[#行の要約][行の要約]]
       - [[#-summarisedata-][★★★ ~summarise(.data, ...)~.]]
-      - [[#-tallyx-wt-sort--false-name--n][★☆☆ ~tally(x, wt, sort = FALSE, name = "n")~.]]
+      - [[#-tallyx-wt-sort--false-name--n][★★☆ ~tally(x, wt, sort = FALSE, name = "n")~.]]
       - [[#-countx--wt--null-sort--false-name--n-drop--group_dropsx][★☆☆ ~count(x, ..., wt = NULL, sort = FALSE, name = "n", .drop = group_drops(x))~.]]
   - [[#列の操作][列の操作]]
     - [[#列の追加][列の追加]]
@@ -37,7 +37,7 @@
     - [[#グループの作成][グループの作成]]
       - [[#-group_bydata--add--false-drop--group_by_drop_defaultdata][★★★ ~group_by(.data, ..., add = FALSE, .drop = group_by_drop_default(.data))~.]]
       - [[#-ungroupx-][★★★ ~ungroup(x, ...)~.]]
-      - [[#-group_nesttbl--key--data-keep--false][★★☆ ~group_nest(.tbl, ..., .key = "data", keep = FALSE)~.]]
+      - [[#-group_nesttbl--key--data-keep--false][★☆☆ ~group_nest(.tbl, ..., .key = "data", keep = FALSE)~.]]
       - [[#-group_splittbl--keep--true][★★☆ ~group_split(.tbl, ..., keep = TRUE)~.]]
     - [[#グループへの関数適応][グループへの関数適応]]
       - [[#-group_maptbl-f--keep--false][★★★ ~group_map(.tbl, .f, ..., keep = FALSE)~.]]
@@ -212,6 +212,7 @@ packageVersion("dplyr")
 - Deprecated
 - Experimental
 - Questining
+\\
 
 * 1 つの ~data.frame~ を操作する関数群
 ** データセット
@@ -581,7 +582,7 @@ FANG %>%
 | NFLX   | 19565909.8214286 |
 \\
 
-**** ★☆☆ ~tally(x, wt, sort = FALSE, name = "n")~.
+**** ★★☆ ~tally(x, wt, sort = FALSE, name = "n")~.
 
 - ~summarise()~ -> ~n()~ や ~sum(n)~ のラッパー関数
 - 列を指定しなければ、総行数を集計してくれる (= ~n()~)
@@ -869,7 +870,7 @@ FANG %>% group_by(symbol) %>% ungroup() %>% class()
 : [1] "tbl_df"     "tbl"        "data.frame"
 \\
 
-**** ★★☆ ~group_nest(.tbl, ..., .key = "data", keep = FALSE)~.
+**** ★☆☆ ~group_nest(.tbl, ..., .key = "data", keep = FALSE)~.
 
 - グループ毎のネストされた ~data.frame~ を作成する
 - ネストされたデータに対して ~purrr::map()~ を ~mutate()~ 内で使ってモデリング等の操作することが多い
@@ -1108,6 +1109,7 @@ FANG %>%
 10 FB    
 # … with 4,022 more rows
 #+end_example
+\\
 
 **** ★☆☆ ~groups(x)~.
 
@@ -1124,6 +1126,7 @@ FANG %>%
 : 
 : [[1]]
 : symbol
+\\
 
 **** ★☆☆ ~group_vars(x)~.
 
@@ -1138,6 +1141,7 @@ FANG %>%
 #+RESULTS:
 : 
 : [1] "symbol"
+\\
 
 **** ★☆☆ ~group_size(x)~.
 
@@ -1221,15 +1225,19 @@ iris %>%
   - ~_if~:  ~.predicate~ で列を選択し ~.funs~ の関数を適応
 
 - ~.funs~ の指定方法
-  - "min", min, のように文字列もしくは、シンボルで指定
+  - ~"min"~, ~min~, のように文字列もしくは、シンボルで指定
+  - ~~ fun(.)~ のようにラムダ式で指定
   - ~list(min, max)~ で複数の関数を指定
   - ~list("min" = min, "max" = max)~ で列名を指定できる
   - ~funs(min, max)~ の指定方法は *soft-deprecated*
 
 - ~.vars~ の指定方法
+  - ~c("hoge", "fuga")~ character vector
   - ~vars(starts_with("hoge"))~ *select_helpers* を使う場合
 
 - ~.predicate~ の指定方法
+  - ~is.numeric()~ のように TRUE/FALSE を返す関数
+\\
  
 *** Select helpers
 
@@ -1249,6 +1257,7 @@ tidyselect::vars_select(col_names, starts_with("Sepal"))
 : 
 :   Sepal.Length    Sepal.Width 
 : "Sepal.Length"  "Sepal.Width"
+\\
 
 **** ★★★ ~ends_with(match, ignore.case = TRUE, vars = peek_vars())~.
 
@@ -1263,6 +1272,7 @@ tidyselect::vars_select(col_names, ends_with("Width"))
 : 
 :   Sepal.Width   Petal.Width 
 : "Sepal.Width" "Petal.Width"
+\\
 
 **** ★★☆ ~contains(match, ignore.case = TRUE, vars = peek_vars())~.
 
@@ -1277,6 +1287,7 @@ tidyselect::vars_select(col_names, contains("etal"))
 : 
 :   Petal.Length    Petal.Width 
 : "Petal.Length"  "Petal.Width"
+\\
 
 **** ★☆☆ ~matches(match, ignore.case = TRUE, vars = peek_vars())~.
 
@@ -1291,6 +1302,7 @@ tidyselect::vars_select(col_names, matches(".t."))
 : 
 :   Sepal.Length    Sepal.Width   Petal.Length    Petal.Width 
 : "Sepal.Length"  "Sepal.Width" "Petal.Length"  "Petal.Width"
+\\
 
 **** ★☆☆ ~num_range(prefix, range, width = NULL, vars = peek_vars())~.
 
@@ -1304,6 +1316,7 @@ tidyselect::vars_select(col_names, num_range(prefix = "col", range = 1:3, width 
 #+RESULTS:
 :   col01   col02   col03 
 : "col01" "col02" "col03"
+\\
 
 **** ★★☆ ~one_of(..., .vars = peek_vars())~.
 
@@ -1317,6 +1330,7 @@ tidyselect::vars_select(col_names, one_of(c("Sepal.Width", "Petal.Width")))
 #+RESULTS:
 :   Sepal.Width   Petal.Width 
 : "Sepal.Width" "Petal.Width"
+\\
 
 **** ★☆☆ ~everything(vars = peek_vars())~.
 
@@ -1360,6 +1374,7 @@ tidyselect::vars_select(col_names, last_col())
 : 
 :   Petal.Width 
 : "Petal.Width"
+\\
 
 *** dplyr
 **** ★★★ ~vars(...)~.
@@ -1436,6 +1451,7 @@ y <- data.frame(fruit = c("apple", "banana", "grape"),
 
 - ~{base}~, ~{dplyr}~, ~{data.table}~ に同名の関数あり
 - 絶対参照にして利用したほうが、誤解がなくて無難
+\\
 
 *** 積集合
 **** ★★☆ ~intersect(x, y, ...)~.
@@ -1715,7 +1731,7 @@ do.call(rbind, list(x, y))
 | grape  | radish    |
 \\
 
-- =.id = "column_name"= で結合前のテーブル毎に id をつけてくれる
+- .id = "column_name" で結合前のテーブル毎に id をつけてくれる
 #+begin_src R
 bind_rows(x, y, .id = "src")
 #+end_src
@@ -1776,6 +1792,7 @@ x_df <- data.frame(x = x_vec)
 |  0.738 |
 |  0.576 |
 |   0.33 |
+\\
 
 *** ランキング
 **** ★★☆ ~row_number(x)~.
@@ -2024,6 +2041,7 @@ near(sqrt(2) ^ 2, 2)
 : [1] FALSE
 : 
 : [1] TRUE
+\\
 
 - 実行環境でのデフォルト tolerance
 #+begin_src R :results output :exports both
@@ -2032,6 +2050,7 @@ near(sqrt(2) ^ 2, 2)
 
 #+RESULTS:
 : [1] 1.110223e-16
+\\
 
 *** 条件分岐
 **** ★★☆ ~if_else(condition, true, false, missing = NULL)~.
@@ -2114,6 +2133,7 @@ recode(char_vec,
 | c      |
 | c      |
 | Apple  |
+\\
 
 **** TODO ★☆☆ ~recode_factor(.x, ..., .default = NULL, .missing = NULL, .ordered = FALSE)~.
 *** オフセット
@@ -2242,6 +2262,7 @@ desc(1:10)
 
 #+RESULTS:
 :  [1]  -1  -2  -3  -4  -5  -6  -7  -8  -9 -10
+\\
 
 **** TODO ★☆☆ ~id(.variables, drop = FALSE)~.
 **** TODO ★☆☆ ~combine(...)~.
