@@ -1,7 +1,7 @@
 #+STARTUP: folded indent inlineimages latexpreview
 #+PROPERTY: header-args:R :results value :colnames yes :session *R:dplyr*
 
-* 目次                                                               :TOC:QUOTE:
+* 目次_星の数は個人的な利用頻度                                                         :TOC:QUOTE:
 #+BEGIN_QUOTE
 - [[#ライブラリの読み込みとバージョンの確認][ライブラリの読み込みとバージョンの確認]]
 - [[#1-つの-dataframe-を操作する関数群][1 つの ~data.frame~ を操作する関数群]]
@@ -10,7 +10,7 @@
     - [[#行の抽出削減][行の抽出・削減]]
       - [[#-filterdata--preserve--false][★★★ ~filter(.data, ..., .preserve = FALSE)~.]]
       - [[#-slicedata--preserve--false][★★☆ ~slice(.data, ..., .preserve = FALSE)~.]]
-      - [[#-distinctdata--keep_all--false][★☆☆ ~distinct(.data, ..., .keep_all = FALSE)~.]]
+      - [[#-distinctdata--keep_all--false][★★☆ ~distinct(.data, ..., .keep_all = FALSE)~.]]
       - [[#-top_nx-n-wt][★☆☆ ~top_n(x, n, wt)~.]]
       - [[#-top_fracx-n-wt][★☆☆ ~top_frac(x, n, wt)~.]]
       - [[#-sample_ntbl-size-replace--false-weight--null-env--null-][★☆☆ ~sample_n(tbl, size, replace = FALSE, weight = NULL, .env = NULL, ...)~.]]
@@ -329,7 +329,7 @@ FANG %>%
 | AMZN   | 2013-01-10 | 268.54 | 268.74 |  262.3 | 265.34 | 2863400 |   265.34 |  -0.00379921087423796 |
 \\
 
-**** ★☆☆ ~distinct(.data, ..., .keep_all = FALSE)~.
+**** ★★☆ ~distinct(.data, ..., .keep_all = FALSE)~.
 
 - 重複を削除する
 - ~...~ で重複を判断する列を指定 (省略すれば全列を利用)
