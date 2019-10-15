@@ -36,7 +36,16 @@ Babel の実行には適切な ~org-babel-load-language~ の設定が必要で�
 - [[file:lang/r/finance/dataset.org][Dataset]]
  
 *** Package
-- ~data.frame~: [[file:lang/r/package/dplyr.org][dplyr]], tidyr, purrrlyr, dbplyr
+
+- tidyverse
+  - [[file:lang/r/package/dplyr.org][dplyr]]
+
+- tidymodels
+  - rsample
+  - [[file:lang/r/package/recipes.org][recipes]]
+  - parsnip
+  - yardstick
+
 - workflow: drake
 - rsample
 - recipes
