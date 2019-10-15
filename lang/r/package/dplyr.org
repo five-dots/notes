@@ -8,7 +8,7 @@
   - [[#データセット][データセット]]
   - [[#行の操作][行の操作]]
     - [[#行の抽出削減][行の抽出・削減]]
-      - [[#-filterdata--preserve--false][★★★ ~filter(.data, ..., .preserve = FALSE)~]]
+      - [[#-filterdata--preserve--false][★★★ ~filter(.data, ..., .preserve = FALSE)~.]]
       - [[#-slicedata--preserve--false][★★☆ slice(.data, ..., .preserve = FALSE)]]
       - [[#top_nx-n-wt][top_n(x, n, wt)]]
       - [[#top_fracx-n-wt][top_frac(x, n, wt)]]
@@ -179,7 +179,7 @@ head(FANG, n = 3)
 
 ** 行の操作
 *** 行の抽出・削減
-**** ★★★ ~filter(.data, ..., .preserve = FALSE)~
+**** ★★★ ~filter(.data, ..., .preserve = FALSE)~.
 
 - 条件に合致する行を抽出
 - 評価結果が ~NA~ となる行は除かれる
