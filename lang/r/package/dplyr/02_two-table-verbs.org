@@ -39,6 +39,7 @@
 - 第 1 引数 ~x~ と第 2 引数 ~y~ に ~data.frame~ を指定する関数群
 - 返り値も ~data.frame~ を返す
 - 3 つ以上の ~data.frame~ を受け取る関数は ~{dplyr}~ には存在しないが ~purrr::reduce()~ とこのカテゴリーの関数を組み合わせることで実現できる
+\\
 
 * ライブラリの読み込みとバージョンの確認
 
@@ -59,7 +60,7 @@ packageVersion("dplyr")
 * データセット
 
 - x, y は同じ列で構成された ~data.frame~ である必要あり
-- FANG ではなく、より単純なデータを用意する
+- 単純なデータを用意する
 
 #+begin_src R
 x <- data.frame(fruit = c("apple", "banana", "peach"),
@@ -91,8 +92,7 @@ y <- data.frame(fruit = c("apple", "banana", "grape"),
 
 * 集合演算
 
-- ~{base}~, ~{dplyr}~, ~{data.table}~ に同名の関数あり
-- 絶対参照にして利用したほうが、誤解がなくて無難
+- ~{base}~ や ~{data.table}~ にも同名の関数あるため、絶対参照で利用したほうが、誤解がなくて無難
 \\
 
 ** 積集合
@@ -194,6 +194,14 @@ dplyr::setequal(x, y)
 : [1] FALSE
 \\
 
+#+begin_src R :results output :exports both
+dplyr::setequal(x[1:2, ], y[1:2, ])
+#+end_src
+
+#+RESULTS:
+: [1] TRUE
+\\
+
 *** ★☆☆ ~all_equal(target, current, ignore_col_order = TRUE, ignore_row_order = TRUE, convert = FALSE, ...)~.
 
 - 同じ ~data.frame~ かどうかを比較
@@ -210,7 +218,8 @@ dplyr::all_equal(x, y)
 ** Mutating join
 *** ★★★ ~inner_join(x, y, by = NULL, copy = FALSE, suffix = c(".x", ".y"), ...)~.
 
-- x, y の両方に by が存在する場合に結合する
+- ~by~ で結合のキーとなる列を指定する (省略すると名前が同じ列を全て利用する)
+- x, y の両方に ~by~ が存在する場合に結合する
 - ~by~ の指定方法
   - ~by = c("hoge")~
   - ~by = c("hoge" = "fuga")~ 列名が異なる場合

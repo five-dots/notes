@@ -1,11 +1,73 @@
 #+STARTUP: folded indent inlineimages latexpreview
 #+PROPERTY: header-args:R :results value :colnames yes :session *R:helper-funs*
 
-* 目次
+* 目次                                                            :TOC:QUOTE:
+#+BEGIN_QUOTE
+- [[#ヘルパー関数群][ヘルパー関数群]]
+- [[#ライブラリの読み込みとバージョンの確認][ライブラリの読み込みとバージョンの確認]]
+- [[#ベクトル関数][ベクトル関数]]
+  - [[#データセット][データセット]]
+  - [[#ランキング][ランキング]]
+    - [[#-row_numberx][★★☆ ~row_number(x)~.]]
+    - [[#-min_rankx][★★☆ ~min_rank(x)~.]]
+    - [[#-dense_rankx][★☆☆ ~dense_rank(x)~.]]
+    - [[#-percent_rankx][★★☆ ~percent_rank(x)~.]]
+    - [[#-ntilex--row_number-n][★☆☆ ~ntile(x = row_number(), n)~.]]
+    - [[#-cume_distx][★☆☆ ~cume_dist(x)~.]]
+  - [[#累積関数][累積関数]]
+    - [[#-cumallx][★☆☆ ~cumall(x)~.]]
+    - [[#-cumanyx][★☆☆ ~cumany(x)~.]]
+    - [[#-cummeanx][★☆☆ ~cummean(x)~.]]
+  - [[#比較][比較]]
+    - [[#-betweenx-left-right][★★★ ~between(x, left, right)~.]]
+    - [[#-nearx-y-tol--machinedoubleeps05][★★☆ ~near(x, y, tol = .Machine$double.eps^0.5)~.]]
+  - [[#条件分岐][条件分岐]]
+    - [[#-if_elsecondition-true-false-missing--null][★★☆ ~if_else(condition, true, false, missing = NULL)~.]]
+    - [[#-case_when][★☆☆ ~case_when(...)~.]]
+    - [[#-recodex--default--null-missing--null][★☆☆ ~recode(.x, ..., .default = NULL, .missing = NULL)~.]]
+    - [[#-recode_factorx--default--null-missing--null-ordered--false][★☆☆ ~recode_factor(.x, ..., .default = NULL, .missing = NULL, .ordered = FALSE)~.]]
+  - [[#オフセット][オフセット]]
+    - [[#-leadx-n--1l-default--na-order_by--null-][★☆☆ ~lead(x, n = 1L, default = NA, order_by = NULL, ...)~.]]
+    - [[#-lagx-n--1l-default--na-order_by--null-][★★★ ~lag(x, n = 1L, default = NA, order_by = NULL, ...)~.]]
+  - [[#na][NA]]
+    - [[#-coalesce][★☆☆ ~coalesce(...)~.]]
+    - [[#-na_ifx-y][★★☆ ~na_if(x, y)~.]]
+  - [[#その他][その他]]
+    - [[#-descx][★★☆ ~desc(x)~.]]
+    - [[#-idvariables-drop--false][★☆☆ ~id(.variables, drop = FALSE)~.]]
+    - [[#-combine][★☆☆ ~combine(...)~.]]
+    - [[#-common_byby--null-x-y][★☆☆ ~common_by(by = NULL, x, y)~.]]
+    - [[#-order_byorder_by-call][★☆☆ ~order_by(order_by, call)~.]]
+    - [[#-with_orderorder_by-fun-x-][★☆☆ ~with_order(order_by, fun, x, ...)~.]]
+- [[#集約関数][集約関数]]
+  - [[#集計][集計]]
+    - [[#-n][★★★ ~n()~.]]
+    - [[#-n_distinct-narm--false][★★☆ ~n_distinct(..., na.rm = FALSE)~.]]
+  - [[#ポジション][ポジション]]
+    - [[#-firstx-order_by--null-default--default_missingx][★★☆ ~first(x, order_by = NULL, default = default_missing(x))~.]]
+    - [[#-lastx-order_by--null-default--default_missingx][★★☆ ~last(x, order_by = NULL, default = default_missing(x))~.]]
+    - [[#-nthx-n-order_by--null-default--default_missingx][★☆☆ ~nth(x, n, order_by = NULL, default = default_missing(x))~.]]
+- [[#その他-1][その他]]
+  - [[#ユーティリティ][ユーティリティ]]
+    - [[#-locationdf][★☆☆ ~location(df)~.]]
+    - [[#-changesx-y][★☆☆ ~changes(x, y)~.]]
+    - [[#-dim_descx][★☆☆ ~dim_desc(x)~.]]
+    - [[#-dr_dplyr][★☆☆ ~dr_dplyr()~.]]
+    - [[#-hybrid_calldata-expr][★☆☆ ~hybrid_call(.data, expr)~.]]
+    - [[#-progress_estimatedn-min_time--0][★☆☆ ~progress_estimated(n, min_time = 0)~.]]
+- [[#実行環境][実行環境]]
+#+END_QUOTE
+
+* ヘルパー関数群
+
+- ~data.frame~ を引数に取るのではなく ~data.frame~ を構成する列をベクトルとして受け取る
+- ベクトルを受け取って、ベクトルを返す関数を *ベクトル関数* と呼ぶ (~mutate()~ などの中で使う)
+- ベクトルを受け取って、スカラ値を返す関数を *集約関数* と呼ぶ (~summarise()~ などの中で使う)
+- その他のユーティリティ関数もここで扱う
+
 * ライブラリの読み込みとバージョンの確認
 
 #+begin_src R :results silent
-# install.packages("dplyr")
 library(dplyr)
 #+end_src
 \\
@@ -19,13 +81,8 @@ packageVersion("dplyr")
 : [1] ‘0.8.3’
 \\
 
-* ヘルパー関数群
-** ベクトル関数・ウィンドウ関数
-
-- ~mutate()~ や ~transmute()~ 内で利用する
-- ベクトルを引数に取り、新たなベクトルを返す関数
-
-*** データセット
+* ベクトル関数
+** データセット
 
 #+begin_src R
 set.seed(1)
@@ -49,8 +106,8 @@ x_df <- data.frame(x = x_vec)
 |   0.33 |
 \\
 
-*** ランキング
-**** ★★☆ ~row_number(x)~.
+** ランキング
+*** ★★☆ ~row_number(x)~.
 
 • equivalent to ~rank(ties.method = "first")~
 - タイがあった場合は、タイにせずにデータ順でランキングする
@@ -87,7 +144,7 @@ row_number(x_vec)
 :  [1]  3  5  1 10  6  2  7  9  8  4
 \\
 
-**** ★★☆ ~min_rank(x)~.
+*** ★★☆ ~min_rank(x)~.
 
 • equivalent to ~rank(ties.method = "min")~
 - タイがある場合、その次の順位はギャップが発生する (~dense_rank()~ は発生しない)
@@ -114,7 +171,7 @@ x_df %>%
 |  1.595 |         10 |        10 |
 \\
 
-**** ★☆☆ ~dense_rank(x)~.
+*** ★☆☆ ~dense_rank(x)~.
 
 • ~min_rank()~ と似ているが、タイがある場合、ギャップが発生しない
 
@@ -139,7 +196,7 @@ x_df %>%
 |  1.595 |          9 |
 \\
 
-**** ★★☆ ~percent_rank(x)~.
+*** ★★☆ ~percent_rank(x)~.
  
 • ~min_rank()~ の結果を 0 - 1 に変換
  
@@ -164,7 +221,7 @@ x_df %>%
 |  1.595 |                 1 |
 \\
 
-**** ★☆☆ ~ntile(x = row_number(), n)~.
+*** ★☆☆ ~ntile(x = row_number(), n)~.
 
 - n 等分に分割する
 
@@ -190,7 +247,7 @@ x_df %>%
 |  0.738 |          5 |
 \\
 
-**** ★☆☆ ~cume_dist(x)~.
+*** ★☆☆ ~cume_dist(x)~.
  
 • cume_dist = 累積割合
  
@@ -215,11 +272,11 @@ x_df %>%
 |  1.595 |          1 |
 \\
 
-*** 累積関数
+** 累積関数
 
 - base に収録されている累積関数 (~cummax()~, ~cummin()~ ~cumsum()~, ~cumprod()~) を補完する
 
-**** ★☆☆ ~cumall(x)~.
+*** ★☆☆ ~cumall(x)~.
 
 - ~all()~ をインデックスを 1 つずつずらしながら実行する
 - 入力と同じ長さの logical vector を返す
@@ -233,7 +290,7 @@ cumall(x_vec < 0)
 :  [1]  TRUE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE
 \\
 
-**** ★☆☆ ~cumany(x)~.
+*** ★☆☆ ~cumany(x)~.
 
 - ~any()~ をインデックスを 1 つずつずらしながら実行する
 
@@ -245,7 +302,7 @@ cumany(x_vec > 0)
 :  [1] FALSE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE
 \\
 
-**** ★☆☆ ~cummean(x)~.
+*** ★☆☆ ~cummean(x)~.
 
 - ~mean()~ をインデックスを 1 つずつずらしながら実行する
 
@@ -269,8 +326,8 @@ cumsum(x_vec) / seq_along(x_vec)
 :  [7]  0.04485714  0.13150000  0.18088889  0.19580000
 \\
 
-*** 比較
-**** ★★★ ~between(x, left, right)~.
+** 比較
+*** ★★★ ~between(x, left, right)~.
 
 - shortcut for ~x >= left & x <= right~
 
@@ -282,7 +339,7 @@ between(x_vec, -0.7, 0.4)
 :  [1]  TRUE  TRUE FALSE FALSE  TRUE FALSE FALSE FALSE FALSE  TRUE
 \\
 
-**** ★★☆ ~near(x, y, tol = .Machine$double.eps^0.5)~.
+*** ★★☆ ~near(x, y, tol = .Machine$double.eps^0.5)~.
 
 - 浮動小数点の誤差を考慮した比較
 - tol で誤差の範囲を指定できる
@@ -307,8 +364,8 @@ near(sqrt(2) ^ 2, 2)
 : [1] 1.110223e-16
 \\
 
-*** 条件分岐
-**** ★★☆ ~if_else(condition, true, false, missing = NULL)~.
+** 条件分岐
+*** ★★☆ ~if_else(condition, true, false, missing = NULL)~.
 
 - TRUE/FALSE の型が同じかどうかをチェックするため、base ~ifelse()~ よりも厳格なバージョン
 
@@ -326,7 +383,7 @@ if_else(x < 0, NA_integer_, x)
 :  [1] NA NA NA NA NA  0  1  2  3  4  5  0
 \\
 
-**** ★☆☆ ~case_when(...)~.
+*** ★☆☆ ~case_when(...)~.
 
 - Multi-case ~if_else()~
 - ~LHS ~ RHS~ の形式
@@ -362,7 +419,7 @@ case_when(
 #+end_example
 \\
 
-**** ★☆☆ ~recode(.x, ..., .default = NULL, .missing = NULL)~.
+*** ★☆☆ ~recode(.x, ..., .default = NULL, .missing = NULL)~.
      
 - Vectorized ~switch()~ (~switch()~ ではスカラ値しか扱えない)
 - character or factor = 名前で指定
@@ -390,9 +447,9 @@ recode(char_vec,
 | Apple  |
 \\
 
-**** TODO ★☆☆ ~recode_factor(.x, ..., .default = NULL, .missing = NULL, .ordered = FALSE)~.
-*** オフセット
-**** ★☆☆ ~lead(x, n = 1L, default = NA, order_by = NULL, ...)~.
+*** TODO ★☆☆ ~recode_factor(.x, ..., .default = NULL, .missing = NULL, .ordered = FALSE)~.
+** オフセット
+*** ★☆☆ ~lead(x, n = 1L, default = NA, order_by = NULL, ...)~.
 
 - 前のインデックスのデータを見たいとき
 - 末尾が ~NA~ になる
@@ -412,7 +469,7 @@ lead(1:10, 3)
 :  [1]  4  5  6  7  8  9 10 NA NA NA
 \\
 
-**** ★★★ ~lag(x, n = 1L, default = NA, order_by = NULL, ...)~.
+*** ★★★ ~lag(x, n = 1L, default = NA, order_by = NULL, ...)~.
 
 - 後ろのインデックスのデータを見たいとき
 - 先頭が ~NA~ になる
@@ -425,8 +482,8 @@ lag(1:10, 1)
 :  [1] NA  1  2  3  4  5  6  7  8  9
 \\
 
-*** NA
-**** ★☆☆ ~coalesce(...)~.
+** NA
+*** ★☆☆ ~coalesce(...)~.
 
 - 複数のベクトルの中から、最初の非 NA 値を抜き出す
 - 全てのベクトルは、第 1 引数と同じ長さか、長さ 1 である必要あり
@@ -480,7 +537,7 @@ coalesce(!!!vecs)
 : [1] 1 2 3 4 5
 \\          
 
-**** ★★☆ ~na_if(x, y)~.
+*** ★★☆ ~na_if(x, y)~.
 
 - 特定の値を ~NA~ に置き換える
 - 不正な値を ~NA~ にして、除外する際に使う
@@ -505,8 +562,8 @@ na_if(1:5, 3)
 : [1]  1  2 NA  4  5
 \\
 
-*** その他
-**** ★★☆ ~desc(x)~.
+** その他
+*** ★★☆ ~desc(x)~.
 
 - データを降順に並び替える
 - ~arrange()~ の中などで利用する
@@ -519,14 +576,14 @@ desc(1:10)
 :  [1]  -1  -2  -3  -4  -5  -6  -7  -8  -9 -10
 \\
 
-**** TODO ★☆☆ ~id(.variables, drop = FALSE)~.
-**** TODO ★☆☆ ~combine(...)~.
-**** TODO ★☆☆ ~common_by(by = NULL, x, y)~.
-**** TODO ★☆☆ ~order_by(order_by, call)~.
-**** TODO ★☆☆ ~with_order(order_by, fun, x, ...)~.
-** 集約関数
-*** 集計 
-**** ★★★ ~n()~.
+*** TODO ★☆☆ ~id(.variables, drop = FALSE)~.
+*** TODO ★☆☆ ~combine(...)~.
+*** TODO ★☆☆ ~common_by(by = NULL, x, y)~.
+*** TODO ★☆☆ ~order_by(order_by, call)~.
+*** TODO ★☆☆ ~with_order(order_by, fun, x, ...)~.
+* 集約関数
+** 集計 
+*** ★★★ ~n()~.
 
 - グループ内の行数をカウント
 - ~summarise()~, ~mutate()~, ~filter()~ 内でのみ利用できる
@@ -546,7 +603,7 @@ FANG %>%
 | NFLX   |  1008 |
 \\
 
-**** ★★☆ ~n_distinct(..., na.rm = FALSE)~.
+*** ★★☆ ~n_distinct(..., na.rm = FALSE)~.
 
 - ユニークな長さ = ~length(unique(x))~
 
@@ -563,8 +620,8 @@ n_distinct(x)
 : [1] 10
 \\
 
-*** ポジション 
-**** ★★☆ ~first(x, order_by = NULL, default = default_missing(x))~.
+** ポジション 
+*** ★★☆ ~first(x, order_by = NULL, default = default_missing(x))~.
 
 - 1 番目を抜き出す
 
@@ -576,7 +633,7 @@ first(1:10)
 : [1] 1
 \\
 
-**** ★★☆ ~last(x, order_by = NULL, default = default_missing(x))~.
+*** ★★☆ ~last(x, order_by = NULL, default = default_missing(x))~.
 
 - 最後を抜き出す
 - ~length()~ + ~[~ を使うよりも直感的
@@ -589,7 +646,7 @@ last(1:10)
 : [1] 10
 \\
 
-**** ★☆☆ ~nth(x, n, order_by = NULL, default = default_missing(x))~.
+*** ★☆☆ ~nth(x, n, order_by = NULL, default = default_missing(x))~.
 
 - n 番目を抜き出す
 
@@ -601,9 +658,9 @@ nth(1:10, 4)
 : [1] 4
 \\
 
-** その他
-*** ユーティリティ
-**** ★☆☆ ~location(df)~.
+* その他
+** ユーティリティ
+*** ★☆☆ ~location(df)~.
 
 - ~data.frame~ のメモリ上の位置を確認できる
 
@@ -630,7 +687,7 @@ Attributes:
 #+end_example
 \\
 
-**** ★☆☆ ~changes(x, y)~.
+*** ★☆☆ ~changes(x, y)~.
 
 - 2 つの ~data.frame~ のメモリ上の差分を表示
 
@@ -652,7 +709,7 @@ changes(FANG, FANG2)
 : row.names 0x55cdb4300708 0x55cdb4303a20
 \\
 
-**** ★☆☆ ~dim_desc(x)~.
+*** ★☆☆ ~dim_desc(x)~.
 
 - データの次元を表示する
 
@@ -664,9 +721,10 @@ dim_desc(FANG)
 : [1] "[4,032 x 8]"
 \\
 
-**** ★☆☆ ~dr_dplyr()~.
+*** ★☆☆ ~dr_dplyr()~.
 
 - インストールが問題ないかを確認する
+- 特に問題が発生していない場合は、実行する必要はない
 
 #+begin_src R :exports both :results output
 dr_dplyr()
@@ -678,7 +736,7 @@ dr_dplyr()
 : Please reinstall dplyr to avoid random crashes or undefined behavior.
 \\
 
-**** ★☆☆ ~hybrid_call(.data, expr)~.
+*** ★☆☆ ~hybrid_call(.data, expr)~.
 
 #+begin_src R :exports both :results output
 hybrid_call(iris, n())
@@ -690,7 +748,7 @@ hybrid_call(iris, n())
 :   C++ class : dplyr::hybrid::Count<dplyr::NaturalDataFrame>
 \\
 
-**** ★☆☆ ~progress_estimated(n, min_time = 0)~.
+*** ★☆☆ ~progress_estimated(n, min_time = 0)~.
 
 - プログレスバーを表示するための R6 class
 

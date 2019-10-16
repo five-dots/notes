@@ -1,8 +1,7 @@
 #+STARTUP: folded indent inlineimages latexpreview
 #+PROPERTY: header-args:R :results value :colnames yes :session *R:deprecated*
 
-* 目次
-* TODO 非推奨とされている関数群
+* 非推奨とされている関数群
 
 | dplyr function    | sucesssor                                          |
 |-------------------+----------------------------------------------------|

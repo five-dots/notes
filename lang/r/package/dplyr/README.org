@@ -21,7 +21,7 @@ ver. 0.8.3 の ~{dplyr}~ には *262 個* もの関数が含まれている。(�
 
 - [[file:./03_helper-funs.org][ヘルパー関数群]] :: ~data.frame~ を引数に取るのではなく ~data.frame~ を構成する列をベクトルとして受け取る関数群。主に ~mutate()~ と組み合わせるベクトル関数や ~summarise()~ と共に利用する集約関数など、便利な関数がここに含まれる。
 
-- [[file:./04_scoped-verbs-variants.org][Scoped Verbs の亜種と {tidyselect}]] :: *Scoped verbs* の末尾に ~_if()~, ~_all()~, ~_at()~ が付く亜種と ~_at()~ 系の関数と組み合わせて利用するために ~{tidyselect}~ パッケージからインポートされたヘルパー関数群がここに含まれる。
+- Scoped Verbs の亜種と {tidyselect} :: *Scoped verbs* の末尾に ~_if()~, ~_all()~, ~_at()~ が付く亜種と ~_at()~ 系の関数と組み合わせて利用するために ~{tidyselect}~ パッケージからインポートされたヘルパー関数群がここに含まれる。
 
 - DB バックエンド :: バックエンドとして、データベースを利用するための関数群がここに含まれる。
 
