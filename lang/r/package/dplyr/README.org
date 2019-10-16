@@ -15,19 +15,19 @@
 
 ver. 0.8.3 の ~{dplyr}~ には *262 個* もの関数が含まれている。(実際、この中には  ~{rlang}~ , ~{tibble}~, ~{tidyselect}~ からインポートされたものも含むため、純粋に ~{dplyr}~ の関数がここまで多いわけではない。) ひとつひとつ見ていくと ~filter()~, や ~summarise()~ といったメジャーな関数以外にも、便利なヘルパー関数が多く含まれていることがわかる。ここでは [[https://dplyr.tidyverse.org/reference/][dplyr reference]] の分類を参考にしながら、いくつかのカテゴリーに分けて、関数群を整理していく。
  
-- [[file:./single-table-verbs.org][1 つの data.frame を操作する関数群]] :: 第 1 引数に ~data.frame~ を指定する関数群。 ~filter()~, ~mutate()~, ~summarise()~, ~select()~ などのメジャーな関数はここに含まれる。これらの関数は *Scoped verbs* とも呼ばれる。
+- [[file:./01_single-table-verbs.org][1 つの data.frame を操作する関数群]] :: 第 1 引数に ~data.frame~ を指定する関数群。 ~filter()~, ~mutate()~, ~summarise()~, ~select()~ などのメジャーな関数はここに含まれる。これらの関数は *Scoped verbs* とも呼ばれる。
 
-- [[file:./two-table-verbs.org][2 つの data.frame を操作する関数群]] :: 第 1 引数と第 2 引数に ~data.frame~ を指定する関数群。2 つの ~data.frame~ に対する集合演算や、結合処理 (~*_join()~) をするものがここに含まれる。
+- [[file:./02_two-table-verbs.org][2 つの data.frame を操作する関数群]] :: 第 1 引数と第 2 引数に ~data.frame~ を指定する関数群。2 つの ~data.frame~ に対する集合演算や、結合処理 (~*_join()~) をするものがここに含まれる。
 
-- [[file:./helper-funs.org][ヘルパー関数群]] :: ~data.frame~ を引数に取るのではなく ~data.frame~ を構成する列をベクトルとして受け取る関数群。主に ~mutate()~ と組み合わせるベクトル関数や ~summarise()~ と共に利用する集約関数など、便利な関数がここに含まれる。
+- [[file:./03_helper-funs.org][ヘルパー関数群]] :: ~data.frame~ を引数に取るのではなく ~data.frame~ を構成する列をベクトルとして受け取る関数群。主に ~mutate()~ と組み合わせるベクトル関数や ~summarise()~ と共に利用する集約関数など、便利な関数がここに含まれる。
 
-- [[file:./scoped-verbs-variants.org][Scoped Verbs の亜種と {tidyselect}]] :: *Scoped verbs* の末尾に ~_if()~, ~_all()~, ~_at()~ が付く亜種と ~_at()~ 系の関数と組み合わせて利用するために ~{tidyselect}~ パッケージから流用されているヘルパー関数群がここに含まれる。
-
-- NSE プログラミングと {rlang} :: ~{dplyr}~ を *NSE (Non Standard Evaluation)* でプログラミングをするために ~{rlang}~ パッケージからインポートされた関数群がここに含まれる。
+- [[file:./04_scoped-verbs-variants.org][Scoped Verbs の亜種と {tidyselect}]] :: *Scoped verbs* の末尾に ~_if()~, ~_all()~, ~_at()~ が付く亜種と ~_at()~ 系の関数と組み合わせて利用するために ~{tidyselect}~ パッケージからインポートされたヘルパー関数群がここに含まれる。
 
 - DB バックエンド :: バックエンドとして、データベースを利用するための関数群がここに含まれる。
 
-- [[file:./deprecated-funs.org][非推奨とされている関数群]] :: 現時点ではパッケージに含まれているが、既に開発停止がアナウンスされているものや後継機能が発表されているものがここに含まれる。
+- NSE プログラミングと {rlang} :: ~{dplyr}~ を *NSE (Non Standard Evaluation)* でプログラミングをするために ~{rlang}~ パッケージからインポートされた関数群がここに含まれる。
+
+- [[file:./07_deprecated-funs.org][非推奨とされている関数群]] :: 現時点ではパッケージに含まれているが、既に開発停止がアナウンスされているものや後継機能が発表されているものがここに含まれる。
 \\
 
 * 参考リンク
