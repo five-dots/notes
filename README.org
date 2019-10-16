@@ -37,7 +37,7 @@ Babel の実行には適切な ~org-babel-load-language~ の設定が必要で�
  
 *** Package
 
-- Table Data: [[file:lang/r/package/][{dplyr}]], {tidyr}, {purrrlyr}, {tibble}, {data.table}, {dtplyr}
+- Table Data: [[file:lang/r/package/dplyr/][{dplyr}]] {tidyr}, {purrrlyr}, {tibble}, {data.table}, {dtplyr}
 - String: {stringr}
 - Date and Time: {lubridate}
 - Preprocessing: [[file:lang/r/package/recipes.org][{recipes}]]
