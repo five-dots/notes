@@ -3,7 +3,7 @@
 
 * 目次                                                            :QUOTE:TOC:
 #+BEGIN_QUOTE
-- [[#stringr-a-fresh-approach-to-string-manipulation-in-r][~{stringr}~: A fresh approach to string manipulation in R]]
+- [[#stringr-a-fresh-approach-to-string-manipulation-in-r][{stringr}: A fresh approach to string manipulation in R]]
 - [[#ライブラリの読み込みとバージョンの確認][ライブラリの読み込みとバージョンの確認]]
 - [[#全関数リスト][全関数リスト]]
 - [[#基本操作][基本操作]]
@@ -17,36 +17,36 @@
   - [[#-str_trimstring-side--cboth-left-right-空白を除去][★☆☆ ~str_trim(string, side = c("both", "left", "right"))~ 空白を除去]]
   - [[#-str_squishstring-複数の空白を除去][★☆☆ ~str_squish(string)~ 複数の空白を除去]]
   - [[#-str_padstring-width-side--cleft-right-both-pad----文字埋め][★☆☆ ~str_pad(string, width, side = c("left", "right", "both"), pad = " ")~ 文字埋め]]
-  - [[#-str_truncstring-width-side--cright-left-center-ellipsis--][★☆☆ ~str_trunc(string, width, side = c("right", "left", "center"), ellipsis = "...")~]]
+  - [[#-str_truncstring-width-side--cright-left-center-ellipsis---文字埋め][★☆☆ ~str_trunc(string, width, side = c("right", "left", "center"), ellipsis = "...")~ 文字埋め]]
 - [[#正規表現][正規表現]]
   - [[#-str_countstring-pattern---マッチをカウント][★☆☆ ~str_count(string, pattern = "")~ マッチをカウント]]
   - [[#-str_detectstring-pattern-negate--false-マッチ-predicate][★★★ ~str_detect(string, pattern, negate = FALSE)~ マッチ Predicate]]
   - [[#-str_startsstring-pattern-negate--false-先頭マッチ-predicate][★★★ ~str_starts(string, pattern, negate = FALSE)~ 先頭マッチ Predicate]]
   - [[#-str_endsstring-pattern-negate--false-末尾マッチ-predicate][★★★ ~str_ends(string, pattern, negate = FALSE)~ 末尾マッチ Predicate]]
   - [[#-str_extractstring-pattern-マッチ部分を抽出][★★☆ ~str_extract(string, pattern)~ マッチ部分を抽出]]
-  - [[#-str_extract_allstring-pattern-simplify--false][★☆☆ ~str_extract_all(string, pattern, simplify = FALSE)~]]
+  - [[#-str_extract_allstring-pattern-simplify--false-マッチ部分を抽出][★☆☆ ~str_extract_all(string, pattern, simplify = FALSE)~ マッチ部分を抽出]]
   - [[#-str_subsetstring-pattern-negate--false-マッチ要素を抽出][★★★ ~str_subset(string, pattern, negate = FALSE)~ マッチ要素を抽出]]
   - [[#-str_whichstring-pattern-negate--false-マッチのインデックス][★★☆ ~str_which(string, pattern, negate = FALSE)~ マッチのインデックス]]
   - [[#-str_locatestring-pattern-マッチの開始終了インデックス][★☆☆ ~str_locate(string, pattern)~ マッチの開始・終了インデックス]]
-  - [[#-str_locate_allstring-pattern][★☆☆ ~str_locate_all(string, pattern)~]]
+  - [[#-str_locate_allstring-pattern-マッチの開始終了インデックス][★☆☆ ~str_locate_all(string, pattern)~ マッチの開始・終了インデックス]]
   - [[#-str_matchstring-pattern-マッチしないものも含めて返す][★☆☆ ~str_match(string, pattern)~ マッチしないものも含めて返す]]
-  - [[#-str_match_allstring-pattern][★☆☆ ~str_match_all(string, pattern)~]]
+  - [[#-str_match_allstring-pattern-マッチしないものも含めて返す][★☆☆ ~str_match_all(string, pattern)~ マッチしないものも含めて返す]]
   - [[#-str_replacestring-pattern-replacement-マッチを置換][★☆☆ ~str_replace(string, pattern, replacement)~ マッチを置換]]
-  - [[#-str_replace_allstring-pattern-replacement][★☆☆ ~str_replace_all(string, pattern, replacement)~]]
+  - [[#-str_replace_allstring-pattern-replacement-マッチを置換][★☆☆ ~str_replace_all(string, pattern, replacement)~ マッチを置換]]
   - [[#-str_removestring-pattern-マッチを削除][★☆☆ ~str_remove(string, pattern)~ マッチを削除]]
-  - [[#-str_remove_allstring-pattern][★☆☆ ~str_remove_all(string, pattern)~]]
+  - [[#-str_remove_allstring-pattern-マッチを削除][★☆☆ ~str_remove_all(string, pattern)~ マッチを削除]]
   - [[#regex][REGEX]]
 - [[#書式変換][書式変換]]
-  - [[#-str_to_lowerstring-locale--en][★☆☆ ~str_to_lower(string, locale = "en")~]]
-  - [[#-str_to_upperstring-locale--en][★☆☆ ~str_to_upper(string, locale = "en")~]]
-  - [[#-str_to_titlestring-locale--en][★☆☆ ~str_to_title(string, locale = "en")~]]
-  - [[#-str_to_sentencestring-locale--en][★☆☆ ~str_to_sentence(string, locale = "en")~]]
-  - [[#-str_interpstring-env--parentframe-文字列中に-formatexpr-を埋め込む][★☆☆ ~str_interp(string, env = parent.frame())~ 文字列中に $[format]{expr} を埋め込む]]
-- [[#参考リンク][参考リンク]]
+  - [[#-str_to_lowerstring-locale--en-小文字][★☆☆ ~str_to_lower(string, locale = "en")~ 小文字]]
+  - [[#-str_to_upperstring-locale--en-大文字][★☆☆ ~str_to_upper(string, locale = "en")~ 大文字]]
+  - [[#-str_to_titlestring-locale--en-タイトル形式][★☆☆ ~str_to_title(string, locale = "en")~ タイトル形式]]
+  - [[#-str_to_sentencestring-locale--en-センテンス形式][★☆☆ ~str_to_sentence(string, locale = "en")~ センテンス形式]]
+  - [[#-str_interpstring-env--parentframe-format-を埋め込む][★☆☆ ~str_interp(string, env = parent.frame())~ format を埋め込む]]
 - [[#実行環境][実行環境]]
+- [[#参考リンク][参考リンク]]
 #+END_QUOTE
 
-* ~{stringr}~: A fresh approach to string manipulation in R
+* {stringr}: A fresh approach to string manipulation in R
 
 ~{stringr}~ (ストリンガー) は、R の文字列を操作するパッケージ。
 \\
@@ -89,6 +89,7 @@ pacman::p_funs(stringr)
 [45] "str_view"        "str_view_all"    "str_which"       "str_wrap"       
 [49] "word"
 #+end_example
+\\
 
 * 基本操作
 ** ★☆☆ ~str_length(string)~ 文字数をカウント
@@ -103,7 +104,7 @@ str_length("hoge")
 
 ** ★☆☆ ~str_sub(string, start = 1L, end = -1L)~ インデックスで抽出
      
-#+begin_src R
+#+begin_src R :exports both
 str_sub("hoge_fuga", start = 1, end = 4)
 #+end_src
 
@@ -112,7 +113,7 @@ str_sub("hoge_fuga", start = 1, end = 4)
 \\
 
 - インデックスをマイナスにすると後ろから指定できる
-#+begin_src R
+#+begin_src R :exports both
 str_sub("hoge_fuga", start = 1, end = 4)
 str_sub("hoge_fuga", start = -4, end = -1)
 #+end_src
@@ -127,188 +128,207 @@ str_sub("hoge_fuga", start = -4, end = -1)
 
 ** ★☆☆ ~str_flatten(string, collapse = "")~ ベクトルの結合
 
-#+begin_src R
+#+begin_src R :exports both
 str_flatten(c("hoge", "fuga"), collapse = "_")
 #+end_src
 
 #+RESULTS:
 : hoge_fuga
+\\
 
 ** ★☆☆ ~str_c(..., sep = "", collapse = NULL)~ ~...~ の結合
 
 - ... 引数を結合
-#+begin_src R
+#+begin_src R :exports both
 str_c("hoge", "fuga", c("piyo", "piyo"), sep = "_")
 #+end_src
 
 #+RESULTS:
 : [1] "hoge_fuga_piyo" "hoge_fuga_piyo"
+\\
 
 ** ★★☆ ~str_split(string, pattern, n = Inf, simplify = FALSE)~ 分割
 
 - ~list~ で返す
-#+begin_src R
+#+begin_src R :exports both
 str_split("hoge_fuga", "_")
 #+end_src
 
 #+RESULTS:
 : [[1]]
 : [1] "hoge" "fuga"
+\\
 
 - ~matrix~ で返す
-#+begin_src R
+#+begin_src R :exports both
 str_split("hoge_fuga", "_", simplify = TRUE)
 #+end_src
 
 #+RESULTS:
 :      [,1]   [,2]  
 : [1,] "hoge" "fuga"
+\\
 
 - 長さを指定する
-#+begin_src R
+#+begin_src R :exports both
 str_split("hoge_fuga_piyo", "_", n = 2)
 #+end_src
 
 #+RESULTS:
 : [[1]]
 : [1] "hoge"      "fuga_piyo"
+\\
 
 ** ★☆☆ ~str_split_fixed(string, pattern, n)~ 固定長で分割
 
 - 不足分を空文字で埋めてくれる
-#+begin_src R
+#+begin_src R :exports both
 str_split_fixed("hoge_fuga_piyo", "_", 4)
 #+end_src
 
 #+RESULTS:
 :      [,1]   [,2]   [,3]   [,4]
 : [1,] "hoge" "fuga" "piyo" ""
+\\
 
 ** ★☆☆ ~str_dup(string, times)~ 複製
 
 - 指定した文字を複製して結合
-#+begin_src R
+#+begin_src R :exports both
 str_dup("hoge", 10)
 #+end_src
 
 #+RESULTS:
 : [1] "hogehogehogehogehogehogehogehogehogehoge"
+\\
 
 - 区切りとして便利
-#+begin_src R
+#+begin_src R :exports both
 str_dup("#", 79) 
 #+end_src
 
 #+RESULTS:
 : [1] "###############################################################################"
+\\
 
 ** ★☆☆ ~str_trim(string, side = c("both", "left", "right"))~ 空白を除去
 
-#+begin_src R
+#+begin_src R :exports both
 str_trim(" hoge ", side = "both")
 #+end_src
 
 #+RESULTS:
 : [1] "hoge"
+\\
 
 ** ★☆☆ ~str_squish(string)~ 複数の空白を除去
 
 - 2 つ以上の空白文字を取り除く
-#+begin_src R
+#+begin_src R :exports both
 str_squish("  hoge  ")
 #+end_src
 
 #+RESULTS:
 : [1] "hoge"
+\\
 
 ** ★☆☆ ~str_pad(string, width, side = c("left", "right", "both"), pad = " ")~ 文字埋め
 
-#+begin_src R
+#+begin_src R :exports both
 str_pad("hoge", width = 7, side = "right", pad = "_")
 #+end_src
 
 #+RESULTS:
 : [1] "hoge___"
+\\
 
-** TODO ★☆☆ ~str_trunc(string, width, side = c("right", "left", "center"), ellipsis = "...")~
+** ★☆☆ ~str_trunc(string, width, side = c("right", "left", "center"), ellipsis = "...")~ 文字埋め
 
-#+begin_src R
+#+begin_src R :exports both
 names <- c("Shun", "Shiori", "Tamaki", "Ryo")
 str_trunc(names, 4, side = "right", ellipsis = "...")
 #+end_src
 
 #+RESULTS:
 : [1] "Shun" "S..." "T..." "Ryo"
+\\
 
 * 正規表現
 ** ★☆☆ ~str_count(string, pattern = "")~ マッチをカウント
 
-#+begin_src R
+#+begin_src R :exports both
 str_count("hoge_hoge_hoge", pattern = "hoge")
 #+end_src
 
 #+RESULTS:
 : [1] 3
+\\
 
 ** ★★★ ~str_detect(string, pattern, negate = FALSE)~ マッチ Predicate
 
-#+begin_src R
+#+begin_src R :exports both
 str_detect("hoge", "ho")
 #+end_src
 
 #+RESULTS:
 : [1] TRUE
+\\
 
 - negate = TRUE で結果を反転
-#+begin_src R
+#+begin_src R :exports both
 str_detect("hoge", "ho", negate = TRUE)
 #+end_src
 
 #+RESULTS:
 : [1] FALSE
+\\
 
 ** ★★★ ~str_starts(string, pattern, negate = FALSE)~ 先頭マッチ Predicate
 
-#+begin_src R
+#+begin_src R :exports both
 str_starts("hoge", "h")
 #+end_src
 
 #+RESULTS:
 : [1] TRUE
+\\
 
 ** ★★★ ~str_ends(string, pattern, negate = FALSE)~ 末尾マッチ Predicate
 
-#+begin_src R
+#+begin_src R :exports both
 str_ends("hoge", "e")
 #+end_src
 
 #+RESULTS:
 : [1] TRUE
+\\
 
 ** ★★☆ ~str_extract(string, pattern)~ マッチ部分を抽出
 
 - マッチしないと NA
-#+begin_src R
+#+begin_src R :exports both
 str_extract("hoge_fuga", "^hoge_")
 #+end_src
 
 #+RESULTS:
 : [1] "hoge_"
+\\
 
-** ★☆☆ ~str_extract_all(string, pattern, simplify = FALSE)~
+** ★☆☆ ~str_extract_all(string, pattern, simplify = FALSE)~ マッチ部分を抽出
 
 - マッチした全て
-#+begin_src R
+#+begin_src R :exports both
 str_extract_all("hoge_hoge_fuga", "hoge") 
 #+end_src
 
 #+RESULTS:
 : [[1]]
 : [1] "hoge" "hoge"
+\\
 
 ** ★★★ ~str_subset(string, pattern, negate = FALSE)~ マッチ要素を抽出
 
-#+begin_src R
+#+begin_src R :exports both
 strings <- c("hoge", "fuga", "moge")
 str_subset(strings, "hoge")
 
@@ -318,10 +338,11 @@ str_subset(strings, "hoge")
 
 #+RESULTS:
 : [1] "hoge"
+\\
 
 ** ★★☆ ~str_which(string, pattern, negate = FALSE)~ マッチのインデックス
 
-#+begin_src R
+#+begin_src R :exports both
 strings <- c("hoge", "fuga", "moge")
 str_which(strings, "hoge")
 
@@ -331,20 +352,22 @@ str_which(strings, "hoge")
 
 #+RESULTS:
 : [1] 1
+\\
 
 ** ★☆☆ ~str_locate(string, pattern)~ マッチの開始・終了インデックス
 
-#+begin_src R
+#+begin_src R :exports both
 str_locate("hoge_fuga", "hoge")
 #+end_src
 
 #+RESULTS:
 :      start end
 : [1,]     1   4
+\\
 
-** ★☆☆ ~str_locate_all(string, pattern)~
+** ★☆☆ ~str_locate_all(string, pattern)~ マッチの開始・終了インデックス
 
-#+begin_src R
+#+begin_src R :exports both
 str_locate_all("hoge_hoge_fuga", "hoge")
 #+end_src
 
@@ -353,10 +376,11 @@ str_locate_all("hoge_hoge_fuga", "hoge")
 :      start end
 : [1,]     1   4
 : [2,]     6   9
+\\
 
 ** ★☆☆ ~str_match(string, pattern)~ マッチしないものも含めて返す
 
-#+begin_src R
+#+begin_src R :exports both
 strings <- c("hoge", "fuga", "moge")
 str_match(strings, "hoge") # matrix で返す
 #+end_src
@@ -366,11 +390,12 @@ str_match(strings, "hoge") # matrix で返す
 : [1,] "hoge"
 : [2,] NA    
 : [3,] NA
+\\
 
-** ★☆☆ ~str_match_all(string, pattern)~
+** ★☆☆ ~str_match_all(string, pattern)~ マッチしないものも含めて返す
 
 - list で返す
-#+begin_src R
+#+begin_src R :exports both
 strings <- c("hoge", "fuga", "moge")
 str_match_all(strings, "hoge")
 #+end_src
@@ -385,42 +410,47 @@ str_match_all(strings, "hoge")
 : 
 : [[3]]
 :      [,1]
+\\
 
 ** ★☆☆ ~str_replace(string, pattern, replacement)~ マッチを置換
 
-#+begin_src R
+#+begin_src R :exports both
 str_replace("hoge_fuga", "hoge", "xxxx")
 #+end_src
 
 #+RESULTS:
 : [1] "xxxx_fuga"
+\\
 
-** ★☆☆ ~str_replace_all(string, pattern, replacement)~
+** ★☆☆ ~str_replace_all(string, pattern, replacement)~ マッチを置換
 
-#+begin_src R
+#+begin_src R :exports both
 str_replace_all("hoge_hoge", "hoge", "xxxx")
 #+end_src
 
 #+RESULTS:
 : [1] "xxxx_xxxx"
+\\
 
 ** ★☆☆ ~str_remove(string, pattern)~ マッチを削除
 
-#+begin_src R
+#+begin_src R :exports both
 str_remove("hoge_fuga", "hoge")
 #+end_src
 
 #+RESULTS:
 : [1] "_fuga"
+\\
 
-** ★☆☆ ~str_remove_all(string, pattern)~
+** ★☆☆ ~str_remove_all(string, pattern)~ マッチを削除
 
-#+begin_src R 
+#+begin_src R  :exports both
 str_remove_all("hoge_hoge_fuga", "hoge")
 #+end_src
 
 #+RESULTS:
 : [1] "__fuga"
+\\
 
 ** TODO REGEX
 
@@ -431,71 +461,64 @@ boundary()
 coll()
 
 * 書式変換
-** ★☆☆ ~str_to_lower(string, locale = "en")~
+** ★☆☆ ~str_to_lower(string, locale = "en")~ 小文字
 
-#+begin_src R
+#+begin_src R :exports both
 str_to_lower("HOGE")
 #+end_src
 
 #+RESULTS:
 : [1] "hoge"
+\\
 
-** ★☆☆ ~str_to_upper(string, locale = "en")~
+** ★☆☆ ~str_to_upper(string, locale = "en")~ 大文字
 
-#+begin_src R
+#+begin_src R :exports both
 str_to_upper("hoge")
 #+end_src
 
 #+RESULTS:
 : [1] "HOGE"
+\\
 
-** ★☆☆ ~str_to_title(string, locale = "en")~
+** ★☆☆ ~str_to_title(string, locale = "en")~ タイトル形式
 
-#+begin_src R
+#+begin_src R :exports both
 str_to_title("hoge no fuga")
 #+end_src
 
 #+RESULTS:
 : [1] "Hoge No Fuga"
+\\
 
-** ★☆☆ ~str_to_sentence(string, locale = "en")~
+** ★☆☆ ~str_to_sentence(string, locale = "en")~ センテンス形式
 
-#+begin_src R
+#+begin_src R :exports both
 str_to_sentence("hoge no fuga")
 #+end_src
 
 #+RESULTS:
 : [1] "Hoge no fuga"
+\\
 
-** ★☆☆ ~str_interp(string, env = parent.frame())~ 文字列中に $[format]{expr} を埋め込む
+** ★☆☆ ~str_interp(string, env = parent.frame())~ format を埋め込む
 
-#+begin_src R
+#+begin_src R :exports both
 str_interp("Mean sepal width is $[.3f]{mean(Sepal.Width)}.", iris)
 #+end_src
 
 #+RESULTS:
 : [1] "Mean sepal width is 3.057."
+\\
 
-#+begin_src R
+#+begin_src R :exports both
 str_interp("Mean sepal width is $[.3f]{mean(iris$Sepal.Width)}.")
 #+end_src
 
 #+RESULTS:
 : [1] "Mean sepal width is 3.057."
+\\
 
-* 参考リンク
-
-- [[https://stringr.tidyverse.org/][公式サイト]]
-- [[https://cloud.r-project.org/web/packages/stringr/index.html][CRAN]]
-- [[https://cloud.r-project.org/web/packages/stringr/stringr.pdf][Reference Manual]]
-- [[https://github.com/tidyverse/stringr][Github Repo]]
-- [[https://evoldyn.gitlab.io/evomics-2018/ref-sheets/R_strings.pdf][Cheatsheet(PDF)]]
-- Vignette
-  - [[https://cloud.r-project.org/web/packages/stringr/vignettes/stringr.html][Introduction to stringr]]
-  - [[https://cloud.r-project.org/web/packages/stringr/vignettes/regular-expressions.html][Regular expressions]]
-- Blog
-  - [[https://heavywatal.github.io/rstats/stringr.html][stringr — Rの文字列をまともな方法で処理する@Heavy Watal]]
-    
 * 実行環境
 
 #+begin_src R :results output :exports both
@@ -529,3 +552,18 @@ other attached packages:
 loaded via a namespace (and not attached):
 [1] compiler_3.6.1 magrittr_1.5   tools_3.6.1    stringi_1.4.3
 #+end_example
+\\
+
+* 参考リンク
+
+- [[https://stringr.tidyverse.org/][公式サイト]]
+- [[https://cloud.r-project.org/web/packages/stringr/index.html][CRAN]]
+- [[https://cloud.r-project.org/web/packages/stringr/stringr.pdf][Reference Manual]]
+- [[https://github.com/tidyverse/stringr][Github Repo]]
+- [[https://evoldyn.gitlab.io/evomics-2018/ref-sheets/R_strings.pdf][Cheatsheet(PDF)]]
+- Vignette
+  - [[https://cloud.r-project.org/web/packages/stringr/vignettes/stringr.html][Introduction to stringr]]
+  - [[https://cloud.r-project.org/web/packages/stringr/vignettes/regular-expressions.html][Regular expressions]]
+- Blog
+  - [[https://heavywatal.github.io/rstats/stringr.html][stringr — Rの文字列をまともな方法で処理する@Heavy Watal]]
+    
