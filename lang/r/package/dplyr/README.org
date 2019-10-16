@@ -3,7 +3,7 @@
 
 * ~{dplyr}~: A grammar of data manipulation
 
-~{dplyr}~ [fn:dplyr]は、R でデータ分析をする際には欠かせない ~data.frame~ を操作するパッケージ。base R でも ~data.frame~ の基本的な操作はできるが、比較していくつかのメリットがある。
+~{dplyr}~[fn:dplyr] は、R でデータ分析をする際には欠かせない ~data.frame~ を操作するパッケージ。base R でも ~data.frame~ の基本的な操作はできるが、比較していくつかのメリットがある。
 
 - NSE の記法により、変数選択の記述が完結
 - パイプ ~%>%~ と併用することで、データの処理順とコードの流れが合致し、可読性が向上
