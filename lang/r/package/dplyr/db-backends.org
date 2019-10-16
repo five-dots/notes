@@ -1,0 +1,71 @@
+#+STARTUP: folded indent inlineimages latexpreview
+#+PROPERTY: header-args:R :results value :colnames yes :session *R:db-backends*
+
+* 目次                                                            :TOC:QUOTE:
+#+BEGIN_QUOTE
+#+END_QUOTE
+
+* TODO DB functions                                                :noexport:
+** External data source
+*** ★☆☆ ~tbl(src, ...)~.
+*** ★☆☆ ~is.tbl(x)~.
+*** ★☆☆ ~as.tbl(x, ...)~.
+*** ★☆☆ ~as.tbl_cube(x, ...)~.
+*** ★☆☆ ~src(subclass, ...)~.
+*** ★☆☆ ~is.src(x)~.
+*** ★☆☆ ~src_local(tbl, pkg = NULL, env = NULL)~.
+*** ★☆☆ ~src_df(pkg = NULL, env = NULL)~.
+*** ★☆☆ ~src_tbls(x)~.
+*** ★☆☆ ~tbl_cube(dimensions, measures)~.
+*** ★☆☆ ~make_tbl(subclass, ...)~.
+*** ★☆☆ ~tbl_vars(x)~.
+*** ★☆☆ ~tbl_nongroup_vars(x)~.
+** SQL
+*** ★☆☆ ~db_analyze(con, table, ...)~.
+*** ★☆☆ ~db_begin(con, ...)~.
+*** ★☆☆ ~db_commit(con, ...)~.
+*** ★☆☆ ~db_create_index(con, table, columns, name = NULL, unique = FALSE, ...)~.
+*** ★☆☆ ~db_create_indexes(con, table, indexes = NULL, unique = FALSE, ...)~.
+*** ★☆☆ ~db_create_table(con, table, types, temporary = FALSE, ...)~.
+*** ★☆☆ ~db_data_type(con, fields)~.
+*** ★☆☆ ~db_desc(x)~.
+*** ★☆☆ ~db_drop_table(con, table, force = FALSE, ...)~.
+*** ★☆☆ ~db_explain(con, sql, ...)~.
+*** ★☆☆ ~db_has_table(con, table)~.
+*** ★☆☆ ~db_insert_into(con, table, values, ...)~.
+*** ★☆☆ ~db_list_tables(con)~.
+*** ★☆☆ ~db_query_fields(con, sql, ...)~.
+*** ★☆☆ ~db_query_rows(con, sql, ...)~.
+*** ★☆☆ ~db_rollback(con, ...)~.
+*** ★☆☆ ~db_save_query(con, sql, name, temporary = TRUE, ...)~.
+*** ★☆☆ ~db_write_table(con, table, types, values, temporary = FALSE, ...)~.
+*** ★☆☆ ~sql(...)~.
+*** ★☆☆ ~sql_escape_ident(con, x)~.
+*** ★☆☆ ~sql_escape_string(con, x)~.
+*** ★☆☆ ~sql_join(con, x, y, vars, type = "inner", by = NULL, ...)~.
+*** ★☆☆ ~sql_select(con, select, from, where = NULL, group_by = NULL, having = NULL, order_by = NULL, limit = NULL, distinct = FALSE, ...)~.
+*** ★☆☆ ~sql_semi_join(con, x, y, anti = FALSE, by = NULL, ...)~.
+*** ★☆☆ ~sql_set_op(con, x, y, method)~.
+*** ★☆☆ ~sql_subquery(con, from, name = random_table_name(), ...)~.
+*** ★☆☆ ~sql_translate_env(con)~.
+** Source
+*** ★☆☆ ~src_mysql(dbname, host = NULL, port = 0L, username = "root", password = "", ...)~.
+*** ★☆☆ ~src_postgres(dbname = NULL, host = NULL, port = NULL, user = NULL, password = NULL, ...)~.
+*** ★☆☆ ~src_sqlite(path, create = FALSE)~.
+** Utilty
+*** ~auto_copy(x, y, copy = FALSE, ...)~.
+*** ~bench_tbls(tbls, op, ..., times = 10)~.
+*** ~compare_tbls(tbls, op, ref = NULL, compare = equal_data_frame, ...)~.
+*** ~compare_tbls2(tbls_x, tbls_y, op, ref = NULL, compare = equal_data_frame, ...)~.
+*** ~eval_tbls(tbls, op)~.
+*** ~eval_tbls2(tbls_x, tbls_y, op)~.
+*** ~check_dbplyr()~.
+*** ~wrap_dbplyr_obj(obj_name)~.
+*** ~compute(x, name = random_table_name(), ...)~.
+*** ~collect(x, ...)~.
+*** ~collapse(x, ...)~.
+*** ~copy_to(dest, df, name = deparse(substitute(df)), overwrite = FALSE, ...)~.
+*** ~explain(x, ...)~.
+*** ~show_query(x, ...)~.
+*** ~ident(...)~.
+*** ~same_src(x, y).~
