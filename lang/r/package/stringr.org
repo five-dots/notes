@@ -1,7 +1,43 @@
 #+STARTUP: folded indent inlineimages latexpreview
 #+PROPERTY: header-args:R :results output :colnames yes :session *R:stringr*
 
-* 目次
+* 目次                                                                :QUOTE:
+#+BEGIN_QUOTE
+- [[#stringr-a-fresh-approach-to-string-manipulation-in-r][~{stringr}~: A fresh approach to string manipulation in R]]
+- [[#ライブラリの読み込みとバージョンの確認][ライブラリの読み込みとバージョンの確認]]
+- [[#全関数リスト][全関数リスト]]
+- [[#基本][基本]]
+  - [[#-str_lengthstring-文字数をカウント][★☆☆ ~str_length(string)~ 文字数をカウント]]
+  - [[#-str_substring-start--1l-end---1l-インデックスで抽出][★☆☆ ~str_sub(string, start = 1L, end = -1L)~ インデックスで抽出]]
+  - [[#str_flatten--str_c---------結合][str_flatten() & str_c()         結合]]
+  - [[#str_flattenstring-collapse---ベクトルの結合][str_flatten(string, collapse = "") ベクトルの結合]]
+  - [[#str_split--str_split_fixed-分割][str_split() & str_split_fixed() 分割]]
+  - [[#str_dup-----------------------繰り返し][str_dup()                       繰り返し]]
+  - [[#str_trim--str_squish-------空白文字を取り除く][str_trim() & str_squish()       空白文字を取り除く]]
+  - [[#str_pad-----------------------指定幅まで指定文字で埋める][str_pad()                       指定幅まで指定文字で埋める]]
+  - [[#str_trunc][str_trunc()]]
+- [[#正規表現][正規表現]]
+  - [[#str_count-----------------------マッチする数をカウント][str_count()                       マッチする数をカウント]]
+  - [[#str_detect----------------------マッチするか調べる-boolen][str_detect()                      マッチするか調べる (Boolen)]]
+  - [[#str_starts--str_ends---------先頭末尾が指定した文字か調べる-boolen][str_starts() & str_ends()         先頭・末尾が指定した文字か調べる (Boolen)]]
+  - [[#str_extract--str_extract_all-マッチした文字列を抜き出す][str_extract() & str_extract_all() マッチした文字列を抜き出す]]
+  - [[#str_subset----------------------vector-の中からマッチしたものを返す][str_subset()                      vector の中からマッチしたものを返す]]
+  - [[#str_which-----------------------マッチするインデックスを返す][str_which()                       マッチするインデックスを返す]]
+  - [[#str_locate--str_locate_all---マッチした文字列の開始終了インデックスを返す][str_locate() & str_locate_all()   マッチした文字列の開始・終了インデックスを返す]]
+  - [[#str_match--str_match_all-----マッチしないものも含めて返す][str_match() & str_match_all()     マッチしないものも含めて返す]]
+  - [[#str_replace--str_replace_all-マッチした文字列を置換][str_replace() & str_replace_all() マッチした文字列を置換]]
+  - [[#str_remove--str_remove_all---マッチした文字列を削除][str_remove() & str_remove_all()   マッチした文字列を削除]]
+  - [[#regex][REGEX]]
+- [[#書式][書式]]
+  - [[#str_to_lower][str_to_lower()]]
+  - [[#str_to_upper][str_to_upper()]]
+  - [[#str_to_title][str_to_title()]]
+  - [[#str_to_sentence][str_to_sentence()]]
+  - [[#str_interp-文字列中に-formatexpr-を埋め込む][str_interp() 文字列中に $[format]{expr} を埋め込む]]
+- [[#参考リンク][参考リンク]]
+- [[#実行環境][実行環境]]
+#+END_QUOTE
+
 * ~{stringr}~: A fresh approach to string manipulation in R
 
 ~{stringr}~ (ストリンガー) は、R の文字列を操作するパッケージ。
@@ -47,9 +83,7 @@ pacman::p_funs(stringr)
 #+end_example
 
 * 基本
-** 文字数をカウント
-
-- ~str_length(string)~
+** ★☆☆ ~str_length(string)~ 文字数をカウント
 
 #+begin_src R :exports both
 str_length("hoge")
@@ -59,28 +93,15 @@ str_length("hoge")
 : [1] 4
 \\
 
-** ~str_length(string)~                    カウント
-
-- 文字数をカウント
-#+begin_src R :exports both
-str_length("hoge")
-#+end_src
-
-#+RESULTS:
-: [1] 4
-\\
-
-** str_sub()                       インデックスでサブセット
-
-** str_sub(string, start = 1L, end = -1L)
+** ★☆☆ ~str_sub(string, start = 1L, end = -1L)~ インデックスで抽出
      
-     str_sub(string, start = 1L, end = -1L, omit_na = FALSE) <- value
 #+begin_src R
 str_sub("hoge_fuga", start = 1, end = 4)
 #+end_src
 
 #+RESULTS:
-: hoge
+: [1] "hoge"
+\\
 
 - インデックスをマイナスにすると後ろから指定できる
 #+begin_src R
@@ -89,17 +110,23 @@ str_sub("hoge_fuga", start = -4, end = -1)
 #+end_src
 
 #+RESULTS:
-: fuga
+: [1] "hoge"
+: 
+: [1] "fuga"
+\\
 
-** str_flatten() & str_c()         結合
+- ~str_sub(string, start = 1L, end = -1L, omit_na = FALSE) <- value~
 
-- vector の結合
+** ★☆☆ ~str_flatten(string, collapse = "")~ ベクトルの結合
+
 #+begin_src R
-str_flatten(c("hoge", "fuga"), collapse = "_") # vectorの結合
+str_flatten(c("hoge", "fuga"), collapse = "_")
 #+end_src
 
 #+RESULTS:
 : hoge_fuga
+
+** ★☆☆ ~str_c(..., sep = "", collapse = NULL)~ ~...~ の結合
 
 - ... 引数を結合
 #+begin_src R
@@ -107,54 +134,57 @@ str_c("hoge", "fuga", c("piyo", "piyo"), sep = "_")
 #+end_src
 
 #+RESULTS:
-| hoge_fuga_piyo |
-| hoge_fuga_piyo |
+: [1] "hoge_fuga_piyo" "hoge_fuga_piyo"
 
-** str_split() & str_split_fixed() 分割
+** ★★☆ ~str_split(string, pattern, n = Inf, simplify = FALSE)~ 分割
 
-- list で返す
-#+begin_src R :results list
+- ~list~ で返す
+#+begin_src R
 str_split("hoge_fuga", "_")
 #+end_src
 
 #+RESULTS:
-- ("hoge")
-- ("fuga")
+: [[1]]
+: [1] "hoge" "fuga"
 
-- matrix で返す
-#+begin_src R :results list
+- ~matrix~ で返す
+#+begin_src R
 str_split("hoge_fuga", "_", simplify = TRUE)
 #+end_src
 
 #+RESULTS:
-- ("hoge" "fuga")
+:      [,1]   [,2]  
+: [1,] "hoge" "fuga"
 
-- 返す数を指定できる
-#+begin_src R :results list
-str_split("hoge_fuga_mogo", "_", n = 2)
+- 長さを指定する
+#+begin_src R
+str_split("hoge_fuga_piyo", "_", n = 2)
 #+end_src
 
 #+RESULTS:
-- ("hoge")
-- ("fuga_mogo")
+: [[1]]
+: [1] "hoge"      "fuga_piyo"
+
+** ★☆☆ ~str_split_fixed(string, pattern, n)~ 固定長で分割
 
 - 不足分を空文字で埋めてくれる
 #+begin_src R
-str_split_fixed("hoge_fuga_mogo", "_", 4)
+str_split_fixed("hoge_fuga_piyo", "_", 4)
 #+end_src
 
 #+RESULTS:
-| hoge | fuga | mogo |
+:      [,1]   [,2]   [,3]   [,4]
+: [1,] "hoge" "fuga" "piyo" ""
 
-** str_dup()                       繰り返し
+** ★☆☆ ~str_dup(string, times)~ 複製
 
-- 指定した文字を繰り返して、結合
+- 指定した文字を複製して結合
 #+begin_src R
 str_dup("hoge", 10)
 #+end_src
 
 #+RESULTS:
-: hogehogehogehogehogehogehogehogehogehoge
+: [1] "hogehogehogehogehogehogehogehogehogehoge"
 
 - 区切りとして便利
 #+begin_src R
@@ -162,17 +192,18 @@ str_dup("#", 79)
 #+end_src
 
 #+RESULTS:
-: ###############################################################################
+: [1] "###############################################################################"
 
-** str_trim() & str_squish()       空白文字を取り除く
+** ★☆☆ ~str_trim(string, side = c("both", "left", "right"))~ 空白を除去
 
-- side = c("both", "right", "left")
 #+begin_src R
 str_trim(" hoge ", side = "both")
 #+end_src
 
 #+RESULTS:
-: hoge
+: [1] "hoge"
+
+** ★☆☆ ~str_squish(string)~ 複数の空白を除去
 
 - 2 つ以上の空白文字を取り除く
 #+begin_src R
@@ -180,17 +211,16 @@ str_squish("  hoge  ")
 #+end_src
 
 #+RESULTS:
-: hoge
+: [1] "hoge"
 
-** str_pad()                       指定幅まで指定文字で埋める
+** ★☆☆ ~str_pad(string, width, side = c("left", "right", "both"), pad = " ")~ 文字埋め
 
-- side = c("right", "left", "both")
 #+begin_src R
-str_pad("hoge", width = 5, side = "right", pad = "x")
+str_pad("hoge", width = 7, side = "right", pad = "_")
 #+end_src
 
 #+RESULTS:
-: xhoge
+: [1] "hoge___"
 
 ** str_trunc()
 
