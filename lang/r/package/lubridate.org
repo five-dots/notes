@@ -1,0 +1,557 @@
+#+STARTUP: folded indent inlineimages latexpreview
+#+PROPERTY: header-args:R :results output :colnames yes :session *R:lubridate*
+
+* 目次                                                            :QUOTE:TOC:
+#+BEGIN_QUOTE
+- [[#lubridate-make-working-with-dates-in-r-just-that-little-bit-easier][{lubridate}: Make working with dates in R just that little bit easier]]
+- [[#ライブラリの読み込みとバージョンの確認][ライブラリの読み込みとバージョンの確認]]
+- [[#全関数リスト][全関数リスト]]
+- [[#新規作成][新規作成]]
+  - [[#load-library][Load library]]
+  - [[#now-today][now(), today()]]
+  - [[#make_datetime][make_datetime()]]
+  - [[#ymd-mdy-dmy--date-class][ymd(), mdy(), dmy() => Date class]]
+  - [[#ymd_hms-ymd_hm-ymd_h--posixct-class][ymd_hms(), ymd_hm(), ymd_h() => POSIXct class]]
+  - [[#as_date-as_datetime][as_date(), as_datetime()]]
+- [[#subset-アクセサ関数][Subset (アクセサ関数)]]
+  - [[#second-minute-hour-day-month-year][second(), minute(), hour(), day(), month(), year()]]
+  - [[#wday-mday-yday][wday(), mday(), yday()]]
+  - [[#tz][tz()]]
+  - [[#wday-month][wday(), month()]]
+  - [[#week-isoweek][week(), isoweek()]]
+  - [[#set-value][Set value]]
+- [[#丸める][丸める]]
+  - [[#floor_date-round_date-ceiling_date][floor_date(), round_date(), ceiling_date()]]
+- [[#timezone][Timezone]]
+  - [[#with_tz-force_tz][with_tz(), force_tz()]]
+- [[#timespan][Timespan]]
+  - [[#3-つのクラスが用意されている][3 つのクラスが用意されている]]
+  - [[#interval---][Interval, %--%]]
+  - [[#durations][Durations]]
+  - [[#periods][Periods]]
+- [[#実行環境][実行環境]]
+- [[#参考リンク][参考リンク]]
+#+END_QUOTE
+
+* {lubridate}: Make working with dates in R just that little bit easier
+
+~{lubridate}~ () は、R の日付を操作するパッケージ。
+\\
+
+* ライブラリの読み込みとバージョンの確認
+
+#+begin_src R :results silent
+library(lubridate)
+#+end_src
+\\
+
+- バージョン
+#+begin_src R :exports both
+packageVersion("lubridate")
+#+end_src
+
+#+RESULTS:
+: [1] ‘1.7.4’
+\\
+
+* 全関数リスト
+
+#+begin_src R :exports both
+pacman::p_funs(lubridate)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+  [1] ".__C__Duration"                   ".__C__Interval"                  
+  [3] ".__C__Period"                     ".__C__Timespan"                  
+  [5] ".__T__-:base"                     ".__T__[:base"                    
+  [7] ".__T__[[:base"                    ".__T__[[<-:base"                 
+  [9] ".__T__[<-:base"                   ".__T__*:base"                    
+ [11] ".__T__/:base"                     ".__T__%/%:base"                  
+ [13] ".__T__%%:base"                    ".__T__%m-%:lubridate"            
+ [15] ".__T__%m+%:lubridate"             ".__T__%within%:lubridate"        
+ [17] ".__T__+:base"                     ".__T__$:base"                    
+ [19] ".__T__$<-:base"                   ".__T__Arith:base"                
+ [21] ".__T__as_date:lubridate"          ".__T__as_datetime:lubridate"     
+ [23] ".__T__as.character:base"          ".__T__as.difftime:base"          
+ [25] ".__T__as.duration:lubridate"      ".__T__as.interval:lubridate"     
+ [27] ".__T__as.numeric:base"            ".__T__as.period:lubridate"       
+ [29] ".__T__c:base"                     ".__T__Compare:methods"           
+ [31] ".__T__date<-:lubridate"           ".__T__day<-:lubridate"           
+ [33] ".__T__hour<-:lubridate"           ".__T__intersect:base"            
+ [35] ".__T__minute<-:lubridate"         ".__T__month<-:lubridate"         
+ [37] ".__T__qday<-:lubridate"           ".__T__reclass_timespan:lubridate"
+ [39] ".__T__rep:base"                   ".__T__second<-:lubridate"        
+ [41] ".__T__setdiff:base"               ".__T__show:methods"              
+ [43] ".__T__time_length:lubridate"      ".__T__union:base"                
+ [45] ".__T__year<-:lubridate"           "%--%"                            
+ [47] "%m-%"                             "%m+%"                            
+ [49] "%within%"                         "add_with_rollback"               
+ [51] "am"                               "Arith"                           
+ [53] "as_date"                          "as_datetime"                     
+ [55] "as.difftime"                      "as.duration"                     
+ [57] "as.interval"                      "as.period"                       
+ [59] "ceiling_date"                     "Compare"                         
+ [61] "date"                             "date_decimal"                    
+ [63] "date<-"                           "day"                             
+ [65] "day<-"                            "days"                            
+ [67] "days_in_month"                    "ddays"                           
+ [69] "decimal_date"                     "dhours"                          
+ [71] "dmicroseconds"                    "dmilliseconds"                   
+ [73] "dminutes"                         "dmy"                             
+ [75] "dmy_h"                            "dmy_hm"                          
+ [77] "dmy_hms"                          "dnanoseconds"                    
+ [79] "dpicoseconds"                     "dseconds"                        
+ [81] "dst"                              "duration"                        
+ [83] "dweeks"                           "dyears"                          
+ [85] "dym"                              "edays"                           
+ [87] "ehours"                           "emicroseconds"                   
+ [89] "emilliseconds"                    "eminutes"                        
+ [91] "enanoseconds"                     "epicoseconds"                    
+ [93] "epiweek"                          "epiyear"                         
+ [95] "eseconds"                         "eweeks"                          
+ [97] "eyears"                           "fast_strptime"                   
+ [99] "fit_to_timeline"                  "floor_date"                      
+[101] "force_tz"                         "force_tzs"                       
+[103] "guess_formats"                    "here"                            
+[105] "hm"                               "hms"                             
+[107] "hour"                             "hour<-"                          
+[109] "hours"                            "int_aligns"                      
+[111] "int_diff"                         "int_end"                         
+[113] "int_end<-"                        "int_flip"                        
+[115] "int_length"                       "int_overlaps"                    
+[117] "int_shift"                        "int_standardize"                 
+[119] "int_start"                        "int_start<-"                     
+[121] "intersect"                        "interval"                        
+[123] "is.Date"                          "is.difftime"                     
+[125] "is.duration"                      "is.instant"                      
+[127] "is.interval"                      "is.period"                       
+[129] "is.POSIXct"                       "is.POSIXlt"                      
+[131] "is.POSIXt"                        "is.timepoint"                    
+[133] "is.timespan"                      "isoweek"                         
+[135] "isoyear"                          "leap_year"                       
+[137] "local_time"                       "make_date"                       
+[139] "make_datetime"                    "make_difftime"                   
+[141] "mday"                             "mday<-"                          
+[143] "mdy"                              "mdy_h"                           
+[145] "mdy_hm"                           "mdy_hms"                         
+[147] "microseconds"                     "milliseconds"                    
+[149] "minute"                           "minute<-"                        
+[151] "minutes"                          "month"                           
+[153] "month<-"                          "ms"                              
+[155] "myd"                              "nanoseconds"                     
+[157] "new_difftime"                     "new_duration"                    
+[159] "new_interval"                     "new_period"                      
+[161] "now"                              "olson_time_zones"                
+[163] "origin"                           "parse_date_time"                 
+[165] "parse_date_time2"                 "period"                          
+[167] "period_to_seconds"                "picoseconds"                     
+[169] "pm"                               "pretty_dates"                    
+[171] "qday"                             "qday<-"                          
+[173] "quarter"                          "reclass_date"                    
+[175] "reclass_timespan"                 "rollback"                        
+[177] "round_date"                       "second"                          
+[179] "second<-"                         "seconds"                         
+[181] "seconds_to_period"                "semester"                        
+[183] "setdiff"                          "show"                            
+[185] "stamp"                            "stamp_date"                      
+[187] "stamp_time"                       "time_length"                     
+[189] "today"                            "tz"                              
+[191] "tz<-"                             "union"                           
+[193] "wday"                             "wday<-"                          
+[195] "week"                             "week<-"                          
+[197] "weeks"                            "with_tz"                         
+[199] "yday"                             "yday<-"                          
+[201] "ydm"                              "ydm_h"                           
+[203] "ydm_hm"                           "ydm_hms"                         
+[205] "year"                             "year<-"                          
+[207] "years"                            "ymd"                             
+[209] "ymd_h"                            "ymd_hm"                          
+[211] "ymd_hms"                          "yq"
+#+end_example
+\\
+
+* 新規作成
+** Load library
+
+#+begin_src R :results output
+library(lubridate)
+#+end_src
+
+#+RESULTS:
+: 
+: Attaching package: ‘lubridate’
+: 
+: The following object is masked from ‘package:base’:
+: 
+:     date
+
+** now(), today()
+
+- POSIXct class
+#+begin_src R
+now()
+#+end_src
+
+#+RESULTS:
+: 2019-06-28 12:33:10
+
+- Date class
+#+begin_src R
+today()
+#+end_src
+
+#+RESULTS:
+: 2019-06-28
+
+** make_datetime()
+
+- POSIXct class
+#+begin_src R
+make_datetime(2018, 1, 28, 14, 32, 23)
+#+end_src
+
+#+RESULTS:
+: 2018-01-28 14:32:23
+
+** ymd(), mdy(), dmy() => Date class
+
+#+begin_src R
+ymd("20190128")
+#+end_src
+
+#+RESULTS:
+: 2019-01-28
+
+#+begin_src R
+mdy("02-21-2018")
+#+end_src
+
+#+RESULTS:
+: 2018-02-21
+
+#+begin_src R
+dmy("20/8/2017")
+#+end_src
+
+#+RESULTS:
+: 2017-08-20
+
+#+begin_src R
+class(dmy("20/8/2017"))
+#+end_src
+
+#+RESULTS:
+: Date
+
+** ymd_hms(), ymd_hm(), ymd_h() => POSIXct class
+
+#+begin_src R
+ymd_hms("2019-01-28 16:39:02", tz = "America/New_York")
+#+end_src
+
+#+RESULTS:
+: 2019-01-28 16:39:02
+
+#+begin_src R
+class(ymd_hms("2019-01-28 16:39:02", tz = "America/New_York"))
+#+end_src
+
+#+RESULTS:
+| POSIXct |
+| POSIXt  |
+
+** as_date(), as_datetime()
+
+#+begin_src R
+as_date(now())
+#+end_src
+
+#+RESULTS:
+: 2019-07-11
+
+#+begin_src R
+as_datetime(today())
+#+end_src
+
+#+RESULTS:
+: 2019-07-11
+
+#+begin_src R :results output
+dt_utc <- ymd_hms("2010-08-03 00:50:50")
+dt_europe <- ymd_hms("2010-08-03 00:50:50", tz = "Europe/London")
+c(as_date(dt_utc), as.Date(dt_utc))
+c(as_date(dt_europoe), as.Date(dt_europe))
+#+end_src
+
+#+RESULTS:
+: 
+: [1] "2010-08-03" "2010-08-03"
+: 
+: [1] "2010-08-03" "2010-08-02"
+
+* Subset (アクセサ関数)
+** second(), minute(), hour(), day(), month(), year()
+
+#+begin_src R
+dt <- now()
+second(dt)
+## minute(dt)
+## hour(dt)
+## day(dt)
+## month(dt)
+## year(dt)
+#+end_src
+
+#+RESULTS:
+: 50.0138881206512
+
+** wday(), mday(), yday()
+
+#+begin_src R
+dt <- now()
+wday(dt)
+## mday(dt)
+## yday(dt)
+#+end_src
+
+#+RESULTS:
+: 6
+
+** tz()
+
+#+begin_src R
+dt <- ymd_hms("2018-02-08 11:38:43")
+tz(dt)
+#+end_src
+
+#+RESULTS:
+: UTC
+
+** wday(), month()
+
+- month, wday は、label = TRUE で文字列として取り出す 
+#+begin_src R
+dt <- ymd_hms("2018-02-08 11:38:43")
+wday(dt, label = TRUE)
+#+end_src
+
+#+RESULTS:
+: Thu
+
+- abbr = FALSE で完全名を取得
+#+begin_src R
+dt <- ymd_hms("2018-02-08 11:38:43")
+wday(dt, label = TRUE, abbr = FALSE)
+#+end_src
+
+#+RESULTS:
+: Thursday
+
+** week(), isoweek()
+
+- week は 1 月 1 日からの経過日数、isoweek はいわゆる年間の week
+#+begin_src R
+dt <- ymd("2019-01-28")
+c(week(dt), isoweek(dt))
+#+end_src
+
+#+RESULTS:
+| 4 |
+| 5 |
+
+** Set value
+
+- アクセス関数で値の設定もできる
+#+begin_src R
+dt <- ymd_hms("2018-02-08 11:38:43")
+year(dt) <- 2017
+dt
+#+end_src
+
+#+RESULTS:
+: 2017-02-08 11:38:43
+
+* 丸める
+** floor_date(), round_date(), ceiling_date()
+
+- "year", "quarter", "month", "day", "hour", "minute", "second" で丸める
+#+begin_src R
+dt <- ymd_hms("2018-02-08 11:38:43")
+floor_date(dt, "week")
+#+end_src
+
+#+RESULTS:
+: 2018-02-04
+
+* Timezone
+** with_tz(), force_tz()
+
+- with_tz でタイムゾーン間の変換が可能
+#+begin_src R
+dt <- ymd_hms("2018-02-08 11:38:43", tz = "Asia/Tokyo")
+with_tz(dt, "America/New_York")
+#+end_src
+
+#+RESULTS:
+: 2018-02-07 21:38:43
+
+- force_tz で日時はそのままで、タイムゾーンのみ変更可能
+#+begin_src R
+dt <- ymd_hms("2018-02-08 11:38:43", tz = "Asia/Tokyo")
+force_tz(dt, "America/New_York")
+#+end_src
+
+#+RESULTS:
+: 2018-02-08 11:38:43
+
+* Timespan
+** 3 つのクラスが用意されている
+
+- Interval  = 間隔 = 開始と終了を保持している
+- Durations = 期間 = 正確な秒数
+- Periods   = 時期 = 週や月などの人間が扱う単位
+
+** Interval, %--%
+
+#+begin_src R
+arrive <- ymd_hms("2011-06-04 12:00:00", tz = "Asia/Tokyo")
+leave  <- ymd_hms("2011-08-20 14:00:00", tz = "Asia/Tokyo")
+
+interval(arrive, leave)
+#+end_src
+
+#+RESULTS:
+: 2011-06-04 12:00:00 JST--2011-08-20 14:00:00 JST
+
+- %--% でも同じ表現
+#+begin_src R
+arrive <- ymd_hms("2011-06-04 12:00:00", tz = "Asia/Tokyo")
+leave  <- ymd_hms("2011-08-20 14:00:00", tz = "Asia/Tokyo")
+
+arrive %--% leave
+#+end_src
+
+#+RESULTS:
+: 2011-06-04 12:00:00 JST--2011-08-20 14:00:00 JST
+
+** Durations
+
+- R では日付の差は、difftime object
+- 計算によって、単位が週・日・時・分・秒で異なる
+- この例の場合は、日数
+#+begin_src R
+today() - ymd("1983-05-23")
+#+end_src
+
+#+RESULTS:
+: 13034
+
+- duration クラスでは、秒に統一して扱う
+#+begin_src R
+age <- today() - ymd("1983-05-23")
+as.duration(age)
+#+end_src
+
+#+RESULTS:
+: 1139184000s (~36.1 years)
+
+- "d" + 単位 で duration class を作成できる
+#+begin_src R
+dminutes(2)
+#+end_src
+
+#+RESULTS:
+: 120s (~2 minutes)
+
+- 演算もできる
+#+begin_src R
+ymd("2018-12-21") + ddays(2)
+#+end_src
+
+#+RESULTS:
+: 2018-12-23
+
+** Periods
+
+- Periods は秒数固定ではない
+#+begin_src R
+minutes(2)
+#+end_src
+
+#+RESULTS:
+: 2M 0S
+
+- Period を足す
+#+begin_src R
+ymd("2018-12-21") + days(2)
+#+end_src
+
+#+RESULTS:
+: 2018-12-23
+
+- Durations を使うと計算が正確 (夏時間への変更を考慮)
+#+begin_src R
+dt1 <- ymd_hms("2016-03-12 13:00:00", tz = "America/New_York")
+dt1 + ddays(1)
+#+end_src
+
+#+RESULTS:
+: 2016-03-13 14:00:00
+
+- Period を使うとより直感的 (人間の感覚でプラス 1 日)
+#+begin_src R :exports none
+dt1 <- ymd_hms("2016-03-12 13:00:00", tz = "America/New_York")
+dt1 + days(1)
+#+end_src
+
+#+RESULTS:
+: 2016-03-13 13:00:00
+* 実行環境
+
+#+begin_src R :results output :exports both
+sessionInfo()
+#+end_src
+
+#+RESULTS:
+#+begin_example
+R version 3.6.1 (2019-07-05)
+Platform: x86_64-pc-linux-gnu (64-bit)
+Running under: Ubuntu 18.04.3 LTS
+
+Matrix products: default
+BLAS:   /usr/lib/x86_64-linux-gnu/blas/libblas.so.3.7.1
+LAPACK: /usr/lib/x86_64-linux-gnu/lapack/liblapack.so.3.7.1
+
+locale:
+ [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C              
+ [3] LC_TIME=en_US.UTF-8        LC_COLLATE=en_US.UTF-8    
+ [5] LC_MONETARY=en_US.UTF-8    LC_MESSAGES=en_US.UTF-8   
+ [7] LC_PAPER=en_US.UTF-8       LC_NAME=C                 
+ [9] LC_ADDRESS=C               LC_TELEPHONE=C            
+[11] LC_MEASUREMENT=en_US.UTF-8 LC_IDENTIFICATION=C       
+
+attached base packages:
+[1] stats     graphics  grDevices utils     datasets  methods   base     
+
+other attached packages:
+[1] lubridate_1.7.4
+
+loaded via a namespace (and not attached):
+[1] compiler_3.6.1 magrittr_1.5   tools_3.6.1    Rcpp_1.0.2     stringi_1.4.3 
+[6] stringr_1.4.0  pacman_0.5.1
+#+end_example
+\\
+
+* 参考リンク
+
+- [[https://lubridate.tidyverse.org/][公式サイト]]
+- [[https://cloud.r-project.org/web/packages/lubridate/index.html][CRAN]]
+- [[https://cloud.r-project.org/web/packages/lubridate/lubridate.pdf][Reference Manual]]
+- [[https://github.com/tidyverse/lubridate][Github Repo]]
+- [[https://evoldyn.gitlab.io/evomics-2018/ref-sheets/R_lubridate.pdf][Cheatsheet(PDF)]]
+- [[https://r4ds.had.co.nz/][R for Data Science]]
+- Vignette
+  - [[https://cloud.r-project.org/web/packages/lubridate/vignettes/lubridate.html][Do more with dates and times in R]] ([[https://qiita.com/nozma/items/01725761d980a0110027][日本語訳@Qiita]])
+- Blog
+    

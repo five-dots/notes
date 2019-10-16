@@ -561,6 +561,7 @@ loaded via a namespace (and not attached):
 - [[https://cloud.r-project.org/web/packages/stringr/stringr.pdf][Reference Manual]]
 - [[https://github.com/tidyverse/stringr][Github Repo]]
 - [[https://evoldyn.gitlab.io/evomics-2018/ref-sheets/R_strings.pdf][Cheatsheet(PDF)]]
+- [[https://r4ds.had.co.nz/][R for Data Science]]
 - Vignette
   - [[https://cloud.r-project.org/web/packages/stringr/vignettes/stringr.html][Introduction to stringr]]
   - [[https://cloud.r-project.org/web/packages/stringr/vignettes/regular-expressions.html][Regular expressions]]

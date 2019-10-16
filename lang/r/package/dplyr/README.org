@@ -39,6 +39,7 @@ ver. 0.8.3 の ~{dplyr}~ には *262 個* もの関数が含まれている。(�
 - [[https://dplyr.tidyverse.org/reference/][dplyr reference]] (分類の参考になる)
 - [[https://github.com/rstudio/cheatsheets/raw/master/data-transformation.pdf][Cheatsheet(PDF)]]
 - [[https://dplyr.tidyverse.org/reference/se-deprecated.html][Deprecated SE versions of main verbs.]]
+- [[https://r4ds.had.co.nz/][R for Data Science]]
 - Vignette
   - [[https://cran.r-project.org/web/packages/dplyr/vignettes/compatibility.html][dplyr compatibility]]
   - [[https://cran.r-project.org/web/packages/dplyr/vignettes/dplyr.html][Introduction to dplyr]] ([[https://qiita.com/yutannihilation/items/7a78d897810446dd6a3b][和訳@Qiita]])
