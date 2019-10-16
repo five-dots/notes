@@ -1,0 +1,471 @@
+#+STARTUP: folded indent inlineimages latexpreview
+#+PROPERTY: header-args:R :results output :colnames yes :session *R:stringr*
+
+* 目次
+* ~{stringr}~: A fresh approach to string manipulation in R
+
+~{stringr}~ (ストリンガー) は、R の文字列を操作するパッケージ。
+\\
+
+* ライブラリの読み込みとバージョンの確認
+
+#+begin_src R :results silent
+library(stringr)
+#+end_src
+\\
+
+- バージョン
+#+begin_src R :exports both
+packageVersion("stringr")
+#+end_src
+
+#+RESULTS:
+: [1] ‘1.4.0’
+\\
+
+* 全関数リスト
+
+#+begin_src R :exports both
+pacman::p_funs(stringr)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+ [1] "%>%"             "boundary"        "coll"            "fixed"          
+ [5] "invert_match"    "regex"           "str_c"           "str_conv"       
+ [9] "str_count"       "str_detect"      "str_dup"         "str_ends"       
+[13] "str_extract"     "str_extract_all" "str_flatten"     "str_glue"       
+[17] "str_glue_data"   "str_interp"      "str_length"      "str_locate"     
+[21] "str_locate_all"  "str_match"       "str_match_all"   "str_order"      
+[25] "str_pad"         "str_remove"      "str_remove_all"  "str_replace"    
+[29] "str_replace_all" "str_replace_na"  "str_sort"        "str_split"      
+[33] "str_split_fixed" "str_squish"      "str_starts"      "str_sub"        
+[37] "str_sub<-"       "str_subset"      "str_to_lower"    "str_to_sentence"
+[41] "str_to_title"    "str_to_upper"    "str_trim"        "str_trunc"      
+[45] "str_view"        "str_view_all"    "str_which"       "str_wrap"       
+[49] "word"
+#+end_example
+
+* 基本
+** 文字数をカウント
+
+- ~str_length(string)~
+
+#+begin_src R :exports both
+str_length("hoge")
+#+end_src
+
+#+RESULTS:
+: [1] 4
+\\
+
+** ~str_length(string)~                    カウント
+
+- 文字数をカウント
+#+begin_src R :exports both
+str_length("hoge")
+#+end_src
+
+#+RESULTS:
+: [1] 4
+\\
+
+** str_sub()                       インデックスでサブセット
+
+** str_sub(string, start = 1L, end = -1L)
+     
+     str_sub(string, start = 1L, end = -1L, omit_na = FALSE) <- value
+#+begin_src R
+str_sub("hoge_fuga", start = 1, end = 4)
+#+end_src
+
+#+RESULTS:
+: hoge
+
+- インデックスをマイナスにすると後ろから指定できる
+#+begin_src R
+str_sub("hoge_fuga", start = 1, end = 4)
+str_sub("hoge_fuga", start = -4, end = -1)
+#+end_src
+
+#+RESULTS:
+: fuga
+
+** str_flatten() & str_c()         結合
+
+- vector の結合
+#+begin_src R
+str_flatten(c("hoge", "fuga"), collapse = "_") # vectorの結合
+#+end_src
+
+#+RESULTS:
+: hoge_fuga
+
+- ... 引数を結合
+#+begin_src R
+str_c("hoge", "fuga", c("piyo", "piyo"), sep = "_")
+#+end_src
+
+#+RESULTS:
+| hoge_fuga_piyo |
+| hoge_fuga_piyo |
+
+** str_split() & str_split_fixed() 分割
+
+- list で返す
+#+begin_src R :results list
+str_split("hoge_fuga", "_")
+#+end_src
+
+#+RESULTS:
+- ("hoge")
+- ("fuga")
+
+- matrix で返す
+#+begin_src R :results list
+str_split("hoge_fuga", "_", simplify = TRUE)
+#+end_src
+
+#+RESULTS:
+- ("hoge" "fuga")
+
+- 返す数を指定できる
+#+begin_src R :results list
+str_split("hoge_fuga_mogo", "_", n = 2)
+#+end_src
+
+#+RESULTS:
+- ("hoge")
+- ("fuga_mogo")
+
+- 不足分を空文字で埋めてくれる
+#+begin_src R
+str_split_fixed("hoge_fuga_mogo", "_", 4)
+#+end_src
+
+#+RESULTS:
+| hoge | fuga | mogo |
+
+** str_dup()                       繰り返し
+
+- 指定した文字を繰り返して、結合
+#+begin_src R
+str_dup("hoge", 10)
+#+end_src
+
+#+RESULTS:
+: hogehogehogehogehogehogehogehogehogehoge
+
+- 区切りとして便利
+#+begin_src R
+str_dup("#", 79) 
+#+end_src
+
+#+RESULTS:
+: ###############################################################################
+
+** str_trim() & str_squish()       空白文字を取り除く
+
+- side = c("both", "right", "left")
+#+begin_src R
+str_trim(" hoge ", side = "both")
+#+end_src
+
+#+RESULTS:
+: hoge
+
+- 2 つ以上の空白文字を取り除く
+#+begin_src R
+str_squish("  hoge  ")
+#+end_src
+
+#+RESULTS:
+: hoge
+
+** str_pad()                       指定幅まで指定文字で埋める
+
+- side = c("right", "left", "both")
+#+begin_src R
+str_pad("hoge", width = 5, side = "right", pad = "x")
+#+end_src
+
+#+RESULTS:
+: xhoge
+
+** str_trunc()
+
+- side = c("right", "left", "center")
+#+begin_src R
+names <- c("Shun", "Shiori", "Tamaki", "Ryo")
+str_trunc(names, 4, side = "right", ellipsis = "...")
+#+end_src
+
+#+RESULTS:
+| Shun |
+| S... |
+| T... |
+| Ryo  |
+
+* 正規表現
+** str_count()                       マッチする数をカウント
+
+#+begin_src R
+str_count("hoge_hoge_hoge", pattern = "hoge")
+#+end_src
+
+#+RESULTS:
+: 3
+
+** str_detect()                      マッチするか調べる (Boolen)
+
+#+begin_src R
+str_detect("hoge", "ho")
+#+end_src
+
+#+RESULTS:
+: TRUE
+
+- negate = TRUE で結果を反転
+#+begin_src R
+str_detect("hoge", "ho", negate = TRUE)
+#+end_src
+
+#+RESULTS:
+: FALSE
+
+** str_starts() & str_ends()         先頭・末尾が指定した文字か調べる (Boolen)
+
+#+begin_src R
+str_starts("hoge", "h")
+#+end_src
+
+#+RESULTS:
+: TRUE
+
+#+begin_src R
+str_ends("hoge", "e")
+#+end_src
+
+#+RESULTS:
+: TRUE
+
+** str_extract() & str_extract_all() マッチした文字列を抜き出す
+
+- マッチしないと NA
+#+begin_src R
+str_extract("hoge_fuga", "^hoge_")
+#+end_src
+
+#+RESULTS:
+: hoge_
+
+#+begin_src R
+str_extract_all("hoge_hoge_fuga", "hoge") # マッチした全て
+#+end_src
+
+#+RESULTS:
+| hoge |
+| hoge |
+
+** str_subset()                      vector の中からマッチしたものを返す
+
+#+begin_src R
+strings <- c("hoge", "fuga", "moge")
+str_subset(strings, "hoge")
+
+# 同表現
+# strings[str_detect(strings, "hoge")]
+#+end_src
+
+#+RESULTS:
+: hoge
+
+** str_which()                       マッチするインデックスを返す
+
+#+begin_src R
+strings <- c("hoge", "fuga", "moge")
+str_which(strings, "hoge")
+
+# 同表現
+# which(str_detect(strings, "hoge"))
+#+end_src
+
+#+RESULTS:
+: 1
+
+** str_locate() & str_locate_all()   マッチした文字列の開始・終了インデックスを返す
+
+#+begin_src R
+str_locate("hoge_fuga", "hoge")
+#+end_src
+
+#+RESULTS:
+| 1 | 4 |
+
+#+begin_src R
+str_locate_all("hoge_hoge_fuga", "hoge")
+#+end_src
+
+#+RESULTS:
+| 1 | 4 |
+| 6 | 9 |
+
+** str_match() & str_match_all()     マッチしないものも含めて返す
+
+#+begin_src R
+strings <- c("hoge", "fuga", "moge")
+str_match(strings, "hoge") # matrix で返す
+#+end_src
+
+#+RESULTS:
+| hoge |
+| nil  |
+| nil  |
+
+- list で返す
+#+begin_src R
+strings <- c("hoge", "fuga", "moge")
+str_match_all(strings, "hoge")
+#+end_src
+
+#+RESULTS:
+
+** str_replace() & str_replace_all() マッチした文字列を置換
+
+#+begin_src R
+str_replace("hoge_fuga", "hoge", "xxxx")
+#+end_src
+
+#+RESULTS:
+: xxxx_fuga
+
+#+begin_src R
+str_replace_all("hoge_hoge", "hoge", "xxxx")
+#+end_src
+
+#+RESULTS:
+: xxxx_xxxx
+
+** str_remove() & str_remove_all()   マッチした文字列を削除
+
+#+begin_src R
+str_remove("hoge_fuga", "hoge")
+#+end_src
+
+#+RESULTS:
+: _fuga
+
+#+begin_src R 
+str_remove_all("hoge_hoge_fuga", "hoge")
+#+end_src
+
+#+RESULTS:
+: __fuga
+
+** TODO REGEX
+stringr の pattern 引数に以下の関数を通して渡すことで正規表現の挙動を変更できる
+regex()
+fixed()
+boundary()
+coll()
+
+* 書式
+** str_to_lower()
+
+#+begin_src R
+str_to_lower("HOGE")
+#+end_src
+
+#+RESULTS:
+: hoge
+
+** str_to_upper()
+
+#+begin_src R
+str_to_upper("hoge")
+#+end_src
+
+#+RESULTS:
+: HOGE
+
+** str_to_title()
+
+#+begin_src R
+str_to_title("hoge no fuga")
+#+end_src
+
+#+RESULTS:
+: Hoge No Fuga
+
+** str_to_sentence()
+
+#+begin_src R
+str_to_sentence("hoge no fuga")
+#+end_src
+
+#+RESULTS:
+: Hoge no fuga
+
+** str_interp() 文字列中に $[format]{expr} を埋め込む
+
+#+begin_src R
+str_interp("Mean sepal width is $[.3f]{mean(Sepal.Width)}.", iris)
+#+end_src
+
+#+RESULTS:
+: Mean sepal width is 3.057.
+
+#+begin_src R
+str_interp("Mean sepal width is $[.3f]{mean(iris$Sepal.Width)}.")
+#+end_src
+
+#+RESULTS:
+: Mean sepal width is 3.057.
+
+* 参考リンク
+
+- [[https://stringr.tidyverse.org/][公式サイト]]
+- [[https://cloud.r-project.org/web/packages/stringr/index.html][CRAN]]
+- [[https://cloud.r-project.org/web/packages/stringr/stringr.pdf][Reference Manual]]
+- [[https://github.com/tidyverse/stringr][Github Repo]]
+- [[https://evoldyn.gitlab.io/evomics-2018/ref-sheets/R_strings.pdf][Cheatsheet(PDF)]]
+- Vignette
+  - [[https://cloud.r-project.org/web/packages/stringr/vignettes/stringr.html][Introduction to stringr]]
+  - [[https://cloud.r-project.org/web/packages/stringr/vignettes/regular-expressions.html][Regular expressions]]
+- Blog
+  - [[https://heavywatal.github.io/rstats/stringr.html][stringr — Rの文字列をまともな方法で処理する@Heavy Watal]]
+
+    
+* 実行環境
+
+#+begin_src R :results output :exports both
+sessionInfo()
+#+end_src
+
+#+RESULTS:
+#+begin_example
+R version 3.6.1 (2019-07-05)
+Platform: x86_64-pc-linux-gnu (64-bit)
+Running under: Ubuntu 18.04.3 LTS
+
+Matrix products: default
+BLAS:   /usr/lib/x86_64-linux-gnu/blas/libblas.so.3.7.1
+LAPACK: /usr/lib/x86_64-linux-gnu/lapack/liblapack.so.3.7.1
+
+locale:
+ [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C              
+ [3] LC_TIME=en_US.UTF-8        LC_COLLATE=en_US.UTF-8    
+ [5] LC_MONETARY=en_US.UTF-8    LC_MESSAGES=en_US.UTF-8   
+ [7] LC_PAPER=en_US.UTF-8       LC_NAME=C                 
+ [9] LC_ADDRESS=C               LC_TELEPHONE=C            
+[11] LC_MEASUREMENT=en_US.UTF-8 LC_IDENTIFICATION=C       
+
+attached base packages:
+[1] stats     graphics  grDevices utils     datasets  methods   base     
+
+other attached packages:
+[1] stringr_1.4.0
+
+loaded via a namespace (and not attached):
+[1] compiler_3.6.1 magrittr_1.5   tools_3.6.1    stringi_1.4.3
+#+end_example
