@@ -198,7 +198,9 @@
 # install.packages("dplyr")
 library(dplyr)
 #+end_src
+\\
 
+- バージョン
 #+begin_src R :results output :exports both
 packageVersion("dplyr")
 #+end_src

@@ -1,0 +1,39 @@
+#+STARTUP: folded indent inlineimages latexpreview
+#+PROPERTY: header-args:R :results value :colnames yes :session *R:rsample*
+
+* 目次                                                            :QUOTE:TOC:
+#+BEGIN_QUOTE
+- [[#ライブラリの読み込みとバージョンの確認][ライブラリの読み込みとバージョンの確認]]
+- [[#参考リンク][参考リンク]]
+#+END_QUOTE
+
+* ライブラリの読み込みとバージョンの確認
+
+#+begin_src R :results silent
+# install.packages("rsample")
+library(rsample)
+#+end_src
+\\
+
+- バージョン
+#+begin_src R :results output :exports both
+packageVersion("rsample")
+#+end_src
+
+#+RESULTS:
+: [1] ‘0.0.5’
+\\
+
+* 参考リンク
+
+- [[https://tidymodels.github.io/rsample/][公式サイト]]
+- [[https://cloud.r-project.org/web/packages/rsample/index.html][CRAN]]
+- [[https://cloud.r-project.org/web/packages/rsample/rsample.pdf][Reference Manual]]
+- [[https://github.com/tidymodels/rsample][Github Repo]]
+- Vignette
+  - [[https://cloud.r-project.org/web/packages/rsample/vignettes/Basics.html][Basics]]
+  - [[https://cloud.r-project.org/web/packages/rsample/vignettes/Working_with_rsets.html][Working with rsets]]
+- Blog
+  - [[https://blog.hoxo-m.com/entry/2019/06/08/220307][Rでのナウなデータ分割のやり方: rsampleパッケージによる交差検証@株式会社ホクソエムのブログ]]
+  - [[https://dropout009.hatenablog.com/entry/2019/01/06/124932][tidymodelsによるtidyな機械学習フロー（その1）@Dropout]]
+  - [[https://dropout009.hatenablog.com/entry/2019/01/09/214233][tidymodelsによるtidyな機械学習フロー（その2：Cross Varidation）@Dropout]]
