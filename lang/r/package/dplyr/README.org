@@ -11,7 +11,7 @@
 - 豊富なヘルパー関数
 \\
 
-** カテゴリー分け
+* 関数のカテゴリー
 
 ver. 0.8.3 の ~{dplyr}~ には *262 個* もの関数が含まれている。(実際、この中には  ~{rlang}~ , ~{tibble}~, ~{tidyselect}~ からインポートされたものも含むため、純粋に ~{dplyr}~ の関数がここまで多いわけではない。) ひとつひとつ見ていくと ~filter()~, や ~summarise()~ といったメジャーな関数以外にも、便利なヘルパー関数が多く含まれていることがわかる。ここでは [[https://dplyr.tidyverse.org/reference/][dplyr reference]] の分類を参考にしながら、いくつかのカテゴリーに分けて、関数群を整理していく。
  
@@ -30,7 +30,7 @@ ver. 0.8.3 の ~{dplyr}~ には *262 個* もの関数が含まれている。(�
 - [[file:./deprecated-funs.org][非推奨とされている関数群]] :: 現時点ではパッケージに含まれているが、既に開発停止がアナウンスされているものや後継機能が発表されているものがここに含まれる。
 \\
 
-** 参考リンク
+* 参考リンク
 
 - [[https://dplyr.tidyverse.org/][公式サイト]]
 - [[https://cran.r-project.org/web/packages/dplyr/index.html][CRAN]]
