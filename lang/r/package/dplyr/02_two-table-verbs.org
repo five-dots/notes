@@ -3,40 +3,46 @@
 
 * 目次                                                            :TOC:QUOTE:
 #+BEGIN_QUOTE
-- [[#ライブラリの読み込みとバージョンの確認][ライブラリの読み込みとバージョンの確認]]
 - [[#2-つの-dataframe-を操作する関数群][2 つの ~data.frame~ を操作する関数群]]
-  - [[#データセット][データセット]]
-  - [[#集合演算][集合演算]]
-    - [[#積集合][積集合]]
-      - [[#-intersectx-y-][★★☆ ~intersect(x, y, ...)~.]]
-    - [[#和集合][和集合]]
-      - [[#-unionx-y-][★★☆ ~union(x, y, ...)~.]]
-      - [[#-union_allx-y-][★☆☆ ~union_all(x, y, ...)~.]]
-    - [[#差集合][差集合]]
-      - [[#-setdiffx-y-][★★☆ ~setdiff(x, y, ...)~.]]
-    - [[#同値][同値]]
-      - [[#-setequalx-y-][★☆☆ ~setequal(x, y, ...)~.]]
-      - [[#-all_equaltarget-current-ignore_col_order--true-ignore_row_order--true-convert--false-][★☆☆ ~all_equal(target, current, ignore_col_order = TRUE, ignore_row_order = TRUE, convert = FALSE, ...)~.]]
-  - [[#結合演算][結合演算]]
-    - [[#mutating-join][Mutating join]]
-      - [[#-inner_joinx-y-by--null-copy--false-suffix--cx-y-][★★★ ~inner_join(x, y, by = NULL, copy = FALSE, suffix = c(".x", ".y"), ...)~.]]
-      - [[#-left_joinx-y-by--null-copy--false-suffix--cx-y-][★★★ ~left_join(x, y, by = NULL, copy = FALSE, suffix = c(".x", ".y"), ...)~.]]
-      - [[#-right_joinx-y-by--null-copy--false-suffix--cx-y-][★☆☆ ~right_join(x, y, by = NULL, copy = FALSE, suffix = c(".x", ".y"), ...)~.]]
-      - [[#-full_joinx-y-by--null-copy--false-suffix--cx-y-][★★☆ ~full_join(x, y, by = NULL, copy = FALSE, suffix = c(".x", ".y"), ...)~.]]
-      - [[#-nest_joinx-y-by--null-copy--false-keep--false-name--null-][★☆☆ ~nest_join(x, y, by = NULL, copy = FALSE, keep = FALSE, name = NULL, ...)~.]]
-    - [[#filtering-join][Filtering join]]
-      - [[#-semi_joinx-y-by--null-copy--false-][★★☆ ~semi_join(x, y, by = NULL, copy = FALSE, ...)~.]]
-      - [[#-anti_joinx-y-by--null-copy--false-][★☆☆ ~anti_join(x, y, by = NULL, copy = FALSE, ...)~.]]
-    - [[#bind-tables][Bind tables]]
-      - [[#-bind_rows-id--null][★★★ ~bind_rows(..., .id = NULL)~.]]
-      - [[#-bind_cols][★☆☆ ~bind_cols(...)~.]]
+- [[#ライブラリの読み込みとバージョンの確認][ライブラリの読み込みとバージョンの確認]]
+- [[#データセット][データセット]]
+- [[#集合演算][集合演算]]
+  - [[#積集合][積集合]]
+    - [[#-intersectx-y-][★★☆ ~intersect(x, y, ...)~.]]
+  - [[#和集合][和集合]]
+    - [[#-unionx-y-][★★☆ ~union(x, y, ...)~.]]
+    - [[#-union_allx-y-][★☆☆ ~union_all(x, y, ...)~.]]
+  - [[#差集合][差集合]]
+    - [[#-setdiffx-y-][★★☆ ~setdiff(x, y, ...)~.]]
+  - [[#同値][同値]]
+    - [[#-setequalx-y-][★☆☆ ~setequal(x, y, ...)~.]]
+    - [[#-all_equaltarget-current-ignore_col_order--true-ignore_row_order--true-convert--false-][★☆☆ ~all_equal(target, current, ignore_col_order = TRUE, ignore_row_order = TRUE, convert = FALSE, ...)~.]]
+- [[#結合演算][結合演算]]
+  - [[#mutating-join][Mutating join]]
+    - [[#-inner_joinx-y-by--null-copy--false-suffix--cx-y-][★★★ ~inner_join(x, y, by = NULL, copy = FALSE, suffix = c(".x", ".y"), ...)~.]]
+    - [[#-left_joinx-y-by--null-copy--false-suffix--cx-y-][★★★ ~left_join(x, y, by = NULL, copy = FALSE, suffix = c(".x", ".y"), ...)~.]]
+    - [[#-right_joinx-y-by--null-copy--false-suffix--cx-y-][★☆☆ ~right_join(x, y, by = NULL, copy = FALSE, suffix = c(".x", ".y"), ...)~.]]
+    - [[#-full_joinx-y-by--null-copy--false-suffix--cx-y-][★★☆ ~full_join(x, y, by = NULL, copy = FALSE, suffix = c(".x", ".y"), ...)~.]]
+    - [[#-nest_joinx-y-by--null-copy--false-keep--false-name--null-][★☆☆ ~nest_join(x, y, by = NULL, copy = FALSE, keep = FALSE, name = NULL, ...)~.]]
+  - [[#filtering-join][Filtering join]]
+    - [[#-semi_joinx-y-by--null-copy--false-][★★☆ ~semi_join(x, y, by = NULL, copy = FALSE, ...)~.]]
+    - [[#-anti_joinx-y-by--null-copy--false-][★☆☆ ~anti_join(x, y, by = NULL, copy = FALSE, ...)~.]]
+  - [[#bind-tables][Bind tables]]
+    - [[#-bind_rows-id--null][★★★ ~bind_rows(..., .id = NULL)~.]]
+    - [[#-bind_cols][★☆☆ ~bind_cols(...)~.]]
 - [[#実行環境][実行環境]]
 #+END_QUOTE
+
+* 2 つの ~data.frame~ を操作する関数群
+
+- 2 つの ~data.frame~ に対する集合演算や、結合処理 (~*_join()~) をするカテゴリー
+- 第 1 引数 ~x~ と第 2 引数 ~y~ に ~data.frame~ を指定する関数群
+- 返り値も ~data.frame~ を返す
+- 3 つ以上の ~data.frame~ を受け取る関数は ~{dplyr}~ には存在しないが ~purrr::reduce()~ とこのカテゴリーの関数を組み合わせることで実現できる
 
 * ライブラリの読み込みとバージョンの確認
 
 #+begin_src R :results silent
-# install.packages("dplyr")
 library(dplyr)
 #+end_src
 \\
@@ -50,8 +56,7 @@ packageVersion("dplyr")
 : [1] ‘0.8.3’
 \\
 
-* 2 つの ~data.frame~ を操作する関数群
-** データセット
+* データセット
 
 - x, y は同じ列で構成された ~data.frame~ である必要あり
 - FANG ではなく、より単純なデータを用意する
@@ -84,14 +89,14 @@ y <- data.frame(fruit = c("apple", "banana", "grape"),
 | grape  | radish    |
 \\
 
-** 集合演算
+* 集合演算
 
 - ~{base}~, ~{dplyr}~, ~{data.table}~ に同名の関数あり
 - 絶対参照にして利用したほうが、誤解がなくて無難
 \\
 
-*** 積集合
-**** ★★☆ ~intersect(x, y, ...)~.
+** 積集合
+*** ★★☆ ~intersect(x, y, ...)~.
 
 - *積集合* = x, y の両方にある列を抜き出す
 
@@ -106,8 +111,8 @@ dplyr::intersect(x, y)
 | banana | potato    |
 \\
 
-*** 和集合
-**** ★★☆ ~union(x, y, ...)~.
+** 和集合
+*** ★★☆ ~union(x, y, ...)~.
 
 - *和集合* = x, y を連結し、重複を削除
 
@@ -124,7 +129,7 @@ dplyr::union(x, y)
 | grape  | radish    |
 \\
 
-**** ★☆☆ ~union_all(x, y, ...)~.
+*** ★☆☆ ~union_all(x, y, ...)~.
 
 - *和集合* = x, y を連結し、重複を削除 *しない*
 
@@ -161,8 +166,8 @@ bind_rows(x, y)
 | grape  | radish    |
 \\
 
-*** 差集合
-**** ★★☆ ~setdiff(x, y, ...)~.
+** 差集合
+*** ★★☆ ~setdiff(x, y, ...)~.
 
 - *差集合* = y にはない x の行を返す
 
@@ -176,8 +181,8 @@ dplyr::setdiff(x, y)
 | peach | tomato    |
 \\
 
-*** 同値
-**** ★☆☆ ~setequal(x, y, ...)~.
+** 同値
+*** ★☆☆ ~setequal(x, y, ...)~.
 
 - 同じ集合かどうかを判断する
 
@@ -189,7 +194,7 @@ dplyr::setequal(x, y)
 : [1] FALSE
 \\
 
-**** ★☆☆ ~all_equal(target, current, ignore_col_order = TRUE, ignore_row_order = TRUE, convert = FALSE, ...)~.
+*** ★☆☆ ~all_equal(target, current, ignore_col_order = TRUE, ignore_row_order = TRUE, convert = FALSE, ...)~.
 
 - 同じ ~data.frame~ かどうかを比較
 - 同じでない場合、異なる箇所を指摘してくれる
@@ -201,9 +206,9 @@ dplyr::all_equal(x, y)
 #+RESULTS:
 : [1] "Rows in x but not y: 3. Rows in y but not x: 3. "
 
-** 結合演算
-*** Mutating join
-**** ★★★ ~inner_join(x, y, by = NULL, copy = FALSE, suffix = c(".x", ".y"), ...)~.
+* 結合演算
+** Mutating join
+*** ★★★ ~inner_join(x, y, by = NULL, copy = FALSE, suffix = c(".x", ".y"), ...)~.
 
 - x, y の両方に by が存在する場合に結合する
 - ~by~ の指定方法
@@ -222,7 +227,7 @@ inner_join(x, y, by = c("fruit"))
 | banana | potato      | potato      |
 \\
 
-**** ★★★ ~left_join(x, y, by = NULL, copy = FALSE, suffix = c(".x", ".y"), ...)~.
+*** ★★★ ~left_join(x, y, by = NULL, copy = FALSE, suffix = c(".x", ".y"), ...)~.
 
 - x は全て利用し、by が一致する y があれば結合する
 - y の欠損値は ~NA~ になる
@@ -239,7 +244,7 @@ left_join(x, y, by = "fruit")
 | peach  | tomato      | nil         |
 \\
 
-**** ★☆☆ ~right_join(x, y, by = NULL, copy = FALSE, suffix = c(".x", ".y"), ...)~.
+*** ★☆☆ ~right_join(x, y, by = NULL, copy = FALSE, suffix = c(".x", ".y"), ...)~.
 
 - ~left_join()~ の x, y が逆のバージョン
 - 基本的には ~left_join()~ の方が直感的にわかりやすいので利用しない
@@ -256,7 +261,7 @@ right_join(x, y, by = "fruit")
 | grape  | nil         | radish      |
 \\
 
-**** ★★☆ ~full_join(x, y, by = NULL, copy = FALSE, suffix = c(".x", ".y"), ...)~.
+*** ★★☆ ~full_join(x, y, by = NULL, copy = FALSE, suffix = c(".x", ".y"), ...)~.
 
 - x, y の全てを利用し、マッチしない部分を ~NA~ とする
 
@@ -273,7 +278,7 @@ full_join(x, y, by = "fruit")
 | grape  | nil         | radish      |
 \\
 
-**** TODO ★☆☆ ~nest_join(x, y, by = NULL, copy = FALSE, keep = FALSE, name = NULL, ...)~.
+*** TODO ★☆☆ ~nest_join(x, y, by = NULL, copy = FALSE, keep = FALSE, name = NULL, ...)~.
 
 - ~full_join()~ 以外を一般的に扱うことができる
 
@@ -283,8 +288,8 @@ nest_join(x, y, by = "fruit")
 
 \\
 
-*** Filtering join
-**** ★★☆ ~semi_join(x, y, by = NULL, copy = FALSE, ...)~.
+** Filtering join
+*** ★★☆ ~semi_join(x, y, by = NULL, copy = FALSE, ...)~.
 
 - x をフィルタリングする条件として、y の ~by~ 列を利用する
 
@@ -299,7 +304,7 @@ semi_join(x, y, by = "fruit")
 | banana | potato    |
 \\
 
-**** ★☆☆ ~anti_join(x, y, by = NULL, copy = FALSE, ...)~.
+*** ★☆☆ ~anti_join(x, y, by = NULL, copy = FALSE, ...)~.
 
 - semi_join の否定形。y とマッチしなかった行を抜き出す
 
@@ -313,8 +318,8 @@ anti_join(x, y, by = "fruit")
 | peach | tomato    |
 \\
 
-*** Bind tables
-**** ★★★ ~bind_rows(..., .id = NULL)~.
+** Bind tables
+*** ★★★ ~bind_rows(..., .id = NULL)~.
 
 - 行の結合
 - ~rbind~ よりも高速
@@ -384,7 +389,7 @@ bind_rows(x, y, .id = "src")
 |   2 | grape  | radish    |
 \\
 
-**** ★☆☆ ~bind_cols(...)~.
+*** ★☆☆ ~bind_cols(...)~.
 
 - 列の結合
 - ~bind_rows()~ 同様に ~do.call(cbind, dfs)~ を置き換えるもの

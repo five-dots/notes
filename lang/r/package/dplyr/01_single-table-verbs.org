@@ -66,16 +66,18 @@
 
 * 1 つの ~data.frame~ を操作する関数群
 
+- ~filter()~, ~mutate()~, ~summarise()~, ~select()~ などのメジャーな関数はこのカテゴリーに含まれる (これらの関数は ~{dplyr}~ のドキュメントなどでは *Scoped verbs* とも呼ばれている)
 - 第 1 引数が ~.data~ や ~tbl~ となっていて、受け取った ~data.frame~ に何らかの操作をする関数群
-- 返り値も ~data.frame~ のため ~%>%~ でメッソッドチェーンを作ることができる (~pull()~ などの例外除く)
-- ~filter()~, ~mutate()~, ~summarise()~, ~select()~ などのメジャーな関数はこのカテゴリーに含まれる (これらの関数 ~{dplyr}~ のドキュメントなどでは *Scoped verbs* とも呼ばれている)
-- 主に、行に対する操作・列に対する操作・グループに対する操作に大別できる
+- 基本的に返り値も ~data.frame~ のため ~%>%~ でメッソッドチェーンを作ることができる (~pull()~ などの例外除く)
+- 主に *行に対する操作* ・ *列に対する操作* ・ *グループに対する操作* に大別できる
+\\
 
 * ライブラリの読み込みとバージョンの確認
 
 #+begin_src R :results silent
 library(dplyr)
 #+end_src
+\\
 
 - バージョン
 #+begin_src R :results output :exports both
