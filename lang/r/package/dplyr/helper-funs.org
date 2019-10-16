@@ -1,0 +1,750 @@
+#+STARTUP: folded indent inlineimages latexpreview
+#+PROPERTY: header-args:R :results value :colnames yes :session *R:helper-funs*
+
+* 目次
+* ライブラリの読み込みとバージョンの確認
+
+#+begin_src R :results silent
+# install.packages("dplyr")
+library(dplyr)
+#+end_src
+\\
+
+- バージョン
+#+begin_src R :results output :exports both
+packageVersion("dplyr")
+#+end_src
+
+#+RESULTS:
+: [1] ‘0.8.3’
+\\
+
+* ヘルパー関数群
+** ベクトル関数・ウィンドウ関数
+
+- ~mutate()~ や ~transmute()~ 内で利用する
+- ベクトルを引数に取り、新たなベクトルを返す関数
+
+*** データセット
+
+#+begin_src R
+set.seed(1)
+# 重複データを追加しておく
+x_vec <- rnorm(9) %>% round(3) %>% c(0.33)
+x_df <- data.frame(x = x_vec)
+#+end_src
+
+#+RESULTS:
+|      x |
+|--------|
+| -0.626 |
+|  0.184 |
+| -0.836 |
+|  1.595 |
+|   0.33 |
+|  -0.82 |
+|  0.487 |
+|  0.738 |
+|  0.576 |
+|   0.33 |
+\\
+
+*** ランキング
+**** ★★☆ ~row_number(x)~.
+
+• equivalent to ~rank(ties.method = "first")~
+- タイがあった場合は、タイにせずにデータ順でランキングする
+ 
+#+begin_src R
+x_df %>% 
+  mutate(dplyr_rank = row_number(x),
+         base_rank = rank(x, ties.method = "first")) %>%
+  arrange(dplyr_rank)
+#+end_src
+
+#+RESULTS:
+|      x | dplyr_rank | base_rank |
+|--------+------------+-----------|
+| -0.836 |          1 |         1 |
+|  -0.82 |          2 |         2 |
+| -0.626 |          3 |         3 |
+|  0.184 |          4 |         4 |
+|   0.33 |          5 |         5 |
+|   0.33 |          6 |         6 |
+|  0.487 |          7 |         7 |
+|  0.576 |          8 |         8 |
+|  0.738 |          9 |         9 |
+|  1.595 |         10 |        10 |
+\\
+
+- _vector in, vector out_ の関数
+
+#+begin_src R :results output :exports both
+row_number(x_vec)
+#+end_src
+
+#+RESULTS:
+:  [1]  3  5  1 10  6  2  7  9  8  4
+\\
+
+**** ★★☆ ~min_rank(x)~.
+
+• equivalent to ~rank(ties.method = "min")~
+- タイがある場合、その次の順位はギャップが発生する (~dense_rank()~ は発生しない)
+
+#+begin_src R
+x_df %>% 
+  mutate(dplyr_rank = min_rank(x),
+         base_rank = rank(x, ties.method = "min")) %>%
+  arrange(dplyr_rank)
+#+end_src
+
+#+RESULTS:
+|      x | dplyr_rank | base_rank |
+|--------+------------+-----------|
+| -0.836 |          1 |         1 |
+|  -0.82 |          2 |         2 |
+| -0.626 |          3 |         3 |
+|  0.184 |          4 |         4 |
+|   0.33 |          5 |         5 |
+|   0.33 |          5 |         5 |
+|  0.487 |          7 |         7 |
+|  0.576 |          8 |         8 |
+|  0.738 |          9 |         9 |
+|  1.595 |         10 |        10 |
+\\
+
+**** ★☆☆ ~dense_rank(x)~.
+
+• ~min_rank()~ と似ているが、タイがある場合、ギャップが発生しない
+
+#+begin_src R
+x_df %>% 
+  mutate(dplyr_rank = dense_rank(x)) %>%
+  arrange(dplyr_rank)
+#+end_src
+
+#+RESULTS:
+|      x | dplyr_rank |
+|--------+------------|
+| -0.836 |          1 |
+|  -0.82 |          2 |
+| -0.626 |          3 |
+|  0.184 |          4 |
+|   0.33 |          5 |
+|   0.33 |          5 |
+|  0.487 |          6 |
+|  0.576 |          7 |
+|  0.738 |          8 |
+|  1.595 |          9 |
+\\
+
+**** ★★☆ ~percent_rank(x)~.
+ 
+• ~min_rank()~ の結果を 0 - 1 に変換
+ 
+#+begin_src R
+x_df %>% 
+  mutate(dplyr_rank = percent_rank(x)) %>%
+  arrange(dplyr_rank)
+#+end_src
+
+#+RESULTS:
+|      x |        dplyr_rank |
+|--------+-------------------|
+| -0.836 |                 0 |
+|  -0.82 | 0.111111111111111 |
+| -0.626 | 0.222222222222222 |
+|  0.184 | 0.333333333333333 |
+|   0.33 | 0.444444444444444 |
+|   0.33 | 0.444444444444444 |
+|  0.487 | 0.666666666666667 |
+|  0.576 | 0.777777777777778 |
+|  0.738 | 0.888888888888889 |
+|  1.595 |                 1 |
+\\
+
+**** ★☆☆ ~ntile(x = row_number(), n)~.
+
+- n 等分に分割する
+
+#+begin_src R
+# 5等分に分けてみる
+x_df %>%
+  mutate(dplyr_rank = ntile(x, n = 5)) %>%
+  arrange(dplyr_rank)
+#+end_src
+
+#+RESULTS:
+|      x | dplyr_rank |
+|--------+------------|
+| -0.836 |          1 |
+|  -0.82 |          1 |
+| -0.626 |          2 |
+|  0.184 |          2 |
+|   0.33 |          3 |
+|   0.33 |          3 |
+|  0.487 |          4 |
+|  0.576 |          4 |
+|  1.595 |          5 |
+|  0.738 |          5 |
+\\
+
+**** ★☆☆ ~cume_dist(x)~.
+ 
+• cume_dist = 累積割合
+ 
+#+begin_src R
+x_df %>% 
+  mutate(dplyr_rank = cume_dist(x)) %>%
+  arrange(dplyr_rank)
+#+end_src
+
+#+RESULTS:
+|      x | dplyr_rank |
+|--------+------------|
+| -0.836 |        0.1 |
+|  -0.82 |        0.2 |
+| -0.626 |        0.3 |
+|  0.184 |        0.4 |
+|   0.33 |        0.6 |
+|   0.33 |        0.6 |
+|  0.487 |        0.7 |
+|  0.576 |        0.8 |
+|  0.738 |        0.9 |
+|  1.595 |          1 |
+\\
+
+*** 累積関数
+
+- base に収録されている累積関数 (~cummax()~, ~cummin()~ ~cumsum()~, ~cumprod()~) を補完する
+
+**** ★☆☆ ~cumall(x)~.
+
+- ~all()~ をインデックスを 1 つずつずらしながら実行する
+- 入力と同じ長さの logical vector を返す
+- ~filter()~ の中などで利用する
+
+#+begin_src R :results output :exports both
+cumall(x_vec < 0)
+#+end_src
+
+#+RESULTS:
+:  [1]  TRUE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE
+\\
+
+**** ★☆☆ ~cumany(x)~.
+
+- ~any()~ をインデックスを 1 つずつずらしながら実行する
+
+#+begin_src R :results output :exports both
+cumany(x_vec > 0)
+#+end_src
+
+#+RESULTS:
+:  [1] FALSE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE
+\\
+
+**** ★☆☆ ~cummean(x)~.
+
+- ~mean()~ をインデックスを 1 つずつずらしながら実行する
+
+#+begin_src R :results output :exports both
+cummean(x_vec)
+#+end_src
+
+#+RESULTS:
+:  [1] -0.62600000 -0.22100000 -0.42600000  0.07925000  0.12940000 -0.02883333
+:  [7]  0.04485714  0.13150000  0.18088889  0.19580000
+\\
+
+- 上記と同じ結果
+
+#+begin_src R :results output :exports both
+cumsum(x_vec) / seq_along(x_vec)
+#+end_src
+
+#+RESULTS:
+:  [1] -0.62600000 -0.22100000 -0.42600000  0.07925000  0.12940000 -0.02883333
+:  [7]  0.04485714  0.13150000  0.18088889  0.19580000
+\\
+
+*** 比較
+**** ★★★ ~between(x, left, right)~.
+
+- shortcut for ~x >= left & x <= right~
+
+#+begin_src R :results output :exports both
+between(x_vec, -0.7, 0.4)
+#+end_src
+
+#+RESULTS:
+:  [1]  TRUE  TRUE FALSE FALSE  TRUE FALSE FALSE FALSE FALSE  TRUE
+\\
+
+**** ★★☆ ~near(x, y, tol = .Machine$double.eps^0.5)~.
+
+- 浮動小数点の誤差を考慮した比較
+- tol で誤差の範囲を指定できる
+
+#+begin_src R :results output :exports both
+sqrt(2) ^ 2 == 2
+near(sqrt(2) ^ 2, 2)
+#+end_src
+
+#+RESULTS:
+: [1] FALSE
+: 
+: [1] TRUE
+\\
+
+- 実行環境でのデフォルト tolerance
+#+begin_src R :results output :exports both
+.Machine$double.eps * 0.5
+#+end_src
+
+#+RESULTS:
+: [1] 1.110223e-16
+\\
+
+*** 条件分岐
+**** ★★☆ ~if_else(condition, true, false, missing = NULL)~.
+
+- TRUE/FALSE の型が同じかどうかをチェックするため、base ~ifelse()~ よりも厳格なバージョン
+
+#+begin_src R :results output :exports both
+x <- c(-5:5, NA)
+if_else(x < 0, NA_integer_, x)
+
+# NA_integer を NA にするとエラーになる
+# Error: `false` must be a logical vector, not an integer vector
+# if_else(x < 0, NA, x)
+#+end_src
+
+#+RESULTS:
+: 
+:  [1] NA NA NA NA NA  0  1  2  3  4  5  0
+\\
+
+**** ★☆☆ ~case_when(...)~.
+
+- Multi-case ~if_else()~
+- ~LHS ~ RHS~ の形式
+  - LHS と RHS は同じ長さである必要あり (1 or ~n()~)
+  - LHS: どの値にマッチさせるか 
+    - LHS は logical vector である必要
+  - RHS: 置換する値
+    - RHS は全て同じ型である必要 (~NA_real_~ などを使う)
+
+- FizzBuzz 問題
+#+begin_src R :results output :exports both
+x <- 1:50
+case_when(
+  x %% 15 == 0 ~ "fizz buzz",
+  x %% 3 == 0 ~ "fizz",
+  x %% 5 == 0 ~ "buzz",
+  TRUE ~ as.character(x)
+)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+ [1] "1"         "2"         "fizz"      "4"         "buzz"      "fizz"     
+ [7] "7"         "8"         "fizz"      "buzz"      "11"        "fizz"     
+[13] "13"        "14"        "fizz buzz" "16"        "17"        "fizz"     
+[19] "19"        "buzz"      "fizz"      "22"        "23"        "fizz"     
+[25] "buzz"      "26"        "fizz"      "28"        "29"        "fizz buzz"
+[31] "31"        "32"        "fizz"      "34"        "buzz"      "fizz"     
+[37] "37"        "38"        "fizz"      "buzz"      "41"        "fizz"     
+[43] "43"        "44"        "fizz buzz" "46"        "47"        "fizz"     
+[49] "49"        "buzz"
+#+end_example
+\\
+
+**** ★☆☆ ~recode(.x, ..., .default = NULL, .missing = NULL)~.
+     
+- Vectorized ~switch()~ (~switch()~ ではスカラ値しか扱えない)
+- character or factor = 名前で指定
+- numeric = ポジションで指定
+
+#+begin_src R
+char_vec <- sample(c("a", "b", "c"), 10, replace = TRUE)
+recode(char_vec,
+       a = "Apple",
+       b = "Banana")
+#+end_src
+
+#+RESULTS:
+| x      |
+|--------|
+| Apple  |
+| c      |
+| c      |
+| Banana |
+| c      |
+| c      |
+| Banana |
+| c      |
+| c      |
+| Apple  |
+\\
+
+**** TODO ★☆☆ ~recode_factor(.x, ..., .default = NULL, .missing = NULL, .ordered = FALSE)~.
+*** オフセット
+**** ★☆☆ ~lead(x, n = 1L, default = NA, order_by = NULL, ...)~.
+
+- 前のインデックスのデータを見たいとき
+- 末尾が ~NA~ になる
+#+begin_src R :results output :exports both
+lead(1:10, 1)
+#+end_src
+
+#+RESULTS:
+:  [1]  2  3  4  5  6  7  8  9 10 NA
+\\
+
+#+begin_src R :results output :exports both
+lead(1:10, 3)
+#+end_src
+
+#+RESULTS:
+:  [1]  4  5  6  7  8  9 10 NA NA NA
+\\
+
+**** ★★★ ~lag(x, n = 1L, default = NA, order_by = NULL, ...)~.
+
+- 後ろのインデックスのデータを見たいとき
+- 先頭が ~NA~ になる
+
+#+begin_src R :results output :exports both
+lag(1:10, 1)
+#+end_src
+
+#+RESULTS:
+:  [1] NA  1  2  3  4  5  6  7  8  9
+\\
+
+*** NA
+**** ★☆☆ ~coalesce(...)~.
+
+- 複数のベクトルの中から、最初の非 NA 値を抜き出す
+- 全てのベクトルは、第 1 引数と同じ長さか、長さ 1 である必要あり
+
+- Example のコード (1)
+#+begin_src R :results output :exports both
+# 全ての NA を 0 で置き換える
+x <- sample(c(1:5, NA, NA, NA))
+coalesce(x, 0L)
+#+end_src
+
+#+RESULTS:
+: 
+: [1] 1 4 3 2 5 0 0 0
+\\
+
+- ただ、上記のケースであれば ~tidyr::replace_na()~ の方がわかりやすい
+#+begin_src R :results output :exports both
+tidyr::replace_na(x, 0L)
+#+end_src
+
+#+RESULTS:
+: [1] 1 4 3 2 5 0 0 0
+\\
+
+- Example のコード (2)
+- NA を 2 つ目のベクトルの値で置き換える
+#+begin_src R :results output :exports both
+y <- c(1, 2, NA, NA, 5)
+z <- c(NA, NA, 3, 4, 5)
+coalesce(y, z)
+#+end_src
+
+#+RESULTS:
+: 
+: [1] 1 2 3 4 5
+\\
+
+- Example のコード (3) (結果は 2 と同じ)
+- ~list~ で複数のベクトルを与えて ~!!!~ で評価する
+#+begin_src R :results output :exports both
+# Supply lists by splicing them into dots:
+vecs <- list(
+  c(1, 2, NA, NA, 5),
+  c(NA, NA, 3, 4, 5))
+coalesce(!!!vecs)
+#+end_src
+
+#+RESULTS:
+: 
+: [1] 1 2 3 4 5
+\\          
+
+**** ★★☆ ~na_if(x, y)~.
+
+- 特定の値を ~NA~ に置き換える
+- 不正な値を ~NA~ にして、除外する際に使う
+
+- ~x~: 対象となるベクトル
+- ~y~: ~NA~ に置換するベクトル
+
+#+begin_src R :results output :exports both
+na_if(1:5, 5:1)
+#+end_src
+
+#+RESULTS:
+: [1]  1  2 NA  4  5
+\\
+
+- 上記と同じ
+#+begin_src R :results output :exports both
+na_if(1:5, 3)
+#+end_src
+
+#+RESULTS:
+: [1]  1  2 NA  4  5
+\\
+
+*** その他
+**** ★★☆ ~desc(x)~.
+
+- データを降順に並び替える
+- ~arrange()~ の中などで利用する
+
+#+begin_src R :exports both :results output
+desc(1:10)
+#+end_src
+
+#+RESULTS:
+:  [1]  -1  -2  -3  -4  -5  -6  -7  -8  -9 -10
+\\
+
+**** TODO ★☆☆ ~id(.variables, drop = FALSE)~.
+**** TODO ★☆☆ ~combine(...)~.
+**** TODO ★☆☆ ~common_by(by = NULL, x, y)~.
+**** TODO ★☆☆ ~order_by(order_by, call)~.
+**** TODO ★☆☆ ~with_order(order_by, fun, x, ...)~.
+** 集約関数
+*** 集計 
+**** ★★★ ~n()~.
+
+- グループ内の行数をカウント
+- ~summarise()~, ~mutate()~, ~filter()~ 内でのみ利用できる
+
+#+begin_src R
+FANG %>%
+  group_by(symbol) %>%
+  summarise(count = n())
+#+end_src
+
+#+RESULTS:
+| symbol | count |
+|--------+-------|
+| AMZN   |  1008 |
+| FB     |  1008 |
+| GOOG   |  1008 |
+| NFLX   |  1008 |
+\\
+
+**** ★★☆ ~n_distinct(..., na.rm = FALSE)~.
+
+- ユニークな長さ = ~length(unique(x))~
+
+#+begin_src R :exports both :results output
+x <- sample(1:10, 1e5, rep = TRUE)
+length(unique(x))
+n_distinct(x)
+#+end_src
+
+#+RESULTS:
+: 
+: [1] 10
+: 
+: [1] 10
+\\
+
+*** ポジション 
+**** ★★☆ ~first(x, order_by = NULL, default = default_missing(x))~.
+
+- 1 番目を抜き出す
+
+#+begin_src R :results output :exports both
+first(1:10)
+#+end_src
+
+#+RESULTS:
+: [1] 1
+\\
+
+**** ★★☆ ~last(x, order_by = NULL, default = default_missing(x))~.
+
+- 最後を抜き出す
+- ~length()~ + ~[~ を使うよりも直感的
+
+#+begin_src R :results output :exports both
+last(1:10)
+#+end_src
+
+#+RESULTS:
+: [1] 10
+\\
+
+**** ★☆☆ ~nth(x, n, order_by = NULL, default = default_missing(x))~.
+
+- n 番目を抜き出す
+
+#+begin_src R :results output :exports both
+nth(1:10, 4)
+#+end_src
+
+#+RESULTS:
+: [1] 4
+\\
+
+** その他
+*** ユーティリティ
+**** ★☆☆ ~location(df)~.
+
+- ~data.frame~ のメモリ上の位置を確認できる
+
+#+begin_src R :exports both :results output
+location(FANG)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+<0x55cdb4e029d8>
+Variables:
+ ,* symbol:    <0x55cdb5435810>
+ ,* date:      <0x55cdb5536b30>
+ ,* open:      <0x55cdb3d30a80>
+ ,* high:      <0x55cdb51783b0>
+ ,* low:       <0x55cdb3738cb0>
+ ,* close:     <0x55cdb4d38730>
+ ,* volume:    <0x55cdb5285500>
+ ,* adjusted:  <0x55cdb37b9800>
+Attributes:
+ ,* names:     <0x55cdb4e02c78>
+ ,* class:     <0x55cdb4c1b3a8>
+ ,* row.names: <0x55cdb3f1b778>
+#+end_example
+\\
+
+**** ★☆☆ ~changes(x, y)~.
+
+- 2 つの ~data.frame~ のメモリ上の差分を表示
+
+#+begin_src R :exports both :results output
+FANG2 <- FANG %>%
+  mutate(return = log(adjusted) - lag(log(adjusted)))
+
+changes(FANG, FANG2)
+#+end_src
+
+#+RESULTS:
+: Changed variables:
+:           old     new           
+: return    <added> 0x55cdb5edecc0
+: 
+: Changed attributes:
+:           old            new           
+: names     0x55cdb4e02c78 0x55cdb57f0d48
+: row.names 0x55cdb4300708 0x55cdb4303a20
+\\
+
+**** ★☆☆ ~dim_desc(x)~.
+
+- データの次元を表示する
+
+#+begin_src R :exports both :results output
+dim_desc(FANG)
+#+end_src
+
+#+RESULTS:
+: [1] "[4,032 x 8]"
+\\
+
+**** ★☆☆ ~dr_dplyr()~.
+
+- インストールが問題ないかを確認する
+
+#+begin_src R :exports both :results output
+dr_dplyr()
+#+end_src
+
+#+RESULTS:
+: Warning message:
+: Installed Rcpp (1.0.2) different from Rcpp used to build dplyr (1.0.1).
+: Please reinstall dplyr to avoid random crashes or undefined behavior.
+\\
+
+**** ★☆☆ ~hybrid_call(.data, expr)~.
+
+#+begin_src R :exports both :results output
+hybrid_call(iris, n())
+#+end_src
+
+#+RESULTS:
+: <hybrid evaluation>
+:   call      : dplyr::n()
+:   C++ class : dplyr::hybrid::Count<dplyr::NaturalDataFrame>
+\\
+
+**** ★☆☆ ~progress_estimated(n, min_time = 0)~.
+
+- プログレスバーを表示するための R6 class
+
+#+begin_src R :exports both :results output
+p <- progress_estimated(3)
+for (i in 1:3) p$pause(0.1)$tick()$print()
+#+end_src
+
+#+RESULTS:
+: |==================                                    | 33% ~0 s remaining     
+: |====================================                  | 67% ~0 s remaining     
+: |======================================================|100% ~0 s remaining
+
+* 実行環境
+
+#+begin_src R :results output :exports both
+sessionInfo()
+#+end_src
+
+#+RESULTS:
+#+begin_example
+R version 3.6.1 (2019-07-05)
+Platform: x86_64-pc-linux-gnu (64-bit)
+Running under: Ubuntu 18.04.3 LTS
+
+Matrix products: default
+BLAS:   /usr/lib/x86_64-linux-gnu/blas/libblas.so.3.7.1
+LAPACK: /usr/lib/x86_64-linux-gnu/lapack/liblapack.so.3.7.1
+
+locale:
+ [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C              
+ [3] LC_TIME=en_US.UTF-8        LC_COLLATE=en_US.UTF-8    
+ [5] LC_MONETARY=en_US.UTF-8    LC_MESSAGES=en_US.UTF-8   
+ [7] LC_PAPER=en_US.UTF-8       LC_NAME=C                 
+ [9] LC_ADDRESS=C               LC_TELEPHONE=C            
+[11] LC_MEASUREMENT=en_US.UTF-8 LC_IDENTIFICATION=C       
+
+attached base packages:
+[1] stats     graphics  grDevices utils     datasets  methods   base     
+
+other attached packages:
+[1] rlang_0.4.0                tidyquant_0.5.7           
+[3] quantmod_0.4-15            TTR_0.23-5                
+[5] PerformanceAnalytics_1.5.3 xts_0.11-2                
+[7] zoo_1.8-6                  lubridate_1.7.4           
+[9] dplyr_0.8.3               
+
+loaded via a namespace (and not attached):
+ [1] Rcpp_1.0.2       rstudioapi_0.10  magrittr_1.5     tidyselect_0.2.5
+ [5] lattice_0.20-38  R6_2.4.0         quadprog_1.5-7   fansi_0.4.0     
+ [9] httr_1.4.1       stringr_1.4.0    tools_3.6.1      grid_3.6.1      
+[13] utf8_1.1.4       cli_1.1.0        assertthat_0.2.1 tibble_2.1.3    
+[17] crayon_1.3.4     purrr_0.3.2      vctrs_0.2.0      zeallot_0.1.0   
+[21] curl_3.3         Quandl_2.10.0    glue_1.3.1       stringi_1.4.3   
+[25] compiler_3.6.1   pillar_1.4.2     backports_1.1.5  jsonlite_1.6    
+[29] pkgconfig_2.0.3
+#+end_example
