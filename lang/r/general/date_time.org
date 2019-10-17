@@ -1,13 +1,13 @@
 #+STARTUP: folded indent inlineimages latexpreview
 #+PROPERTY: header-args:R :results output :colnames yes :session *R:date_time*
 
-* Date and time in ~{base}~ package                                  :noexport:
+* Date and Time in ~{base}~ package                                  :noexport:
 
 R での日時の扱いはややこしい面がある。似たような複数の型が存在していたり、名前が直感的にわかりにくかったりするからだ。幸い ~{lubridate}~ などの便利なパッケージのお陰で、そうした不便を軽減することはできる。しかし ~{lubridate}~ は ~{tidyverse}~ のコアパッケージではなく、どんな時も利用できる、というわけではないだろう。そんな時のために、ここでは ~{base}~ パッケージの中で最低限押さえて置くべきことをまとめておく。
 
 * 目次                                                            :quote:toc:
 #+BEGIN_QUOTE
-- [[#datedate_time-class][Date/Date_Time Class]]
+- [[#日時を扱う型][日時を扱う型]]
 - [[#date-class][Date class]]
   - [[#新規作成][新規作成]]
   - [[#for-loop-で-date-が-numeric-になる問題][for loop で Date が numeric になる問題]]
@@ -25,7 +25,7 @@ R での日時の扱いはややこしい面がある。似たような複数の
 - [[#参考情報][参考情報]]
 #+END_QUOTE
 
-* Date/Date_Time Class
+* 日時を扱う型
 
 base R には、日時を扱う 4 つの class が存在する
 |---------+-------------------------------------------------------------|
@@ -33,13 +33,15 @@ base R には、日時を扱う 4 つの class が存在する
 |---------+-------------------------------------------------------------|
 | ~Date~    | 経過日数で表現される。「年月日」のみ。                      |
 | ~POSIXt~  | POSIXct, POSIXlt の両方の性質を持つ。                       |
-| ~POSIXct~ | ct = Calender Time. 経過秒数で表現される。                  |
-| ~POSIXlt~ | lt = Local Time. 日付項目が名前付きのリスト。可読性が高い。 |
+| ~POSIXct~ | ct = Calender Time。経過秒数で表現される。                  |
+| ~POSIXlt~ | lt = Local Time。日付項目が名前付きのリスト。可読性が高い。 |
 |---------+-------------------------------------------------------------|
 
 - R の日付型は、Unix エポック経過時間で表現される (origin = "1970-01-01")
-- R には時刻を単独で扱うクラスはない。パッケージとして、 ~hms~ がある
-- ~tibble~ では、日付<date>、時刻<time>、日付時刻<dttm>で表現される
+- 日時は、基本的に ~POSIXct~ class を利用しておけば良い
+- R には時刻のみ扱うクラスはない (パッケージとして、 ~hms~ がある)
+- ~tibble~ では、日付<date>、時刻<time>、日時<dttm>で表示される
+\\
 
 * Date class
 ** 新規作成
@@ -73,6 +75,7 @@ epoch + unclass(Sys.Date())
 #+RESULTS:
 : 
 : [1] "2019-10-17"
+\\
 
 - 数値から Date を作成するには、origin を指定する
 #+begin_src R :exports both
@@ -81,10 +84,11 @@ as.Date(num_dates, origin = "1970-01-01")
 
 #+RESULTS:
 : [1] "2019-10-17"
+\\
 
 ** for loop で Date が numeric になる問題
 
-- for loop 内で class attribute が欠落してしまう
+- ~for~ loop 内で class attribute が欠落してしまう問題
 #+begin_src R :exports both
 dates <- c(as.Date("2019-01-01"), as.Date("2019-01-02"))
 for (date in dates) print(date)
@@ -96,7 +100,7 @@ for (date in dates) print(date)
 : [1] 17898
 \\
 
-- list に変換してからループする
+- 対策: ~list~ に変換してからループする
 #+begin_src R :exports both
 for (date in as.list(dates)) print(date)
 #+end_src
@@ -153,7 +157,6 @@ as.POSIXct("2019-01-28 15:35:10", format = "%Y-%m-%d %H:%M:%S",
 ** POSIXct -> Date への変換で日付がずれることがある
 
 - [[https://qiita.com/kota9/items/657c8c0ac5092e3ec1ff][ここ]] での議論
-- 
 #+begin_src R :exports both
 today <- as.POSIXct("2016-09-23")
 as.Date(today)
@@ -171,6 +174,7 @@ as.Date(today, tz = "Asia/Tokyo")
 
 #+RESULTS:
 : [1] "2016-09-23"
+\\
 
 - もしくは、文字列に一度変換する
 #+begin_src R :exports both
@@ -191,10 +195,11 @@ lubridate::tz(lubridate::as_date(today)) # 時間情報を削除して、UTCに�
 #+RESULTS:
 : [1] "2016-09-23"
 : [1] "UTC"
+\\
 
 ** ミリ秒の扱い
 
-- ミリ秒がずれる (切り捨てられる, [[https://stackoverflow.com/questions/10931972/r-issue-with-rounding-milliseconds][ここでの議論]])
+- ミリ秒がずれる (切り捨てられる。[[https://stackoverflow.com/questions/10931972/r-issue-with-rounding-milliseconds][ここでの議論]])
 #+begin_src R :exports both
 options(digits.secs = 3)
 ms_dt <- as.POSIXct("2019-06-28 12:34:01.123", format = "%Y-%m-%d %H:%M:%OS")
@@ -216,6 +221,7 @@ lubridate::ymd_hms("2019-06-28 12:34:01.123", tz = "Asia/Tokyo")
 \\
 
 - ミリ秒単位の経過時間を POSIXct に変換する ([[https://stackoverflow.com/questions/49828433/r-how-to-convert-milliseconds-from-origin-to-date-and-keep-the-milliseconds][ここでの議論]])
+- 株価のティックデータなどで必要になる手法
 - 1000 で割って秒数に換算する (+0.0005 を足すことで丸め誤差を消すことができる)
 #+begin_src R :exports both
 msec <- 1506378448123
@@ -244,6 +250,7 @@ Sys.timezone()
 
 #+RESULTS:
 : [1] "Asia/Tokyo"
+\\
 
 - Timezone のリスト
 #+begin_src R :exports both
@@ -255,6 +262,7 @@ head(OlsonNames(), 10)
 :  [4] "Africa/Algiers"     "Africa/Asmara"      "Africa/Asmera"     
 :  [7] "Africa/Bamako"      "Africa/Bangui"      "Africa/Banjul"     
 : [10] "Africa/Bissau"
+\\
 
 * フォーマット
 ** 基本
@@ -265,6 +273,7 @@ head(OlsonNames(), 10)
 
 - 日時 -> 文字列
   - ~format()~, ~as.character()~, ~strftime()~
+\\
   
 ** フォーマット一覧
 
@@ -272,59 +281,58 @@ head(OlsonNames(), 10)
 options(digits.secs = 3)
 today <- as.POSIXct("2019-01-28 16:41:21.123", format = "%Y-%m-%d %H:%M:%OS", tz = "Asia/Tokyo")
 formats <- c(
-  "%C",  # Century
-  "%Y",  # 4 digits year (00-68 => prefix+20, 69-99 => prefix+19)
-  "%y",  # 2 digits year
-  "%m",  # 2 digits month
-  "%b",  # Abbrev month
-  "%B",  # Full month
-  "%d",  # Day of the month
-  "%j",  # Day of the year (000-366)
-  "%u",  # Weekday num (Start from Mon, 0-6)
-  "%w",  # Weekday num (Start from Sun, 1-7)
-  "%a",  # Abbrev weekday
-  "%A",  # Full weekday
-  "%W",  # Week of the year (Start from Mon)
-  "%U",  # Week of the year (Start from Sun)
-  "%H",  # 24 Hour
-  "%I",  # 12 Hour
-  "%M",  # Minute
-  "%S",  # Second
-  "%OS", # Second+Millisecond
-  "%p",  # Locale specific AM/PM
-  "%x",  # Locale specific date
-  "%z",  # UTC offset
-  "%Z"   # Timezone
-)
-purrr::map_dfr(formats, ~ data.frame(foramt = .x, value = format(today, format = .x)))
+  "Century"               = "%C",
+  "4 digits year"         = "%Y",
+  "2 digits year"         = "%y",
+  "2 digits month"        = "%m",
+  "Abbrev month"          = "%b",
+  "Full month"            = "%B",
+  "Day of the month"      = "%d",
+  "Day of the year"       = "%j",
+  "Weekday num "          = "%u",
+  "Weekday num"           = "%w",
+  "Abbrev weekday"        = "%a",
+  "Full weekday"          = "%A",
+  "Week of the year"      = "%W",
+  "Week of the year"      = "%U",
+  "24 Hour"               = "%H",
+  "12 Hour"               = "%I",
+  "Minute"                = "%M",
+  "Second"                = "%S",
+  "Second+Millisecond"    = "%OS",
+  "Locale specific AM/PM" = "%p",
+  "Locale specific date"  = "%x",
+  "UTC offset"            = "%z",
+  "Timezone"              = "%Z")
+purrr::imap_dfr(formats, ~ data.frame(name = .y, foramt = .x, value = format(today, format = .x)))
 #+end_src
 
 #+RESULTS:
-| foramt |      value |
-|--------+------------|
-| %C     |         20 |
-| %Y     |       2019 |
-| %y     |         19 |
-| %m     |          1 |
-| %b     |        Jan |
-| %B     |    January |
-| %d     |         28 |
-| %j     |         28 |
-| %u     |          1 |
-| %w     |          1 |
-| %a     |        Mon |
-| %A     |     Monday |
-| %W     |          4 |
-| %U     |          4 |
-| %H     |         16 |
-| %I     |          4 |
-| %M     |         41 |
-| %S     |         21 |
-| %OS    |     21.122 |
-| %p     |         PM |
-| %x     | 01/28/2019 |
-| %z     |      +0900 |
-| %Z     |        JST |
+| name                  | foramt |      value |
+|-----------------------+--------+------------|
+| Century               | %C     |         20 |
+| 4 digits year         | %Y     |       2019 |
+| 2 digits year         | %y     |         19 |
+| 2 digits month        | %m     |          1 |
+| Abbrev month          | %b     |        Jan |
+| Full month            | %B     |    January |
+| Day of the month      | %d     |         28 |
+| Day of the year       | %j     |         28 |
+| Weekday num           | %u     |          1 |
+| Weekday num           | %w     |          1 |
+| Abbrev weekday        | %a     |        Mon |
+| Full weekday          | %A     |     Monday |
+| Week of the year      | %W     |          4 |
+| Week of the year      | %U     |          4 |
+| 24 Hour               | %H     |         16 |
+| 12 Hour               | %I     |          4 |
+| Minute                | %M     |         41 |
+| Second                | %S     |         21 |
+| Second+Millisecond    | %OS    |     21.122 |
+| Locale specific AM/PM | %p     |         PM |
+| Locale specific date  | %x     | 01/28/2019 |
+| UTC offset            | %z     |      +0900 |
+| Timezone              | %Z     |        JST |
 \\
 
 ** strptime(x, format, tz = "")
