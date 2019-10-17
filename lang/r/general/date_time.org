@@ -13,6 +13,7 @@ R での日時の扱いは煩雑な面がある。似たような複数の型が
   - [[#for-loop-で-date-が-numeric-になる問題][for loop で Date が numeric になる問題]]
 - [[#posixct-class][POSIXct class]]
   - [[#新規作成-1][新規作成]]
+  - [[#date-から-posixct-への変換][Date から POSIXct への変換]]
   - [[#posixct-から-date-への変換で日付がずれる問題][POSIXct から Date への変換で日付がずれる問題]]
   - [[#ミリ秒の丸め問題][ミリ秒の丸め問題]]
 - [[#タイムゾーン][タイムゾーン]]
@@ -68,7 +69,7 @@ num_dates
 : [1] 18186
 \\
 
-- エポック時間に経過日数を足せば、今日の日付になる
+- 当然、エポック時間に経過日数を足せば、今日の日付になる
 #+begin_src R :exports both
 epoch <- as.Date("1970-01-01")
 epoch + num_dates
@@ -124,16 +125,6 @@ Sys.time()
 : [1] "2019-10-17 15:36:05 JST"
 \\
 
-- ~POSIXct~ から ~Date~ への変換
-- デフォルトの JST が使われるため、GMT+9 になる
-#+begin_src R :exports both
-as.POSIXct(Sys.Date())
-#+end_src
-
-#+RESULTS:
-: [1] "2019-10-17 09:00:00 JST"
-\\
-
 - ~POSIXct~ は Unix エポックからの経過 *秒数* で表現される
 #+begin_src R :exports both
 td <- Sys.time()
@@ -154,6 +145,27 @@ as.POSIXct("2019-01-28 15:35:10", format = "%Y-%m-%d %H:%M:%S",
 #+RESULTS:
 : 
 : [1] "2019-01-28 15:35:10 JST"
+\\
+
+** Date から POSIXct への変換
+
+- ~Date~ から ~POSIXct~ への変換
+- デフォルトの JST が使われるため、GMT+9 になる
+#+begin_src R :exports both
+as.POSIXct(Sys.Date())
+#+end_src
+
+#+RESULTS:
+: [1] "2019-10-17 09:00:00 JST"
+\\
+
+- ~lubridate::as_datetime()~ なら UTC で 00:00 に変換できる
+#+begin_src R :exports both
+lubridate::as_datetime(Sys.Date())
+#+end_src
+
+#+RESULTS:
+: [1] "2019-10-17 UTC"
 \\
 
 ** POSIXct から Date への変換で日付がずれる問題
@@ -257,8 +269,6 @@ Sys.timezone()
 \\
 
 - タイムゾーンのリストを取得
-- タイムゾーンは、"Area/Locality" の形式で指定すべき ([[https://stackoverflow.com/questions/37205128/understanding-timezone-strings-in-r][参考]])
-- つまり "JST" ではなく、"Asia/Tokyo" の形式で指定する
 #+begin_src R :exports both
 head(OlsonNames(), 10)
 #+end_src
@@ -270,14 +280,24 @@ head(OlsonNames(), 10)
 : [10] "Africa/Bissau"
 \\
 
+- タイムゾーンは、"Area/Locality" の形式で指定すべき ([[https://stackoverflow.com/questions/37205128/understanding-timezone-strings-in-r][参考]])
+- つまり "JST" ではなく、"Asia/Tokyo" の形式で指定する
+#+begin_src R :exports both
+as.POSIXct("2019-01-01 13:14:15", tz = "Asia/Tokyo")
+#+end_src
+
+#+RESULTS:
+: [1] "2019-01-01 13:14:15 JST"
+\\
+
 * フォーマット
 ** 基本
 
-- 文字列 -> 日時
+- 文字列 から 日時
   - ~strptime()~
   - ~as.Date()~, ~as.POSIXct()~, ~as.POSIXlt()~ も format を指定できる
 
-- 日時 -> 文字列
+- 日時 から 文字列
   - ~format()~, ~as.character()~, ~strftime()~
 \\
   
@@ -358,7 +378,7 @@ strptime("2019-01-28 14:23:12", format = "%Y-%m-%d %H:%M:%S")
 
 - ~strftime(x, format = "", tz = "", usetz = FALSE, ...)~
 - f = "Format
-- strftime = format.POSIXlt のラッパー
+- ~strftime()~ = ~format.POSIXlt()~ のラッパー
 #+begin_src R :exports both
 strftime(Sys.Date(), format = "Century = %Cth, Weekday = %a")
 #+end_src
@@ -371,6 +391,7 @@ strftime(Sys.Date(), format = "Century = %Cth, Weekday = %a")
 
 - ~Sys.setlocale(category = "LC_ALL", locale = "")~
 - 曜日などの出力形式を変更したい場合は、ロケールを変更する
+\\
 
 - 日本表記
 #+begin_src R :exports both
