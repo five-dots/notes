@@ -1,9 +1,16 @@
 #+STARTUP: folded indent inlineimages latexpreview
 #+PROPERTY: header-args:R :results value :colnames yes :session *R:two-table-verbs*
 
-* 目次                                                            :TOC:QUOTE:
+* 2 つの ~data.frame~ を操作する関数群                               :noexport:
+
+- 2 つの ~data.frame~ に対する集合演算や、結合処理 (~*_join()~) をするカテゴリー
+- 第 1 引数 ~x~ と第 2 引数 ~y~ に ~data.frame~ を指定する関数群
+- 返り値も ~data.frame~ を返す
+- 3 つ以上の ~data.frame~ を受け取る関数は ~{dplyr}~ には存在しないが ~purrr::reduce()~ とこのカテゴリーの関数を組み合わせることで実現できる
+\\
+
+* 目次                                                            :toc:quote:
 #+BEGIN_QUOTE
-- [[#2-つの-dataframe-を操作する関数群][2 つの ~data.frame~ を操作する関数群]]
 - [[#ライブラリの読み込みとバージョンの確認][ライブラリの読み込みとバージョンの確認]]
 - [[#データセット][データセット]]
 - [[#集合演算][集合演算]]
@@ -32,14 +39,6 @@
     - [[#-bind_cols][★☆☆ ~bind_cols(...)~.]]
 - [[#実行環境][実行環境]]
 #+END_QUOTE
-
-* 2 つの ~data.frame~ を操作する関数群
-
-- 2 つの ~data.frame~ に対する集合演算や、結合処理 (~*_join()~) をするカテゴリー
-- 第 1 引数 ~x~ と第 2 引数 ~y~ に ~data.frame~ を指定する関数群
-- 返り値も ~data.frame~ を返す
-- 3 つ以上の ~data.frame~ を受け取る関数は ~{dplyr}~ には存在しないが ~purrr::reduce()~ とこのカテゴリーの関数を組み合わせることで実現できる
-\\
 
 * ライブラリの読み込みとバージョンの確認
 

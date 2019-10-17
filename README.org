@@ -1,15 +1,6 @@
 #+STARTUP: content indent
 
-* 目次                                                            :TOC_2:QUOTE:
-#+BEGIN_QUOTE
-- [[#org-mode--babel-による技術ノート集][org-mode + babel による技術ノート集]]
-- [[#プログラミング言語][プログラミング言語]]
-  - [[#r][R]]
-  - [[#python][Python]]
-  - [[#emacs-lisp][Emacs Lisp]]
-#+END_QUOTE
-
-* org-mode + babel による技術ノート集
+* org-mode + babel による技術ノート集                              :noexport:
 
 個人の技術ノートをまとめたリポジトリです。すべてのノートを Emacs の [[https://orgmode.org/ja/][org-mode]] で記載しています。ソースコードは、[[https://orgmode.org/worg/org-contrib/babel/][Babel]] を利用して実際に実行したものを掲載していますので、clone をして手元で試していただくことが可能です。(各ノートの末尾に実行環境を掲載するようにしています。)
 
@@ -29,8 +20,17 @@ Babel の実行には適切な ~org-babel-load-language~ の設定が必要で�
     (python . t)))
 #+end_src
 
+* 目次                                                          :toc_2:quote:
+#+BEGIN_QUOTE
+- [[#プログラミング言語][プログラミング言語]]
+  - [[#r][R]]
+  - [[#python][Python]]
+  - [[#emacs-lisp][Emacs Lisp]]
+#+END_QUOTE
+
 * プログラミング言語
 ** R
+
 |---------------+-----------------------------------------------------------------|
 | Category      | Notes                                                           |
 |---------------+-----------------------------------------------------------------|

@@ -1,9 +1,13 @@
 #+STARTUP: folded indent inlineimages latexpreview
 #+PROPERTY: header-args:R :results value :colnames yes :session *R:scoped-verbs-variants*
 
-* 目次                                                            :TOC:QUOTE:
+* Scoped Verbs の亜種と {tidyselect}                               :noexport:
+
+- *Scoped verbs* の末尾に ~_if()~, ~_all()~, ~_at()~ が付く亜種では、複数の列に一括して関数を適応できる
+- ~_at()~ 系の関数では、列の選択を柔軟に行うための関数が ~{tidyselect}~ パッケージからインポートされている (*Select Helpers* と呼ばれている)
+
+* 目次                                                            :toc:quote:
 #+BEGIN_QUOTE
-- [[#scoped-verbs-の亜種と-tidyselect][Scoped Verbs の亜種と {tidyselect}]]
 - [[#ライブラリの読み込みとバージョンの確認][ライブラリの読み込みとバージョンの確認]]
 - [[#基本][基本]]
 - [[#select-helpers][Select helpers]]
@@ -54,11 +58,6 @@
   - [[#-group_by_preparedata--dots--list-add--false][★☆☆ ~group_by_prepare(.data, ..., .dots = list(), add = FALSE)~.]]
 - [[#実行環境][実行環境]]
 #+END_QUOTE
-
-* Scoped Verbs の亜種と {tidyselect}
-
-- *Scoped verbs* の末尾に ~_if()~, ~_all()~, ~_at()~ が付く亜種では、複数の列に一括して関数を適応できる
-- ~_at()~ 系の関数では、列の選択を柔軟に行うための関数が ~{tidyselect}~ パッケージからインポートされている (*Select Helpers* と呼ばれている)
 
 * ライブラリの読み込みとバージョンの確認
 

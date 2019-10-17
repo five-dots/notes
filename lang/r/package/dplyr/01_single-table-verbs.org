@@ -1,9 +1,16 @@
 #+STARTUP: folded indent inlineimages latexpreview
 #+PROPERTY: header-args:R :results value :colnames yes :session *R:single-table-verbs*
 
-* 目次                                                                :QUOTE:
+* 1 つの ~data.frame~ を操作する関数群                               :noexport:
+
+- ~filter()~, ~mutate()~, ~summarise()~, ~select()~ などのメジャーな関数はこのカテゴリーに含まれる (これらの関数は ~{dplyr}~ のドキュメントなどでは *Scoped verbs* とも呼ばれている)
+- 第 1 引数が ~.data~ や ~tbl~ となっていて、受け取った ~data.frame~ に何らかの操作をする関数群
+- 基本的に返り値も ~data.frame~ のため ~%>%~ でメッソッドチェーンを作ることができる (~pull()~ などの例外除く)
+- 主に *行に対する操作* ・ *列に対する操作* ・ *グループに対する操作* に大別できる
+\\
+
+* 目次                                                            :toc:quote:
 #+BEGIN_QUOTE
-- [[#1-つの-dataframe-を操作する関数群][1 つの ~data.frame~ を操作する関数群]]
 - [[#ライブラリの読み込みとバージョンの確認][ライブラリの読み込みとバージョンの確認]]
 - [[#データセット][データセット]]
 - [[#行の操作][行の操作]]
@@ -63,14 +70,6 @@
     - [[#-validate_grouped_dfx][★☆☆ ~validate_grouped_df(x)~.]]
 - [[#実行環境][実行環境]]
 #+END_QUOTE
-
-* 1 つの ~data.frame~ を操作する関数群
-
-- ~filter()~, ~mutate()~, ~summarise()~, ~select()~ などのメジャーな関数はこのカテゴリーに含まれる (これらの関数は ~{dplyr}~ のドキュメントなどでは *Scoped verbs* とも呼ばれている)
-- 第 1 引数が ~.data~ や ~tbl~ となっていて、受け取った ~data.frame~ に何らかの操作をする関数群
-- 基本的に返り値も ~data.frame~ のため ~%>%~ でメッソッドチェーンを作ることができる (~pull()~ などの例外除く)
-- 主に *行に対する操作* ・ *列に対する操作* ・ *グループに対する操作* に大別できる
-\\
 
 * ライブラリの読み込みとバージョンの確認
 

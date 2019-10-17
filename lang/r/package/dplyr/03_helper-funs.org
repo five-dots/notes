@@ -1,9 +1,15 @@
 #+STARTUP: folded indent inlineimages latexpreview
 #+PROPERTY: header-args:R :results value :colnames yes :session *R:helper-funs*
 
-* 目次                                                            :TOC:QUOTE:
+* ヘルパー関数群                                                   :noexport:
+
+- ~data.frame~ を引数に取るのではなく ~data.frame~ を構成する列をベクトルとして受け取る
+- ベクトルを受け取って、ベクトルを返す関数を *ベクトル関数* と呼ぶ (~mutate()~ などの中で使う)
+- ベクトルを受け取って、スカラ値を返す関数を *集約関数* と呼ぶ (~summarise()~ などの中で使う)
+- その他のユーティリティ関数もここで扱う
+
+* 目次                                                            :toc:quote:
 #+BEGIN_QUOTE
-- [[#ヘルパー関数群][ヘルパー関数群]]
 - [[#ライブラリの読み込みとバージョンの確認][ライブラリの読み込みとバージョンの確認]]
 - [[#ベクトル関数][ベクトル関数]]
   - [[#データセット][データセット]]
@@ -57,13 +63,6 @@
     - [[#-progress_estimatedn-min_time--0][★☆☆ ~progress_estimated(n, min_time = 0)~.]]
 - [[#実行環境][実行環境]]
 #+END_QUOTE
-
-* ヘルパー関数群
-
-- ~data.frame~ を引数に取るのではなく ~data.frame~ を構成する列をベクトルとして受け取る
-- ベクトルを受け取って、ベクトルを返す関数を *ベクトル関数* と呼ぶ (~mutate()~ などの中で使う)
-- ベクトルを受け取って、スカラ値を返す関数を *集約関数* と呼ぶ (~summarise()~ などの中で使う)
-- その他のユーティリティ関数もここで扱う
 
 * ライブラリの読み込みとバージョンの確認
 

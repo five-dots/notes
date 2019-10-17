@@ -13,7 +13,7 @@
 * 目次                                                            :quote:toc:
 #+BEGIN_QUOTE
 - [[#ライブラリの読み込みとバージョンの確認][ライブラリの読み込みとバージョンの確認]]
-- [[#文字列操作関数][文字列操作関数]]
+- [[#全関数リスト][全関数リスト]]
   - [[#抽出][抽出]]
     - [[#-str_substring-start--1l-end---1l-開始終了位置で抽出][★★☆ ~str_sub(string, start = 1L, end = -1L)~ 開始・終了位置で抽出]]
     - [[#-str_subsetstring-pattern-negate--false-マッチ要素を抽出][★★★ ~str_subset(string, pattern, negate = FALSE)~ マッチ要素を抽出]]
@@ -89,7 +89,7 @@ packageVersion("stringr")
 : [1] ‘1.4.0’
 \\
 
-* 文字列操作関数
+* 全関数リスト
 ** 抽出
 *** ★★☆ ~str_sub(string, start = 1L, end = -1L)~ 開始・終了位置で抽出
      

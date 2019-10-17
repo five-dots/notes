@@ -1,7 +1,7 @@
 #+STARTUP: folded indent inlineimages latexpreview
 #+PROPERTY: header-args:R :results value :colnames yes :session *R:db-backends*
 
-* 目次                                                            :TOC:QUOTE:
+* 目次                                                            :toc:quote:
 #+BEGIN_QUOTE
 #+END_QUOTE
 

@@ -1,42 +1,87 @@
 #+STARTUP: folded indent inlineimages latexpreview
 #+PROPERTY: header-args:R :results output :colnames yes :session *R:lubridate*
 
-* 目次                                                            :QUOTE:TOC:
+* ~{lubridate}~: Make working with dates in R just that little bit easier :noexport:
+
+~{lubridate}~ (リュブリデート) は、R の日付を操作するパッケージ。 ~{tidyverse}~ の他のパッケージ同様、base R ではややこしい機能を簡単に扱えるようにしてくれている。
+
+- 日付データは ~Date~ class で扱う
+- 日時データは ~POSIXct~ class で扱う (POSIXlt などは使わない)
+- タイムスパンを表現する 3 つのクラスが追加されている
+\\
+
+* 目次                                                            :toc:quote:
 #+BEGIN_QUOTE
-- [[#lubridate-make-working-with-dates-in-r-just-that-little-bit-easier][{lubridate}: Make working with dates in R just that little bit easier]]
 - [[#ライブラリの読み込みとバージョンの確認][ライブラリの読み込みとバージョンの確認]]
-- [[#全関数リスト][全関数リスト]]
-- [[#新規作成][新規作成]]
-  - [[#load-library][Load library]]
-  - [[#now-today][now(), today()]]
-  - [[#make_datetime][make_datetime()]]
-  - [[#ymd-mdy-dmy--date-class][ymd(), mdy(), dmy() => Date class]]
-  - [[#ymd_hms-ymd_hm-ymd_h--posixct-class][ymd_hms(), ymd_hm(), ymd_h() => POSIXct class]]
-  - [[#as_date-as_datetime][as_date(), as_datetime()]]
-- [[#subset-アクセサ関数][Subset (アクセサ関数)]]
-  - [[#second-minute-hour-day-month-year][second(), minute(), hour(), day(), month(), year()]]
-  - [[#wday-mday-yday][wday(), mday(), yday()]]
-  - [[#tz][tz()]]
-  - [[#wday-month][wday(), month()]]
-  - [[#week-isoweek][week(), isoweek()]]
-  - [[#set-value][Set value]]
-- [[#丸める][丸める]]
-  - [[#floor_date-round_date-ceiling_date][floor_date(), round_date(), ceiling_date()]]
-- [[#timezone][Timezone]]
-  - [[#with_tz-force_tz][with_tz(), force_tz()]]
-- [[#timespan][Timespan]]
-  - [[#3-つのクラスが用意されている][3 つのクラスが用意されている]]
-  - [[#interval---][Interval, %--%]]
+- [[#関数リスト-dateposixct-class][関数リスト: Date/POSIXct class]]
+  - [[#新規作成][新規作成]]
+    - [[#-nowtzone--][★★☆ ~now(tzone = "")~.]]
+    - [[#-todaytzone--][★★☆ ~today(tzone = "")~.]]
+    - [[#-make_datetimeyear--1970l-month--1l-day--1l-hour--0l-min--0l-sec--0-tz--utc][★★☆ ~make_datetime(year = 1970L, month = 1L, day = 1L, hour = 0L, min = 0L, sec = 0, tz = "UTC")~.]]
+    - [[#-make_dateyear--1970l-month--1l-day--1l][★★☆ ~make_date(year = 1970L, month = 1L, day = 1L)~.]]
+    - [[#-ymd-quiet--false-tz--null-locale--sysgetlocalelc_time-truncated--0][★★★ ~ymd(..., quiet = FALSE, tz = NULL, locale = Sys.getlocale("LC_TIME"), truncated = 0)~.]]
+    - [[#-ymd_hms-quiet--false-tz--utc-locale--sysgetlocalelc_time-truncated--0][★★★ ~ymd_hms(..., quiet = FALSE, tz = "UTC", locale = Sys.getlocale("LC_TIME"), truncated = 0)~.]]
+    - [[#-as_datex-tz--null][★★☆ ~as_date(x, tz = NULL)~.]]
+    - [[#-as_datetimex-tz--utc][★★☆ ~as_datetime(x, tz = "UTC")~.]]
+  - [[#要素の抽出--アクセサ関数][要素の抽出 + アクセサ関数]]
+    - [[#-secondx-minutex-hourx][★☆☆ ~second(x)~, ~minute(x)~, ~hour(x)~.]]
+    - [[#-dayx-wdayx-qdayx-ydayx][★☆☆ ~day(x)~, ~wday(x)~, ~qday(x)~, ~yday(x)~.]]
+    - [[#-weekx-isoweekx-epiweekx][★★★ ~week(x)~, ~isoweek(x)~, ~epiweek(x)~.]]
+    - [[#-monthx-label--false-abbr--true-locale--sysgetlocalelc_time][★★★ ~month(x, label = FALSE, abbr = TRUE, locale = Sys.getlocale("LC_TIME"))~.]]
+    - [[#-yearx-isoyearx-epiyearx][★★★ ~year(x)~, ~isoyear(x)~, ~epiyear(x)~.]]
+    - [[#-tzx][★☆☆ ~tz(x)~]]
+  - [[#タイムゾーン][タイムゾーン]]
+    - [[#-with_tztime-tzone--][★★☆ ~with_tz(time, tzone = "")~.]]
+    - [[#-force_tztime-tzone---roll--false][★★☆ ~force_tz(time, tzone = "", roll = FALSE)~.]]
+    - [[#-force_tzstime-tzones-tzone_out--utc-roll--false][★☆☆ ~force_tzs(time, tzones, tzone_out = "UTC", roll = FALSE)~.]]
+  - [[#丸め][丸め]]
+    - [[#-round_datex-unit--second-week_start--getoptionlubridateweekstart-7][★★☆ ~round_date(x, unit = "second", week_start = getOption("lubridate.week.start", 7))~.]]
+    - [[#-floor_datex-unit--seconds-week_start--getoptionlubridateweekstart-7][★★☆ ~floor_date(x, unit = "seconds", week_start = getOption("lubridate.week.start", 7))~.]]
+    - [[#-ceiling_datex-unit--seconds-change_on_boundary--null-week_start--getoptionlubridateweekstart-7][★★☆ ~ceiling_date(x, unit = "seconds", change_on_boundary = NULL, week_start = getOption("lubridate.week.start", 7))~.]]
+- [[#関数リスト-timespan-class][関数リスト: Timespan class]]
+  - [[#3-つの-s4-クラスが用意されている][3 つの S4 クラスが用意されている]]
+  - [[#intervals][Intervals]]
+    - [[#-intervalstart-end--null-tzone--tzstart][★☆☆ ~interval(start, end = NULL, tzone = tz(start))~.]]
+    - [[#-start----end][★☆☆ ~start %--% end~.]]
+    - [[#-isintervalx][★☆☆ ~is.interval(x)~.]]
+    - [[#-int_startint][★☆☆ ~int_start(int)~.]]
+    - [[#-int_endint][★☆☆ ~int_end(int)~.]]
+    - [[#-int_lengthint][★☆☆ ~int_length(int)~.]]
+    - [[#-int_flipint][★☆☆ ~int_flip(int)~.]]
+    - [[#-int_shiftint-by][★☆☆ ~int_shift(int, by)~.]]
+    - [[#-int_overlapsint1-int2][★☆☆ ~int_overlaps(int1, int2)~.]]
+    - [[#-int_standardizeint][★☆☆ ~int_standardize(int)~.]]
+    - [[#-int_alignsint1-int2][★☆☆ ~int_aligns(int1, int2)~.]]
+    - [[#-int_difftimes][★☆☆ ~int_diff(times)~.]]
   - [[#durations][Durations]]
+    - [[#-durationnum--null-units--seconds-][★☆☆ ~duration(num = NULL, units = "seconds", ...)~.]]
+    - [[#-dsecondsx--1][★☆☆ ~dseconds(x = 1)~.]]
+    - [[#-dminutesx--1][★☆☆ ~dminutes(x = 1)~.]]
+    - [[#-dhoursx--1][★☆☆ ~dhours(x = 1)~.]]
+    - [[#-ddaysx--1][★☆☆ ~ddays(x = 1)~.]]
+    - [[#-dweeksx--1][★☆☆ ~dweeks(x = 1)~.]]
+    - [[#-dyearsx--1][★☆☆ ~dyears(x = 1)~.]]
+    - [[#-dmillisecondsx--1][★☆☆ ~dmilliseconds(x = 1)~.]]
+    - [[#-dmicrosecondsx--1][★☆☆ ~dmicroseconds(x = 1)~.]]
+    - [[#-dnanosecondsx--1][★☆☆ ~dnanoseconds(x = 1)~.]]
+    - [[#-dpicosecondsx--1][★☆☆ ~dpicoseconds(x = 1)~.]]
+    - [[#-isdurationx][★☆☆ ~is.duration(x)~.]]
   - [[#periods][Periods]]
+    - [[#-periodnum--null-units--second-][★☆☆ ~period(num = NULL, units = "second", ...)~.]]
+    - [[#-isperiodx][★☆☆ ~is.period(x)~.]]
+    - [[#-secondsx--1][★☆☆ ~seconds(x = 1)~.]]
+    - [[#-minutesx--1][★☆☆ ~minutes(x = 1)~.]]
+    - [[#-hoursx--1][★☆☆ ~hours(x = 1)~.]]
+    - [[#-daysx--1][★☆☆ ~days(x = 1)~.]]
+    - [[#-weeksx--1][★☆☆ ~weeks(x = 1)~.]]
+    - [[#-yearsx--1][★☆☆ ~years(x = 1)~.]]
+    - [[#-millisecondsx--1][★☆☆ ~milliseconds(x = 1)~.]]
+    - [[#-microsecondsx--1][★☆☆ ~microseconds(x = 1)~.]]
+    - [[#-nanosecondsx--1][★☆☆ ~nanoseconds(x = 1)~.]]
+    - [[#-picosecondsx--1][★☆☆ ~picoseconds(x = 1)~.]]
 - [[#実行環境][実行環境]]
 - [[#参考リンク][参考リンク]]
 #+END_QUOTE
-
-* {lubridate}: Make working with dates in R just that little bit easier
-
-~{lubridate}~ () は、R の日付を操作するパッケージ。
-\\
 
 * ライブラリの読み込みとバージョンの確認
 
@@ -54,375 +99,401 @@ packageVersion("lubridate")
 : [1] ‘1.7.4’
 \\
 
-* 全関数リスト
+* 関数リスト: Date/POSIXct class
+** 新規作成
+*** ★★☆ ~now(tzone = "")~.
 
-#+begin_src R :exports both
-pacman::p_funs(lubridate)
-#+end_src
+- ~POSIXct~ class で現在日時を返す
+- ~tzone~ は省略するとシステムのデフォルトになる
+- ~Sys.time()~ と同じだが ~tzone~ を指定できる
 
-#+RESULTS:
-#+begin_example
-  [1] ".__C__Duration"                   ".__C__Interval"                  
-  [3] ".__C__Period"                     ".__C__Timespan"                  
-  [5] ".__T__-:base"                     ".__T__[:base"                    
-  [7] ".__T__[[:base"                    ".__T__[[<-:base"                 
-  [9] ".__T__[<-:base"                   ".__T__*:base"                    
- [11] ".__T__/:base"                     ".__T__%/%:base"                  
- [13] ".__T__%%:base"                    ".__T__%m-%:lubridate"            
- [15] ".__T__%m+%:lubridate"             ".__T__%within%:lubridate"        
- [17] ".__T__+:base"                     ".__T__$:base"                    
- [19] ".__T__$<-:base"                   ".__T__Arith:base"                
- [21] ".__T__as_date:lubridate"          ".__T__as_datetime:lubridate"     
- [23] ".__T__as.character:base"          ".__T__as.difftime:base"          
- [25] ".__T__as.duration:lubridate"      ".__T__as.interval:lubridate"     
- [27] ".__T__as.numeric:base"            ".__T__as.period:lubridate"       
- [29] ".__T__c:base"                     ".__T__Compare:methods"           
- [31] ".__T__date<-:lubridate"           ".__T__day<-:lubridate"           
- [33] ".__T__hour<-:lubridate"           ".__T__intersect:base"            
- [35] ".__T__minute<-:lubridate"         ".__T__month<-:lubridate"         
- [37] ".__T__qday<-:lubridate"           ".__T__reclass_timespan:lubridate"
- [39] ".__T__rep:base"                   ".__T__second<-:lubridate"        
- [41] ".__T__setdiff:base"               ".__T__show:methods"              
- [43] ".__T__time_length:lubridate"      ".__T__union:base"                
- [45] ".__T__year<-:lubridate"           "%--%"                            
- [47] "%m-%"                             "%m+%"                            
- [49] "%within%"                         "add_with_rollback"               
- [51] "am"                               "Arith"                           
- [53] "as_date"                          "as_datetime"                     
- [55] "as.difftime"                      "as.duration"                     
- [57] "as.interval"                      "as.period"                       
- [59] "ceiling_date"                     "Compare"                         
- [61] "date"                             "date_decimal"                    
- [63] "date<-"                           "day"                             
- [65] "day<-"                            "days"                            
- [67] "days_in_month"                    "ddays"                           
- [69] "decimal_date"                     "dhours"                          
- [71] "dmicroseconds"                    "dmilliseconds"                   
- [73] "dminutes"                         "dmy"                             
- [75] "dmy_h"                            "dmy_hm"                          
- [77] "dmy_hms"                          "dnanoseconds"                    
- [79] "dpicoseconds"                     "dseconds"                        
- [81] "dst"                              "duration"                        
- [83] "dweeks"                           "dyears"                          
- [85] "dym"                              "edays"                           
- [87] "ehours"                           "emicroseconds"                   
- [89] "emilliseconds"                    "eminutes"                        
- [91] "enanoseconds"                     "epicoseconds"                    
- [93] "epiweek"                          "epiyear"                         
- [95] "eseconds"                         "eweeks"                          
- [97] "eyears"                           "fast_strptime"                   
- [99] "fit_to_timeline"                  "floor_date"                      
-[101] "force_tz"                         "force_tzs"                       
-[103] "guess_formats"                    "here"                            
-[105] "hm"                               "hms"                             
-[107] "hour"                             "hour<-"                          
-[109] "hours"                            "int_aligns"                      
-[111] "int_diff"                         "int_end"                         
-[113] "int_end<-"                        "int_flip"                        
-[115] "int_length"                       "int_overlaps"                    
-[117] "int_shift"                        "int_standardize"                 
-[119] "int_start"                        "int_start<-"                     
-[121] "intersect"                        "interval"                        
-[123] "is.Date"                          "is.difftime"                     
-[125] "is.duration"                      "is.instant"                      
-[127] "is.interval"                      "is.period"                       
-[129] "is.POSIXct"                       "is.POSIXlt"                      
-[131] "is.POSIXt"                        "is.timepoint"                    
-[133] "is.timespan"                      "isoweek"                         
-[135] "isoyear"                          "leap_year"                       
-[137] "local_time"                       "make_date"                       
-[139] "make_datetime"                    "make_difftime"                   
-[141] "mday"                             "mday<-"                          
-[143] "mdy"                              "mdy_h"                           
-[145] "mdy_hm"                           "mdy_hms"                         
-[147] "microseconds"                     "milliseconds"                    
-[149] "minute"                           "minute<-"                        
-[151] "minutes"                          "month"                           
-[153] "month<-"                          "ms"                              
-[155] "myd"                              "nanoseconds"                     
-[157] "new_difftime"                     "new_duration"                    
-[159] "new_interval"                     "new_period"                      
-[161] "now"                              "olson_time_zones"                
-[163] "origin"                           "parse_date_time"                 
-[165] "parse_date_time2"                 "period"                          
-[167] "period_to_seconds"                "picoseconds"                     
-[169] "pm"                               "pretty_dates"                    
-[171] "qday"                             "qday<-"                          
-[173] "quarter"                          "reclass_date"                    
-[175] "reclass_timespan"                 "rollback"                        
-[177] "round_date"                       "second"                          
-[179] "second<-"                         "seconds"                         
-[181] "seconds_to_period"                "semester"                        
-[183] "setdiff"                          "show"                            
-[185] "stamp"                            "stamp_date"                      
-[187] "stamp_time"                       "time_length"                     
-[189] "today"                            "tz"                              
-[191] "tz<-"                             "union"                           
-[193] "wday"                             "wday<-"                          
-[195] "week"                             "week<-"                          
-[197] "weeks"                            "with_tz"                         
-[199] "yday"                             "yday<-"                          
-[201] "ydm"                              "ydm_h"                           
-[203] "ydm_hm"                           "ydm_hms"                         
-[205] "year"                             "year<-"                          
-[207] "years"                            "ymd"                             
-[209] "ymd_h"                            "ymd_hm"                          
-[211] "ymd_hms"                          "yq"
-#+end_example
-\\
-
-* 新規作成
-** Load library
-
-#+begin_src R :results output
-library(lubridate)
-#+end_src
-
-#+RESULTS:
-: 
-: Attaching package: ‘lubridate’
-: 
-: The following object is masked from ‘package:base’:
-: 
-:     date
-
-** now(), today()
-
-- POSIXct class
 #+begin_src R
 now()
+Sys.time()
 #+end_src
 
 #+RESULTS:
-: 2019-06-28 12:33:10
+: [1] "2019-10-17 13:03:19 JST"
+: 
+: [1] "2019-10-17 13:03:19 JST"
+\\
 
-- Date class
+- ~tzone~ 指定
+#+begin_src R
+now(tzone = "America/New_York")
+#+end_src
+
+#+RESULTS:
+: [1] "2019-10-17 00:01:39 EDT"
+\\
+
+*** ★★☆ ~today(tzone = "")~.
+
+- ~Date~ class
 #+begin_src R
 today()
+Sys.Date()
 #+end_src
 
 #+RESULTS:
-: 2019-06-28
+: [1] "2019-10-17"
+: 
+: [1] "2019-10-17"
+\\
 
-** make_datetime()
-
-- POSIXct class
+*** ★★☆ ~make_datetime(year = 1970L, month = 1L, day = 1L, hour = 0L, min = 0L, sec = 0, tz = "UTC")~.
+ 
+- ~POSIXct~ class
 #+begin_src R
 make_datetime(2018, 1, 28, 14, 32, 23)
 #+end_src
 
 #+RESULTS:
-: 2018-01-28 14:32:23
+: [1] "2018-01-28 14:32:23 UTC"
 
-** ymd(), mdy(), dmy() => Date class
+*** ★★☆ ~make_date(year = 1970L, month = 1L, day = 1L)~.
 
+- ~Date~ class
+#+begin_src R
+make_date(2018, 1, 28)
+#+end_src
+
+#+RESULTS:
+: [1] "2018-01-28"
+
+*** ★★★ ~ymd(..., quiet = FALSE, tz = NULL, locale = Sys.getlocale("LC_TIME"), truncated = 0)~.
+
+- ~Date~ class
 #+begin_src R
 ymd("20190128")
+ymd("2019/01/28")
+ymd("2019-01-28")
+ymd("19-01-28")
+ymd("19-1-28")
 #+end_src
 
 #+RESULTS:
-: 2019-01-28
+: [1] "2019-01-28"
+: 
+: [1] "2019-01-28"
+: 
+: [1] "2019-01-28"
+: 
+: [1] "2019-01-28"
+: 
+: [1] "2019-01-28"
 
-#+begin_src R
-mdy("02-21-2018")
-#+end_src
+- 同様に ~Date~ を作成する亜種
+  - ~ydm()~, ~mdy()~, ~myd()~, ~dmy()~, ~dym()~, ~yq()~
 
-#+RESULTS:
-: 2018-02-21
+*** ★★★ ~ymd_hms(..., quiet = FALSE, tz = "UTC", locale = Sys.getlocale("LC_TIME"), truncated = 0)~.
 
-#+begin_src R
-dmy("20/8/2017")
-#+end_src
-
-#+RESULTS:
-: 2017-08-20
-
-#+begin_src R
-class(dmy("20/8/2017"))
-#+end_src
-
-#+RESULTS:
-: Date
-
-** ymd_hms(), ymd_hm(), ymd_h() => POSIXct class
-
+- ~POSIXct~ class
 #+begin_src R
 ymd_hms("2019-01-28 16:39:02", tz = "America/New_York")
 #+end_src
 
 #+RESULTS:
-: 2019-01-28 16:39:02
+: [1] "2019-01-28 16:39:02 EST"
 
+- 同様に POSIXct を作成する亜種
+  - ~ymd_hms()~, ~ymd_hm()~, ~ymd_h()~
+  - ~dmy_hms()~, ~dmy_hm()~, ~dmy_h()~
+  - ~mdy_hms()~, ~mdy_hm()~, ~mdy_h()~
+  - ~ydm_hms()~, ~ydm_hm()~, ~ydm_h()~
+
+*** ★★☆ ~as_date(x, tz = NULL)~.
+
+- ~POSIXt~ -> ~Date~
+- ~as_date(x, tz = NULL)~
+- 日時を無視するだけなので、変換結果がより直感的
 #+begin_src R
-class(ymd_hms("2019-01-28 16:39:02", tz = "America/New_York"))
+dt_europe <- ymd_hms("2010-08-03 00:50:50", tz="Europe/London")
+as_date(dt_europe)
+as.Date(dt_europe)
 #+end_src
 
 #+RESULTS:
-| POSIXct |
-| POSIXt  |
+: [1] "2010-08-03"
+: [1] "2010-08-02"
 
-** as_date(), as_datetime()
-
+- ~numeric~ -> ~Date~
+- ~as_date(x, origin = lubridate::origin)~
+- origin を指定しなくてもよい
 #+begin_src R
-as_date(now())
+as_date(10)
+as.Date(10, origin = "1970-01-01")
 #+end_src
 
 #+RESULTS:
-: 2019-07-11
+: [1] "1970-01-11"
+: [1] "1970-01-11"
+\\
 
+- character -> Date
+- ~as_date(x, tz = NULL, format = NULL)~
+- format で書式を指定できる
 #+begin_src R
-as_datetime(today())
+as_date("Jan26, 2019", tz = "UTC", format = "%b%d, %Y")
 #+end_src
 
 #+RESULTS:
-: 2019-07-11
+: [1] "2019-01-26"
+\\
 
-#+begin_src R :results output
-dt_utc <- ymd_hms("2010-08-03 00:50:50")
-dt_europe <- ymd_hms("2010-08-03 00:50:50", tz = "Europe/London")
-c(as_date(dt_utc), as.Date(dt_utc))
-c(as_date(dt_europoe), as.Date(dt_europe))
+*** ★★☆ ~as_datetime(x, tz = "UTC")~.
+
+- ~POSIXt~ -> ~POSIXct~
+- ~as_date(x, tz = NULL)~
+#+begin_src R
+dt_europe <- ymd_hms("2010-08-03 00:50:50", tz="Europe/London")
+as_datetime(dt_europe, tz = "Europe/London")
 #+end_src
 
 #+RESULTS:
-: 
-: [1] "2010-08-03" "2010-08-03"
-: 
-: [1] "2010-08-03" "2010-08-02"
+: [1] "2010-08-03 00:50:50 BST"
+\\
 
-* Subset (アクセサ関数)
-** second(), minute(), hour(), day(), month(), year()
+- ~numeric~ -> ~POSIXct~
+- ~as_datetime(x, origin = lubridate::origin, tz = "UTC")~
+- origin を指定しなくてもよい
+#+begin_src R
+as_datetime(10)
+as.POSIXct(10, tz = "UTC", origin = "1970-01-01 00:00:00")
+#+end_src
 
+#+RESULTS:
+: [1] "1970-01-01 00:00:10 UTC"
+: [1] "1970-01-01 00:00:10 UTC"
+\\
+
+- ~character~ -> ~POSIXct~
+- ~as_datetime(x, tz = "UTC", format = NULL)~
+- format で書式を指定できる
+#+begin_src R
+as_datetime("Jan26, 2019 15:12:53", tz = "UTC", format = "%b%d, %Y %H:%M:%OS")
+#+end_src
+
+#+RESULTS:
+: [1] "2019-01-26 15:12:53 UTC"
+\\
+
+** 要素の抽出 + アクセサ関数
+*** ★☆☆ ~second(x)~, ~minute(x)~, ~hour(x)~.
+
+- 日時を抽出
 #+begin_src R
 dt <- now()
+dt
 second(dt)
-## minute(dt)
-## hour(dt)
-## day(dt)
-## month(dt)
-## year(dt)
 #+end_src
 
 #+RESULTS:
-: 50.0138881206512
+: [1] "2019-10-17 13:33:47 JST"
+: [1] 47.59161
 
-** wday(), mday(), yday()
-
+- 変更もできる
 #+begin_src R
-dt <- now()
-wday(dt)
-## mday(dt)
-## yday(dt)
-#+end_src
-
-#+RESULTS:
-: 6
-
-** tz()
-
-#+begin_src R
-dt <- ymd_hms("2018-02-08 11:38:43")
-tz(dt)
-#+end_src
-
-#+RESULTS:
-: UTC
-
-** wday(), month()
-
-- month, wday は、label = TRUE で文字列として取り出す 
-#+begin_src R
-dt <- ymd_hms("2018-02-08 11:38:43")
-wday(dt, label = TRUE)
-#+end_src
-
-#+RESULTS:
-: Thu
-
-- abbr = FALSE で完全名を取得
-#+begin_src R
-dt <- ymd_hms("2018-02-08 11:38:43")
-wday(dt, label = TRUE, abbr = FALSE)
-#+end_src
-
-#+RESULTS:
-: Thursday
-
-** week(), isoweek()
-
-- week は 1 月 1 日からの経過日数、isoweek はいわゆる年間の week
-#+begin_src R
-dt <- ymd("2019-01-28")
-c(week(dt), isoweek(dt))
-#+end_src
-
-#+RESULTS:
-| 4 |
-| 5 |
-
-** Set value
-
-- アクセス関数で値の設定もできる
-#+begin_src R
-dt <- ymd_hms("2018-02-08 11:38:43")
-year(dt) <- 2017
+second(dt) <- 0
 dt
 #+end_src
 
 #+RESULTS:
-: 2017-02-08 11:38:43
+: [1] "2019-10-17 13:33:00 JST"
 
-* 丸める
-** floor_date(), round_date(), ceiling_date()
+*** ★☆☆ ~day(x)~, ~wday(x)~, ~qday(x)~, ~yday(x)~.
 
-- "year", "quarter", "month", "day", "hour", "minute", "second" で丸める
+- 特定の起点からの経過日を返す
+- wday() は更に細かいオプションが指定可能
+  ~wday(x, label = FALSE, abbr = TRUE, week_start = getOption("lubridate.week.start", 7), locale = Sys.getlocale("LC_TIME"))~
+
 #+begin_src R
-dt <- ymd_hms("2018-02-08 11:38:43")
-floor_date(dt, "week")
+dt <- today()
+dt
+day(dt)
+wday(dt) # day of the week
+mday(dt)
+qday(dt) # day of the quarter
+yday(dt) # day of the year
 #+end_src
 
 #+RESULTS:
-: 2018-02-04
+: [1] "2019-10-17"
+: [1] 17
+: [1] 5
+: [1] 17
+: [1] 17
+: [1] 290
+\\
 
-* Timezone
-** with_tz(), force_tz()
+*** ★★★ ~week(x)~, ~isoweek(x)~, ~epiweek(x)~.
 
-- with_tz でタイムゾーン間の変換が可能
+- week は 1 月 1 日からの経過日数、isoweek はいわゆる年間の week
+#+begin_src R
+dt <- today()
+dt
+week(dt)
+isoweek(dt)
+epiweek(dt)
+#+end_src
+
+#+RESULTS:
+: [1] "2019-10-17"
+: [1] 42
+: [1] 42
+: [1] 42
+
+*** ★★★ ~month(x, label = FALSE, abbr = TRUE, locale = Sys.getlocale("LC_TIME"))~.
+
+#+begin_src R
+dt <- today()
+month(dt)
+#+end_src
+
+#+RESULTS:
+: [1] 10
+\\
+
+- ~month()~, ~wday()~ は ~label = TRUE~ でファクターとして取り出す 
+#+begin_src R
+dt <- today()
+month(dt, label = TRUE)
+wday(dt, label = TRUE)
+#+end_src
+
+#+RESULTS:
+: [1] Oct
+: 12 Levels: Jan < Feb < Mar < Apr < May < Jun < Jul < Aug < Sep < ... < Dec
+: [1] Thu
+: Levels: Sun < Mon < Tue < Wed < Thu < Fri < Sat
+\\
+
+- abbr = FALSE で完全名を取得
+#+begin_src R
+month(dt, label = TRUE, abbr = FALSE)
+#+end_src
+
+#+RESULTS:
+: [1] October
+: 12 Levels: January < February < March < April < May < June < ... < December
+\\
+
+*** ★★★ ~year(x)~, ~isoyear(x)~, ~epiyear(x)~.
+
+#+begin_src R
+dt <- today()
+dt
+year(dt)
+isoyear(dt) # ISO 8601 year
+epiyear(dt) # Epidemilogical year
+#+end_src
+
+#+RESULTS:
+: [1] "2019-10-17"
+: [1] 2019
+: [1] 2019
+: [1] 2019
+\\
+
+*** ★☆☆ ~tz(x)~
+
+#+begin_src R
+dt <- today()
+dt
+tz(dt)
+#+end_src
+
+#+RESULTS:
+: [1] "2019-10-17"
+: [1] "UTC"
+
+** タイムゾーン
+*** ★★☆ ~with_tz(time, tzone = "")~.
+
+- タイムゾーン間の変換が可能
 #+begin_src R
 dt <- ymd_hms("2018-02-08 11:38:43", tz = "Asia/Tokyo")
+dt
 with_tz(dt, "America/New_York")
 #+end_src
 
 #+RESULTS:
-: 2018-02-07 21:38:43
+: [1] "2018-02-08 11:38:43 JST"
+: [1] "2018-02-07 21:38:43 EST"
+\\
 
-- force_tz で日時はそのままで、タイムゾーンのみ変更可能
+*** ★★☆ ~force_tz(time, tzone = "", roll = FALSE)~.
+
+- 日時はそのままで、タイムゾーンのみ変更可能
 #+begin_src R
 dt <- ymd_hms("2018-02-08 11:38:43", tz = "Asia/Tokyo")
+dt
 force_tz(dt, "America/New_York")
 #+end_src
 
 #+RESULTS:
-: 2018-02-08 11:38:43
+: [1] "2018-02-08 11:38:43 JST"
+: [1] "2018-02-08 11:38:43 EST"
+\\
 
-* Timespan
-** 3 つのクラスが用意されている
+*** ★☆☆ ~force_tzs(time, tzones, tzone_out = "UTC", roll = FALSE)~.
 
-- Interval  = 間隔 = 開始と終了を保持している
-- Durations = 期間 = 正確な秒数
-- Periods   = 時期 = 週や月などの人間が扱う単位
+- 複数のタイムゾーンに一括変換
+#+begin_src R
+dt <- ymd_hms("2018-02-08 11:38:43", tz = "Asia/Tokyo")
+dt
+force_tzs(dt, c("America/New_York", "America/Chicago"), tzone_out = "UTC")
+#+end_src
 
-** Interval, %--%
+#+RESULTS:
+: [1] "2018-02-08 11:38:43 JST"
+: [1] "2018-02-08 16:38:43 UTC" "2018-02-08 17:38:43 UTC"
+\\
+
+** 丸め
+*** ★★☆ ~round_date(x, unit = "second", week_start = getOption("lubridate.week.start", 7))~.
+
+- "year", "quarter", "month", "day", "hour", "minute", "second" で丸める
+#+begin_src R
+dt <- today()
+dt
+floor_date(dt, "week")
+#+end_src
+
+#+RESULTS:
+: [1] "2019-10-17"
+: [1] "2019-10-13"
+\\
+
+*** ★★☆ ~floor_date(x, unit = "seconds", week_start = getOption("lubridate.week.start", 7))~.
+*** ★★☆ ~ceiling_date(x, unit = "seconds", change_on_boundary = NULL, week_start = getOption("lubridate.week.start", 7))~.
+* 関数リスト: Timespan class
+** 3 つの S4 クラスが用意されている
+
+- Intervals class :: 時間間隔のこと。 *開始と終了の 2 つの日時を保持している。* period と duration に正確に変換可能。
+- Durations class :: 期間のこと。 *正確な秒数として保持されている。* 人間の直感とはずれることがある。
+- Periods class :: 時期のこと。週や月などの *人間が扱う単位で変換* してくれる。
+
+** Intervals
+*** ★☆☆ ~interval(start, end = NULL, tzone = tz(start))~.
 
 #+begin_src R
 arrive <- ymd_hms("2011-06-04 12:00:00", tz = "Asia/Tokyo")
 leave  <- ymd_hms("2011-08-20 14:00:00", tz = "Asia/Tokyo")
 
-interval(arrive, leave)
+int <- interval(arrive, leave)
+int
+class(int)
 #+end_src
 
 #+RESULTS:
-: 2011-06-04 12:00:00 JST--2011-08-20 14:00:00 JST
+: [1] 2011-06-04 12:00:00 JST--2011-08-20 14:00:00 JST
+: [1] "Interval"
+: attr(,"package")
+: [1] "lubridate"
+\\
+
+*** ★☆☆ ~start %--% end~.
 
 - %--% でも同じ表現
 #+begin_src R
@@ -433,11 +504,25 @@ arrive %--% leave
 #+end_src
 
 #+RESULTS:
-: 2011-06-04 12:00:00 JST--2011-08-20 14:00:00 JST
+: [1] 2011-06-04 12:00:00 JST--2011-08-20 14:00:00 JST
+\\
 
+*** TODO ★☆☆ ~is.interval(x)~.
+*** TODO ★☆☆ ~int_start(int)~.
+- ~int_start(int) <- value~.
+*** TODO ★☆☆ ~int_end(int)~.
+- ~int_end(int) <- value~.
+*** TODO ★☆☆ ~int_length(int)~.
+*** TODO ★☆☆ ~int_flip(int)~.
+*** TODO ★☆☆ ~int_shift(int, by)~.
+*** TODO ★☆☆ ~int_overlaps(int1, int2)~.
+*** TODO ★☆☆ ~int_standardize(int)~.
+*** TODO ★☆☆ ~int_aligns(int1, int2)~.
+*** TODO ★☆☆ ~int_diff(times)~.
 ** Durations
+*** ★☆☆ ~duration(num = NULL, units = "seconds", ...)~.
 
-- R では日付の差は、difftime object
+- R では日付の差は ~difftime~ object
 - 計算によって、単位が週・日・時・分・秒で異なる
 - この例の場合は、日数
 #+begin_src R
@@ -471,8 +556,20 @@ ymd("2018-12-21") + ddays(2)
 
 #+RESULTS:
 : 2018-12-23
+*** ★☆☆ ~dseconds(x = 1)~.
+*** ★☆☆ ~dminutes(x = 1)~.
+*** ★☆☆ ~dhours(x = 1)~.
+*** ★☆☆ ~ddays(x = 1)~.
+*** ★☆☆ ~dweeks(x = 1)~.
+*** ★☆☆ ~dyears(x = 1)~.
+*** ★☆☆ ~dmilliseconds(x = 1)~.
+*** ★☆☆ ~dmicroseconds(x = 1)~.
+*** ★☆☆ ~dnanoseconds(x = 1)~.
+*** ★☆☆ ~dpicoseconds(x = 1)~.
+*** ★☆☆ ~is.duration(x)~.
 
 ** Periods
+*** ★☆☆ ~period(num = NULL, units = "second", ...)~.
 
 - Periods は秒数固定ではない
 #+begin_src R
@@ -507,6 +604,17 @@ dt1 + days(1)
 
 #+RESULTS:
 : 2016-03-13 13:00:00
+*** ★☆☆ ~is.period(x)~.
+*** ★☆☆ ~seconds(x = 1)~.
+*** ★☆☆ ~minutes(x = 1)~.
+*** ★☆☆ ~hours(x = 1)~.
+*** ★☆☆ ~days(x = 1)~.
+*** ★☆☆ ~weeks(x = 1)~.
+*** ★☆☆ ~years(x = 1)~.
+*** ★☆☆ ~milliseconds(x = 1)~.
+*** ★☆☆ ~microseconds(x = 1)~.
+*** ★☆☆ ~nanoseconds(x = 1)~.
+*** ★☆☆ ~picoseconds(x = 1)~.
 * 実行環境
 
 #+begin_src R :results output :exports both
@@ -551,7 +659,8 @@ loaded via a namespace (and not attached):
 - [[https://github.com/tidyverse/lubridate][Github Repo]]
 - [[https://evoldyn.gitlab.io/evomics-2018/ref-sheets/R_lubridate.pdf][Cheatsheet(PDF)]]
 - [[https://r4ds.had.co.nz/][R for Data Science]]
+- [[https://www.jstatsoft.org/article/view/v040i03][Original Paper]]
+- [[https://kazutan.github.io/SappoRoR8/index.html][ログデータ処理で始めるlubridate入門]]
 - Vignette
   - [[https://cloud.r-project.org/web/packages/lubridate/vignettes/lubridate.html][Do more with dates and times in R]] ([[https://qiita.com/nozma/items/01725761d980a0110027][日本語訳@Qiita]])
 - Blog
-    
