@@ -4,6 +4,11 @@
 * ~{tidyr}~: Easily tidy data with spread and gather functions       :noexport:
 
 ~{tidyr}~ (タイディアー) は、R の ~data.frame~ を操作するパッケージ。
+
+- 縦長・横長に変換する関数
+- Nested data.frame を作成するための関数
+- 欠損値処理の関数
+- 列の分割・結合の関数
 \\
 
 * 目次                                                            :quote:toc:
