@@ -58,30 +58,15 @@
     - [[#-int_difftimes][★☆☆ ~int_diff(times)~.]]
   - [[#durations][Durations]]
     - [[#-durationnum--null-units--seconds-][★☆☆ ~duration(num = NULL, units = "seconds", ...)~.]]
-    - [[#-dsecondsx--1][★☆☆ ~dseconds(x = 1)~.]]
-    - [[#-dminutesx--1][★☆☆ ~dminutes(x = 1)~.]]
-    - [[#-dhoursx--1][★☆☆ ~dhours(x = 1)~.]]
-    - [[#-ddaysx--1][★☆☆ ~ddays(x = 1)~.]]
-    - [[#-dweeksx--1][★☆☆ ~dweeks(x = 1)~.]]
-    - [[#-dyearsx--1][★☆☆ ~dyears(x = 1)~.]]
-    - [[#-dmillisecondsx--1][★☆☆ ~dmilliseconds(x = 1)~.]]
-    - [[#-dmicrosecondsx--1][★☆☆ ~dmicroseconds(x = 1)~.]]
-    - [[#-dnanosecondsx--1][★☆☆ ~dnanoseconds(x = 1)~.]]
-    - [[#-dpicosecondsx--1][★☆☆ ~dpicoseconds(x = 1)~.]]
+    - [[#-asdurationx-][★☆☆ ~as.duration(x, ...)~.]]
     - [[#-isdurationx][★☆☆ ~is.duration(x)~.]]
+    - [[#-dsecondsx--1-dminutesx--1-dhoursx--1-ddaysx--1-dweeksx--1-dyearsx--1][★★☆ ~dseconds(x = 1)~, ~dminutes(x = 1)~, ~dhours(x = 1)~, ~ddays(x = 1)~, ~dweeks(x = 1)~, ~dyears(x = 1)~.]]
+    - [[#-dmillisecondsx--1-dmicrosecondsx--1-dnanosecondsx--1-dpicosecondsx--1][★☆☆ ~dmilliseconds(x = 1)~, ~dmicroseconds(x = 1)~, ~dnanoseconds(x = 1)~, ~dpicoseconds(x = 1)~.]]
   - [[#periods][Periods]]
     - [[#-periodnum--null-units--second-][★☆☆ ~period(num = NULL, units = "second", ...)~.]]
     - [[#-isperiodx][★☆☆ ~is.period(x)~.]]
-    - [[#-secondsx--1][★☆☆ ~seconds(x = 1)~.]]
-    - [[#-minutesx--1][★☆☆ ~minutes(x = 1)~.]]
-    - [[#-hoursx--1][★☆☆ ~hours(x = 1)~.]]
-    - [[#-daysx--1][★☆☆ ~days(x = 1)~.]]
-    - [[#-weeksx--1][★☆☆ ~weeks(x = 1)~.]]
-    - [[#-yearsx--1][★☆☆ ~years(x = 1)~.]]
-    - [[#-millisecondsx--1][★☆☆ ~milliseconds(x = 1)~.]]
-    - [[#-microsecondsx--1][★☆☆ ~microseconds(x = 1)~.]]
-    - [[#-nanosecondsx--1][★☆☆ ~nanoseconds(x = 1)~.]]
-    - [[#-picosecondsx--1][★☆☆ ~picoseconds(x = 1)~.]]
+    - [[#-secondsx--1-minutesx--1-hoursx--1-daysx--1-weeksx--1-yearsx--1][★☆☆ ~seconds(x = 1)~, ~minutes(x = 1)~, ~hours(x = 1)~, ~days(x = 1)~, ~weeks(x = 1)~, ~years(x = 1)~.]]
+    - [[#-millisecondsx--1-microsecondsx--1-nanosecondsx--1-picosecondsx--1][★☆☆ ~milliseconds(x = 1)~, ~microseconds(x = 1)~, ~nanoseconds(x = 1)~, ~picoseconds(x = 1)~.]]
 - [[#実行環境][実行環境]]
 - [[#参考リンク][参考リンク]]
 #+END_QUOTE
@@ -106,7 +91,7 @@ packageVersion("lubridate")
 ** 新規作成
 *** ★★☆ ~today(tzone = "")~.
 
-- ~Date~ class で今日を返す
+- ~Date~ class で今日の日付を返す
 #+begin_src R :exports both
 today()
 Sys.Date()
@@ -168,7 +153,8 @@ make_date(2018, 1, 28)
 
 *** ★★★ ~ymd(..., quiet = FALSE, tz = NULL, locale = Sys.getlocale("LC_TIME"), truncated = 0)~.
 
-- ~Date~ class
+- ~Date~ class をフォーマットを指定せずに作成する
+- 文章の中に、日付が含まれている場合でも、パースしてくれる
 - 同様に ~Date~ を作成する亜種
   - ~ydm()~, ~mdy()~, ~myd()~, ~dmy()~, ~dym()~, ~yq()~
 
@@ -178,24 +164,29 @@ ymd("2019/01/28")
 ymd("2019-01-28")
 ymd("19-01-28")
 ymd("19-1-28")
+ymd("Today is 2019-01-28.")
 #+end_src
 
 #+RESULTS:
-: [1] "2019-01-28"
-: 
-: [1] "2019-01-28"
-: 
-: [1] "2019-01-28"
-: 
-: [1] "2019-01-28"
-: 
-: [1] "2019-01-28"
+#+begin_example
+[1] "2019-01-28"
+
+[1] "2019-01-28"
+
+[1] "2019-01-28"
+
+[1] "2019-01-28"
+
+[1] "2019-01-28"
+
+[1] "2019-01-28"
+#+end_example
 \\
 
 *** ★★★ ~ymd_hms(..., quiet = FALSE, tz = "UTC", locale = Sys.getlocale("LC_TIME"), truncated = 0)~.
 
-- ~POSIXct~ class
-- 同様に POSIXct を作成する亜種
+- ~POSIXct~ class をフォーマットを指定せずに作成する
+- 同様に ~POSIXct~ を作成する亜種
   - ~ymd_hms()~, ~ymd_hm()~, ~ymd_h()~
   - ~dmy_hms()~, ~dmy_hm()~, ~dmy_h()~
   - ~mdy_hms()~, ~mdy_hm()~, ~mdy_h()~
@@ -211,7 +202,7 @@ ymd_hms("2019-01-28 16:39:02", tz = "America/New_York")
 
 *** ★★☆ ~as_date(x, tz = NULL)~.
 
-- ~POSIXt~ -> ~Date~
+- ~POSIXt~ から ~Date~ への変換
 - ~as_date(x, tz = NULL)~
 - 日時を無視するだけなので、変換結果がより直感的
 #+begin_src R :exports both
@@ -225,7 +216,7 @@ as.Date(dt_europe)
 : [1] "2010-08-02"
 \\
 
-- ~numeric~ -> ~Date~
+- ~numeric~ から ~Date~ への変換
 - ~as_date(x, origin = lubridate::origin)~
 - origin を指定しなくてもよい
 #+begin_src R :exports both
@@ -238,7 +229,7 @@ as.Date(10, origin = "1970-01-01") # 同じ結果
 : [1] "1970-01-11"
 \\
 
-- character -> Date
+- ~character~ から ~Date~ への変換
 - ~as_date(x, tz = NULL, format = NULL)~
 - format で書式を指定できる
 #+begin_src R :exports both
@@ -251,7 +242,7 @@ as_date("Jan26, 2019", tz = "UTC", format = "%b%d, %Y")
 
 *** ★★☆ ~as_datetime(x, tz = "UTC")~.
 
-- ~POSIXt~ -> ~POSIXct~
+- ~POSIXt~ から ~POSIXct~ への変換
 - ~as_date(x, tz = NULL)~
 #+begin_src R :exports both
 dt_europe <- ymd_hms("2010-08-03 00:50:50", tz="Europe/London")
@@ -262,7 +253,7 @@ as_datetime(dt_europe, tz = "Europe/London")
 : [1] "2010-08-03 00:50:50 BST"
 \\
 
-- ~numeric~ -> ~POSIXct~
+- ~numeric~ から ~POSIXct~ への変換
 - ~as_datetime(x, origin = lubridate::origin, tz = "UTC")~
 - origin を指定しなくてもよい
 #+begin_src R :exports both
@@ -275,7 +266,7 @@ as.POSIXct(10, tz = "UTC", origin = "1970-01-01 00:00:00") # 同じ結果
 : [1] "1970-01-01 00:00:10 UTC"
 \\
 
-- ~character~ -> ~POSIXct~
+- ~character~ から ~POSIXct~ への変換
 - ~as_datetime(x, tz = "UTC", format = NULL)~
 - format で書式を指定できる
 #+begin_src R :exports both
@@ -347,7 +338,7 @@ dt
 
 - 特定の起点からの経過日を返す
 - wday() は更に細かいオプションが指定可能
-  ~wday(x, label = FALSE, abbr = TRUE, week_start = getOption("lubridate.week.start", 7), locale = Sys.getlocale("LC_TIME"))~
+- ~wday(x, label = FALSE, abbr = TRUE, week_start = getOption("lubridate.week.start", 7), locale = Sys.getlocale("LC_TIME"))~
 
 #+begin_src R :exports both
 dt <- today()
@@ -397,7 +388,7 @@ month(dt)
 : [1] 10
 \\
 
-- ~month()~, ~wday()~ は ~label = TRUE~ でファクターとして取り出す 
+- ~month()~, ~wday()~ は ~label = TRUE~ でファクターとして取り出すことができる
 #+begin_src R :exports both
 dt <- today()
 month(dt, label = TRUE)
@@ -501,22 +492,55 @@ force_tzs(dt, c("America/New_York", "America/Chicago"), tzone_out = "UTC")
 #+begin_src R :exports both
 dt <- today()
 dt
+round_date(dt, "week")
+#+end_src
+
+#+RESULTS:
+: 
+: [1] "2019-10-17"
+: 
+: [1] "2019-10-20"
+\\
+
+*** ★★☆ ~floor_date(x, unit = "seconds", week_start = getOption("lubridate.week.start", 7))~.
+
+- 切り下げで丸める
+#+begin_src R :exports both
+dt <- today()
+dt
 floor_date(dt, "week")
 #+end_src
 
 #+RESULTS:
+: 
 : [1] "2019-10-17"
+: 
 : [1] "2019-10-13"
 \\
 
-*** ★★☆ ~floor_date(x, unit = "seconds", week_start = getOption("lubridate.week.start", 7))~.
 *** ★★☆ ~ceiling_date(x, unit = "seconds", change_on_boundary = NULL, week_start = getOption("lubridate.week.start", 7))~.
+
+- 切り上げで丸める
+#+begin_src R :exports both
+dt <- today()
+dt
+ceiling_date(dt, "week")
+#+end_src
+
+#+RESULTS:
+: 
+: [1] "2019-10-17"
+: 
+: [1] "2019-10-20"
+\\
+
 * 関数リスト: Timespan class
 ** 3 つの S4 クラスが用意されている
 
-- Intervals class :: 時間間隔のこと。 *開始と終了の 2 つの日時を保持している。* period と duration に正確に変換可能。
-- Durations class :: 期間のこと。 *正確な秒数として保持されている。* 人間の直感とはずれることがある。
-- Periods class :: 時期のこと。週や月などの *人間が扱う単位で変換* してくれる。
+- Intervals class :: *開始と終了の 2 つの日時で表現された時間間隔のこと。* period と duration に正確に変換可能。
+- Durations class :: *正確な秒数として保持された期間のこと。* 人間の直感とはズレることがある。
+- Periods class :: 週や月などの *人間が扱う単位* で期間を扱うことができる。
+\\
 
 ** Intervals
 *** ★☆☆ ~interval(start, end = NULL, tzone = tz(start))~.
@@ -566,109 +590,175 @@ arrive %--% leave
 ** Durations
 *** ★☆☆ ~duration(num = NULL, units = "seconds", ...)~.
 
-- R では日付の差は ~difftime~ object
+- R では日付の差はデフォルトでは ~difftime~ class で扱われる
 - 計算によって、単位が週・日・時・分・秒で異なる
 - この例の場合は、日数
 #+begin_src R :exports both
-today() - ymd("1983-05-23")
+diff_date <- today() - today() - 10
+diff_date # 日数で表現
+class(diff_date)
+
+diff_time <- now() - now() - 10
+diff_time # 秒で表現
+class(diff_time)
 #+end_src
 
 #+RESULTS:
-: 13034
+: 
+: Time difference of -10 days
+: 
+: [1] "difftime"
+: 
+: Time difference of -10.00003 secs
+: 
+: [1] "difftime"
 \\
 
-- duration クラスでは、秒に統一して扱う
+- ~duration~ class では、秒に統一して扱う
+- units を指定して ~Duration~ を作成
+#+begin_src R :exports both
+duration(10, units = "minute")
+#+end_src
+
+#+RESULTS:
+: [1] "600s (~10 minutes)"
+\\
+
+*** ★☆☆ ~as.duration(x, ...)~.
+
 #+begin_src R :exports both
 age <- today() - ymd("1983-05-23")
 as.duration(age)
 #+end_src
 
 #+RESULTS:
-: 1139184000s (~36.1 years)
+: 
+: [1] "1148774400s (~36.4 years)"
 \\
 
-- "d" + 単位 で duration class を作成できる
+*** ★☆☆ ~is.duration(x)~.
+
+- ~duration~ class の type predicate
+#+begin_src R :exports both
+is.duration(dseconds(10))
+#+end_src
+
+#+RESULTS:
+: [1] TRUE
+
+*** ★★☆ ~dseconds(x = 1)~, ~dminutes(x = 1)~, ~dhours(x = 1)~, ~ddays(x = 1)~, ~dweeks(x = 1)~, ~dyears(x = 1)~.
+
+- "d" + 単位の関数群で ~duration~ class を作成できる
 #+begin_src R :exports both
 dminutes(2)
 #+end_src
 
 #+RESULTS:
-: 120s (~2 minutes)
+: [1] "120s (~2 minutes)"
 \\
 
 - 演算もできる
 #+begin_src R :exports both
-ymd("2018-12-21") + ddays(2)
+today() + ddays(2)
 #+end_src
 
 #+RESULTS:
-: 2018-12-23
+: [1] "2019-10-19"
 \\
 
-*** ★☆☆ ~dseconds(x = 1)~.
-*** ★☆☆ ~dminutes(x = 1)~.
-*** ★☆☆ ~dhours(x = 1)~.
-*** ★☆☆ ~ddays(x = 1)~.
-*** ★☆☆ ~dweeks(x = 1)~.
-*** ★☆☆ ~dyears(x = 1)~.
-*** ★☆☆ ~dmilliseconds(x = 1)~.
-*** ★☆☆ ~dmicroseconds(x = 1)~.
-*** ★☆☆ ~dnanoseconds(x = 1)~.
-*** ★☆☆ ~dpicoseconds(x = 1)~.
-*** ★☆☆ ~is.duration(x)~.
+*** ★☆☆ ~dmilliseconds(x = 1)~, ~dmicroseconds(x = 1)~, ~dnanoseconds(x = 1)~, ~dpicoseconds(x = 1)~.
+
+- ~POSIXct~ はマイクロ秒の粒度までしか扱えないので、ナノ秒・ピコ秒の利用方法は不明
+#+begin_src R :exports both
+options(digits.secs = 6)
+n <- now()
+n
+n + dmicroseconds(10)
+n + dpicoseconds(10)
+#+end_src
+
+#+RESULTS:
+: 
+: [1] "2019-10-17 22:22:35.994052 JST"
+: 
+: [1] "2019-10-17 22:22:35.994062 JST"
+: 
+: [1] "2019-10-17 22:22:35.994052 JST"
 
 ** Periods
 *** ★☆☆ ~period(num = NULL, units = "second", ...)~.
 
-- Periods は秒数固定ではない
+- ~Period~ は秒数固定ではない
 #+begin_src R :exports both
-minutes(2)
+prd <- period(1, units = "day")
+prd
 #+end_src
 
 #+RESULTS:
-: 2M 0S
+: 
+: [1] "1d 0H 0M 0S"
 \\
 
-- Period を足す
+- ~Period~ を足す
 #+begin_src R :exports both
-ymd("2018-12-21") + days(2)
+ymd("2018-12-21") + prd
 #+end_src
 
 #+RESULTS:
-: 2018-12-23
+: [1] "2018-12-22"
 \\
 
-- Durations を使うと計算が正確 (夏時間への変更を考慮)
+- ~Duration~ を使うと計算が正確 (夏時間への変更を考慮)
 #+begin_src R :exports both
 dt1 <- ymd_hms("2016-03-12 13:00:00", tz = "America/New_York")
 dt1 + ddays(1)
 #+end_src
 
 #+RESULTS:
-: 2016-03-13 14:00:00
+: 
+: [1] "2016-03-13 14:00:00 EDT"
 \\
 
-- Period を使うとより直感的 (人間の感覚でプラス 1 日)
+- 一方 ~Period~ を使うとより直感的 (人間の感覚でプラス 1 日)
 #+begin_src R :exports both
 dt1 <- ymd_hms("2016-03-12 13:00:00", tz = "America/New_York")
-dt1 + days(1)
+dt1 + prd
 #+end_src
 
 #+RESULTS:
+: 
 : [1] "2016-03-13 13:00:00 EDT"
 \\
 
 *** ★☆☆ ~is.period(x)~.
-*** ★☆☆ ~seconds(x = 1)~.
-*** ★☆☆ ~minutes(x = 1)~.
-*** ★☆☆ ~hours(x = 1)~.
-*** ★☆☆ ~days(x = 1)~.
-*** ★☆☆ ~weeks(x = 1)~.
-*** ★☆☆ ~years(x = 1)~.
-*** ★☆☆ ~milliseconds(x = 1)~.
-*** ★☆☆ ~microseconds(x = 1)~.
-*** ★☆☆ ~nanoseconds(x = 1)~.
-*** ★☆☆ ~picoseconds(x = 1)~.
+
+- ~Period~ class の type predicate
+#+begin_src R :exports both
+is.period(days(1))
+#+end_src
+
+#+RESULTS:
+: [1] TRUE
+
+*** ★☆☆ ~seconds(x = 1)~, ~minutes(x = 1)~, ~hours(x = 1)~, ~days(x = 1)~, ~weeks(x = 1)~, ~years(x = 1)~.
+
+- 単位の複数形の関数群で ~Period~ class を作成できる
+#+begin_src R :exports both
+days(2)
+#+end_src
+
+#+RESULTS:
+: [1] "2d 0H 0M 0S"
+
+*** ★☆☆ ~milliseconds(x = 1)~, ~microseconds(x = 1)~, ~nanoseconds(x = 1)~, ~picoseconds(x = 1)~.
+
+#+begin_src R :exports both
+milliseconds(2)
+#+end_src
+
+#+RESULTS:
+: [1] "0.002S"
+
 * 実行環境
 
 #+begin_src R :results output :exports both
