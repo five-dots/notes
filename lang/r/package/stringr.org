@@ -14,6 +14,14 @@
 #+BEGIN_QUOTE
 - [[#ライブラリの読み込みとバージョンの確認][ライブラリの読み込みとバージョンの確認]]
 - [[#文字列操作関数][文字列操作関数]]
+  - [[#抽出][抽出]]
+    - [[#-str_substring-start--1l-end---1l-開始終了位置で抽出][★★☆ ~str_sub(string, start = 1L, end = -1L)~ 開始・終了位置で抽出]]
+    - [[#-str_subsetstring-pattern-negate--false-マッチ要素を抽出][★★★ ~str_subset(string, pattern, negate = FALSE)~ マッチ要素を抽出]]
+    - [[#-str_extractstring-pattern-最初のマッチ部分を抽出][★★☆ ~str_extract(string, pattern)~ 最初のマッチ部分を抽出]]
+    - [[#-str_extract_allstring-pattern-simplify--false-全てのマッチ部分を抽出][★☆☆ ~str_extract_all(string, pattern, simplify = FALSE)~ 全てのマッチ部分を抽出]]
+    - [[#-str_matchstring-pattern-最初のマッチ部分を抽出][★☆☆ ~str_match(string, pattern)~ 最初のマッチ部分を抽出]]
+    - [[#-str_match_allstring-pattern-全てのマッチ部分を抽出][★☆☆ ~str_match_all(string, pattern)~ 全てのマッチ部分を抽出]]
+    - [[#-wordstring-start--1l-end--start-sep--fixed--単語を抽出][★☆☆ ~word(string, start = 1L, end = start, sep = fixed(" "))~ 単語を抽出]]
   - [[#置換変換削除][置換・変換・削除]]
     - [[#-str_substring-start--1l-end---1l-omit_na--false---value-開始終了位置で置換][★★☆ ~str_sub(string, start = 1L, end = -1L, omit_na = FALSE) <- value~ 開始・終了位置で置換]]
     - [[#-str_replacestring-pattern-replacement-最初のマッチを置換][★★★ ~str_replace(string, pattern, replacement)~ 最初のマッチを置換]]
@@ -24,14 +32,6 @@
     - [[#-str_to_upperstring-locale--en-大文字に変換][★★☆ ~str_to_upper(string, locale = "en")~ 大文字に変換]]
     - [[#-str_to_titlestring-locale--en-タイトル形式に変換][★☆☆ ~str_to_title(string, locale = "en")~ タイトル形式に変換]]
     - [[#-str_to_sentencestring-locale--en-センテンス形式に変換][★☆☆ ~str_to_sentence(string, locale = "en")~ センテンス形式に変換]]
-  - [[#抽出][抽出]]
-    - [[#-str_substring-start--1l-end---1l-開始終了位置で抽出][★★☆ ~str_sub(string, start = 1L, end = -1L)~ 開始・終了位置で抽出]]
-    - [[#-str_subsetstring-pattern-negate--false-マッチ要素を抽出][★★★ ~str_subset(string, pattern, negate = FALSE)~ マッチ要素を抽出]]
-    - [[#-str_extractstring-pattern-最初のマッチ部分を抽出][★★☆ ~str_extract(string, pattern)~ 最初のマッチ部分を抽出]]
-    - [[#-str_extract_allstring-pattern-simplify--false-全てのマッチ部分を抽出][★☆☆ ~str_extract_all(string, pattern, simplify = FALSE)~ 全てのマッチ部分を抽出]]
-    - [[#-str_matchstring-pattern-最初のマッチ部分を抽出][★☆☆ ~str_match(string, pattern)~ 最初のマッチ部分を抽出]]
-    - [[#-str_match_allstring-pattern-全てのマッチ部分を抽出][★☆☆ ~str_match_all(string, pattern)~ 全てのマッチ部分を抽出]]
-    - [[#-wordstring-start--1l-end--start-sep--fixed--単語を抽出][★☆☆ ~word(string, start = 1L, end = start, sep = fixed(" "))~ 単語を抽出]]
   - [[#結合分割][結合・分割]]
     - [[#-str_c-sep---collapse--null-結合-][★★☆ ~str_c(..., sep = "", collapse = NULL)~ 結合 (~...~)]]
     - [[#-str_flattenstring-collapse---結合-ベクトル][★★☆ ~str_flatten(string, collapse = "")~ 結合 (ベクトル)]]
@@ -65,10 +65,10 @@
     - [[#-str_viewstring-pattern-match--na-最初のマッチを-html-表示][★☆☆ ~str_view(string, pattern, match = NA)~ 最初のマッチを HTML 表示]]
     - [[#-str_view_allstring-pattern-match--na-全てのマッチを-html-表示][★☆☆ ~str_view_all(string, pattern, match = NA)~ 全てのマッチを HTML 表示]]
 - [[#正規表現オプション][正規表現オプション]]
-  - [[#fixedpattern-ignore_case--false][fixed(pattern, ignore_case = FALSE)]]
-  - [[#collpattern-ignore_case--false-locale--en-][coll(pattern, ignore_case = FALSE, locale = "en", ...)]]
-  - [[#regexpattern-ignore_case--false-multiline--false-comments--false-dotall--false-][regex(pattern, ignore_case = FALSE, multiline = FALSE, comments = FALSE, dotall = FALSE, ...)]]
-  - [[#boundarytype--ccharacter-line_break-sentence-word-skip_word_none--na-][boundary(type = c("character", "line_break", "sentence", "word"), skip_word_none = NA, ...)]]
+  - [[#fixedpattern-ignore_case--false][~fixed(pattern, ignore_case = FALSE)~.]]
+  - [[#collpattern-ignore_case--false-locale--en-][~coll(pattern, ignore_case = FALSE, locale = "en", ...)~.]]
+  - [[#regexpattern-ignore_case--false-multiline--false-comments--false-dotall--false-][~regex(pattern, ignore_case = FALSE, multiline = FALSE, comments = FALSE, dotall = FALSE, ...)~.]]
+  - [[#boundarytype--ccharacter-line_break-sentence-word-skip_word_none--na-][~boundary(type = c("character", "line_break", "sentence", "word"), skip_word_none = NA, ...)~.]]
 - [[#実行環境][実行環境]]
 - [[#参考リンク][参考リンク]]
 #+END_QUOTE
@@ -90,101 +90,6 @@ packageVersion("stringr")
 \\
 
 * 文字列操作関数
-** 置換・変換・削除
-*** ★★☆ ~str_sub(string, start = 1L, end = -1L, omit_na = FALSE) <- value~ 開始・終了位置で置換
-
-#+begin_src R :exports both
-string <- "hoge_fuga"
-str_sub(string, start = 1, end = 4) <- "piyo"
-string
-#+end_src
-
-#+RESULTS:
-: [1] "piyo_fuga"
-\\
-
-*** ★★★ ~str_replace(string, pattern, replacement)~ 最初のマッチを置換
-
-#+begin_src R :exports both
-strings <- "hoge_fuga_hoge"
-str_replace(strings, "hoge", "piyo")
-#+end_src
-
-#+RESULTS:
-: [1] "piyo_fuga_hoge"
-\\
-
-*** ★★★ ~str_replace_all(string, pattern, replacement)~ 全てのマッチを置換
-
-#+begin_src R :exports both
-strings <- "hoge_fuga_hoge"
-str_replace_all(strings, "hoge", "piyo")
-#+end_src
-
-#+RESULTS:
-: [1] "piyo_fuga_piyo"
-\\
-
-*** ★★★ ~str_remove(string, pattern)~ マッチ部分を削除
-
-#+begin_src R :exports both
-str_remove("hoge_fuga", "hoge")
-#+end_src
-
-#+RESULTS:
-: [1] "_fuga"
-\\
-
-*** ★★★ ~str_remove_all(string, pattern)~ マッチを削除
-
-#+begin_src R  :exports both
-str_remove_all("hoge_hoge_fuga", "hoge")
-#+end_src
-
-#+RESULTS:
-: [1] "__fuga"
-\\
-
-*** ★★☆ ~str_to_lower(string, locale = "en")~ 小文字に変換
-
-#+begin_src R :exports both
-str_to_lower("HOGE")
-#+end_src
-
-#+RESULTS:
-: [1] "hoge"
-\\
-
-*** ★★☆ ~str_to_upper(string, locale = "en")~ 大文字に変換
-
-#+begin_src R :exports both
-str_to_upper("hoge")
-#+end_src
-
-#+RESULTS:
-: [1] "HOGE"
-\\
-
-*** ★☆☆ ~str_to_title(string, locale = "en")~ タイトル形式に変換
-
-#+begin_src R :exports both
-str_to_title("hoge no fuga")
-#+end_src
-
-#+RESULTS:
-: [1] "Hoge No Fuga"
-\\
-
-*** ★☆☆ ~str_to_sentence(string, locale = "en")~ センテンス形式に変換
-
-#+begin_src R :exports both
-str_to_sentence("hoge no fuga")
-#+end_src
-
-#+RESULTS:
-: [1] "Hoge no fuga"
-\\
-
 ** 抽出
 *** ★★☆ ~str_sub(string, start = 1L, end = -1L)~ 開始・終了位置で抽出
      
@@ -313,12 +218,109 @@ str_match_all(strings, "hoge")
 
 *** ★☆☆ ~word(string, start = 1L, end = start, sep = fixed(" "))~ 単語を抽出
 
+- なぜか ~str_~ から始まっていない
 #+begin_src R :exports both
 word("This is a pen.", 1)
 #+end_src
 
 #+RESULTS:
 : [1] "This"
+\\
+
+** 置換・変換・削除
+*** ★★☆ ~str_sub(string, start = 1L, end = -1L, omit_na = FALSE) <- value~ 開始・終了位置で置換
+
+#+begin_src R :exports both
+string <- "hoge_fuga"
+str_sub(string, start = 1, end = 4) <- "piyo"
+string
+#+end_src
+
+#+RESULTS:
+: [1] "piyo_fuga"
+\\
+
+*** ★★★ ~str_replace(string, pattern, replacement)~ 最初のマッチを置換
+
+#+begin_src R :exports both
+strings <- "hoge_fuga_hoge"
+str_replace(strings, "hoge", "piyo")
+#+end_src
+
+#+RESULTS:
+: [1] "piyo_fuga_hoge"
+\\
+
+*** ★★★ ~str_replace_all(string, pattern, replacement)~ 全てのマッチを置換
+
+#+begin_src R :exports both
+strings <- "hoge_fuga_hoge"
+str_replace_all(strings, "hoge", "piyo")
+#+end_src
+
+#+RESULTS:
+: [1] "piyo_fuga_piyo"
+\\
+
+*** ★★★ ~str_remove(string, pattern)~ マッチ部分を削除
+
+#+begin_src R :exports both
+str_remove("hoge_fuga", "hoge")
+#+end_src
+
+#+RESULTS:
+: [1] "_fuga"
+\\
+
+*** ★★★ ~str_remove_all(string, pattern)~ マッチを削除
+
+#+begin_src R  :exports both
+str_remove_all("hoge_hoge_fuga", "hoge")
+#+end_src
+
+#+RESULTS:
+: [1] "__fuga"
+\\
+
+*** ★★☆ ~str_to_lower(string, locale = "en")~ 小文字に変換
+
+#+begin_src R :exports both
+str_to_lower("HOGE")
+#+end_src
+
+#+RESULTS:
+: [1] "hoge"
+\\
+
+*** ★★☆ ~str_to_upper(string, locale = "en")~ 大文字に変換
+
+#+begin_src R :exports both
+str_to_upper("hoge")
+#+end_src
+
+#+RESULTS:
+: [1] "HOGE"
+\\
+
+*** ★☆☆ ~str_to_title(string, locale = "en")~ タイトル形式に変換
+
+#+begin_src R :exports both
+str_to_title("hoge no fuga")
+#+end_src
+
+#+RESULTS:
+: [1] "Hoge No Fuga"
+\\
+
+*** ★☆☆ ~str_to_sentence(string, locale = "en")~ センテンス形式に変換
+
+#+begin_src R :exports both
+str_to_sentence("hoge no fuga")
+#+end_src
+
+#+RESULTS:
+: [1] "Hoge no fuga"
+\\
 
 ** 結合・分割
 *** ★★☆ ~str_c(..., sep = "", collapse = NULL)~ 結合 (~...~)
@@ -347,6 +349,7 @@ str_c("hoge", c("fuga", "piyo"), sep = "_", collapse = "-")
 
 #+RESULTS:
 : [1] "hoge_fuga-hoge_piyo"
+\\
 
 *** ★★☆ ~str_flatten(string, collapse = "")~ 結合 (ベクトル)
 
@@ -438,19 +441,12 @@ str_interp("Mean sepal width is $[.3f]{mean(Sepal.Width)}.", iris)
 *** ★☆☆ ~str_glue(..., .sep = "", .envir = parent.frame())~ glue()
 
 - ~glue::glue()~ のラッパー
-#+begin_src R :exports both
-mean_width = round(mean(iris$Sepal.Width), 2)
-str_glue("Mean sepal width is {mean_width}.")
-#+end_src
-
-#+RESULTS:
-: Mean sepal width is 3.06.
+\\
 
 *** ★☆☆ ~str_glue_data(.x, ..., .sep = "", .envir = parent.frame(), .na = "NA")~ glue_data()
 
 - ~glue::glue_data()~ のラッパー
-#+begin_src R :exports both
-#+end_src
+\\
 
 ** 正規表現マッチを検出
 *** ★★★ ~str_detect(string, pattern, negate = FALSE)~ マッチの真偽
@@ -473,6 +469,7 @@ str_detect(strings, pattern = "^ho", negate = TRUE)
 
 #+RESULTS:
 : [1] FALSE  TRUE  TRUE
+\\
 
 *** ★★★ ~str_starts(string, pattern, negate = FALSE)~ 先頭マッチの真偽
 
@@ -618,6 +615,7 @@ str_order(strings)
 
 #+RESULTS:
 : [1] 2 1 3
+\\
 
 *** ★☆☆ ~str_sort(x, decreasing = FALSE, na_last = TRUE, locale = "en", numeric = FALSE, ...)~ ソート
 
@@ -628,6 +626,7 @@ str_sort(strings)
 
 #+RESULTS:
 : [1] "fuga" "hoge" "piyo"
+\\
 
 ** その他
 *** ★☆☆ ~str_conv(string, encoding)~ 文字コード変換
@@ -644,6 +643,7 @@ str_conv(x, "ISO-8859-1") # Plus-minus
 : [1] "\xb1"
 : [1] "ą"
 : [1] "±"
+\\
 
 *** ★☆☆ ~str_view(string, pattern, match = NA)~ 最初のマッチを HTML 表示
 
@@ -651,6 +651,7 @@ str_conv(x, "ISO-8859-1") # Plus-minus
 #+begin_src R :exports both :results silent
 str_view(c("hoge", "fuga", "piyo"), "[aeo]")
 #+end_src
+\\
 
 *** ★☆☆ ~str_view_all(string, pattern, match = NA)~ 全てのマッチを HTML 表示
 
@@ -658,16 +659,16 @@ str_view(c("hoge", "fuga", "piyo"), "[aeo]")
 #+begin_src R :exports both :results silent
 str_view_all(c("hoge", "fuga", "piyo"), "[aeo]")
 #+end_src
+\\
 
 * 正規表現オプション
 
 - stringr の pattern 引数に以下の関数を通して渡すことで正規表現の挙動を変更できる
 
-** TODO fixed(pattern, ignore_case = FALSE)
-** TODO coll(pattern, ignore_case = FALSE, locale = "en", ...)
-** TODO regex(pattern, ignore_case = FALSE, multiline = FALSE, comments = FALSE, dotall = FALSE, ...)
-** TODO boundary(type = c("character", "line_break", "sentence", "word"), skip_word_none = NA, ...)
-
+** TODO ~fixed(pattern, ignore_case = FALSE)~.
+** TODO ~coll(pattern, ignore_case = FALSE, locale = "en", ...)~.
+** TODO ~regex(pattern, ignore_case = FALSE, multiline = FALSE, comments = FALSE, dotall = FALSE, ...)~.
+** TODO ~boundary(type = c("character", "line_break", "sentence", "word"), skip_word_none = NA, ...)~.
 * 実行環境
 
 #+begin_src R :results output :exports both
