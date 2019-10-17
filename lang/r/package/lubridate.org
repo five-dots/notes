@@ -3,7 +3,7 @@
 
 * ~{lubridate}~: Make working with dates in R just that little bit easier :noexport:
 
-~{lubridate}~ (リュブリデート) は、R の日付を操作するパッケージ。 ~{tidyverse}~ の他のパッケージ同様、R のややこしい日時処理を簡単に扱えるようにしてくれている。
+~{lubridate}~ (リュブリデート) は、R の日時を操作するパッケージ。 ~{tidyverse}~ の他のパッケージ同様、R のややこしい処理を簡単に扱えるようにしてくれている。
 
 - 日付データは ~Date~ class で扱う
 - 日時データは ~POSIXct~ class で扱う (~POSIXlt~ などは使わない)
@@ -587,12 +587,12 @@ arrive %--% leave
 *** TODO ★☆☆ ~int_standardize(int)~.
 *** TODO ★☆☆ ~int_aligns(int1, int2)~.
 *** TODO ★☆☆ ~int_diff(times)~.
+\\
 ** Durations
 *** ★☆☆ ~duration(num = NULL, units = "seconds", ...)~.
 
-- R では日付の差はデフォルトでは ~difftime~ class で扱われる
+- R では日時の差はデフォルトでは ~difftime~ class で扱われる
 - 計算によって、単位が週・日・時・分・秒で異なる
-- この例の場合は、日数
 #+begin_src R :exports both
 diff_date <- today() - today() - 10
 diff_date # 日数で表現
@@ -645,6 +645,7 @@ is.duration(dseconds(10))
 
 #+RESULTS:
 : [1] TRUE
+\\
 
 *** ★★☆ ~dseconds(x = 1)~, ~dminutes(x = 1)~, ~dhours(x = 1)~, ~ddays(x = 1)~, ~dweeks(x = 1)~, ~dyears(x = 1)~.
 
@@ -684,6 +685,7 @@ n + dpicoseconds(10)
 : [1] "2019-10-17 22:22:35.994062 JST"
 : 
 : [1] "2019-10-17 22:22:35.994052 JST"
+\\
 
 ** Periods
 *** ★☆☆ ~period(num = NULL, units = "second", ...)~.
@@ -739,6 +741,7 @@ is.period(days(1))
 
 #+RESULTS:
 : [1] TRUE
+\\
 
 *** ★☆☆ ~seconds(x = 1)~, ~minutes(x = 1)~, ~hours(x = 1)~, ~days(x = 1)~, ~weeks(x = 1)~, ~years(x = 1)~.
 
@@ -749,6 +752,7 @@ days(2)
 
 #+RESULTS:
 : [1] "2d 0H 0M 0S"
+\\
 
 *** ★☆☆ ~milliseconds(x = 1)~, ~microseconds(x = 1)~, ~nanoseconds(x = 1)~, ~picoseconds(x = 1)~.
 
@@ -758,6 +762,7 @@ milliseconds(2)
 
 #+RESULTS:
 : [1] "0.002S"
+\\
 
 * 実行環境
 
@@ -808,3 +813,4 @@ loaded via a namespace (and not attached):
 - Vignette
   - [[https://cloud.r-project.org/web/packages/lubridate/vignettes/lubridate.html][Do more with dates and times in R]] ([[https://qiita.com/nozma/items/01725761d980a0110027][日本語訳@Qiita]])
 - Blog
+  - [[https://www.slideshare.net/kashitan/20150905-tokyo-r50-52444556][lubridateパッケージ入門@SlideShare]]
