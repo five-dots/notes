@@ -3,7 +3,7 @@
 
 * Date and Time in ~{base}~ package                                  :noexport:
 
-R での日時の扱いはややこしい面がある。似たような複数の型が存在していたり、名前が直感的にわかりにくかったりするからだ。幸い ~{lubridate}~ などの便利なパッケージのお陰で、そうした不便を軽減することはできる。しかし ~{lubridate}~ は ~{tidyverse}~ のコアパッケージではなく、どんな時も利用できる、というわけではないだろう。そんな時のために、ここでは ~{base}~ パッケージの中で最低限押さえて置くべきことをまとめておく。
+R での日時の扱いは煩雑な面がある。似たような複数の型が存在していたり、名前が直感的にわかりにくかったりするからだ。幸い ~{lubridate}~ などの便利なパッケージのお陰で、そうした不便を軽減することはできる。しかし ~{lubridate}~ は ~{tidyverse}~ のコアパッケージではないし、どんな時も利用できる、というわけではないだろう。そんな時のために、ここでは ~{base}~ パッケージの中で最低限押さえて置くべきことをまとめておく。
 
 * 目次                                                            :quote:toc:
 #+BEGIN_QUOTE
@@ -13,15 +13,15 @@ R での日時の扱いはややこしい面がある。似たような複数の
   - [[#for-loop-で-date-が-numeric-になる問題][for loop で Date が numeric になる問題]]
 - [[#posixct-class][POSIXct class]]
   - [[#新規作成-1][新規作成]]
-  - [[#posixct---date-への変換で日付がずれることがある][POSIXct -> Date への変換で日付がずれることがある]]
-  - [[#ミリ秒の扱い][ミリ秒の扱い]]
+  - [[#posixct-から-date-への変換で日付がずれる問題][POSIXct から Date への変換で日付がずれる問題]]
+  - [[#ミリ秒の丸め問題][ミリ秒の丸め問題]]
 - [[#タイムゾーン][タイムゾーン]]
 - [[#フォーマット][フォーマット]]
   - [[#基本][基本]]
   - [[#フォーマット一覧][フォーマット一覧]]
-  - [[#strptimex-format-tz--][strptime(x, format, tz = "")]]
-  - [[#strftimex-format---tz---usetz--false-][strftime(x, format = "", tz = "", usetz = FALSE, ...)]]
-  - [[#syssetlocalecategory--lc_all-locale--][Sys.setlocale(category = "LC_ALL", locale = "")]]
+  - [[#文字列から日時への変換][文字列から日時への変換]]
+  - [[#日時から文字列への変換][日時から文字列への変換]]
+  - [[#ロケールの変更][ロケールの変更]]
 - [[#参考情報][参考情報]]
 #+END_QUOTE
 
@@ -37,7 +37,7 @@ base R には、日時を扱う 4 つの class が存在する
 | ~POSIXlt~ | lt = Local Time。日付項目が名前付きのリスト。可読性が高い。 |
 |---------+-------------------------------------------------------------|
 
-- R の日付型は、Unix エポック経過時間で表現される (origin = "1970-01-01")
+- R の日時を扱う型は、Unix エポックからの経過時間で表現される (origin = "1970-01-01")
 - 日時は、基本的に ~POSIXct~ class を利用しておけば良い
 - R には時刻のみ扱うクラスはない (パッケージとして、 ~hms~ がある)
 - ~tibble~ では、日付<date>、時刻<time>、日時<dttm>で表示される
@@ -48,16 +48,18 @@ base R には、日時を扱う 4 つの class が存在する
 
 - 今日を取得
 #+begin_src R :exports both
-Sys.Date()
+td <- Sys.Date()
+td
 #+end_src
 
 #+RESULTS:
+: 
 : [1] "2019-10-17"
 \\
 
-- エポックからの差分が日数で表現されている
+- ~Date~ はエポックからの日数で表現されている
 #+begin_src R :exports both
-num_dates <- unclass(Sys.Date())
+num_dates <- unclass(td)
 num_dates
 #+end_src
 
@@ -69,7 +71,7 @@ num_dates
 - エポック時間に経過日数を足せば、今日の日付になる
 #+begin_src R :exports both
 epoch <- as.Date("1970-01-01")
-epoch + unclass(Sys.Date())
+epoch + num_dates
 #+end_src
 
 #+RESULTS:
@@ -77,7 +79,7 @@ epoch + unclass(Sys.Date())
 : [1] "2019-10-17"
 \\
 
-- 数値から Date を作成するには、origin を指定する
+- 数値から ~Date~ を作成するには ~origin~ を指定する
 #+begin_src R :exports both
 as.Date(num_dates, origin = "1970-01-01")
 #+end_src
@@ -88,7 +90,7 @@ as.Date(num_dates, origin = "1970-01-01")
 
 ** for loop で Date が numeric になる問題
 
-- ~for~ loop 内で class attribute が欠落してしまう問題
+- ~for~ loop 内で class attribute が欠落してしまう問題 ([[https://www.r-bloggers.com/for-loops-in-r-can-lose-class-information/][参考]])
 #+begin_src R :exports both
 dates <- c(as.Date("2019-01-01"), as.Date("2019-01-02"))
 for (date in dates) print(date)
@@ -114,7 +116,6 @@ for (date in as.list(dates)) print(date)
 ** 新規作成
 
 - 現在日時を取得
-
 #+begin_src R :exports both
 Sys.time()
 #+end_src
@@ -123,7 +124,8 @@ Sys.time()
 : [1] "2019-10-17 15:36:05 JST"
 \\
 
-- Timezone を指定しないとデフォルトの JST が使われるため、GMT+9 になる
+- ~POSIXct~ から ~Date~ への変換
+- デフォルトの JST が使われるため、GMT+9 になる
 #+begin_src R :exports both
 as.POSIXct(Sys.Date())
 #+end_src
@@ -132,18 +134,18 @@ as.POSIXct(Sys.Date())
 : [1] "2019-10-17 09:00:00 JST"
 \\
 
-- 経過秒数で表現される
+- ~POSIXct~ は Unix エポックからの経過 *秒数* で表現される
 #+begin_src R :exports both
-today <- Sys.time()
-unclass(today)
+td <- Sys.time()
+unclass(td)
 #+end_src
 
 #+RESULTS:
 : 
-: [1] 1571294187
+: [1] 1571314959
 \\
 
-- format を指定して作成
+- ~POSIXct~ を ~format~ を指定して作成
 #+begin_src R :exports both
 as.POSIXct("2019-01-28 15:35:10", format = "%Y-%m-%d %H:%M:%S",
             tz = "Asia/Tokyo")
@@ -154,22 +156,22 @@ as.POSIXct("2019-01-28 15:35:10", format = "%Y-%m-%d %H:%M:%S",
 : [1] "2019-01-28 15:35:10 JST"
 \\
 
-** POSIXct -> Date への変換で日付がずれることがある
+** POSIXct から Date への変換で日付がずれる問題
 
-- [[https://qiita.com/kota9/items/657c8c0ac5092e3ec1ff][ここ]] での議論
+- [[https://qiita.com/kota9/items/657c8c0ac5092e3ec1ff][ここ]]での議論
 #+begin_src R :exports both
-today <- as.POSIXct("2016-09-23")
-as.Date(today)
+td <- as.POSIXct("2016-09-23")
+as.Date(td)
 #+end_src
 
 #+RESULTS:
+: 
 : [1] "2016-09-22"
 \\
 
-- Timezone を指定すれば問題ない
+- ~tz~ を指定すれば問題ない
 #+begin_src R :exports both
-today <- as.POSIXct("2016-09-23")
-as.Date(today, tz = "Asia/Tokyo")
+as.Date(td, tz = "Asia/Tokyo")
 #+end_src
 
 #+RESULTS:
@@ -178,8 +180,7 @@ as.Date(today, tz = "Asia/Tokyo")
 
 - もしくは、文字列に一度変換する
 #+begin_src R :exports both
-today <- as.POSIXct("2016-09-23")
-as.Date(strftime(today, "%Y-%m-%d"))
+as.Date(strftime(td, "%Y-%m-%d"))
 #+end_src
 
 #+RESULTS:
@@ -188,18 +189,19 @@ as.Date(strftime(today, "%Y-%m-%d"))
 
 - ~lubridate::as_date()~ ならずれない
 #+begin_src R :exports both
-lubridate::as_date(today)
-lubridate::tz(lubridate::as_date(today)) # 時間情報を削除して、UTCに変換している
+lubridate::as_date(td)
+lubridate::tz(lubridate::as_date(td)) # 時間情報を削除して、UTCに変換している
 #+end_src
 
 #+RESULTS:
 : [1] "2016-09-23"
+: 
 : [1] "UTC"
 \\
 
-** ミリ秒の扱い
+** ミリ秒の丸め問題
 
-- ミリ秒がずれる (切り捨てられる。[[https://stackoverflow.com/questions/10931972/r-issue-with-rounding-milliseconds][ここでの議論]])
+- 文字列から ~POSIXct~ を作成する際に、ミリ秒のがずれる (切り捨てられる。[[https://stackoverflow.com/questions/10931972/r-issue-with-rounding-milliseconds][ここでの議論]])
 #+begin_src R :exports both
 options(digits.secs = 3)
 ms_dt <- as.POSIXct("2019-06-28 12:34:01.123", format = "%Y-%m-%d %H:%M:%OS")
@@ -207,6 +209,7 @@ ms_dt
 #+end_src
 
 #+RESULTS:
+: 
 : [1] "2019-06-28 12:34:01.122 JST"
 \\
 
@@ -244,6 +247,7 @@ lubridate::as_datetime(msec/1000 + 0.0005)
 
 * タイムゾーン
 
+- システムのタイムゾーンを取得
 #+begin_src R :exports both
 Sys.timezone()
 #+end_src
@@ -252,7 +256,9 @@ Sys.timezone()
 : [1] "Asia/Tokyo"
 \\
 
-- Timezone のリスト
+- タイムゾーンのリストを取得
+- タイムゾーンは、"Area/Locality" の形式で指定すべき ([[https://stackoverflow.com/questions/37205128/understanding-timezone-strings-in-r][参考]])
+- つまり "JST" ではなく、"Asia/Tokyo" の形式で指定する
 #+begin_src R :exports both
 head(OlsonNames(), 10)
 #+end_src
@@ -335,9 +341,9 @@ purrr::imap_dfr(formats, ~ data.frame(name = .y, foramt = .x, value = format(tod
 | Timezone              | %Z     |        JST |
 \\
 
-** strptime(x, format, tz = "")
+** 文字列から日時への変換
 
-- 文字列 -> 日付
+- ~strptime(x, format, tz = "")~
 - p = "Parse"
 - 型は ~POSIXlt~
 #+begin_src R :exports both
@@ -348,9 +354,9 @@ strptime("2019-01-28 14:23:12", format = "%Y-%m-%d %H:%M:%S")
 : [1] "2019-01-28 14:23:12 JST"
 \\
 
-** strftime(x, format = "", tz = "", usetz = FALSE, ...)
+** 日時から文字列への変換
 
-- 日付 -> 文字列
+- ~strftime(x, format = "", tz = "", usetz = FALSE, ...)~
 - f = "Format
 - strftime = format.POSIXlt のラッパー
 #+begin_src R :exports both
@@ -361,7 +367,10 @@ strftime(Sys.Date(), format = "Century = %Cth, Weekday = %a")
 : [1] "Century = 20th, Weekday = Thu"
 \\
 
-** Sys.setlocale(category = "LC_ALL", locale = "")
+** ロケールの変更
+
+- ~Sys.setlocale(category = "LC_ALL", locale = "")~
+- 曜日などの出力形式を変更したい場合は、ロケールを変更する
 
 - 日本表記
 #+begin_src R :exports both
@@ -388,6 +397,8 @@ strftime(Sys.Date(), format = "Weekday = %A")
 * 参考情報
 
 - [[http://www.okadajp.org/RWiki/?%E6%97%A5%E4%BB%98%E3%80%81%E6%99%82%E9%96%93%E9%96%A2%E6%95%B0Tips%E5%A4%A7%E5%85%A8][日付、時間関数Tips大全@RWiki]]
+- [[https://www.r-bloggers.com/for-loops-in-r-can-lose-class-information/][For loops in R can lose class information@R-bloggers]]
 - [[https://qiita.com/kota9/items/657c8c0ac5092e3ec1ff][R: POSIXct -> Date で日付がズレる@Qiita]]
 - [[https://stackoverflow.com/questions/10931972/r-issue-with-rounding-milliseconds][R issue with rounding milliseconds@stackoverflow]]
 - [[https://stackoverflow.com/questions/49828433/r-how-to-convert-milliseconds-from-origin-to-date-and-keep-the-milliseconds][R How to convert milliseconds from origin to date and keep the milliseconds@stackoverflow]]
+- [[https://stackoverflow.com/questions/37205128/understanding-timezone-strings-in-r][Understanding timezone strings in R@stackoverflow]]
