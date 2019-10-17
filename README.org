@@ -36,7 +36,7 @@ Babel の実行には適切な ~org-babel-load-language~ の設定が必要で�
 |---------------+-----------------------------------------------------------------|
 | Table Data    | [[file:lang/r/package/dplyr/][ ~{dplyr}~ ]] {tidyr}, {purrrlyr}, {tibble}, {data.table}, {dtplyr} |
 | String        | regex, [[file:./lang/r/package/stringr.org][ ~{stringr}~ ]] {readr}, {glue}, {crayon}                    |
-| Date and Time | [[file:./lang/r/package/lubridate.org][ ~{lubridate}~ ]]                                                   |
+| Date and Time | [[file:./lang/r/general/date_time.org][ ~{base}~ ]] [[file:./lang/r/package/lubridate.org][ ~{lubridate}~ ]]                                          |
 | Preprocessing | [[file:lang/r/package/recipes.org][ ~{recipes}~ ]]                                                     |
 | Sampling      | [[file:lang/r/package/rsample.org][ ~{rsample}~ ]]                                                     |
 | Performance   | {yardstick}, {PerformanceAnalytics}                             |
