@@ -1,0 +1,697 @@
+#+STARTUP: folded indent inlineimages latexpreview
+#+PROPERTY: header-args:R :results value :colnames yes :session *R:tidyr*
+
+* ~{tidyr}~: Easily tidy data with spread and gather functions       :noexport:
+
+~{tidyr}~ (タイディアー) は、R の ~data.frame~ を操作するパッケージ。
+\\
+
+* 目次                                                            :quote:toc:
+#+BEGIN_QUOTE
+- [[#ライブラリの読み込みとバージョンの確認][ライブラリの読み込みとバージョンの確認]]
+- [[#全関数リスト][全関数リスト]]
+- [[#関数リスト][関数リスト]]
+  - [[#pivoting][Pivoting]]
+    - [[#-pivot_longerdata-cols-names_to--name-names_prefix--null-names_sep--null-names_pattern--null-names_ptypes--list-names_repair--check_unique-values_to--value-values_drop_na--false-values_ptypes--list][★★★ ~pivot_longer(data, cols, names_to = "name", names_prefix = NULL, names_sep = NULL, names_pattern = NULL, names_ptypes = list(), names_repair = "check_unique", values_to = "value", values_drop_na = FALSE, values_ptypes = list())~.]]
+    - [[#-pivot_widerdata-id_cols--null-names_from--name-names_prefix---names_sep--_-names_repair--check_unique-values_from--value-values_fill--null-values_fn--null][★★★ ~pivot_wider(data, id_cols = NULL, names_from = name, names_prefix = "", names_sep = "_", names_repair = "check_unique", values_from = value, values_fill = NULL, values_fn = NULL)~.]]
+    - [[#-gatherdata-key--key-value--value--narm--false-convert--false-factor_key--false][★★★ ~gather(data, key = "key", value = "value", ..., na.rm = FALSE, convert = FALSE, factor_key = FALSE)~.]]
+    - [[#-spreaddata-key-value-fill--na-convert--false-drop--true-sep--null][★★★ ~spread(data, key, value, fill = NA, convert = FALSE, drop = TRUE, sep = NULL)~.]]
+  - [[#nested-data][Nested data]]
+    - [[#-nestdata--key--deprecated][★★☆ ~nest(.data, ..., .key = deprecated())~.]]
+    - [[#-unnestdata-cols--keep_empty--false-ptype--null-names_sep--null-names_repair--check_unique-drop--deprecated-id--deprecated-sep--deprecated-preserve--deprecated][★★☆ ~unnest(data, cols, ..., keep_empty = FALSE, ptype = NULL, names_sep = NULL, names_repair = "check_unique", .drop = deprecated(), .id = deprecated(), .sep = deprecated(), .preserve = deprecated())~.]]
+  - [[#nas][NAs]]
+    - [[#データセット][データセット]]
+    - [[#-drop_nadata-][★★☆ ~drop_na(data, ...)~.]]
+    - [[#-replace_nadata-replace-][★★☆ ~replace_na(data, replace, ...)~.]]
+    - [[#-filldata--direction--cdown-up][★★☆ ~fill(data, ..., .direction = c("down", "up"))~.]]
+  - [[#others][Others]]
+    - [[#-separatedata-col-into-sep--alnum-remove--true-convert--false-extra--warn-fill--warn-][★★☆ ~separate(data, col, into, sep = "[^[:alnum:]]+", remove = TRUE, convert = FALSE, extra = "warn", fill = "warn", ...)~.]]
+    - [[#-unitedata-col--sep--_-remove--true-narm--false][★★☆ ~unite(data, col, ..., sep = "_", remove = TRUE, na.rm = FALSE)~.]]
+    - [[#-completedata--fill--list][★☆☆ ~complete(data, ..., fill = list())~.]]
+    - [[#-expanddata-][★☆☆ ~expand(data, ...)~.]]
+    - [[#-crossing][★☆☆ ~crossing(...)~.]]
+    - [[#-nesting][★☆☆ ~nesting(...)~.]]
+  - [[#pivot-table][Pivot Table]]
+- [[#実行環境][実行環境]]
+- [[#参考リンク][参考リンク]]
+#+END_QUOTE
+
+* ライブラリの読み込みとバージョンの確認
+
+#+begin_src R :results silent
+library(tidyr)
+#+end_src
+\\
+
+- バージョン
+#+begin_src R :exports both
+packageVersion("tidyr")
+#+end_src
+
+#+RESULTS:
+: [1] ‘1.0.0’
+\\
+
+* 全関数リスト
+
+#+begin_src R
+pacman::p_funs(tidyr)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+ [1] "%>%"               "as_tibble"         "build_longer_spec"
+ [4] "build_wider_spec"  "chop"              "complete"         
+ [7] "complete_"         "contains"          "crossing"         
+[10] "crossing_"         "drop_na"           "drop_na_"         
+[13] "ends_with"         "everything"        "expand"           
+[16] "expand_"           "expand_grid"       "extract"          
+[19] "extract_"          "extract_numeric"   "fill"             
+[22] "fill_"             "full_seq"          "gather"           
+[25] "gather_"           "hoist"             "last_col"         
+[28] "matches"           "nest"              "nest_"            
+[31] "nest_legacy"       "nesting"           "nesting_"         
+[34] "num_range"         "one_of"            "pack"             
+[37] "pivot_longer"      "pivot_longer_spec" "pivot_wider"      
+[40] "pivot_wider_spec"  "replace_na"        "separate"         
+[43] "separate_"         "separate_rows"     "separate_rows_"   
+[46] "spread"            "spread_"           "starts_with"      
+[49] "tibble"            "tidyr_legacy"      "tribble"          
+[52] "unchop"            "uncount"           "unite"            
+[55] "unite_"            "unnest"            "unnest_"          
+[58] "unnest_auto"       "unnest_legacy"     "unnest_longer"    
+[61] "unnest_wider"      "unpack"
+#+end_example
+
+* 関数リスト
+** Pivoting
+*** ★★★ ~pivot_longer(data, cols, names_to = "name", names_prefix = NULL, names_sep = NULL, names_pattern = NULL, names_ptypes = list(), names_repair = "check_unique", values_to = "value", values_drop_na = FALSE, values_ptypes = list())~.
+
+- 横 -> 縦の Tidy Data へ変換
+- ~gather()~ の後継
+- ~cols~ でまとめる列を指定 + ~names_*~ でラベル列の操作 + ~values_*~ で値列の操作
+- ~cols~ での列選択方法
+  - ~Sepal.Width~ (単一の列を指定)
+  - ~-Species~ (マイナスで指定)
+  - ~c(Sepal.Width, Petal.Width)~ (複数列を指定)
+  - ~c("Sepal.Width", "Petal.Width")~ (文字列で指定)
+  - ~1:3~ (範囲指定)
+  - ~starts_with("Sepal")~ (~{tidyselect}~ 利用)
+
+#+begin_src R :colnames yes
+iris %>%
+  pivot_longer(-Species, names_to = "key", values_to = "value") %>%
+  head()
+#+end_src
+
+#+RESULTS:
+| Species | key          | value |
+|---------+--------------+-------|
+| setosa  | Sepal.Length |   5.1 |
+| setosa  | Sepal.Width  |   3.5 |
+| setosa  | Petal.Length |   1.4 |
+| setosa  | Petal.Width  |   0.2 |
+| setosa  | Sepal.Length |   4.9 |
+| setosa  | Sepal.Width  |     3 |
+\\
+
+- ~names_prefix~ で冗長な部分を削除できる
+#+begin_src R :colnames yes
+iris %>%
+  pivot_longer(starts_with("Sepal"), names_to = "Sepal", names_prefix = "Sepal.") %>%
+  head()
+#+end_src
+
+#+RESULTS:
+| Petal.Length | Petal.Width | Species | Sepal  | value |
+|--------------+-------------+---------+--------+-------|
+|          1.4 |         0.2 | setosa  | Length |   5.1 |
+|          1.4 |         0.2 | setosa  | Width  |   3.5 |
+|          1.4 |         0.2 | setosa  | Length |   4.9 |
+|          1.4 |         0.2 | setosa  | Width  |     3 |
+|          1.3 |         0.2 | setosa  | Length |   4.7 |
+|          1.3 |         0.2 | setosa  | Width  |   3.2 |
+\\
+
+*** ★★★ ~pivot_wider(data, id_cols = NULL, names_from = name, names_prefix = "", names_sep = "_", names_repair = "check_unique", values_from = value, values_fill = NULL, values_fn = NULL)~.
+
+- ~spread()~ の後継
+- まず ~pivot_longer()~ で縦長に変換
+#+begin_src R :colnames yes
+d <- iris %>% head(3L) %>% tibble::rownames_to_column("id")
+d_long <- pivot_longer(d, c(-id, -Species))
+d_long
+#+end_src
+
+#+RESULTS:
+| id | Species | name         | value |
+|----+---------+--------------+-------|
+|  1 | setosa  | Sepal.Length |   5.1 |
+|  1 | setosa  | Sepal.Width  |   3.5 |
+|  1 | setosa  | Petal.Length |   1.4 |
+|  1 | setosa  | Petal.Width  |   0.2 |
+|  2 | setosa  | Sepal.Length |   4.9 |
+|  2 | setosa  | Sepal.Width  |     3 |
+|  2 | setosa  | Petal.Length |   1.4 |
+|  2 | setosa  | Petal.Width  |   0.2 |
+|  3 | setosa  | Sepal.Length |   4.7 |
+|  3 | setosa  | Sepal.Width  |   3.2 |
+|  3 | setosa  | Petal.Length |   1.3 |
+|  3 | setosa  | Petal.Width  |   0.2 |
+\\
+
+- 横長に戻す
+- 列名がデフォルト (name + value) であれば指定する必要もない
+#+begin_src R :colnames yes
+pivot_wider(d_long, names_from = name, values_from = value)
+#+end_src
+
+#+RESULTS:
+| id | Species | Sepal.Length | Sepal.Width | Petal.Length | Petal.Width |
+|----+---------+--------------+-------------+--------------+-------------|
+|  1 | setosa  |          5.1 |         3.5 |          1.4 |         0.2 |
+|  2 | setosa  |          4.9 |           3 |          1.4 |         0.2 |
+|  3 | setosa  |          4.7 |         3.2 |          1.3 |         0.2 |
+\\
+
+*** ★★★ ~gather(data, key = "key", value = "value", ..., na.rm = FALSE, convert = FALSE, factor_key = FALSE)~.
+
+- 横 -> 縦の Tidy Data へ変換
+- Key-Value pair に変換
+- ~key~, ~value~ に指定したものが、カラム名になる
+- 最後にマイナスでまとめ上げる変数を指定する (date 等)
+
+#+begin_src R :colnames yes
+iris %>%
+  gather(key = "key", value = "value", -Species) %>%
+  head()
+#+end_src
+
+#+RESULTS:
+| Species | key          | value |
+|---------+--------------+-------|
+| setosa  | Sepal.Length |   5.1 |
+| setosa  | Sepal.Length |   4.9 |
+| setosa  | Sepal.Length |   4.7 |
+| setosa  | Sepal.Length |   4.6 |
+| setosa  | Sepal.Length |     5 |
+| setosa  | Sepal.Length |   5.4 |
+\\
+
+*** ★★★ ~spread(data, key, value, fill = NA, convert = FALSE, drop = TRUE, sep = NULL)~.
+
+- 縦 -> 横への変換
+- まずは、縦長データを作成
+#+begin_src R :colnames yes
+d <- iris %>% head(3L) %>% tibble::rownames_to_column("id")
+d_long <- gather(d, key, value, -id, -Species)
+d_long
+#+end_src
+
+#+RESULTS:
+| id | Species | key          | value |
+|----+---------+--------------+-------|
+|  1 | setosa  | Sepal.Length |   5.1 |
+|  2 | setosa  | Sepal.Length |   4.9 |
+|  3 | setosa  | Sepal.Length |   4.7 |
+|  1 | setosa  | Sepal.Width  |   3.5 |
+|  2 | setosa  | Sepal.Width  |     3 |
+|  3 | setosa  | Sepal.Width  |   3.2 |
+|  1 | setosa  | Petal.Length |   1.4 |
+|  2 | setosa  | Petal.Length |   1.4 |
+|  3 | setosa  | Petal.Length |   1.3 |
+|  1 | setosa  | Petal.Width  |   0.2 |
+|  2 | setosa  | Petal.Width  |   0.2 |
+|  3 | setosa  | Petal.Width  |   0.2 |
+\\
+
+- ~spread()~ で横長データに戻す
+#+begin_src R :colnames yes
+d_wide <- spread(d_long, key, value)
+#+end_src
+
+#+RESULTS:
+| id | Species | Petal.Length | Petal.Width | Sepal.Length | Sepal.Width |
+|----+---------+--------------+-------------+--------------+-------------|
+|  1 | setosa  |          1.4 |         0.2 |          5.1 |         3.5 |
+|  2 | setosa  |          1.4 |         0.2 |          4.9 |           3 |
+|  3 | setosa  |          1.3 |         0.2 |          4.7 |         3.2 |
+\\
+
+- 複数列の spread (1 つの key に対して、複数の value 列がある場合, [[https://stackoverflow.com/questions/29775461/how-can-i-spread-repeated-measures-of-multiple-variables-into-wide-format][ここでの議論]])
+- Time と Score をまとめたい
+#+begin_src R :colnames yes
+dat <- tibble(
+  Person = rep(c("greg", "sally", "sue"), each = 2),
+  Time   = rep(c("Pre", "Post"), 3),
+  Score1 = round(rnorm(6, mean = 80, sd = 4), 0),
+  Score2 = round(jitter(Score1, 15), 0),
+  Score3 = 5 + (Score1 + Score2) / 2
+)
+#+end_src
+
+#+RESULTS:
+| Person | Time | Score1 | Score2 | Score3 |
+|--------+------+--------+--------+--------|
+| greg   | Pre  |     82 |     80 |     86 |
+| greg   | Post |     78 |     77 |   82.5 |
+| sally  | Pre  |     74 |     72 |     78 |
+| sally  | Post |     81 |     79 |     85 |
+| sue    | Pre  |     83 |     82 |   87.5 |
+| sue    | Post |     81 |     81 |     86 |
+\\
+
+1. ~gather()~ で一時的な変数 (temp) にまとめる
+2. ~unite()~ で 2 つの列を結合する
+3. ~spread()~ で横長に展開する
+#+begin_src R :colnames yes
+dat %>%
+  gather(temp, score, starts_with("Score")) %>%
+  unite(temp1, Time, temp, sep = ".") %>%
+  spread(temp1, score)
+#+end_src
+
+#+RESULTS:
+| Person | Post.Score1 | Post.Score2 | Post.Score3 | Pre.Score1 | Pre.Score2 | Pre.Score3 |
+|--------+-------------+-------------+-------------+------------+------------+------------|
+| greg   |          78 |          77 |        82.5 |         82 |         80 |         86 |
+| sally  |          81 |          79 |          85 |         74 |         72 |         78 |
+| sue    |          81 |          81 |          86 |         83 |         82 |       87.5 |
+\\
+
+** Nested data
+*** ★★☆ ~nest(.data, ..., .key = deprecated())~.
+
+- ~data.frame~ をネストして *list of data.frame* (= 列が list になっている) のカラムを作る
+- 内側を ... で指定し、外側をマイナスで指定
+
+#+begin_src R :results output
+iris %>% nest(-Species)
+
+# 同じ結果
+# iris %>% nest(Sepal.Length, Sepal.Width, Petal.Length, Petal.Width)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+# A tibble: 3 x 2
+  Species              data
+  <fct>      <list<df[,4]>>
+1 setosa           [50 × 4]
+2 versicolor       [50 × 4]
+3 virginica        [50 × 4]
+Warning message:
+All elements of `...` must be named.
+Did you want `data = c(Sepal.Length, Sepal.Width, Petal.Length, Petal.Width)`?
+#+end_example
+
+- ~dplyr::group_nest()~ と同じ機能
+#+begin_src R :results output
+iris %>% dplyr::group_nest(Species)
+#+end_src
+
+#+RESULTS:
+: # A tibble: 3 x 2
+:   Species    data             
+:   <fct>      <list>           
+: 1 setosa     <tibble [50 × 4]>
+: 2 versicolor <tibble [50 × 4]>
+: 3 virginica  <tibble [50 × 4]>
+
+*** ★★☆ ~unnest(data, cols, ..., keep_empty = FALSE, ptype = NULL, names_sep = NULL, names_repair = "check_unique", .drop = deprecated(), .id = deprecated(), .sep = deprecated(), .preserve = deprecated())~.
+
+- .drop = TRUE 余計なカラムが残らないようにする
+#+begin_src R :colnames yes
+iris %>%
+  nest(-Species, .key = NEW_COLUMN) %>%
+  unnest(NEW_COLUMN) %>%
+  head()
+#+end_src
+
+#+RESULTS:
+| Species | Sepal.Length | Sepal.Width | Petal.Length | Petal.Width |
+|---------+--------------+-------------+--------------+-------------|
+| setosa  |          5.1 |         3.5 |          1.4 |         0.2 |
+| setosa  |          4.9 |           3 |          1.4 |         0.2 |
+| setosa  |          4.7 |         3.2 |          1.3 |         0.2 |
+| setosa  |          4.6 |         3.1 |          1.5 |         0.2 |
+| setosa  |            5 |         3.6 |          1.4 |         0.2 |
+| setosa  |          5.4 |         3.9 |          1.7 |         0.4 |
+
+** NAs
+*** データセット
+
+- 単純なデータを用意する
+#+begin_src R
+df <- data.frame(x = c(1, 2, 3), y = c("A", "B", NA), stringsAsFactors = FALSE)
+df
+#+end_src
+
+#+RESULTS:
+| x | y   |
+|---+-----|
+| 1 | A   |
+| 2 | B   |
+| 3 | nil |
+\\
+
+*** ★★☆ ~drop_na(data, ...)~.
+
+- 指定した列に NA があれば行を削除する
+- 省略すれば、全列をチェックする
+#+begin_src R
+drop_na(df)
+#+end_src
+
+#+RESULTS:
+| x | y |
+|---+---|
+| 1 | A |
+| 2 | B |
+\\
+
+*** ★★☆ ~replace_na(data, replace, ...)~.
+
+- ~NA~ を指定した値で置き換える
+- ~replace = list(col = replacement)~ の形で指定する
+#+begin_src R
+replace_na(df, replace = list(x = 0, y = "unknown"))
+#+end_src
+
+#+RESULTS:
+| x | y       |
+|---+---------|
+| 1 | A       |
+| 2 | B       |
+| 3 | unknown |
+\\
+
+*** ★★☆ ~fill(data, ..., .direction = c("down", "up"))~.
+
+- ~NA~ を直前の ~NA~ でない値で埋める
+#+begin_src R
+fill(df, y, .direction = "down")
+#+end_src
+
+#+RESULTS:
+| x | y |
+|---+---|
+| 1 | A |
+| 2 | B |
+| 3 | B |
+\\
+
+** Others
+*** ★★☆ ~separate(data, col, into, sep = "[^[:alnum:]]+", remove = TRUE, convert = FALSE, extra = "warn", fill = "warn", ...)~.
+
+- 単純なデータを用意する
+#+begin_src R
+df <- data.frame(x = c("hoge_hoge", "fuga_fuga", "piyo_piyo"))
+df
+#+end_src
+
+#+RESULTS:
+| x         |
+|-----------|
+| hoge_hoge |
+| fuga_fuga |
+| piyo_piyo |
+\\
+
+- 区切り文字で列を分割する
+#+begin_src R
+df <- data.frame(x = c("hoge_hoge", "fuga_fuga", "piyo_piyo"))
+separate(df, col = x, into = c("x1", "x2"), sep = "_")
+#+end_src
+
+#+RESULTS:
+| x1   | x2   |
+|------+------|
+| hoge | hoge |
+| fuga | fuga |
+| piyo | piyo |
+\\
+
+*** ★★☆ ~unite(data, col, ..., sep = "_", remove = TRUE, na.rm = FALSE)~.
+
+- 複数列を 1 つにまとめる
+#+begin_src R
+unite_(mtcars, "vs_am", c("vs", "am"))
+#+end_src
+
+#+RESULTS:
+|  mpg | cyl |  disp |  hp | drat |    wt |  qsec | vs_am | gear | carb |
+|------+-----+-------+-----+------+-------+-------+-------+------+------|
+|   21 |   6 |   160 | 110 |  3.9 |  2.62 | 16.46 | 0_1   |    4 |    4 |
+|   21 |   6 |   160 | 110 |  3.9 | 2.875 | 17.02 | 0_1   |    4 |    4 |
+| 22.8 |   4 |   108 |  93 | 3.85 |  2.32 | 18.61 | 1_1   |    4 |    1 |
+| 21.4 |   6 |   258 | 110 | 3.08 | 3.215 | 19.44 | 1_0   |    3 |    1 |
+| 18.7 |   8 |   360 | 175 | 3.15 |  3.44 | 17.02 | 0_0   |    3 |    2 |
+| 18.1 |   6 |   225 | 105 | 2.76 |  3.46 | 20.22 | 1_0   |    3 |    1 |
+| 14.3 |   8 |   360 | 245 | 3.21 |  3.57 | 15.84 | 0_0   |    3 |    4 |
+| 24.4 |   4 | 146.7 |  62 | 3.69 |  3.19 |    20 | 1_0   |    4 |    2 |
+| 22.8 |   4 | 140.8 |  95 | 3.92 |  3.15 |  22.9 | 1_0   |    4 |    2 |
+| 19.2 |   6 | 167.6 | 123 | 3.92 |  3.44 |  18.3 | 1_0   |    4 |    4 |
+| 17.8 |   6 | 167.6 | 123 | 3.92 |  3.44 |  18.9 | 1_0   |    4 |    4 |
+| 16.4 |   8 | 275.8 | 180 | 3.07 |  4.07 |  17.4 | 0_0   |    3 |    3 |
+| 17.3 |   8 | 275.8 | 180 | 3.07 |  3.73 |  17.6 | 0_0   |    3 |    3 |
+| 15.2 |   8 | 275.8 | 180 | 3.07 |  3.78 |    18 | 0_0   |    3 |    3 |
+| 10.4 |   8 |   472 | 205 | 2.93 |  5.25 | 17.98 | 0_0   |    3 |    4 |
+| 10.4 |   8 |   460 | 215 |    3 | 5.424 | 17.82 | 0_0   |    3 |    4 |
+| 14.7 |   8 |   440 | 230 | 3.23 | 5.345 | 17.42 | 0_0   |    3 |    4 |
+| 32.4 |   4 |  78.7 |  66 | 4.08 |   2.2 | 19.47 | 1_1   |    4 |    1 |
+| 30.4 |   4 |  75.7 |  52 | 4.93 | 1.615 | 18.52 | 1_1   |    4 |    2 |
+| 33.9 |   4 |  71.1 |  65 | 4.22 | 1.835 |  19.9 | 1_1   |    4 |    1 |
+| 21.5 |   4 | 120.1 |  97 |  3.7 | 2.465 | 20.01 | 1_0   |    3 |    1 |
+| 15.5 |   8 |   318 | 150 | 2.76 |  3.52 | 16.87 | 0_0   |    3 |    2 |
+| 15.2 |   8 |   304 | 150 | 3.15 | 3.435 |  17.3 | 0_0   |    3 |    2 |
+| 13.3 |   8 |   350 | 245 | 3.73 |  3.84 | 15.41 | 0_0   |    3 |    4 |
+| 19.2 |   8 |   400 | 175 | 3.08 | 3.845 | 17.05 | 0_0   |    3 |    2 |
+| 27.3 |   4 |    79 |  66 | 4.08 | 1.935 |  18.9 | 1_1   |    4 |    1 |
+|   26 |   4 | 120.3 |  91 | 4.43 |  2.14 |  16.7 | 0_1   |    5 |    2 |
+| 30.4 |   4 |  95.1 | 113 | 3.77 | 1.513 |  16.9 | 1_1   |    5 |    2 |
+| 15.8 |   8 |   351 | 264 | 4.22 |  3.17 |  14.5 | 0_1   |    5 |    4 |
+| 19.7 |   6 |   145 | 175 | 3.62 |  2.77 |  15.5 | 0_1   |    5 |    6 |
+|   15 |   8 |   301 | 335 | 3.54 |  3.57 |  14.6 | 0_1   |    5 |    8 |
+| 21.4 |   4 |   121 | 109 | 4.11 |  2.78 |  18.6 | 1_1   |    4 |    2 |
+\\
+
+*** ★☆☆ ~complete(data, ..., fill = list())~.
+
+- 指定した列の組み合わせを作る
+#+begin_src R
+complete(mtcars, vs, cyl)
+#+end_src
+
+#+RESULTS:
+| vs | cyl |  mpg |  disp |  hp | drat |    wt |  qsec |  am | gear | carb |
+|----+-----+------+-------+-----+------+-------+-------+-----+------+------|
+|  0 |   4 |   26 | 120.3 |  91 | 4.43 |  2.14 |  16.7 |   1 |    5 |    2 |
+|  0 |   6 |   21 |   160 | 110 |  3.9 |  2.62 | 16.46 |   1 |    4 |    4 |
+|  0 |   6 |   21 |   160 | 110 |  3.9 | 2.875 | 17.02 |   1 |    4 |    4 |
+|  0 |   6 | 19.7 |   145 | 175 | 3.62 |  2.77 |  15.5 |   1 |    5 |    6 |
+|  0 |   8 | 18.7 |   360 | 175 | 3.15 |  3.44 | 17.02 |   0 |    3 |    2 |
+|  0 |   8 | 14.3 |   360 | 245 | 3.21 |  3.57 | 15.84 |   0 |    3 |    4 |
+|  0 |   8 | 16.4 | 275.8 | 180 | 3.07 |  4.07 |  17.4 |   0 |    3 |    3 |
+|  0 |   8 | 17.3 | 275.8 | 180 | 3.07 |  3.73 |  17.6 |   0 |    3 |    3 |
+|  0 |   8 | 15.2 | 275.8 | 180 | 3.07 |  3.78 |    18 |   0 |    3 |    3 |
+|  0 |   8 | 10.4 |   472 | 205 | 2.93 |  5.25 | 17.98 |   0 |    3 |    4 |
+|  0 |   8 | 10.4 |   460 | 215 |    3 | 5.424 | 17.82 |   0 |    3 |    4 |
+|  0 |   8 | 14.7 |   440 | 230 | 3.23 | 5.345 | 17.42 |   0 |    3 |    4 |
+|  0 |   8 | 15.5 |   318 | 150 | 2.76 |  3.52 | 16.87 |   0 |    3 |    2 |
+|  0 |   8 | 15.2 |   304 | 150 | 3.15 | 3.435 |  17.3 |   0 |    3 |    2 |
+|  0 |   8 | 13.3 |   350 | 245 | 3.73 |  3.84 | 15.41 |   0 |    3 |    4 |
+|  0 |   8 | 19.2 |   400 | 175 | 3.08 | 3.845 | 17.05 |   0 |    3 |    2 |
+|  0 |   8 | 15.8 |   351 | 264 | 4.22 |  3.17 |  14.5 |   1 |    5 |    4 |
+|  0 |   8 |   15 |   301 | 335 | 3.54 |  3.57 |  14.6 |   1 |    5 |    8 |
+|  1 |   4 | 22.8 |   108 |  93 | 3.85 |  2.32 | 18.61 |   1 |    4 |    1 |
+|  1 |   4 | 24.4 | 146.7 |  62 | 3.69 |  3.19 |    20 |   0 |    4 |    2 |
+|  1 |   4 | 22.8 | 140.8 |  95 | 3.92 |  3.15 |  22.9 |   0 |    4 |    2 |
+|  1 |   4 | 32.4 |  78.7 |  66 | 4.08 |   2.2 | 19.47 |   1 |    4 |    1 |
+|  1 |   4 | 30.4 |  75.7 |  52 | 4.93 | 1.615 | 18.52 |   1 |    4 |    2 |
+|  1 |   4 | 33.9 |  71.1 |  65 | 4.22 | 1.835 |  19.9 |   1 |    4 |    1 |
+|  1 |   4 | 21.5 | 120.1 |  97 |  3.7 | 2.465 | 20.01 |   0 |    3 |    1 |
+|  1 |   4 | 27.3 |    79 |  66 | 4.08 | 1.935 |  18.9 |   1 |    4 |    1 |
+|  1 |   4 | 30.4 |  95.1 | 113 | 3.77 | 1.513 |  16.9 |   1 |    5 |    2 |
+|  1 |   4 | 21.4 |   121 | 109 | 4.11 |  2.78 |  18.6 |   1 |    4 |    2 |
+|  1 |   6 | 21.4 |   258 | 110 | 3.08 | 3.215 | 19.44 |   0 |    3 |    1 |
+|  1 |   6 | 18.1 |   225 | 105 | 2.76 |  3.46 | 20.22 |   0 |    3 |    1 |
+|  1 |   6 | 19.2 | 167.6 | 123 | 3.92 |  3.44 |  18.3 |   0 |    4 |    4 |
+|  1 |   6 | 17.8 | 167.6 | 123 | 3.92 |  3.44 |  18.9 |   0 |    4 |    4 |
+|  1 |   8 |  nil |   nil | nil |  nil |   nil |   nil | nil |  nil |  nil |
+\\
+
+*** ★☆☆ ~expand(data, ...)~.
+
+#+begin_src R
+expand(mtcars, vs, cyl)
+#+end_src
+
+#+RESULTS:
+| vs | cyl |
+|----+-----|
+|  0 |   4 |
+|  0 |   6 |
+|  0 |   8 |
+|  1 |   4 |
+|  1 |   6 |
+|  1 |   8 |
+\\
+
+*** ★☆☆ ~crossing(...)~.
+
+- tibble 版の expand.grid()
+#+begin_src R
+crossing(mtcars$vs, mtcars$cyl)
+#+end_src
+
+#+RESULTS:
+| mtcars$vs | mtcars$cyl |
+|-----------+------------|
+|         0 |          4 |
+|         0 |          6 |
+|         0 |          8 |
+|         1 |          4 |
+|         1 |          6 |
+|         1 |          8 |
+\\
+
+*** ★☆☆ ~nesting(...)~.
+
+# sample
+mtcars
+nesting(mtcars$vs, mtcars$cyl)
+
+** Pivot Table
+
+- 2 つ以上のグループ変数で並べて見たい
+- https://qiita.com/ishiijunpei/items/bc8da014a18e2a849978
+
+#+begin_src R :colnames yes
+a <- c("中期", "後期", "晩期", "晩期", "中期", "後期", "後期", "晩期", "中期", "晩期")
+b <- c("厚沢部", "江差", "江差", "厚沢部", "江差", "厚沢部", "江差", "江差", "厚沢部", "江差")
+d <- c(18, 21, 6, 32, 8, 15, 2, 21, 17, 7)
+data <- data.frame(時期 = a, 地域 = b, 数量 = d)
+data
+#+end_src
+
+#+RESULTS:
+| 時期 | 地域   | 数量 |
+|------+--------+------|
+| 中期 | 厚沢部 |   18 |
+| 後期 | 江差   |   21 |
+| 晩期 | 江差   |    6 |
+| 晩期 | 厚沢部 |   32 |
+| 中期 | 江差   |    8 |
+| 後期 | 厚沢部 |   15 |
+| 後期 | 江差   |    2 |
+| 晩期 | 江差   |   21 |
+| 中期 | 厚沢部 |   17 |
+| 晩期 | 江差   |    7 |
+
+- 通常の 1 変数の summarize
+#+begin_src R :colnames yes
+data %>%
+  group_by(時期) %>%
+  summarize(出土点数 = sum(数量))
+#+end_src
+
+#+RESULTS:
+| 時期 | 出土点数 |
+|------+----------|
+| 中期 |       43 |
+| 後期 |       38 |
+| 晩期 |       66 |
+
+- 2 変数で summarize => spread
+#+begin_src R :colnames yes
+data %>%
+  group_by(時期, 地域) %>%
+  summarize(出土点数 = sum(数量)) %>%
+  spread(key = 地域, value = 出土点数)
+#+end_src
+
+#+RESULTS:
+| 時期 | 厚沢部 | 江差 |
+|------+--------+------|
+| 中期 |     35 |    8 |
+| 後期 |     15 |   23 |
+| 晩期 |     32 |   34 |
+
+- クロス集計表
+  https://qiita.com/nigimitama/items/35518304474648417788
+- Titanic データ利用
+#+begin_src R :colnames yes
+library(epitools)
+data <- expand.table(Titanic)
+
+# 生存者(Yes, No) と Age(Child, Adult) の集計
+data %>%
+  group_by(Survived, Age) %>%
+  tally() %>%
+  spread(Survived, n)
+#+end_src
+
+#+RESULTS:
+| Age   |   No | Yes |
+|-------+------+-----|
+| Child |   52 |  57 |
+| Adult | 1438 | 654 |
+
+* 実行環境
+
+#+begin_src R :results output :exports both
+sessionInfo()
+#+end_src
+
+#+RESULTS:
+#+begin_example
+R version 3.6.1 (2019-07-05)
+Platform: x86_64-pc-linux-gnu (64-bit)
+Running under: Ubuntu 18.04.3 LTS
+
+Matrix products: default
+BLAS:   /usr/lib/x86_64-linux-gnu/blas/libblas.so.3.7.1
+LAPACK: /usr/lib/x86_64-linux-gnu/lapack/liblapack.so.3.7.1
+
+locale:
+ [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C              
+ [3] LC_TIME=en_US.UTF-8        LC_COLLATE=en_US.UTF-8    
+ [5] LC_MONETARY=en_US.UTF-8    LC_MESSAGES=en_US.UTF-8   
+ [7] LC_PAPER=en_US.UTF-8       LC_NAME=C                 
+ [9] LC_ADDRESS=C               LC_TELEPHONE=C            
+[11] LC_MEASUREMENT=en_US.UTF-8 LC_IDENTIFICATION=C       
+
+attached base packages:
+[1] stats     graphics  grDevices utils     datasets  methods   base     
+
+other attached packages:
+[1] tidyr_1.0.0
+
+loaded via a namespace (and not attached):
+ [1] Rcpp_1.0.2       zeallot_0.1.0    crayon_1.3.4     dplyr_0.8.3     
+ [5] assertthat_0.2.1 R6_2.4.0         lifecycle_0.1.0  backports_1.1.5 
+ [9] pacman_0.5.1     magrittr_1.5     pillar_1.4.2     rlang_0.4.0     
+[13] vctrs_0.2.0      tools_3.6.1      glue_1.3.1       purrr_0.3.2     
+[17] compiler_3.6.1   pkgconfig_2.0.3  tidyselect_0.2.5 tibble_2.1.3
+#+end_example
+\\
+
+* 参考リンク
+
+- [[https://tidyr.tidyverse.org/][公式サイト]]
+- [[https://cran.r-project.org/web/packages/tidyr/index.html][CRAN]]
+- [[https://cran.r-project.org/web/packages/tidyr/tidyr.pdf][Reference Manual]]
+- [[https://github.com/tidyverse/tidyr][Github Repo]]
+- [[https://github.com/rstudio/cheatsheets/raw/master/data-import.pdf][Cheatsheet(PDF)]]
+- [[https://r4ds.had.co.nz/][R for Data Science]]
+- Vignette
+  - [[https://cran.r-project.org/web/packages/tidyr/vignettes/in-packages.html][Introduction]]
+  - [[https://cran.r-project.org/web/packages/tidyr/vignettes/nest.html][Nested data]]
+  - [[https://cran.r-project.org/web/packages/tidyr/vignettes/pivot.html][Pivoting]]
+  - [[https://cran.r-project.org/web/packages/tidyr/vignettes/rectangle.html][Rectangling]]
+  - [[https://cran.r-project.org/web/packages/tidyr/vignettes/tidy-data.html][Tidy data]]
+- Blog
+  - [[https://heavywatal.github.io/rstats/tidyr.html][tidyr — シンプルなデータ変形ツール@Heavy Watal]]
+  - [[https://notchained.hatenablog.com/entry/2019/06/29/234050][Tokyo.Rでtidyr::pivot_longer()、tidyr::pivot_wider()について発表してきました@Technically, technophobic.]]
+  - [[https://stackoverflow.com/questions/29775461/how-can-i-spread-repeated-measures-of-multiple-variables-into-wide-format][How can I spread repeated measures of multiple variables into wide format?@stackoverflow]]
