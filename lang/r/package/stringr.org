@@ -64,11 +64,11 @@
     - [[#-str_convstring-encoding-文字コード変換][★☆☆ ~str_conv(string, encoding)~ 文字コード変換]]
     - [[#-str_viewstring-pattern-match--na-最初のマッチを-html-表示][★☆☆ ~str_view(string, pattern, match = NA)~ 最初のマッチを HTML 表示]]
     - [[#-str_view_allstring-pattern-match--na-全てのマッチを-html-表示][★☆☆ ~str_view_all(string, pattern, match = NA)~ 全てのマッチを HTML 表示]]
-- [[#正規表現オプション][正規表現オプション]]
-  - [[#fixedpattern-ignore_case--false][~fixed(pattern, ignore_case = FALSE)~.]]
-  - [[#collpattern-ignore_case--false-locale--en-][~coll(pattern, ignore_case = FALSE, locale = "en", ...)~.]]
-  - [[#regexpattern-ignore_case--false-multiline--false-comments--false-dotall--false-][~regex(pattern, ignore_case = FALSE, multiline = FALSE, comments = FALSE, dotall = FALSE, ...)~.]]
-  - [[#boundarytype--ccharacter-line_break-sentence-word-skip_word_none--na-][~boundary(type = c("character", "line_break", "sentence", "word"), skip_word_none = NA, ...)~.]]
+  - [[#正規表現オプション][正規表現オプション]]
+    - [[#-fixedpattern-ignore_case--false][★☆☆ ~fixed(pattern, ignore_case = FALSE)~.]]
+    - [[#-collpattern-ignore_case--false-locale--en-][★☆☆ ~coll(pattern, ignore_case = FALSE, locale = "en", ...)~.]]
+    - [[#-regexpattern-ignore_case--false-multiline--false-comments--false-dotall--false-][★☆☆ ~regex(pattern, ignore_case = FALSE, multiline = FALSE, comments = FALSE, dotall = FALSE, ...)~.]]
+    - [[#-boundarytype--ccharacter-line_break-sentence-word-skip_word_none--na-][★☆☆ ~boundary(type = c("character", "line_break", "sentence", "word"), skip_word_none = NA, ...)~.]]
 - [[#実行環境][実行環境]]
 - [[#参考リンク][参考リンク]]
 #+END_QUOTE
@@ -628,6 +628,15 @@ str_sort(strings)
 : [1] "fuga" "hoge" "piyo"
 \\
 
+- ~base::sort()~ と変わらない
+#+begin_src R :exports both
+sort(strings)
+#+end_src
+
+#+RESULTS:
+: [1] "fuga" "hoge" "piyo"
+\\
+
 ** その他
 *** ★☆☆ ~str_conv(string, encoding)~ 文字コード変換
 
@@ -661,14 +670,14 @@ str_view_all(c("hoge", "fuga", "piyo"), "[aeo]")
 #+end_src
 \\
 
-* 正規表現オプション
+** TODO 正規表現オプション
 
 - stringr の pattern 引数に以下の関数を通して渡すことで正規表現の挙動を変更できる
 
-** TODO ~fixed(pattern, ignore_case = FALSE)~.
-** TODO ~coll(pattern, ignore_case = FALSE, locale = "en", ...)~.
-** TODO ~regex(pattern, ignore_case = FALSE, multiline = FALSE, comments = FALSE, dotall = FALSE, ...)~.
-** TODO ~boundary(type = c("character", "line_break", "sentence", "word"), skip_word_none = NA, ...)~.
+*** ★☆☆ ~fixed(pattern, ignore_case = FALSE)~.
+*** ★☆☆ ~coll(pattern, ignore_case = FALSE, locale = "en", ...)~.
+*** ★☆☆ ~regex(pattern, ignore_case = FALSE, multiline = FALSE, comments = FALSE, dotall = FALSE, ...)~.
+*** ★☆☆ ~boundary(type = c("character", "line_break", "sentence", "word"), skip_word_none = NA, ...)~.
 * 実行環境
 
 #+begin_src R :results output :exports both
