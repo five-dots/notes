@@ -58,14 +58,30 @@
     - [[#-int_difftimes][★☆☆ ~int_diff(times)~.]]
   - [[#durations][Durations]]
     - [[#-durationnum--null-units--seconds-][★☆☆ ~duration(num = NULL, units = "seconds", ...)~.]]
+    - [[#-dsecondsx--1][★☆☆ ~dseconds(x = 1)~.]]
+    - [[#-dminutesx--1][★☆☆ ~dminutes(x = 1)~.]]
+    - [[#-dhoursx--1][★☆☆ ~dhours(x = 1)~.]]
+    - [[#-ddaysx--1][★☆☆ ~ddays(x = 1)~.]]
+    - [[#-dweeksx--1][★☆☆ ~dweeks(x = 1)~.]]
+    - [[#-dyearsx--1][★☆☆ ~dyears(x = 1)~.]]
+    - [[#-dmillisecondsx--1][★☆☆ ~dmilliseconds(x = 1)~.]]
+    - [[#-dmicrosecondsx--1][★☆☆ ~dmicroseconds(x = 1)~.]]
+    - [[#-dnanosecondsx--1][★☆☆ ~dnanoseconds(x = 1)~.]]
+    - [[#-dpicosecondsx--1][★☆☆ ~dpicoseconds(x = 1)~.]]
     - [[#-isdurationx][★☆☆ ~is.duration(x)~.]]
-    - [[#-dsecondsx--1-dminutesx--1-dhoursx--1-ddaysx--1-dweeksx--1-dyearsx--1][★☆☆ ~dseconds(x = 1)~, ~dminutes(x = 1)~, ~dhours(x = 1)~, ~ddays(x = 1)~, ~dweeks(x = 1)~, ~dyears(x = 1)~.]]
-    - [[#-dmillisecondsx--1-dmicrosecondsx--1-dnanosecondsx--1-dpicosecondsx--1][★☆☆ ~dmilliseconds(x = 1)~, ~dmicroseconds(x = 1)~, ~dnanoseconds(x = 1)~, ~dpicoseconds(x = 1)~.]]
   - [[#periods][Periods]]
     - [[#-periodnum--null-units--second-][★☆☆ ~period(num = NULL, units = "second", ...)~.]]
     - [[#-isperiodx][★☆☆ ~is.period(x)~.]]
-    - [[#-secondsx--1-minutesx--1-hoursx--1-daysx--1-weeksx--1-yearsx--1][★☆☆ ~seconds(x = 1)~, ~minutes(x = 1)~, ~hours(x = 1)~, ~days(x = 1)~, ~weeks(x = 1)~, ~years(x = 1)~.]]
-    - [[#-millisecondsx--1-microsecondsx--1-nanosecondsx--1-picosecondsx--1][★☆☆ ~milliseconds(x = 1)~, ~microseconds(x = 1)~, ~nanoseconds(x = 1)~, ~picoseconds(x = 1)~.]]
+    - [[#-secondsx--1][★☆☆ ~seconds(x = 1)~.]]
+    - [[#-minutesx--1][★☆☆ ~minutes(x = 1)~.]]
+    - [[#-hoursx--1][★☆☆ ~hours(x = 1)~.]]
+    - [[#-daysx--1][★☆☆ ~days(x = 1)~.]]
+    - [[#-weeksx--1][★☆☆ ~weeks(x = 1)~.]]
+    - [[#-yearsx--1][★☆☆ ~years(x = 1)~.]]
+    - [[#-millisecondsx--1][★☆☆ ~milliseconds(x = 1)~.]]
+    - [[#-microsecondsx--1][★☆☆ ~microseconds(x = 1)~.]]
+    - [[#-nanosecondsx--1][★☆☆ ~nanoseconds(x = 1)~.]]
+    - [[#-picosecondsx--1][★☆☆ ~picoseconds(x = 1)~.]]
 - [[#実行環境][実行環境]]
 - [[#参考リンク][参考リンク]]
 #+END_QUOTE
@@ -214,7 +230,7 @@ as.Date(dt_europe)
 - origin を指定しなくてもよい
 #+begin_src R :exports both
 as_date(10)
-as.Date(10, origin = "1970-01-01")
+as.Date(10, origin = "1970-01-01") # 同じ結果
 #+end_src
 
 #+RESULTS:
@@ -251,7 +267,7 @@ as_datetime(dt_europe, tz = "Europe/London")
 - origin を指定しなくてもよい
 #+begin_src R :exports both
 as_datetime(10)
-as.POSIXct(10, tz = "UTC", origin = "1970-01-01 00:00:00")
+as.POSIXct(10, tz = "UTC", origin = "1970-01-01 00:00:00") # 同じ結果
 #+end_src
 
 #+RESULTS:
@@ -277,15 +293,16 @@ as_datetime("Jan26, 2019 15:12:53", tz = "UTC", format = "%b%d, %Y %H:%M:%OS")
   2. format の指定の際、"%" をつける必要がない
 
 #+begin_src R :exports both
-parse_date_time("2019-01-28 14:23:12", order = "Y-m-d H:M:S")
+parse_date_time("2019-01-28 14:23:12", format = "Y-m-d H:M:S")
 strptime("2019-01-28 14:23:12", format = "%Y-%m-%d %H:%M:%S")
 #+end_src
 
 #+RESULTS:
 : [1] "2019-01-28 14:23:12 UTC"
 : [1] "2019-01-28 14:23:12 JST"
+\\
 
-*** TODO ★☆☆ ~parse_date_time2(x, orders, tz = "UTC", exact = FALSE, lt = FALSE, cutoff_2000 = 68L)~.
+*** ★☆☆ ~parse_date_time2(x, orders, tz = "UTC", exact = FALSE, lt = FALSE, cutoff_2000 = 68L)~.
 *** ★☆☆ ~fast_strptime(x, format, tz = "UTC", lt = TRUE, cutoff_2000 = 68L)~.
 
 - ~base::strptime()~ と同じ ~format~ を利用できる
@@ -299,6 +316,7 @@ strptime("2019-01-28 14:23:12", format = "%Y-%m-%d %H:%M:%S")
 #+RESULTS:
 : [1] "2019-01-28 14:23:12 JST"
 : [1] "2019-01-28 14:23:12 JST"
+\\
 
 ** 要素の抽出 + アクセサ関数
 *** ★☆☆ ~second(x)~, ~minute(x)~, ~hour(x)~.
@@ -431,6 +449,7 @@ tz(dt)
 #+RESULTS:
 : [1] "2019-10-17"
 : [1] "UTC"
+\\
 
 ** タイムゾーン
 *** ★★☆ ~with_tz(time, tzone = "")~.
@@ -586,21 +605,28 @@ ymd("2018-12-21") + ddays(2)
 : 2018-12-23
 \\
 
+*** ★☆☆ ~dseconds(x = 1)~.
+*** ★☆☆ ~dminutes(x = 1)~.
+*** ★☆☆ ~dhours(x = 1)~.
+*** ★☆☆ ~ddays(x = 1)~.
+*** ★☆☆ ~dweeks(x = 1)~.
+*** ★☆☆ ~dyears(x = 1)~.
+*** ★☆☆ ~dmilliseconds(x = 1)~.
+*** ★☆☆ ~dmicroseconds(x = 1)~.
+*** ★☆☆ ~dnanoseconds(x = 1)~.
+*** ★☆☆ ~dpicoseconds(x = 1)~.
 *** ★☆☆ ~is.duration(x)~.
-*** ★☆☆ ~dseconds(x = 1)~, ~dminutes(x = 1)~, ~dhours(x = 1)~, ~ddays(x = 1)~, ~dweeks(x = 1)~, ~dyears(x = 1)~.
-*** ★☆☆ ~dmilliseconds(x = 1)~, ~dmicroseconds(x = 1)~, ~dnanoseconds(x = 1)~, ~dpicoseconds(x = 1)~.
+
 ** Periods
 *** ★☆☆ ~period(num = NULL, units = "second", ...)~.
 
 - Periods は秒数固定ではない
 #+begin_src R :exports both
-period(2, units = "minute")
 minutes(2)
 #+end_src
 
 #+RESULTS:
-: [1] "2M 0S"
-: [1] "2M 0S"
+: 2M 0S
 \\
 
 - Period を足す
@@ -633,8 +659,16 @@ dt1 + days(1)
 \\
 
 *** ★☆☆ ~is.period(x)~.
-*** ★☆☆ ~seconds(x = 1)~, ~minutes(x = 1)~, ~hours(x = 1)~, ~days(x = 1)~, ~weeks(x = 1)~, ~years(x = 1)~.
-*** ★☆☆ ~milliseconds(x = 1)~, ~microseconds(x = 1)~, ~nanoseconds(x = 1)~, ~picoseconds(x = 1)~.
+*** ★☆☆ ~seconds(x = 1)~.
+*** ★☆☆ ~minutes(x = 1)~.
+*** ★☆☆ ~hours(x = 1)~.
+*** ★☆☆ ~days(x = 1)~.
+*** ★☆☆ ~weeks(x = 1)~.
+*** ★☆☆ ~years(x = 1)~.
+*** ★☆☆ ~milliseconds(x = 1)~.
+*** ★☆☆ ~microseconds(x = 1)~.
+*** ★☆☆ ~nanoseconds(x = 1)~.
+*** ★☆☆ ~picoseconds(x = 1)~.
 * 実行環境
 
 #+begin_src R :results output :exports both
