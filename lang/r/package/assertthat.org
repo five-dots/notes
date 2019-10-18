@@ -5,30 +5,33 @@
 
 ~{assertthat}~ は、R のアサーションを行うパッケージ。 ~base::stopifnot()~ を置き換える機能を提供。
 
-- ~stopifnot()~ よりもわかりやすいエラーメッセージを出力
-- 
+- ~stopifnot()~ よりもわかりやすいエラーメッセージを出力する
+- アサーションをより簡潔に書くための Predicate 関数が追加されている
 \\
 
-* 目次                                                                :quote:
+* 目次                                                            :quote:toc:
 #+BEGIN_QUOTE
 - [[#ライブラリの読み込みとバージョンの確認][ライブラリの読み込みとバージョンの確認]]
-- [[#全関数リスト][全関数リスト]]
 - [[#関数リスト][関数リスト]]
-  - [[#-assert_that-env--parentframe-msg--null][★★★ ~assert_that(..., env = parent.frame(), msg = NULL)~.]]
-  - [[#-see_if-env--parentframe-msg--null][★★☆ ~see_if(..., env = parent.frame(), msg = NULL)~.]]
-  - [[#-validate_that-env--parentframe-msg--null][★★☆ ~validate_that(..., env = parent.frame(), msg = NULL)~.]]
-  - [[#predicate][Predicate]]
-    - [[#isflagx][~is.flag(x)~.]]
-    - [[#isstringx][is.string(x)]]
-    - [[#has_namex-nm-x-has_name-nm][has_name(x, nm), x %has_name% nm]]
-    - [[#has_attrx-attr-x-has_attr-attr][has_attr(x, attr), x %has_attr% attr]]
-    - [[#iscountx][is.count(x)]]
-    - [[#are_equalx-y][are_equal(x, y)]]
-    - [[#not_emptyx-are-all-dimensions-of-x-greater-than-0][not_empty(x): are all dimensions of x greater than 0?]]
-    - [[#nonax-is-x-free-from-missing-values][noNA(x): is x free from missing values?]]
-    - [[#isdirpath-is-path-a-directory][is.dir(path): is path a directory?]]
-    - [[#iswriteablepathisreadablepath-is-path-writeablereadable][is.writeable(path)/is.readable(path): is path writeable/readable?]]
-    - [[#has_extensionpath-extension-does-file-have-given-extension][has_extension(path, extension): does file have given extension?]]
+  - [[#assert-functions][Assert functions]]
+    - [[#-assert_that-env--parentframe-msg--null][★★★ ~assert_that(..., env = parent.frame(), msg = NULL)~.]]
+    - [[#-see_if-env--parentframe-msg--null][★★☆ ~see_if(..., env = parent.frame(), msg = NULL)~.]]
+    - [[#-validate_that-env--parentframe-msg--null][★★☆ ~validate_that(..., env = parent.frame(), msg = NULL)~.]]
+  - [[#predicates][Predicates]]
+    - [[#-isflagx][★☆☆ ~is.flag(x)~.]]
+    - [[#-isstringx][★☆☆ ~is.string(x)~.]]
+    - [[#-iscountx][★☆☆ ~is.count(x)~.]]
+    - [[#-isscalarx][★☆☆ ~is.scalar(x)~.]]
+    - [[#-isnumberx][★☆☆ ~is.number(x)~.]]
+    - [[#-has_namex-nm-x-has_name-nm][★☆☆ ~has_name(x, nm)~, ~x %has_name% nm~.]]
+    - [[#-has_attrx-attr-x-has_attr-attr][★☆☆ ~has_attr(x, attr)~, ~x %has_attr% attr~.]]
+    - [[#-has_argsx-args-exact--false-x-has_args-attr][★☆☆ ~has_args(x, args, exact = FALSE)~, ~x %has_args% attr~.]]
+    - [[#-are_equalx-y][★☆☆ ~are_equal(x, y)~.]]
+    - [[#-not_emptyx][★☆☆ ~not_empty(x)~.]]
+    - [[#-nonax][★☆☆ ~noNA(x)~.]]
+    - [[#-isdirpath][★☆☆ ~is.dir(path)~.]]
+    - [[#-iswriteablepath-isreadablepath][★☆☆ ~is.writeable(path)~, ~is.readable(path)~.]]
+    - [[#-has_extensionpath-extension][★☆☆ ~has_extension(path, extension)~.]]
 - [[#実行環境][実行環境]]
 - [[#参考リンク][参考リンク]]
 #+END_QUOTE
@@ -62,6 +65,7 @@ stopifnot(is.character(x))
 #+RESULTS:
 : 
 : Error: is.character(x) is not TRUE
+\\
 
 - ~assert_that()~ ではエラーメッセージがそのものズバリ
 #+begin_src R
@@ -76,6 +80,7 @@ assert_that(is.numeric(x))
 : Error: length(x) not equal to 5
 : 
 : [1] TRUE
+\\
 
 *** ★★☆ ~see_if(..., env = parent.frame(), msg = NULL)~.
 
@@ -90,6 +95,7 @@ see_if(is.character(x))
 : [1] FALSE
 : attr(,"msg")
 : [1] "x is not a character vector"
+\\
 
 *** ★★☆ ~validate_that(..., env = parent.frame(), msg = NULL)~.
 
