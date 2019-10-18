@@ -1,0 +1,158 @@
+#+STARTUP: folded indent inlineimages latexpreview
+#+PROPERTY: header-args:R :results output :session *R:regex*
+
+* 目次                                                            :quote:toc:
+#+BEGIN_QUOTE
+- [[#正規表現][正規表現]]
+  - [[#メタ文字][メタ文字]]
+  - [[#サンプル][サンプル]]
+  - [[#グループ化][グループ化]]
+  - [[#キャプチャ][キャプチャ]]
+  - [[#先読み後読み][先読み・後読み]]
+  - [[#最長マッチと最短マッチ][最長マッチと最短マッチ]]
+- [[#参考リンク][参考リンク]]
+#+END_QUOTE
+
+* 正規表現
+** メタ文字
+
+- R では、\ はエスケープするために \\ とする
+|----------+------------------------------------+------------------------|
+| 文字     | マッチ                             | メモ                   |
+|----------+------------------------------------+------------------------|
+| .        | 任意の１文字にマッチ               | 改行にはマッチしない   |
+| \w       | 単語を構成する文字にマッチ         | word                   |
+| \W       | 単語を構成する文字 _以外_ にマッチ   |                        |
+| \d       | 数字 (0-9) にマッチ                | digit                  |
+| \D       | 数字 _以外_ にマッチ                 |                        |
+| \s       | 空白文字 (space, tab) にマッチ     | space                  |
+| \S       | 空白文字 _以外_ にマッチ             |                        |
+|----------+------------------------------------+------------------------|
+| \t       | タブ文字                           |                        |
+| \v       | 垂直タブ                           |                        |
+| \n       | 改行文字                           |                        |
+| \r       | 改行文字 (CR)                      |                        |
+| \f       | 用紙送り文字                       |                        |
+| \a       | 警告文字                           |                        |
+| \e       | エスケープ文字                     |                        |
+|----------+------------------------------------+------------------------|
+| {n}      | 〜回以上の繰り返しにマッチ         |                        |
+| {n,m}    | 〜回以上〜回以下の繰り返しにマッチ |                        |
+| {n,}     | 〜回以上                           |                        |
+| *        | ゼロ回以上の繰り返しにマッチ       |                        |
+| +        | 一回以上の繰り返しにマッチ         |                        |
+| ?        | ゼロ回または一回の繰り返しにマッチ |                        |
+|----------+------------------------------------+------------------------|
+| $        | 行末                               |                        |
+| ^        | 行頭                               |                        |
+| \b       | 単語の境界                         |                        |
+| \B       | 単語の境界以外                     |                        |
+|----------+------------------------------------+------------------------|
+| [abc]    | a, b, c のどれか一文字にマッチ     |                        |
+| [a-z]    | a - z のどれか一文字にマッチ       |                        |
+| [^abc]   | a, b, c 以外のどれか一文字にマッチ |                        |
+| abc｜def | abc または def のパターンにマッチ  |                        |
+| (abc)    | グループ化とキャプチャ             |                        |
+| (?:abc)  | グループ化                         |                        |
+|----------+------------------------------------+------------------------|
+| (?=abc)  | 肯定先読み (positive lookahaed)    | マッチより前を抜き出す |
+| (?!abc)  | 否定先読み (negative lookahead)    |                        |
+| (?<=abc) | 肯定後読み (positve lookbehind)    | マッチより後を抜き出す |
+| (?<!abc) | 否定後読み (negatve lookbehind)    |                        |
+|----------+------------------------------------+------------------------|
+\\
+
+** サンプル
+
+- 郵便番号を抽出する
+#+begin_src R :exports both
+strignr::str_extract("〒141-0031 東京都..", "\\d{3}-?\\d{4}")
+#+end_src
+
+#+RESULTS:
+: [1] "141-0031"
+\\
+
+** グループ化 
+
+- (hoge) をひとかたまりとして扱う
+#+begin_src R :exports both
+stringr::str_detect("hogehoge", "(hoge){2}")
+#+end_src
+
+#+RESULTS:
+: [1] TRUE
+\\
+
+- https://www.yahoo.co.jp/ と https://www.google.co.jp/ の両方にマッチさせたい
+#+begin_src R :exports both
+urls <- c("https://www.yahoo.co.jp/", "https://www.google.co.jp/")
+stringr::str_detect(urls, "https://www\\.(google|yahoo)\\.co\\.jp/")
+#+end_src
+
+#+RESULTS:
+: 
+: [1] TRUE TRUE
+\\
+
+** キャプチャ
+
+- グループ化した文字列を参照できるようにすること
+- \1, \2, \3 で前方で記憶した文字列にマッチ (後方参照)
+- $1, $2, $3 で記憶した文字列を変数として参照
+#+begin_src R :exports both
+stringr::str_detect("hoge_hoge", "(hoge)_\\1")
+#+end_src
+
+#+RESULTS:
+: [1] TRUE
+\\
+
+** 先読み・後読み
+
+- 後読み (以降にマッチ)
+#+begin_src R :exports both
+stringr::str_extract("Hello, my name is Michael Jordan.", "(?<=^Hello, ).*")
+#+end_src
+
+#+RESULTS:
+: [1] "my name is Michael Jordan."
+\\
+
+- 先読み (以前にマッチ)
+#+begin_src R
+stringr::str_extract("Hello, my name is Michael Jordan.", ".*(?=Michael Jordan)")
+#+end_src
+
+#+RESULTS:
+: [1] "Hello, my name is "
+\\
+
+** 最長マッチと最短マッチ
+
+- 最長マッチ
+#+begin_src R :exports both
+address <- "hoge@hoge.com"
+stringr::str_extract(address, "h.*e")
+#+end_src
+
+#+RESULTS:
+: 
+: [1] "hoge@hoge"
+\\
+
+- 最短マッチ (?)
+#+begin_src R :exports both
+address <- "hoge@hoge.com"
+stringr::str_extract(address, "h.*?e")
+#+end_src
+
+#+RESULTS:
+: 
+: [1] "hoge"
+\\
+
+* 参考リンク
+- [[https://github.com/rstudio/cheatsheets/raw/master/strings.pdf][{stringr} Cheatsheets(PDF)]]
+- [[http://gimite.net/help/devas-ja/all_regex.html][正規表現一覧]]
+- [[https://qiita.com/ikmiyabi/items/12d1127056cdf4f0eea5][正規表現あれこれ@Qiita]]

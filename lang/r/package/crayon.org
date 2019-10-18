@@ -3,7 +3,7 @@
 
 * ~{crayon}~: R package for colored terminal output                  :noexport:
 
-~{crayon}~ (クレヨン) は、R のコンソール出力を色付けするパッケージ。
+~{crayon}~ (クレヨン) は、R のコンソール出力を色付けするパッケージ。org-mode の出力では色の変化は確認できないので、実際にコンソールでの出力を確認する必要がある。
 \\
 
 * 目次                                                            :quote:toc:
