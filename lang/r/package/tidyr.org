@@ -12,10 +12,9 @@
 - 直積集合を作る関数 (改良版 ~expand.grid()~)
 \\
 
-* 目次                                                                :quote:
+* 目次                                                            :quote:toc:
 #+BEGIN_QUOTE
 - [[#ライブラリの読み込みとバージョンの確認][ライブラリの読み込みとバージョンの確認]]
-- [[#全関数リスト][全関数リスト]]
 - [[#関数リスト][関数リスト]]
   - [[#縦横変換][縦横変換]]
     - [[#-pivot_longerdata-cols-names_to--name-names_prefix--null-names_sep--null-names_pattern--null-names_ptypes--list-names_repair--check_unique-values_to--value-values_drop_na--false-values_ptypes--list][★★★ ~pivot_longer(data, cols, names_to = "name", names_prefix = NULL, names_sep = NULL, names_pattern = NULL, names_ptypes = list(), names_repair = "check_unique", values_to = "value", values_drop_na = FALSE, values_ptypes = list())~.]]
@@ -25,20 +24,23 @@
   - [[#ネストされた-dataframe][ネストされた data.frame]]
     - [[#-nestdata--key--deprecated][★★☆ ~nest(.data, ..., .key = deprecated())~.]]
     - [[#-unnestdata-cols--keep_empty--false-ptype--null-names_sep--null-names_repair--check_unique-drop--deprecated-id--deprecated-sep--deprecated-preserve--deprecated][★★☆ ~unnest(data, cols, ..., keep_empty = FALSE, ptype = NULL, names_sep = NULL, names_repair = "check_unique", .drop = deprecated(), .id = deprecated(), .sep = deprecated(), .preserve = deprecated())~.]]
-  - [[#nas][NAs]]
+    - [[#-chopdata-cols][★☆☆ ~chop(data, cols)~.]]
+    - [[#-unchopdata-cols-keep_empty--false-ptype--null][★☆☆ ~unchop(data, cols, keep_empty = FALSE, ptype = NULL)~.]]
+  - [[#na-処理][NA 処理]]
     - [[#データセット][データセット]]
     - [[#-drop_nadata-][★★☆ ~drop_na(data, ...)~.]]
     - [[#-replace_nadata-replace-][★★☆ ~replace_na(data, replace, ...)~.]]
     - [[#-filldata--direction--cdown-up][★★☆ ~fill(data, ..., .direction = c("down", "up"))~.]]
-    - [[#-completedata--fill--list][★☆☆ ~complete(data, ..., fill = list())~.]]
-  - [[#split--join][Split & Join]]
+  - [[#列の分割結合][列の分割・結合]]
     - [[#-separatedata-col-into-sep--alnum-remove--true-convert--false-extra--warn-fill--warn-][★★☆ ~separate(data, col, into, sep = "[^[:alnum:]]+", remove = TRUE, convert = FALSE, extra = "warn", fill = "warn", ...)~.]]
     - [[#-unitedata-col--sep--_-remove--true-narm--false][★★☆ ~unite(data, col, ..., sep = "_", remove = TRUE, na.rm = FALSE)~.]]
+    - [[#-extractdata-col-into-regex--alnum-remove--true-convert--false-][★☆☆ ~extract(data, col, into, regex = "([[:alnum:]]+)", remove = TRUE, convert = FALSE, ...)~.]]
   - [[#直積集合][直積集合]]
+    - [[#-expand_grid][★☆☆ ~expand_grid(...)~.]]
+    - [[#-nesting][★☆☆ ~nesting(...)~.]]
     - [[#-expanddata-][★☆☆ ~expand(data, ...)~.]]
     - [[#-crossing][★☆☆ ~crossing(...)~.]]
-    - [[#-nesting][★☆☆ ~nesting(...)~.]]
-  - [[#pivot-table][Pivot Table]]
+    - [[#-completedata--fill--list][★☆☆ ~complete(data, ..., fill = list())~.]]
 - [[#実行環境][実行環境]]
 - [[#参考リンク][参考リンク]]
 #+END_QUOTE
