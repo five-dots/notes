@@ -47,7 +47,7 @@ cat(blue("Hello", "world!\n"))
 \\
 
 - %+% で異なる書式の文字列を連結
-#+begin_src R :results output
+#+begin_src R :exports both
 cat("... to highlight the " %+% red("search term") %+% " in a block of text\n")
 #+end_src
 
@@ -56,7 +56,7 @@ cat("... to highlight the " %+% red("search term") %+% " in a block of text\n")
 \\
 
 - $ で書式を追加
-#+begin_src R :results output
+#+begin_src R :exports both
 cat(yellow$bgMagenta$bold('Hello world!\n'))
 #+end_src
 
@@ -65,7 +65,7 @@ cat(yellow$bgMagenta$bold('Hello world!\n'))
 \\
 
 - 書式をネストできる
-#+begin_src R :results output
+#+begin_src R :exports both
 cat(green(
   'I am a green line ' %+%
   blue$underline$bold('with a blue substring') %+%
@@ -79,7 +79,7 @@ cat(green(
 \\
 
 - テンプレートとして書式を設定
-#+begin_src R :results output
+#+begin_src R :exports both
 error <- red $ bold
 warn  <- magenta $ underline
 note  <- cyan
