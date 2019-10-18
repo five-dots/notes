@@ -1,4 +1,4 @@
-#+STARTUP: folded indent inlineimages latexpreview
+#+STARTUP: folded indent
 #+PROPERTY: header-args:R :results output :session *R:performance*
 
 * 目次                                                            :quote:toc:
@@ -12,13 +12,14 @@
 
 * R オブジェクトに append する際のパフォーマンス
 ** summary
+
 - [[https://stackoverflow.com/questions/17046336/here-we-go-again-append-an-element-to-a-list-in-r][ここ]]での議論
-- ~environment~ を使うのが早い
+- ~environment~ を使うのが速い
 
 ** list
 
 - ~list~ にインデックスをインクリメントして追加
-#+begin_src R :results output
+#+begin_src R :exports both
 Result <- list()
 AddItemNaive <- function(item) {
   .GlobalEnv$Result[[length(.GlobalEnv$Result)+1]] <- item
@@ -30,10 +31,11 @@ system.time(for(i in seq_len(2e4)) AddItemNaive(i))
 : 
 :    user  system elapsed 
 :   1.992   0.012   2.003
+\\
 
 - ~list~ のサイズを一括で増やす方法
 - 元議論では、速度の改善が見られたが、自分の環境では向上しない
-#+begin_src R :results output
+#+begin_src R :exports both
 Counter <- 0
 Result <- list(NULL)
 Size <- 1
@@ -58,7 +60,7 @@ system.time(for(i in seq_len(2e4)) AddItemDoubling(i))
 ** environment
 
 - ~environment~ に追加
-#+begin_src R :results output
+#+begin_src R :exports both
 Counter <- 0
 Result <- new.env()
 AddItemEnvir <- function(item) {

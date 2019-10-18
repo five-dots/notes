@@ -1,0 +1,330 @@
+#+STARTUP: folded indent
+#+PROPERTY: header-args:R :results output :session *R:assertthat*
+
+* ~{assertthat}~: User friendly assertions for R                     :noexport:
+
+~{assertthat}~ は、R のアサーションを行うパッケージ。 ~base::stopifnot()~ を置き換える機能を提供。
+
+- ~stopifnot()~ よりもわかりやすいエラーメッセージを出力
+- 
+\\
+
+* 目次                                                                :quote:
+#+BEGIN_QUOTE
+- [[#ライブラリの読み込みとバージョンの確認][ライブラリの読み込みとバージョンの確認]]
+- [[#全関数リスト][全関数リスト]]
+- [[#関数リスト][関数リスト]]
+  - [[#-assert_that-env--parentframe-msg--null][★★★ ~assert_that(..., env = parent.frame(), msg = NULL)~.]]
+  - [[#-see_if-env--parentframe-msg--null][★★☆ ~see_if(..., env = parent.frame(), msg = NULL)~.]]
+  - [[#-validate_that-env--parentframe-msg--null][★★☆ ~validate_that(..., env = parent.frame(), msg = NULL)~.]]
+  - [[#predicate][Predicate]]
+    - [[#isflagx][~is.flag(x)~.]]
+    - [[#isstringx][is.string(x)]]
+    - [[#has_namex-nm-x-has_name-nm][has_name(x, nm), x %has_name% nm]]
+    - [[#has_attrx-attr-x-has_attr-attr][has_attr(x, attr), x %has_attr% attr]]
+    - [[#iscountx][is.count(x)]]
+    - [[#are_equalx-y][are_equal(x, y)]]
+    - [[#not_emptyx-are-all-dimensions-of-x-greater-than-0][not_empty(x): are all dimensions of x greater than 0?]]
+    - [[#nonax-is-x-free-from-missing-values][noNA(x): is x free from missing values?]]
+    - [[#isdirpath-is-path-a-directory][is.dir(path): is path a directory?]]
+    - [[#iswriteablepathisreadablepath-is-path-writeablereadable][is.writeable(path)/is.readable(path): is path writeable/readable?]]
+    - [[#has_extensionpath-extension-does-file-have-given-extension][has_extension(path, extension): does file have given extension?]]
+- [[#実行環境][実行環境]]
+- [[#参考リンク][参考リンク]]
+#+END_QUOTE
+
+* ライブラリの読み込みとバージョンの確認
+
+#+begin_src R :results silent
+library(assertthat)
+#+end_src
+\\
+
+- バージョン
+#+begin_src R :results output :exports both
+packageVersion("assertthat")
+#+end_src
+
+#+RESULTS:
+: [1] ‘0.2.1’
+\\
+
+* 関数リスト
+** Assert functions
+*** ★★★ ~assert_that(..., env = parent.frame(), msg = NULL)~.
+     
+- ~stopifnot()~ では、エラーメッセージがわかりにくい
+#+begin_src R :exports both
+x <- 1:10
+stopifnot(is.character(x))
+#+end_src
+
+#+RESULTS:
+: 
+: Error: is.character(x) is not TRUE
+
+- ~assert_that()~ ではエラーメッセージがそのものズバリ
+#+begin_src R
+assert_that(is.character(x))
+assert_that(length(x) == 5)
+assert_that(is.numeric(x))
+#+end_src
+
+#+RESULTS:
+: Error: x is not a character vector
+: 
+: Error: length(x) not equal to 5
+: 
+: [1] TRUE
+
+*** ★★☆ ~see_if(..., env = parent.frame(), msg = NULL)~.
+
+- 結果を ~logical~ で返す (エラーを出さない)
+- エラーメッセージを ~attribute~ で返す
+#+begin_src R :exports both
+x <- 1:10
+see_if(is.character(x))
+#+end_src
+
+#+RESULTS:
+: [1] FALSE
+: attr(,"msg")
+: [1] "x is not a character vector"
+
+*** ★★☆ ~validate_that(..., env = parent.frame(), msg = NULL)~.
+
+- エラーを文字列で返す
+- S4 クラスに対して利用する? 
+#+begin_src R :exports both
+x <- 1:10
+validate_that(is.character(x))
+#+end_src
+
+#+RESULTS:
+: [1] "x is not a character vector"
+\\
+
+** Predicates
+*** ★☆☆ ~is.flag(x)~.
+
+- is x TRUE or FALSE? (a boolean flag)
+#+begin_src R :exports both
+is.flag(TRUE)
+is.flag(c(TRUE, TRUE))
+#+end_src
+
+#+RESULTS:
+: [1] TRUE
+: 
+: [1] FALSE
+\\
+
+*** ★☆☆ ~is.string(x)~.
+
+- is x a length 1 character vector?
+#+begin_src R :exports both
+is.string("hoge")
+is.string(c("hoge", "fuga"))
+#+end_src
+
+#+RESULTS:
+: [1] TRUE
+: 
+: [1] FALSE
+\\
+
+*** ★☆☆ ~is.count(x)~.
+
+- is x a single positive integer?
+#+begin_src R :exports both
+is.count(1)
+is.count(c(1, 2))
+is.count(-10)
+#+end_src
+
+#+RESULTS:
+: [1] TRUE
+: [1] FALSE
+: [1] FALSE
+\\
+
+*** ★☆☆ ~is.scalar(x)~.
+
+#+begin_src R :exports both
+is.scalar(1)
+is.scalar("hoge")
+is.scalar(c("hoge", "fuga"))
+#+end_src
+
+#+RESULTS:
+: [1] TRUE
+: [1] TRUE
+: [1] FALSE
+\\
+
+*** ★☆☆ ~is.number(x)~.
+
+#+begin_src R :exports both
+is.number(1)
+is.number(1.1)
+is.number(c(1.1, 2.2))
+#+end_src
+
+#+RESULTS:
+: [1] TRUE
+: [1] TRUE
+: [1] FALSE
+\\
+
+*** ★☆☆ ~has_name(x, nm)~, ~x %has_name% nm~.
+
+- does x have component nm?
+#+begin_src R :exports both
+has_name(iris, "Sepal.Width")
+has_name(iris, "sepal.Width")
+iris %has_name% "Sepal.Width"
+#+end_src
+
+#+RESULTS:
+: [1] TRUE
+: 
+: [1] FALSE
+: 
+: [1] TRUE
+\\
+
+*** ★☆☆ ~has_attr(x, attr)~, ~x %has_attr% attr~.
+
+- does x have attribute attr?
+#+begin_src R :exports both
+#+end_src
+
+*** ★☆☆ ~has_args(x, args, exact = FALSE)~, ~x %has_args% attr~.
+
+- does a function has specified arguments?
+#+begin_src R :exports both
+has_args(mean, "x")
+mean %has_args% "x"
+#+end_src
+
+#+RESULTS:
+: [1] TRUE
+: [1] TRUE
+\\
+
+*** ★☆☆ ~are_equal(x, y)~.
+
+- are x and y equal?
+- ~base::all.equal()~ のラッパー
+#+begin_src R :exports both
+x <- 2
+are_equal(x, 1.999, tol = 0.001)
+#+end_src
+
+#+RESULTS:
+: [1] TRUE
+
+*** ★☆☆ ~not_empty(x)~.
+
+- are all dimensions of x greater than 0?
+#+begin_src R :exports both
+not_empty(iris)
+not_empty(data.frame())
+#+end_src
+
+#+RESULTS:
+: [1] TRUE
+: [1] FALSE
+
+*** ★☆☆ ~noNA(x)~.
+
+- is x free from missing values?
+#+begin_src R :exports both
+noNA(1)
+noNA(c(1, NA))
+#+end_src
+
+#+RESULTS:
+: [1] TRUE
+: [1] FALSE
+\\
+
+*** ★☆☆ ~is.dir(path)~.
+
+- is path a directory?
+#+begin_src R :exports both
+is.dir("/tmp")
+is.dir("/hoge")
+#+end_src
+
+#+RESULTS:
+: [1] TRUE
+: Error: Path '/hoge' does not exist
+\\
+
+*** ★☆☆ ~is.writeable(path)~, ~is.readable(path)~.
+
+- is path writeable/readable?
+#+begin_src R :exports both
+is.writeable("/home/shun")
+is.writeable("/root")
+#+end_src
+
+#+RESULTS:
+: [1] TRUE
+: [1] FALSE
+\\
+
+*** ★☆☆ ~has_extension(path, extension)~.
+
+- does file have given extension?
+#+begin_src R :exports both
+file <- "/home/shun/.secret.R"
+has_extension(file, "R")
+#+end_src
+
+#+RESULTS:
+: [1] TRUE
+
+* 実行環境
+
+#+begin_src R :results output :exports both
+sessionInfo()
+#+end_src
+
+#+RESULTS:
+#+begin_example
+R version 3.6.1 (2019-07-05)
+Platform: x86_64-pc-linux-gnu (64-bit)
+Running under: Ubuntu 18.04.3 LTS
+
+Matrix products: default
+BLAS:   /usr/lib/x86_64-linux-gnu/blas/libblas.so.3.7.1
+LAPACK: /usr/lib/x86_64-linux-gnu/lapack/liblapack.so.3.7.1
+
+locale:
+ [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C              
+ [3] LC_TIME=en_US.UTF-8        LC_COLLATE=en_US.UTF-8    
+ [5] LC_MONETARY=en_US.UTF-8    LC_MESSAGES=en_US.UTF-8   
+ [7] LC_PAPER=en_US.UTF-8       LC_NAME=C                 
+ [9] LC_ADDRESS=C               LC_TELEPHONE=C            
+[11] LC_MEASUREMENT=en_US.UTF-8 LC_IDENTIFICATION=C       
+
+attached base packages:
+[1] stats     graphics  grDevices utils     datasets  methods   base     
+
+other attached packages:
+[1] assertthat_0.2.1
+
+loaded via a namespace (and not attached):
+[1] compiler_3.6.1 tools_3.6.1    pacman_0.5.1
+#+end_example
+\\
+
+* 参考リンク
+
+- [[https://cran.r-project.org/web/packages/assertthat/index.html][CRAN]]
+- [[https://cran.r-project.org/web/packages/assertthat/assertthat.pdf][Reference Manual]]
+- [[https://github.com/hadley/assertthat][Github Repo]]
+- Blog
+  - [[https://notchained.hatenablog.com/entry/2015/03/22/140656][Rでアサートする系のパッケージ：ensurer, assertthat, assertr@Technically, technophobic.]]
