@@ -68,7 +68,7 @@ stopifnot(is.character(x))
 \\
 
 - ~assert_that()~ ではエラーメッセージがそのものズバリ
-#+begin_src R
+#+begin_src R :exports both
 assert_that(is.character(x))
 assert_that(length(x) == 5)
 assert_that(is.numeric(x))
@@ -203,7 +203,14 @@ iris %has_name% "Sepal.Width"
 
 - does x have attribute attr?
 #+begin_src R :exports both
+has_attr(Sys.Date(), "class")
+Sys.Date() %has_attr% "class"
 #+end_src
+
+#+RESULTS:
+: [1] TRUE
+: [1] TRUE
+\\
 
 *** ★☆☆ ~has_args(x, args, exact = FALSE)~, ~x %has_args% attr~.
 
@@ -229,6 +236,7 @@ are_equal(x, 1.999, tol = 0.001)
 
 #+RESULTS:
 : [1] TRUE
+\\
 
 *** ★☆☆ ~not_empty(x)~.
 
@@ -241,6 +249,7 @@ not_empty(data.frame())
 #+RESULTS:
 : [1] TRUE
 : [1] FALSE
+\\
 
 *** ★☆☆ ~noNA(x)~.
 
@@ -291,6 +300,7 @@ has_extension(file, "R")
 
 #+RESULTS:
 : [1] TRUE
+\\
 
 * 実行環境
 
