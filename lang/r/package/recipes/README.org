@@ -560,8 +560,9 @@ pacman::p_funs(recipes) %>% stringr::str_subset("^tunable.step_")
 - ~check_type(dat, quant = TRUE)~
 
 * TODO other functions
+** ~prepper(split_obj, recipe, ...)~.
 
-- ~prepper(split_obj, recipe, ...)~.
+- ~rsample::vfold_cv()~ で分割した ~splits~ に ~recipe~ を適応する
 
 * 実行環境
 

@@ -8,6 +8,7 @@
   - [[#iris-アヤメの計測データ][iris (アヤメの計測データ)]]
   - [[#mtcars][mtcars]]
   - [[#mpg][mpg]]
+  - [[#sleep][sleep]]
 #+END_QUOTE
 
 * パッケージの読み込み
@@ -160,4 +161,50 @@ head(mpg)
 | audi         | a4    |     2 | 2008 |   4 | auto(av)   | f   |  21 |  30 | p  | compact |
 | audi         | a4    |   2.8 | 1999 |   6 | auto(l5)   | f   |  16 |  26 | p  | compact |
 | audi         | a4    |   2.8 | 1999 |   6 | manual(m5) | f   |  18 |  26 | p  | compact |
+\\
+** sleep
+
+- 2 種類の睡眠薬を同じ 10 名の患者に投与したときの睡眠時間の長さのデータ
+  - extra 列：睡眠時間の長さ
+  - group 列：睡眠薬の種類
+  - ID 列：患者の ID
+
+#+begin_src R :results output :exports both
+str(sleep)
+#+end_src
+
+#+RESULTS:
+: 'data.frame':	20 obs. of  3 variables:
+:  $ extra: num  0.7 -1.6 -0.2 -1.2 -0.1 3.4 3.7 0.8 0 2 ...
+:  $ group: Factor w/ 2 levels "1","2": 1 1 1 1 1 1 1 1 1 1 ...
+:  $ ID   : Factor w/ 10 levels "1","2","3","4",..: 1 2 3 4 5 6 7 8 9 10 ...
+\\
+
+#+begin_src R
+sleep
+#+end_src
+
+#+RESULTS:
+| extra | group | ID |
+|-------+-------+----|
+|   0.7 |     1 |  1 |
+|  -1.6 |     1 |  2 |
+|  -0.2 |     1 |  3 |
+|  -1.2 |     1 |  4 |
+|  -0.1 |     1 |  5 |
+|   3.4 |     1 |  6 |
+|   3.7 |     1 |  7 |
+|   0.8 |     1 |  8 |
+|     0 |     1 |  9 |
+|     2 |     1 | 10 |
+|   1.9 |     2 |  1 |
+|   0.8 |     2 |  2 |
+|   1.1 |     2 |  3 |
+|   0.1 |     2 |  4 |
+|  -0.1 |     2 |  5 |
+|   4.4 |     2 |  6 |
+|   5.5 |     2 |  7 |
+|   1.6 |     2 |  8 |
+|   4.6 |     2 |  9 |
+|   3.4 |     2 | 10 |
 \\

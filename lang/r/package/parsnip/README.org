@@ -1,5 +1,5 @@
 #+STARTUP: folded indent
-#+PROPERTY: header-args:R :results value :colnames yes :session *R:parsnip*
+#+PROPERTY: header-args:R :results output :colnames yes :session *R:parsnip*
 
 * ~{parsnip}~: A tidy unified interface to models                    :noexport:
 
@@ -12,6 +12,7 @@
 #+begin_src R :results silent
 library(parsnip)
 library(tidyverse)
+library(tidymodels)
 #+end_src
 \\
 
@@ -72,57 +73,248 @@ pacman::p_funs(parsnip)
 
 * 概要
 
-rand_forest(mtry = 12, trees = 2000) %>%
-  set_engine("ranger", importance = 'impurity') %>%
-  fit(y ~ ., data = dat)
-
 - ~type~: モデルの種類
 - ~mode~: 分類 (classification) or 回帰 (regression)
 - ~engine~: 実際に処理をおこなうパッケージ
 
+*ワークフロー*
+1. モデルを選択
+2. ~set_engine()~ でパッケージを選択
+3. ~fit()~ でモデル当てはめ
+
+* Vignette
+
+- ~model_spec~ class + 特定のモデル
+- のちのち最適化されるパラメタは ~varying()~ として作成 (Placeholder の役割)
+#+begin_src R
+rf_mod <- rand_forest(trees =  2000, mtry = varying(), mode = "regression") %>%
+  set_engine("ranger", seed = 63233)
+rf_mod
+class(rf_mod)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+Random Forest Model Specification (regression)
+
+Main Arguments:
+  mtry = varying()
+  trees = 2000
+
+Engine-Specific Arguments:
+  seed = 63233
+
+Computational engine: ranger
+[1] "rand_forest" "model_spec"
+#+end_example
+\\
+
+- モデルの当てはめを行うためには ~varying()~ のパラメタに具体的な値を入れる必要がある
+- ~{ranger}~ を使う場合
+#+begin_src R
+rf_mod %>%
+  set_args(mtry = 4) %>%
+  set_engine("ranger") %>%
+  fit(mpg ~ ., data = mtcars)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+parsnip model object
+
+Ranger result
+
+Call:
+ ranger::ranger(formula = formula, data = data, mtry = ~4, num.trees = ~2000,      num.threads = 1, verbose = FALSE, seed = sample.int(10^5,          1)) 
+
+Type:                             Regression 
+Number of trees:                  2000 
+Sample size:                      32 
+Number of independent variables:  10 
+Mtry:                             4 
+Target node size:                 5 
+Variable importance mode:         none 
+Splitrule:                        variance 
+OOB prediction error (MSE):       5.49497 
+R squared (OOB):                  0.8487239
+#+end_example
+\\
+
+- ~{randomForest}~ を使う場合
+#+begin_src R
+rf_mod %>%
+  set_args(mtry = 4) %>%
+  set_engine("randomForest") %>%
+  fit(mpg ~ ., data = mtcars)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+parsnip model object
+
+
+Call:
+ randomForest(x = as.data.frame(x), y = y, ntree = ~2000, mtry = ~4) 
+               Type of random forest: regression
+                     Number of trees: 2000
+No. of variables tried at each split: 4
+
+          Mean of squared residuals: 5.564976
+                    % Var explained: 84.19
+#+end_example
+\\
+
+* iris: 線形回帰 vs. ランダムフォレスト
+
+#+begin_src R
+# 訓練データとテストデータに分割
+splits <- initial_split(iris, prop = 0.8)
+
+# 対数変換するレシピを作成
+rec <- recipe(Sepal.Width ~ ., data =  iris) %>%
+  step_log(all_numeric())
+rec_trained <- rec %>% prep()
+train_baked <- rec_trained %>% bake(new_data = training(splits))
+test_baked <- rec_trained %>% bake(new_data = testing(splits))
+
+# "lm" を engine として利用
+lm_mod <- linear_reg() %>%
+  set_engine("lm") %>%
+  fit(Sepal.Width ~ Sepal.Length, data = train_baked)
+lm_mod
+#+end_src
+
+#+RESULTS:
+: parsnip model object
+: 
+: 
+: Call:
+: stats::lm(formula = formula, data = data)
+: 
+: Coefficients:
+:  (Intercept)  Sepal.Length  
+:      1.22309      -0.06394
+\\
+
+#+begin_src R
+# predict() 予測生成
+# テストデータと予測を結合
+pred <- test_baked %>% bind_cols(predict(lm_mod, new_data = .))
+
+# yardstick で予測精度指標を取得
+metrics(pred, Sepal.Width, .pred)
+#+end_src
+
+#+RESULTS:
+: # A tibble: 3 x 3
+:   .metric .estimator .estimate
+:   <chr>   <chr>          <dbl>
+: 1 rmse    standard       0.141
+: 2 rsq     standard       0.101
+: 3 mae     standard       0.113
+\\
+
+- ランダムフォレスト
+#+begin_src R
+rf_mod <- rand_forest(trees =  2000, mtry = 1, mode = "regression") %>%
+  set_engine("ranger", seed = 63233) %>%
+  fit(Sepal.Width ~ Sepal.Length, data = train_baked)
+rf_mod
+#+end_src
+
+#+RESULTS:
+#+begin_example
+parsnip model object
+
+Ranger result
+
+Call:
+ ranger::ranger(formula = formula, data = data, mtry = ~1, num.trees = ~2000,      seed = ~63233, num.threads = 1, verbose = FALSE) 
+
+Type:                             Regression 
+Number of trees:                  2000 
+Sample size:                      121 
+Number of independent variables:  1 
+Mtry:                             1 
+Target node size:                 5 
+Variable importance mode:         none 
+Splitrule:                        variance 
+OOB prediction error (MSE):       0.02354428 
+R squared (OOB):                  -0.1513539
+#+end_example
+\\
+
+- 線形回帰よりも精度向上
+#+begin_src R
+rf_pred <- test_baked %>% bind_cols(predict(rf_mod, new_data = .))
+metrics(rf_pred, Sepal.Width, .pred)
+#+end_src
+
+#+RESULTS:
+: # A tibble: 3 x 3
+:   .metric .estimator .estimate
+:   <
+:   <
+:          <dbl>
+: 1 rmse    standard      0.122 
+: 2 rsq     standard      0.316 
+: 3 mae     standard      0.0950
+\\
+
 * 関数リスト
-** mode = "unknown"
-*** ~boost_tree(mode = "unknown", mtry = NULL, trees = NULL, min_n = NULL, tree_depth = NULL, learn_rate = NULL, loss_reduction = NULL, sample_size = NULL)~.
+** 対応モデル
+*** mode = "unknown"
+**** ~boost_tree(mode = "unknown", mtry = NULL, trees = NULL, min_n = NULL, tree_depth = NULL, learn_rate = NULL, loss_reduction = NULL, sample_size = NULL)~.
 
 - 勾配ブースティング (Gradient Boosting)
 
-*** ~decision_tree(mode = "unknown", cost_complexity = NULL, tree_depth = NULL, min_n = NULL)~.
+**** ~decision_tree(mode = "unknown", cost_complexity = NULL, tree_depth = NULL, min_n = NULL)~.
 
 - 決定木
 
-*** ~mars(mode = "unknown", num_terms = NULL, prod_degree = NULL, prune_method = NULL)~.
+**** ~mars(mode = "unknown", num_terms = NULL, prod_degree = NULL, prune_method = NULL)~.
 
 - MARS (Multivariate Adaptive Regression Splines)
 
-*** ~mlp(mode = "unknown", hidden_units = NULL, penalty = NULL, dropout = NULL, epochs = NULL, activation = NULL)~.
+**** ~mlp(mode = "unknown", hidden_units = NULL, penalty = NULL, dropout = NULL, epochs = NULL, activation = NULL)~.
 
 - Multilayer Perceptron 多層パーセプトロン
 
-*** ~nearest_neighbor(mode = "unknown", neighbors = NULL, weight_func = NULL, dist_power = NULL)~.
+**** ~nearest_neighbor(mode = "unknown", neighbors = NULL, weight_func = NULL, dist_power = NULL)~.
 
 - k 近傍法 (k-nearest neighbor algorithm, k-NN)
 
-*** ~rand_forest(mode = "unknown", mtry = NULL, trees = NULL, min_n = NULL)~.
+**** ~rand_forest(mode = "unknown", mtry = NULL, trees = NULL, min_n = NULL)~.
 
 - ランダムフォレスト
 
-*** ~svm_poly(mode = "unknown", cost = NULL, degree = NULL, scale_factor = NULL, margin = NULL)~.
+**** ~svm_poly(mode = "unknown", cost = NULL, degree = NULL, scale_factor = NULL, margin = NULL)~.
 
 - Support Vector Machine
 - 非線形多項式
 
-*** ~svm_rbf(mode = "unknown", cost = NULL, rbf_sigma = NULL, margin = NULL)~.
+**** ~svm_rbf(mode = "unknown", cost = NULL, rbf_sigma = NULL, margin = NULL)~.
 
 - SVM Radial Basis Function
 
-** mode = "classification"
-*** ~logistic_reg(mode = "classification", penalty = NULL, mixture = NULL)~.
-*** ~multinom_reg(mode = "classification", penalty = NULL, mixture = NULL)~.
-*** ~null_model(mode = "classification")~.
-** mode = "regression"
-*** ~linear_reg(mode = "regression", penalty = NULL, mixture = NULL)~.
-*** ~surv_reg(mode = "regression", dist = NULL)~.
-** set_engine(object, engine, ...)
+*** mode = "classification"
+**** ~logistic_reg(mode = "classification", penalty = NULL, mixture = NULL)~.
+**** ~multinom_reg(mode = "classification", penalty = NULL, mixture = NULL)~.
+**** ~null_model(mode = "classification")~.
+*** mode = "regression"
+**** ~linear_reg(mode = "regression", penalty = NULL, mixture = NULL)~.
+
+- 対応エンジン
+  • "lm" (the default) or "glmnet"
+  • "stan"
+  • "spark"
+  • "keras"
+
+**** ~surv_reg(mode = "regression", dist = NULL)~.
+** ユーティリティ関数
+*** set_engine(object, engine, ...)
+*** set_args(object, ...)
+*** set_mode(object, mode)
 * 実行環境
 
 #+begin_src R :results output :exports both
