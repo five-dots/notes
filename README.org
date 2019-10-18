@@ -45,7 +45,7 @@ Babel の実行には適切な ~org-babel-load-language~ の設定が必要で�
 | Assertion          | [[file:./lang/r/package/assertthat.org][ ~{assertthat}~ ]], {assertr}                                          |
 | Workflow           | {drake}                                                            |
 | Utility            | {magrittr}, {zeallot}                                              |
-| Dataset            | [[file:lang/r/finance/dataset.org][finance]]                                                            |
+| Dataset            | [[file:./lang/r/general/dataset.org][ ~general~ ]], [[file:lang/r/finance/dataset.org][finance]]                                                 |
 |--------------------+--------------------------------------------------------------------|
 
 ** Python

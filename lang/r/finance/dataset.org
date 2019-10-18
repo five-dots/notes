@@ -1,5 +1,5 @@
 #+startup: folded indent
-#+property: header-args:R :results value :exports both :session *R:dataset* :colnames yes
+#+property: header-args:R :results value :session *R:dataset* :colnames yes
 
 * Dataset for Quants Finance
 ** ~sp500ret~ from ~{rugarch}~

@@ -1,0 +1,163 @@
+#+startup: folded indent
+#+property: header-args:R :results value :session *R:dataset* :colnames yes
+
+* 目次                                                            :toc:quote:
+#+BEGIN_QUOTE
+- [[#パッケージの読み込み][パッケージの読み込み]]
+- [[#データセット][データセット]]
+  - [[#iris-アヤメの計測データ][iris (アヤメの計測データ)]]
+  - [[#mtcars][mtcars]]
+  - [[#mpg][mpg]]
+#+END_QUOTE
+
+* パッケージの読み込み
+
+#+begin_src R :results silent
+library(datasets)
+library(ggplot2)
+#+end_src
+
+* データセット
+** iris (アヤメの計測データ)
+
+- ~data.frame~
+- Sepal = がく片 (花の付け根部分)
+- Petal = 花弁
+- 変数
+  - Sepal.Length
+  - Sepal.Width
+  - Petal.Length
+  - Petal.Width
+  - Species (3 factors: setosa, versicolor, virginica (アヤメ属の 3 種))
+
+#+begin_src R :results output :exports both
+str(iris)
+#+end_src
+
+#+RESULTS:
+: 'data.frame':	150 obs. of  5 variables:
+:  $ Sepal.Length: num  5.1 4.9 4.7 4.6 5 5.4 4.6 5 4.4 4.9 ...
+:  $ Sepal.Width : num  3.5 3 3.2 3.1 3.6 3.9 3.4 3.4 2.9 3.1 ...
+:  $ Petal.Length: num  1.4 1.4 1.3 1.5 1.4 1.7 1.4 1.5 1.4 1.5 ...
+:  $ Petal.Width : num  0.2 0.2 0.2 0.2 0.2 0.4 0.3 0.2 0.2 0.1 ...
+:  $ Species     : Factor w/ 3 levels "setosa","versicolor",..: 1 1 1 1 1 1 1 1 1 1 ...
+\\
+
+#+begin_src R :colnames yes
+head(iris)
+#+end_src
+
+#+RESULTS:
+| Sepal.Length | Sepal.Width | Petal.Length | Petal.Width | Species |
+|--------------+-------------+--------------+-------------+---------|
+|          5.1 |         3.5 |          1.4 |         0.2 | setosa  |
+|          4.9 |           3 |          1.4 |         0.2 | setosa  |
+|          4.7 |         3.2 |          1.3 |         0.2 | setosa  |
+|          4.6 |         3.1 |          1.5 |         0.2 | setosa  |
+|            5 |         3.6 |          1.4 |         0.2 | setosa  |
+|          5.4 |         3.9 |          1.7 |         0.4 | setosa  |
+\\
+
+** mtcars
+
+- 32 車種のデータ
+- ~data.frame~
+- A data frame with 32 observations on 11 (numeric) variables.
+  - [, 1]  mpg   Miles/(US) gallon                        
+  - [, 2]  cyl   Number of cylinders                      
+  - [, 3]  disp  Displacement (cu.in.)                    
+  - [, 4]  hp    Gross horsepower                         
+  - [, 5]  drat  Rear axle ratio                          
+  - [, 6]  wt    Weight (1000 lbs)                        
+  - [, 7]  qsec  1/4 mile time                            
+  - [, 8]  vs    Engine (0 = V-shaped, 1 = straight)      
+  - [, 9]  am    Transmission (0 = automatic, 1 = manual) 
+  - [,10]  gear  Number of forward gears                  
+  - [,11]  carb  Number of carburetors                    
+
+#+begin_src R :results output :exports both
+str(mtcars)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+'data.frame':	32 obs. of  11 variables:
+ $ mpg : num  21 21 22.8 21.4 18.7 18.1 14.3 24.4 22.8 19.2 ...
+ $ cyl : num  6 6 4 6 8 6 8 4 4 6 ...
+ $ disp: num  160 160 108 258 360 ...
+ $ hp  : num  110 110 93 110 175 105 245 62 95 123 ...
+ $ drat: num  3.9 3.9 3.85 3.08 3.15 2.76 3.21 3.69 3.92 3.92 ...
+ $ wt  : num  2.62 2.88 2.32 3.21 3.44 ...
+ $ qsec: num  16.5 17 18.6 19.4 17 ...
+ $ vs  : num  0 0 1 1 0 1 0 1 1 1 ...
+ $ am  : num  1 1 1 0 0 0 0 0 0 0 ...
+ $ gear: num  4 4 4 3 3 3 3 4 4 4 ...
+ $ carb: num  4 4 1 1 2 1 4 2 2 4 ...
+#+end_example
+\\
+
+#+begin_src R :colnames yes :rownames yes
+head(mtcars)
+#+end_src
+
+#+RESULTS:
+|                   |  mpg | cyl | disp |  hp | drat |    wt |  qsec | vs | am | gear | carb |
+|-------------------+------+-----+------+-----+------+-------+-------+----+----+------+------|
+| Mazda RX4         |   21 |   6 |  160 | 110 |  3.9 |  2.62 | 16.46 |  0 |  1 |    4 |    4 |
+| Mazda RX4 Wag     |   21 |   6 |  160 | 110 |  3.9 | 2.875 | 17.02 |  0 |  1 |    4 |    4 |
+| Datsun 710        | 22.8 |   4 |  108 |  93 | 3.85 |  2.32 | 18.61 |  1 |  1 |    4 |    1 |
+| Hornet 4 Drive    | 21.4 |   6 |  258 | 110 | 3.08 | 3.215 | 19.44 |  1 |  0 |    3 |    1 |
+| Hornet Sportabout | 18.7 |   8 |  360 | 175 | 3.15 |  3.44 | 17.02 |  0 |  0 |    3 |    2 |
+| Valiant           | 18.1 |   6 |  225 | 105 | 2.76 |  3.46 | 20.22 |  1 |  0 |    3 |    1 |
+\\
+
+** mpg
+
+- A data frame with 234 rows and 11 variables
+  - manufacturer
+  - model: model name
+  - displ: engine displacement, in litres
+  - year:  year of manufacture
+  - cyl:   number of cylinders
+  - trans: type of transmission
+  - drv:   f = front-wheel drive, r = rear wheel drive, 4 = 4wd
+  - cty:   city miles per gallon
+  - hwy:   highway miles per gallon
+  - fl:    fuel type
+  - class: "type" of car
+
+#+begin_src R :results output :exports both
+str(mpg)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+Classes ‘tbl_df’, ‘tbl’ and 'data.frame':	234 obs. of  11 variables:
+ $ manufacturer: chr  "audi" "audi" "audi" "audi" ...
+ $ model       : chr  "a4" "a4" "a4" "a4" ...
+ $ displ       : num  1.8 1.8 2 2 2.8 2.8 3.1 1.8 1.8 2 ...
+ $ year        : int  1999 1999 2008 2008 1999 1999 2008 1999 1999 2008 ...
+ $ cyl         : int  4 4 4 4 6 6 6 4 4 4 ...
+ $ trans       : chr  "auto(l5)" "manual(m5)" "manual(m6)" "auto(av)" ...
+ $ drv         : chr  "f" "f" "f" "f" ...
+ $ cty         : int  18 21 20 21 16 18 18 18 16 20 ...
+ $ hwy         : int  29 29 31 30 26 26 27 26 25 28 ...
+ $ fl          : chr  "p" "p" "p" "p" ...
+ $ class       : chr  "compact" "compact" "compact" "compact" ...
+#+end_example
+\\
+
+#+begin_src R :colnames yes
+head(mpg)
+#+end_src
+
+#+RESULTS:
+| manufacturer | model | displ | year | cyl | trans      | drv | cty | hwy | fl | class   |
+|--------------+-------+-------+------+-----+------------+-----+-----+-----+----+---------|
+| audi         | a4    |   1.8 | 1999 |   4 | auto(l5)   | f   |  18 |  29 | p  | compact |
+| audi         | a4    |   1.8 | 1999 |   4 | manual(m5) | f   |  21 |  29 | p  | compact |
+| audi         | a4    |     2 | 2008 |   4 | manual(m6) | f   |  20 |  31 | p  | compact |
+| audi         | a4    |     2 | 2008 |   4 | auto(av)   | f   |  21 |  30 | p  | compact |
+| audi         | a4    |   2.8 | 1999 |   6 | auto(l5)   | f   |  16 |  26 | p  | compact |
+| audi         | a4    |   2.8 | 1999 |   6 | manual(m5) | f   |  18 |  26 | p  | compact |
+\\
