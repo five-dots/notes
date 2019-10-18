@@ -6,11 +6,19 @@
 ~{rsample}~ は R の ~data.frame~ を訓練データとテストデータに分割するためのパッケージ。 ~{tidymodels}~ のパッケージ群に含まれる。単純な分割から、交差検証のための分割、時系列データの分割までサポートしている。
 \\
 
-* 目次                                                                :quote:
+* 目次                                                            :quote:toc:
 #+BEGIN_QUOTE
 - [[#ライブラリの読み込みとバージョンの確認][ライブラリの読み込みとバージョンの確認]]
-- [[#全関数リスト][全関数リスト]]
 - [[#関数リスト][関数リスト]]
+  - [[#-initial_splitdata-prop--34-strata--null-breaks--4-][★★★ ~initial_split(data, prop = 3/4, strata = NULL, breaks = 4, ...)~.]]
+  - [[#-initial_time_splitdata-prop--34-][★★☆ ~initial_time_split(data, prop = 3/4, ...)~.]]
+  - [[#-trainingx][★★☆ ~training(x)~.]]
+  - [[#-testingx][★★☆ ~testing(x)~.]]
+  - [[#-vfold_cvdata-v--10-repeats--1-strata--null-breaks--4-][★★★ ~vfold_cv(data, v = 10, repeats = 1, strata = NULL, breaks = 4, ...)~.]]
+  - [[#-analysisx-][★★☆ ~analysis(x, ...)~.]]
+  - [[#-assessmentx-][★★☆ ~assessment(x, ...)~.]]
+  - [[#-rolling_origindata-initial--5-assess--1-cumulative--true-skip--0-][★★★ ~rolling_origin(data, initial = 5, assess = 1, cumulative = TRUE, skip = 0, ...)~.]]
+  - [[#-bootstrapsdata-times--25-strata--null-breaks--4-apparent--false-][★☆☆ ~bootstraps(data, times = 25, strata = NULL, breaks = 4, apparent = FALSE, ...)~.]]
 - [[#参考リンク][参考リンク]]
 #+END_QUOTE
 
@@ -192,7 +200,7 @@ analysis(train_fold$splits[[1]]) %>% head()
 |          4.8 |           3 |          1.4 |         0.1 | setosa  |
 \\
  
-** ★★☆ ~assessment(x, ...)~
+** ★★☆ ~assessment(x, ...)~.
 
 - ~vfold_cv~ class から検証用データを抽出する
 #+begin_src R
@@ -209,7 +217,7 @@ assessment(train_fold$splits[[1]]) %>% head()
 |          4.9 |         3.1 |          1.5 |         0.1 | setosa  |
 |          4.8 |         3.4 |          1.6 |         0.2 | setosa  |
 
-** ★★★ ~rolling_origin(data, initial = 5, assess = 1, cumulative = TRUE, skip = 0, ...)~
+** ★★★ ~rolling_origin(data, initial = 5, assess = 1, cumulative = TRUE, skip = 0, ...)~.
 
 - 時系列データの分割に便利な関数
 - 指定期間をずらしながらローリングで分割
