@@ -1,5 +1,5 @@
 #+STARTUP: folded indent
-#+PROPERTY: header-args:R :results value :colnames yes :session *R:yardstick*
+#+PROPERTY: header-args:R :results value :colnames yes :session *R:yardstick* :width 640 :height 480
 
 * ~{yardstick}~: Tidy methods for measuring model performance :noexport:
 
