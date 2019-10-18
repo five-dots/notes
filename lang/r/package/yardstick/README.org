@@ -54,6 +54,7 @@
 
 #+begin_src R :results silent
 library(yardstick)
+library(tidyverse)
 #+end_src
 \\
 
@@ -267,7 +268,7 @@ hpc_cv %>%
 \\
 
 - ~roc_curve()~, ~pr_curve()~, ~gain_curve()~ は ~ggplot2::autoplot()~ が使える
-#+begin_src R :results output graphics :file (my/get-babel-file)
+#+begin_src R :results output graphics :file ./img/autoplot.png
 hpc_cv %>%
   group_by(Resample) %>%
   roc_curve(obs, VF:L) %>%
@@ -275,7 +276,7 @@ hpc_cv %>%
 #+end_src
 
 #+RESULTS:
-[[file:/home/shun/Dropbox/memo/img/babel/fig-8TEpPF.png]]
+[[file:./img/autoplot.png]]
 
 ** Numeric metrics
 *** ★☆☆ ~ccc(data, truth, estimate, bias = FALSE, na_rm = TRUE, ...)~.
