@@ -268,7 +268,7 @@ hpc_cv %>%
 \\
 
 - ~roc_curve()~, ~pr_curve()~, ~gain_curve()~ は ~ggplot2::autoplot()~ が使える
-#+begin_src R :results output graphics :file ./img/autoplot.png
+#+begin_src R :results output graphics :file ./img/autoplot.png :exports both
 hpc_cv %>%
   group_by(Resample) %>%
   roc_curve(obs, VF:L) %>%
