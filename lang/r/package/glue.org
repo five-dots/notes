@@ -1,0 +1,365 @@
+#+STARTUP: folded indent inlineimages latexpreview
+#+PROPERTY: header-args:R :results output :colnames yes :session *R:glue*
+
+* ~{glue}~: Glue strings to data in R                                :noexport:
+
+~{glue}~ (グルー) は、R の文字列に変数を埋め込むためのパッケージ。 ~base::paste()~ の文字列連結よりも、より直感的に文字列を扱うことができる。
+\\
+
+* 目次                                                                :quote:
+#+BEGIN_QUOTE
+- [[#ライブラリの読み込みとバージョンの確認][ライブラリの読み込みとバージョンの確認]]
+- [[#全関数リスト][全関数リスト]]
+- [[#関数リスト][関数リスト]]
+  - [[#縦横変換][縦横変換]]
+    - [[#-pivot_longerdata-cols-names_to--name-names_prefix--null-names_sep--null-names_pattern--null-names_ptypes--list-names_repair--check_unique-values_to--value-values_drop_na--false-values_ptypes--list][★★★ ~pivot_longer(data, cols, names_to = "name", names_prefix = NULL, names_sep = NULL, names_pattern = NULL, names_ptypes = list(), names_repair = "check_unique", values_to = "value", values_drop_na = FALSE, values_ptypes = list())~.]]
+    - [[#-pivot_widerdata-id_cols--null-names_from--name-names_prefix---names_sep--_-names_repair--check_unique-values_from--value-values_fill--null-values_fn--null][★★★ ~pivot_wider(data, id_cols = NULL, names_from = name, names_prefix = "", names_sep = "_", names_repair = "check_unique", values_from = value, values_fill = NULL, values_fn = NULL)~.]]
+    - [[#-gatherdata-key--key-value--value--narm--false-convert--false-factor_key--false][★★★ ~gather(data, key = "key", value = "value", ..., na.rm = FALSE, convert = FALSE, factor_key = FALSE)~.]]
+    - [[#-spreaddata-key-value-fill--na-convert--false-drop--true-sep--null][★★★ ~spread(data, key, value, fill = NA, convert = FALSE, drop = TRUE, sep = NULL)~.]]
+  - [[#ネストされた-dataframe][ネストされた data.frame]]
+    - [[#-nestdata--key--deprecated][★★☆ ~nest(.data, ..., .key = deprecated())~.]]
+    - [[#-unnestdata-cols--keep_empty--false-ptype--null-names_sep--null-names_repair--check_unique-drop--deprecated-id--deprecated-sep--deprecated-preserve--deprecated][★★☆ ~unnest(data, cols, ..., keep_empty = FALSE, ptype = NULL, names_sep = NULL, names_repair = "check_unique", .drop = deprecated(), .id = deprecated(), .sep = deprecated(), .preserve = deprecated())~.]]
+    - [[#-chopdata-cols][★☆☆ ~chop(data, cols)~.]]
+    - [[#-unchopdata-cols-keep_empty--false-ptype--null][★☆☆ ~unchop(data, cols, keep_empty = FALSE, ptype = NULL)~.]]
+  - [[#na-処理][NA 処理]]
+    - [[#データセット][データセット]]
+    - [[#-drop_nadata-][★★☆ ~drop_na(data, ...)~.]]
+    - [[#-replace_nadata-replace-][★★☆ ~replace_na(data, replace, ...)~.]]
+    - [[#-filldata--direction--cdown-up][★★☆ ~fill(data, ..., .direction = c("down", "up"))~.]]
+  - [[#列の分割結合][列の分割・結合]]
+    - [[#-separatedata-col-into-sep--alnum-remove--true-convert--false-extra--warn-fill--warn-][★★☆ ~separate(data, col, into, sep = "[^[:alnum:]]+", remove = TRUE, convert = FALSE, extra = "warn", fill = "warn", ...)~.]]
+    - [[#-unitedata-col--sep--_-remove--true-narm--false][★★☆ ~unite(data, col, ..., sep = "_", remove = TRUE, na.rm = FALSE)~.]]
+    - [[#-extractdata-col-into-regex--alnum-remove--true-convert--false-][★☆☆ ~extract(data, col, into, regex = "([[:alnum:]]+)", remove = TRUE, convert = FALSE, ...)~.]]
+  - [[#直積集合][直積集合]]
+    - [[#-expand_grid][★☆☆ ~expand_grid(...)~.]]
+    - [[#-nesting][★☆☆ ~nesting(...)~.]]
+    - [[#-expanddata-][★☆☆ ~expand(data, ...)~.]]
+    - [[#-crossing][★☆☆ ~crossing(...)~.]]
+    - [[#-completedata--fill--list][★☆☆ ~complete(data, ..., fill = list())~.]]
+- [[#glue-package][glue package]]
+  - [[#glue-----glue_data][glue(),     glue_data()]]
+    - [[#glue][glue()]]
+    - [[#glue_data][glue_data()]]
+  - [[#glue_col-glue_data_col][glue_col(), glue_data_col()]]
+    - [[#glue_col][glue_col()]]
+  - [[#glue_sql-glue_data_sql][glue_sql(), glue_data_sql()]]
+    - [[#glue_sql][glue_sql()]]
+  - [[#glue_collapse][glue_collapse()]]
+- [[#実行環境][実行環境]]
+- [[#参考リンク][参考リンク]]
+#+END_QUOTE
+
+* ライブラリの読み込みとバージョンの確認
+
+#+begin_src R :results silent
+library(glue)
+library(magrittr)
+library(dplyr)
+#+end_src
+\\
+
+- バージョン
+#+begin_src R :exports both
+packageVersion("glue")
+#+end_src
+
+#+RESULTS:
+: [1] ‘1.3.1’
+\\
+
+* 全関数リスト
+
+#+begin_src R
+pacman::p_funs(glue)
+#+end_src
+
+#+RESULTS:
+:  [1] "as_glue"              "backtick"             "collapse"            
+:  [4] "double_quote"         "glue"                 "glue_col"            
+:  [7] "glue_collapse"        "glue_data"            "glue_data_col"       
+: [10] "glue_data_sql"        "glue_sql"             "identity_transformer"
+: [13] "single_quote"         "trim"
+
+* glue package
+** ★★★ ~glue(..., .sep = "", .envir = parent.frame(), .open = "{", .close = "}", .na = "NA", .transformer = identity_transformer)~.
+
+- ~{var}~ の形式で変数を埋め込む
+- ~paste()~, ~paste0()~ よりも読みやすい
+#+begin_src R :exports both
+name <- "Fred"
+glue_str <- glue("My name is {name}.")
+glue_str
+
+paste0("My name is ", name, ".")
+#+end_src
+
+#+RESULTS:
+: My name is Fred.
+: [1] "My name is Fred."
+\\
+
+- ~glue~ class
+#+begin_src R :exports both
+class(glue_str)
+#+end_src
+
+#+RESULTS:
+: [1] "glue"      "character"
+\\
+
+- ~...~ 引数で複数の文字列を連結
+- ~{}~ 内で演算や関数適応もできる
+#+begin_src R :exports both
+name <- "Fred"
+age <- 50
+anniversary <- as.Date("1991-10-12")
+
+glue("My name is {name},",
+  " my age next year is {age + 1},",
+  " my anniversary is {format(anniversary, \"%A, %B %d, %Y\")}.")
+#+end_src
+
+#+RESULTS:
+: 
+: My name is Fred, my age next year is 51, my anniversary is Saturday, October 12, 1991.
+\\
+
+- 空白、空白行は削除される
+- \\ を入力すると改行しない
+- { を入力するときは、{{
+#+begin_src R :exports both
+glue("
+    A formatted string
+    Can have multiple lines
+      with additional indention preserved
+    ")
+
+glue("
+
+  leading or trailing newlines can be added explicitly
+
+  ")
+
+glue("
+    A formatted string \\
+    can also be on a \\
+    single line
+    ")
+    
+glue("My name is {name}, not {{name}}.")
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+A formatted string
+Can have multiple lines
+  with additional indention preserved
+
+
+leading or trailing newlines can be added explicitly
+
+A formatted string can also be on a single line
+
+My name is Fred, not {name}.
+#+end_example
+\\
+
+- ~dplyr::mutate()~ の中で .data の列を指定できる
+#+begin_src R
+head(iris) %>%
+  select(Species, Petal.Length) %>%
+  mutate(description = glue("This {Species} has a petal length of {Petal.Length}"))
+#+end_src
+
+#+RESULTS:
+:   Species Petal.Length                           description
+: 1  setosa          1.4 This setosa has a petal length of 1.4
+: 2  setosa          1.4 This setosa has a petal length of 1.4
+: 3  setosa          1.3 This setosa has a petal length of 1.3
+: 4  setosa          1.5 This setosa has a petal length of 1.5
+: 5  setosa          1.4 This setosa has a petal length of 1.4
+: 6  setosa          1.7 This setosa has a petal length of 1.7
+\\
+
+*** glue()
+
+
+*** glue_data()
+
+- 第一引数に envivroment, list, data.frame のいずれかを渡す
+- その環境内で式を評価してくれる
+- パイプと合わせると強力
+
+#+begin_src R
+head(mtcars) %>% glue_data("{rownames(.)} has {hp} hp")
+#+end_src
+
+#+RESULTS:
+| Mazda RX4 has 110 hp         |
+| Mazda RX4 Wag has 110 hp     |
+| Datsun 710 has 93 hp         |
+| Hornet 4 Drive has 110 hp    |
+| Hornet Sportabout has 175 hp |
+| Valiant has 105 hp           |
+
+- dplyr の関数内で、変数にアクセスできる
+#+begin_src R
+head(iris) %>%
+  mutate(description = glue("This {Species} has a petal length of {Petal.Length}"))
+#+end_src
+
+#+RESULTS:
+| 5.1 | 3.5 | 1.4 | 0.2 | setosa | This setosa has a petal length of 1.4 |
+| 4.9 |   3 | 1.4 | 0.2 | setosa | This setosa has a petal length of 1.4 |
+| 4.7 | 3.2 | 1.3 | 0.2 | setosa | This setosa has a petal length of 1.3 |
+| 4.6 | 3.1 | 1.5 | 0.2 | setosa | This setosa has a petal length of 1.5 |
+|   5 | 3.6 | 1.4 | 0.2 | setosa | This setosa has a petal length of 1.4 |
+| 5.4 | 3.9 | 1.7 | 0.4 | setosa | This setosa has a petal length of 1.7 |
+
+** ★☆☆ ~glue_data(.x, ..., .sep = "", .envir = parent.frame(), .open = "{", .close = "}", .na = "NA", .transformer = identity_transformer, .trim = TRUE)~.
+
+- 第 1 引数 ~.x~ で利用するデータを指定 (パイプで使いやすい)
+- データは ~enviroment~, ~list~ or ~data.frame~
+- データの長さ分の文字列を出力してくれる
+#+begin_src R
+mtcars %>% glue_data("{rownames(.)} has {hp} hp") %>% head()
+#+end_src
+
+#+RESULTS:
+: Mazda RX4 has 110 hp
+: Mazda RX4 Wag has 110 hp
+: Datsun 710 has 93 hp
+: Hornet 4 Drive has 110 hp
+: Hornet Sportabout has 175 hp
+: Valiant has 105 hp
+\\
+
+** ★☆☆ ~glue_col(..., .envir = parent.frame(), .na = "NA")~
+     
+- ~{crayon}~ package と組み合わせて、コンソール出力時に色をつける
+#+begin_src R
+library(crayon)
+glue_col("{blue {Sys.Date()}}")
+#+end_src
+
+#+RESULTS:
+: 2019-10-18
+
+** ★☆☆ ~glue_data_col(.x, ..., .envir = parent.frame(), .na = "NA")~
+\\
+
+** ★☆☆ ~glue_sql(..., .con, .envir = parent.frame(), .na = DBI::SQL("NULL"))~.
+
+- SQL 向けに quote をしてくれる
+#+begin_src R :exports both
+con <- DBI::dbConnect(RSQLite::SQLite(), ":memory:")
+colnames(iris) <- gsub("[.]", "_", tolower(colnames(iris)))
+DBI::dbWriteTable(con, "iris", iris)
+
+var <- "sepal_width"
+tbl <- "iris"
+num <- 2
+val <- "setosa"
+
+glue_sql("
+  SELECT {`var`}
+  FROM {`tbl`}
+  WHERE {`tbl`}.sepal_length > {num}
+    AND {`tbl`}.species = {val}
+  ", .con = con)
+#+end_src
+
+#+RESULTS:
+: <SQL> SELECT `sepal_width`
+: FROM `iris`
+: WHERE `iris`.sepal_length > 2
+:   AND `iris`.species = 'setosa'
+\\
+
+#+begin_src R :exports both
+sql <- glue_sql("
+  SELECT {`var`}
+  FROM {`tbl`}
+  WHERE {`tbl`}.sepal_length > ?
+  ", .con = con)
+query <- DBI::dbSendQuery(con, sql)
+DBI::dbBind(query, list(num))
+DBI::dbFetch(query, n = 4)
+DBI::dbClearResult(query)
+#+end_src
+
+#+RESULTS:
+:   sepal_width
+: 1         3.5
+: 2         3.0
+: 3         3.2
+: 4         3.1
+\\
+
+** ★☆☆ ~glue_data_sql(.x, ..., .con, .envir = parent.frame(), .na = DBI::SQL("NULL"))~.
+\\
+
+** ★☆☆ ~glue_collapse(x, sep = "", width = Inf, last = "")~.
+
+- 文字列を結合して、かつ長さも指定可能
+#+begin_src R :exports both
+glue_collapse(glue("{1:10}"), sep = ", ", width = 20)
+#+end_src
+
+#+RESULTS:
+: 1, 2, 3, 4, 5, 6,...
+\\
+
+* 実行環境
+
+#+begin_src R :results output :exports both
+sessionInfo()
+#+end_src
+
+#+RESULTS:
+#+begin_example
+R version 3.6.1 (2019-07-05)
+Platform: x86_64-pc-linux-gnu (64-bit)
+Running under: Ubuntu 18.04.3 LTS
+
+Matrix products: default
+BLAS:   /usr/lib/x86_64-linux-gnu/blas/libblas.so.3.7.1
+LAPACK: /usr/lib/x86_64-linux-gnu/lapack/liblapack.so.3.7.1
+
+locale:
+ [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C              
+ [3] LC_TIME=en_US.UTF-8        LC_COLLATE=en_US.UTF-8    
+ [5] LC_MONETARY=en_US.UTF-8    LC_MESSAGES=en_US.UTF-8   
+ [7] LC_PAPER=en_US.UTF-8       LC_NAME=C                 
+ [9] LC_ADDRESS=C               LC_TELEPHONE=C            
+[11] LC_MEASUREMENT=en_US.UTF-8 LC_IDENTIFICATION=C       
+
+attached base packages:
+[1] stats     graphics  grDevices utils     datasets  methods   base     
+
+other attached packages:
+[1] dplyr_0.8.3  magrittr_1.5 crayon_1.3.4 glue_1.3.1  
+
+loaded via a namespace (and not attached):
+ [1] Rcpp_1.0.2       tidyselect_0.2.5 bit_1.1-14       R6_2.4.0        
+ [5] rlang_0.4.0      fansi_0.4.0      blob_1.2.0       tools_3.6.1     
+ [9] pacman_0.5.1     utf8_1.1.4       cli_1.1.0        DBI_1.0.0       
+[13] bit64_0.9-7      digest_0.6.21    assertthat_0.2.1 tibble_2.1.3    
+[17] purrr_0.3.2      vctrs_0.2.0      zeallot_0.1.0    memoise_1.1.0   
+[21] RSQLite_2.1.2    compiler_3.6.1   pillar_1.4.2     backports_1.1.5 
+[25] pkgconfig_2.0.3
+#+end_example
+\\
+
+* 参考リンク
+
+- [[https://tidyr.tidyverse.org/][公式サイト]]
+- [[https://cran.r-project.org/web/packages/glue/index.html][CRAN]]
+- [[https://cran.r-project.org/web/packages/glue/glue.pdf][Reference Manual]]
+- [[https://github.com/tidyverse/glue][Github Repo]]
+- Vignette
+  - [[https://cran.r-project.org/web/packages/glue/vignettes/speed.html][Speed of glue]]
+  - [[https://cran.r-project.org/web/packages/glue/vignettes/transformers.html][Transformers]]
+- Blog
+  - [[https://qiita.com/kosshi/items/fb8b745975ca6fd2515c][【R】文字列結合・挿入に便利なパッケージglueを、クエリ作成を題材に紹介する。@Qiita]]
