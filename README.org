@@ -34,6 +34,8 @@ Babel の実行には適切な ~org-babel-load-language~ の設定が必要で�
 |---------------+--------------------------------------------------------------------|
 | Category      | Notes                                                              |
 |---------------+--------------------------------------------------------------------|
+| Language      | types, nse                                                         |
+| Import        | {readr}                                                            |
 | Table Data    | [[file:lang/r/package/dplyr/][ ~{dplyr}~ ]], [[file:./lang/r/package/tidyr.org][ ~{tidyr}~ ]], {purrrlyr}, {tibble}, {data.table}, {dtplyr} |
 | String        | regex, [[file:./lang/r/package/stringr.org][ ~{stringr}~ ]] {readr}, {glue}, {crayon}                       |
 | Factor        | {base}, {forcat}                                                   |
@@ -41,6 +43,7 @@ Babel の実行には適切な ~org-babel-load-language~ の設定が必要で�
 | Preprocessing | [[file:lang/r/package/recipes.org][ ~{recipes}~ ]]                                                        |
 | Sampling      | [[file:lang/r/package/rsample.org][ ~{rsample}~ ]]                                                        |
 | Performance   | {yardstick}, {PerformanceAnalytics}                                |
+| Assertion     | {asserthat}, {assertr}                                             |
 | Workflow      | {drake}                                                            |
 | Dataset       | [[file:lang/r/finance/dataset.org][finance]]                                                            |
 |---------------+--------------------------------------------------------------------|

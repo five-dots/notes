@@ -3,25 +3,26 @@
 
 * ~{tidyr}~: Easily tidy data with spread and gather functions       :noexport:
 
-~{tidyr}~ (タイディアー) は、R の ~data.frame~ を操作するパッケージ。
+~{tidyr}~ (タイディーアー) は、R の ~data.frame~ を操作するパッケージ。Tidy Data (整然データ) を作成するために用いられる。収録されている関数は、おおよそ 5 つほどのカテゴリーに分類できる。
 
-- 縦長・横長に変換する関数
-- Nested data.frame を作成するための関数
-- 欠損値処理の関数
+- 縦長 (longer)・横長 (wider) に変換する関数
+- ネストされた ~data.frame~ を作成するための関数
+- ~NA~ 処理の関数
 - 列の分割・結合の関数
+- 直積集合を作る関数 (改良版 ~expand.grid()~)
 \\
 
-* 目次                                                            :quote:toc:
+* 目次                                                                :quote:
 #+BEGIN_QUOTE
 - [[#ライブラリの読み込みとバージョンの確認][ライブラリの読み込みとバージョンの確認]]
 - [[#全関数リスト][全関数リスト]]
 - [[#関数リスト][関数リスト]]
-  - [[#pivoting][Pivoting]]
+  - [[#縦横変換][縦横変換]]
     - [[#-pivot_longerdata-cols-names_to--name-names_prefix--null-names_sep--null-names_pattern--null-names_ptypes--list-names_repair--check_unique-values_to--value-values_drop_na--false-values_ptypes--list][★★★ ~pivot_longer(data, cols, names_to = "name", names_prefix = NULL, names_sep = NULL, names_pattern = NULL, names_ptypes = list(), names_repair = "check_unique", values_to = "value", values_drop_na = FALSE, values_ptypes = list())~.]]
     - [[#-pivot_widerdata-id_cols--null-names_from--name-names_prefix---names_sep--_-names_repair--check_unique-values_from--value-values_fill--null-values_fn--null][★★★ ~pivot_wider(data, id_cols = NULL, names_from = name, names_prefix = "", names_sep = "_", names_repair = "check_unique", values_from = value, values_fill = NULL, values_fn = NULL)~.]]
     - [[#-gatherdata-key--key-value--value--narm--false-convert--false-factor_key--false][★★★ ~gather(data, key = "key", value = "value", ..., na.rm = FALSE, convert = FALSE, factor_key = FALSE)~.]]
     - [[#-spreaddata-key-value-fill--na-convert--false-drop--true-sep--null][★★★ ~spread(data, key, value, fill = NA, convert = FALSE, drop = TRUE, sep = NULL)~.]]
-  - [[#nested-data][Nested data]]
+  - [[#ネストされた-dataframe][ネストされた data.frame]]
     - [[#-nestdata--key--deprecated][★★☆ ~nest(.data, ..., .key = deprecated())~.]]
     - [[#-unnestdata-cols--keep_empty--false-ptype--null-names_sep--null-names_repair--check_unique-drop--deprecated-id--deprecated-sep--deprecated-preserve--deprecated][★★☆ ~unnest(data, cols, ..., keep_empty = FALSE, ptype = NULL, names_sep = NULL, names_repair = "check_unique", .drop = deprecated(), .id = deprecated(), .sep = deprecated(), .preserve = deprecated())~.]]
   - [[#nas][NAs]]
@@ -29,10 +30,11 @@
     - [[#-drop_nadata-][★★☆ ~drop_na(data, ...)~.]]
     - [[#-replace_nadata-replace-][★★☆ ~replace_na(data, replace, ...)~.]]
     - [[#-filldata--direction--cdown-up][★★☆ ~fill(data, ..., .direction = c("down", "up"))~.]]
-  - [[#others][Others]]
+    - [[#-completedata--fill--list][★☆☆ ~complete(data, ..., fill = list())~.]]
+  - [[#split--join][Split & Join]]
     - [[#-separatedata-col-into-sep--alnum-remove--true-convert--false-extra--warn-fill--warn-][★★☆ ~separate(data, col, into, sep = "[^[:alnum:]]+", remove = TRUE, convert = FALSE, extra = "warn", fill = "warn", ...)~.]]
     - [[#-unitedata-col--sep--_-remove--true-narm--false][★★☆ ~unite(data, col, ..., sep = "_", remove = TRUE, na.rm = FALSE)~.]]
-    - [[#-completedata--fill--list][★☆☆ ~complete(data, ..., fill = list())~.]]
+  - [[#直積集合][直積集合]]
     - [[#-expanddata-][★☆☆ ~expand(data, ...)~.]]
     - [[#-crossing][★☆☆ ~crossing(...)~.]]
     - [[#-nesting][★☆☆ ~nesting(...)~.]]
@@ -59,7 +61,7 @@ packageVersion("tidyr")
 
 * 全関数リスト
 
-#+begin_src R
+#+begin_src R :results output :exports both
 pacman::p_funs(tidyr)
 #+end_src
 
@@ -89,12 +91,13 @@ pacman::p_funs(tidyr)
 #+end_example
 
 * 関数リスト
-** Pivoting
+** 縦横変換
 *** ★★★ ~pivot_longer(data, cols, names_to = "name", names_prefix = NULL, names_sep = NULL, names_pattern = NULL, names_ptypes = list(), names_repair = "check_unique", values_to = "value", values_drop_na = FALSE, values_ptypes = list())~.
 
 - 横 -> 縦の Tidy Data へ変換
 - ~gather()~ の後継
 - ~cols~ でまとめる列を指定 + ~names_*~ でラベル列の操作 + ~values_*~ で値列の操作
+- これまで ~separate()~ や ~unite()~ と組み合わせていた処理も一括で行うことができる
 - ~cols~ での列選択方法
   - ~Sepal.Width~ (単一の列を指定)
   - ~-Species~ (マイナスで指定)
@@ -284,7 +287,7 @@ dat %>%
 | sue    |          81 |          81 |          86 |         83 |         82 |       87.5 |
 \\
 
-** Nested data
+** ネストされた data.frame
 *** ★★☆ ~nest(.data, ..., .key = deprecated())~.
 
 - ~data.frame~ をネストして *list of data.frame* (= 列が list になっている) のカラムを作る
@@ -322,6 +325,7 @@ iris %>% dplyr::group_nest(Species)
 : 1 setosa     <tibble [50 × 4]>
 : 2 versicolor <tibble [50 × 4]>
 : 3 virginica  <tibble [50 × 4]>
+\\
 
 *** ★★☆ ~unnest(data, cols, ..., keep_empty = FALSE, ptype = NULL, names_sep = NULL, names_repair = "check_unique", .drop = deprecated(), .id = deprecated(), .sep = deprecated(), .preserve = deprecated())~.
 
@@ -342,8 +346,79 @@ iris %>%
 | setosa  |          4.6 |         3.1 |          1.5 |         0.2 |
 | setosa  |            5 |         3.6 |          1.4 |         0.2 |
 | setosa  |          5.4 |         3.9 |          1.7 |         0.4 |
+\\
 
-** NAs
+*** ★☆☆ ~chop(data, cols)~.
+    
+- 列構造を維持したまま list of data.frame に集約する 
+#+begin_src R :colnames yes :results output
+df <- tibble(x = c(1, 1, 1, 2, 2, 3), y = 1:6, z = 6:1)
+df %>% chop(c(y, z))
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+# A tibble: 3 x 3
+      x y         z        
+  <dbl> <list>    <list>   
+1     1 <int [3]> <int [3]>
+2     2 <int [2]> <int [2]>
+3     3 <int [1]> <int [1]>
+#+end_example
+\\
+
+- ~nest()~ との違い
+- ~nest()~ は複数列を 1 つの list of data.frame に集約するが ~chop()~ は列の構造を維持したまま 
+#+begin_src R :colnames yes :results output
+df %>% nest(data = c(y, z))
+#+end_src
+
+#+RESULTS:
+: # A tibble: 3 x 2
+:       x           data
+:   <dbl> <list<df[,2]>>
+: 1     1        [3 × 2]
+: 2     2        [2 × 2]
+: 3     3        [1 × 2]
+
+*** ★☆☆ ~unchop(data, cols, keep_empty = FALSE, ptype = NULL)~.
+
+- list-column をフラットな ~data.frame~ へ変換する
+#+begin_src R
+df <- tibble(x = 1:4, y = list(integer(), 1L, 1:2, 1:3))
+df %>% unchop(y)
+#+end_src
+
+#+RESULTS:
+| x | y |
+|---+---|
+| 2 | 1 |
+| 3 | 1 |
+| 3 | 2 |
+| 4 | 1 |
+| 4 | 2 |
+| 4 | 3 |
+\\
+
+- ~NA~ になる行も残す場合
+#+begin_src R
+df %>% unchop(y, keep_empty = TRUE)
+#+end_src
+
+#+RESULTS:
+| x |   y |
+|---+-----|
+| 1 | nil |
+| 2 |   1 |
+| 3 |   1 |
+| 3 |   2 |
+| 4 |   1 |
+| 4 |   2 |
+| 4 |   3 |
+\\
+
+** NA 処理
 *** データセット
 
 - 単純なデータを用意する
@@ -394,6 +469,7 @@ replace_na(df, replace = list(x = 0, y = "unknown"))
 *** ★★☆ ~fill(data, ..., .direction = c("down", "up"))~.
 
 - ~NA~ を直前の ~NA~ でない値で埋める
+- 下方向に補完するか、上方向に補完するかを選択できる
 #+begin_src R
 fill(df, y, .direction = "down")
 #+end_src
@@ -406,7 +482,7 @@ fill(df, y, .direction = "down")
 | 3 | B |
 \\
 
-** Others
+** 列の分割・結合
 *** ★★☆ ~separate(data, col, into, sep = "[^[:alnum:]]+", remove = TRUE, convert = FALSE, extra = "warn", fill = "warn", ...)~.
 
 - 単純なデータを用意する
@@ -439,95 +515,114 @@ separate(df, col = x, into = c("x1", "x2"), sep = "_")
 
 *** ★★☆ ~unite(data, col, ..., sep = "_", remove = TRUE, na.rm = FALSE)~.
 
+- 単純なデータを用意する
+#+begin_src R
+df <- data.frame(x = c("hoge", "fuga", "piyo"), y = c("hoge", "fuga", "piyo"))
+df
+#+end_src
+
+#+RESULTS:
+| x    | y    |
+|------+------|
+| hoge | hoge |
+| fuga | fuga |
+| piyo | piyo |
+
 - 複数列を 1 つにまとめる
 #+begin_src R
-unite_(mtcars, "vs_am", c("vs", "am"))
+unite(df, xy, x:y)
 #+end_src
 
 #+RESULTS:
-|  mpg | cyl |  disp |  hp | drat |    wt |  qsec | vs_am | gear | carb |
-|------+-----+-------+-----+------+-------+-------+-------+------+------|
-|   21 |   6 |   160 | 110 |  3.9 |  2.62 | 16.46 | 0_1   |    4 |    4 |
-|   21 |   6 |   160 | 110 |  3.9 | 2.875 | 17.02 | 0_1   |    4 |    4 |
-| 22.8 |   4 |   108 |  93 | 3.85 |  2.32 | 18.61 | 1_1   |    4 |    1 |
-| 21.4 |   6 |   258 | 110 | 3.08 | 3.215 | 19.44 | 1_0   |    3 |    1 |
-| 18.7 |   8 |   360 | 175 | 3.15 |  3.44 | 17.02 | 0_0   |    3 |    2 |
-| 18.1 |   6 |   225 | 105 | 2.76 |  3.46 | 20.22 | 1_0   |    3 |    1 |
-| 14.3 |   8 |   360 | 245 | 3.21 |  3.57 | 15.84 | 0_0   |    3 |    4 |
-| 24.4 |   4 | 146.7 |  62 | 3.69 |  3.19 |    20 | 1_0   |    4 |    2 |
-| 22.8 |   4 | 140.8 |  95 | 3.92 |  3.15 |  22.9 | 1_0   |    4 |    2 |
-| 19.2 |   6 | 167.6 | 123 | 3.92 |  3.44 |  18.3 | 1_0   |    4 |    4 |
-| 17.8 |   6 | 167.6 | 123 | 3.92 |  3.44 |  18.9 | 1_0   |    4 |    4 |
-| 16.4 |   8 | 275.8 | 180 | 3.07 |  4.07 |  17.4 | 0_0   |    3 |    3 |
-| 17.3 |   8 | 275.8 | 180 | 3.07 |  3.73 |  17.6 | 0_0   |    3 |    3 |
-| 15.2 |   8 | 275.8 | 180 | 3.07 |  3.78 |    18 | 0_0   |    3 |    3 |
-| 10.4 |   8 |   472 | 205 | 2.93 |  5.25 | 17.98 | 0_0   |    3 |    4 |
-| 10.4 |   8 |   460 | 215 |    3 | 5.424 | 17.82 | 0_0   |    3 |    4 |
-| 14.7 |   8 |   440 | 230 | 3.23 | 5.345 | 17.42 | 0_0   |    3 |    4 |
-| 32.4 |   4 |  78.7 |  66 | 4.08 |   2.2 | 19.47 | 1_1   |    4 |    1 |
-| 30.4 |   4 |  75.7 |  52 | 4.93 | 1.615 | 18.52 | 1_1   |    4 |    2 |
-| 33.9 |   4 |  71.1 |  65 | 4.22 | 1.835 |  19.9 | 1_1   |    4 |    1 |
-| 21.5 |   4 | 120.1 |  97 |  3.7 | 2.465 | 20.01 | 1_0   |    3 |    1 |
-| 15.5 |   8 |   318 | 150 | 2.76 |  3.52 | 16.87 | 0_0   |    3 |    2 |
-| 15.2 |   8 |   304 | 150 | 3.15 | 3.435 |  17.3 | 0_0   |    3 |    2 |
-| 13.3 |   8 |   350 | 245 | 3.73 |  3.84 | 15.41 | 0_0   |    3 |    4 |
-| 19.2 |   8 |   400 | 175 | 3.08 | 3.845 | 17.05 | 0_0   |    3 |    2 |
-| 27.3 |   4 |    79 |  66 | 4.08 | 1.935 |  18.9 | 1_1   |    4 |    1 |
-|   26 |   4 | 120.3 |  91 | 4.43 |  2.14 |  16.7 | 0_1   |    5 |    2 |
-| 30.4 |   4 |  95.1 | 113 | 3.77 | 1.513 |  16.9 | 1_1   |    5 |    2 |
-| 15.8 |   8 |   351 | 264 | 4.22 |  3.17 |  14.5 | 0_1   |    5 |    4 |
-| 19.7 |   6 |   145 | 175 | 3.62 |  2.77 |  15.5 | 0_1   |    5 |    6 |
-|   15 |   8 |   301 | 335 | 3.54 |  3.57 |  14.6 | 0_1   |    5 |    8 |
-| 21.4 |   4 |   121 | 109 | 4.11 |  2.78 |  18.6 | 1_1   |    4 |    2 |
+| xy        | x    | y    |
+|-----------+------+------|
+| hoge_hoge | hoge | hoge |
+| fuga_fuga | fuga | fuga |
+| piyo_piyo | piyo | piyo |
 \\
 
-*** ★☆☆ ~complete(data, ..., fill = list())~.
+*** ★☆☆ ~extract(data, col, into, regex = "([[:alnum:]]+)", remove = TRUE, convert = FALSE, ...)~.
+** 直積集合
+*** ★☆☆ ~expand_grid(...)~.
 
-- 指定した列の組み合わせを作る
+- tibble 版の ~expand.grid()~
+- ~expand.grid()~ との違い
+  • Varies the first element fastest
+  • Never converts strings to factors
+  • Does not add any additional attributes
+  • Returns a tibble, not a data frame
+  • Can expand any generalised vector, including data frames
 #+begin_src R
-complete(mtcars, vs, cyl)
+expand_grid(vs = unique(mtcars$vs), cyl = unique(mtcars$cyl))
 #+end_src
 
 #+RESULTS:
-| vs | cyl |  mpg |  disp |  hp | drat |    wt |  qsec |  am | gear | carb |
-|----+-----+------+-------+-----+------+-------+-------+-----+------+------|
-|  0 |   4 |   26 | 120.3 |  91 | 4.43 |  2.14 |  16.7 |   1 |    5 |    2 |
-|  0 |   6 |   21 |   160 | 110 |  3.9 |  2.62 | 16.46 |   1 |    4 |    4 |
-|  0 |   6 |   21 |   160 | 110 |  3.9 | 2.875 | 17.02 |   1 |    4 |    4 |
-|  0 |   6 | 19.7 |   145 | 175 | 3.62 |  2.77 |  15.5 |   1 |    5 |    6 |
-|  0 |   8 | 18.7 |   360 | 175 | 3.15 |  3.44 | 17.02 |   0 |    3 |    2 |
-|  0 |   8 | 14.3 |   360 | 245 | 3.21 |  3.57 | 15.84 |   0 |    3 |    4 |
-|  0 |   8 | 16.4 | 275.8 | 180 | 3.07 |  4.07 |  17.4 |   0 |    3 |    3 |
-|  0 |   8 | 17.3 | 275.8 | 180 | 3.07 |  3.73 |  17.6 |   0 |    3 |    3 |
-|  0 |   8 | 15.2 | 275.8 | 180 | 3.07 |  3.78 |    18 |   0 |    3 |    3 |
-|  0 |   8 | 10.4 |   472 | 205 | 2.93 |  5.25 | 17.98 |   0 |    3 |    4 |
-|  0 |   8 | 10.4 |   460 | 215 |    3 | 5.424 | 17.82 |   0 |    3 |    4 |
-|  0 |   8 | 14.7 |   440 | 230 | 3.23 | 5.345 | 17.42 |   0 |    3 |    4 |
-|  0 |   8 | 15.5 |   318 | 150 | 2.76 |  3.52 | 16.87 |   0 |    3 |    2 |
-|  0 |   8 | 15.2 |   304 | 150 | 3.15 | 3.435 |  17.3 |   0 |    3 |    2 |
-|  0 |   8 | 13.3 |   350 | 245 | 3.73 |  3.84 | 15.41 |   0 |    3 |    4 |
-|  0 |   8 | 19.2 |   400 | 175 | 3.08 | 3.845 | 17.05 |   0 |    3 |    2 |
-|  0 |   8 | 15.8 |   351 | 264 | 4.22 |  3.17 |  14.5 |   1 |    5 |    4 |
-|  0 |   8 |   15 |   301 | 335 | 3.54 |  3.57 |  14.6 |   1 |    5 |    8 |
-|  1 |   4 | 22.8 |   108 |  93 | 3.85 |  2.32 | 18.61 |   1 |    4 |    1 |
-|  1 |   4 | 24.4 | 146.7 |  62 | 3.69 |  3.19 |    20 |   0 |    4 |    2 |
-|  1 |   4 | 22.8 | 140.8 |  95 | 3.92 |  3.15 |  22.9 |   0 |    4 |    2 |
-|  1 |   4 | 32.4 |  78.7 |  66 | 4.08 |   2.2 | 19.47 |   1 |    4 |    1 |
-|  1 |   4 | 30.4 |  75.7 |  52 | 4.93 | 1.615 | 18.52 |   1 |    4 |    2 |
-|  1 |   4 | 33.9 |  71.1 |  65 | 4.22 | 1.835 |  19.9 |   1 |    4 |    1 |
-|  1 |   4 | 21.5 | 120.1 |  97 |  3.7 | 2.465 | 20.01 |   0 |    3 |    1 |
-|  1 |   4 | 27.3 |    79 |  66 | 4.08 | 1.935 |  18.9 |   1 |    4 |    1 |
-|  1 |   4 | 30.4 |  95.1 | 113 | 3.77 | 1.513 |  16.9 |   1 |    5 |    2 |
-|  1 |   4 | 21.4 |   121 | 109 | 4.11 |  2.78 |  18.6 |   1 |    4 |    2 |
-|  1 |   6 | 21.4 |   258 | 110 | 3.08 | 3.215 | 19.44 |   0 |    3 |    1 |
-|  1 |   6 | 18.1 |   225 | 105 | 2.76 |  3.46 | 20.22 |   0 |    3 |    1 |
-|  1 |   6 | 19.2 | 167.6 | 123 | 3.92 |  3.44 |  18.3 |   0 |    4 |    4 |
-|  1 |   6 | 17.8 | 167.6 | 123 | 3.92 |  3.44 |  18.9 |   0 |    4 |    4 |
-|  1 |   8 |  nil |   nil | nil |  nil |   nil |   nil | nil |  nil |  nil |
+| vs | cyl |
+|----+-----|
+|  0 |   6 |
+|  0 |   4 |
+|  0 |   8 |
+|  1 |   6 |
+|  1 |   4 |
+|  1 |   8 |
+
+*** ★☆☆ ~nesting(...)~.
+
+- 実際にデータ内に存在する組み合わせのみ得たい場合に利用する
+#+begin_src R
+nesting(x = 1:3, y = 3:1)
+#+end_src
+
+#+RESULTS:
+| x | y |
+|---+---|
+| 1 | 3 |
+| 2 | 2 |
+| 3 | 1 |
+\\
+
+- ~expand_gird()~ だと全ての組み合わせになってしまう
+#+begin_src R
+expand_grid(x = 1:3, y = 3:1)
+#+end_src
+
+#+RESULTS:
+| x | y |
+|---+---|
+| 1 | 3 |
+| 1 | 2 |
+| 1 | 1 |
+| 2 | 3 |
+| 2 | 2 |
+| 2 | 1 |
+| 3 | 3 |
+| 3 | 2 |
+| 3 | 1 |
 \\
 
 *** ★☆☆ ~expand(data, ...)~.
 
+- 指定したデータの全ての組み合わせを作成する
+- ~left_join()~ と組み合わせて、implicit な欠損値を explicit な欠損値へ変換するために利用する
+#+begin_src R :results output
+mtcars$vs
+unique(mtcars$vs)
+
+mtcars$cyl
+unique(mtcars$cyl)
+#+end_src
+
+#+RESULTS:
+:  [1] 0 0 1 1 0 1 0 1 1 1 1 0 0 0 0 0 0 1 1 1 1 0 0 0 0 1 0 1 0 0 0 1
+: 
+: [1] 0 1
+: 
+:  [1] 6 6 4 6 8 6 8 4 4 6 6 8 8 8 8 8 8 4 4 4 4 8 8 8 8 4 4 4 8 6 8 4
+: 
+: [1] 6 4 8
+\\
+
+- vs, cyl の全ての組み合わせ
 #+begin_src R
 expand(mtcars, vs, cyl)
 #+end_src
@@ -543,9 +638,41 @@ expand(mtcars, vs, cyl)
 |  1 |   8 |
 \\
 
+- ~base::expand.grid()~ を使って書くとこうなる
+#+begin_src R
+expand.grid(vs = unique(mtcars$vs), cyl = unique(mtcars$cyl))
+#+end_src
+
+#+RESULTS:
+| vs | cyl |
+|----+-----|
+|  0 |   6 |
+|  1 |   6 |
+|  0 |   4 |
+|  1 |   4 |
+|  0 |   8 |
+|  1 |   8 |
+\\
+
+- 実際に存在する組み合わせのみに限定するには ~nesting()~ を使う (vs = 1, cyl = 8 は存在しない)
+#+begin_src R
+expand(mtcars, nesting(vs, cyl))
+#+end_src
+
+#+RESULTS:
+| vs | cyl |
+|----+-----|
+|  0 |   4 |
+|  0 |   6 |
+|  0 |   8 |
+|  1 |   4 |
+|  1 |   6 |
+\\
+
 *** ★☆☆ ~crossing(...)~.
 
-- tibble 版の expand.grid()
+- tibble 版の ~expand.grid()~
+- ~expand_grid()~ のラッパーになっている (+重複削除, +ソート)
 #+begin_src R
 crossing(mtcars$vs, mtcars$cyl)
 #+end_src
@@ -561,87 +688,69 @@ crossing(mtcars$vs, mtcars$cyl)
 |         1 |          8 |
 \\
 
-*** ★☆☆ ~nesting(...)~.
+*** ★☆☆ ~complete(data, ..., fill = list())~.
 
-# sample
-mtcars
-nesting(mtcars$vs, mtcars$cyl)
-
-** Pivot Table
-
-- 2 つ以上のグループ変数で並べて見たい
-- https://qiita.com/ishiijunpei/items/bc8da014a18e2a849978
-
-#+begin_src R :colnames yes
-a <- c("中期", "後期", "晩期", "晩期", "中期", "後期", "後期", "晩期", "中期", "晩期")
-b <- c("厚沢部", "江差", "江差", "厚沢部", "江差", "厚沢部", "江差", "江差", "厚沢部", "江差")
-d <- c(18, 21, 6, 32, 8, 15, 2, 21, 17, 7)
-data <- data.frame(時期 = a, 地域 = b, 数量 = d)
-data
+- implicit な欠損値を explicit な欠損値として埋めるための関数
+- 行として存在していないデータを無理やり ~NA~ として登場させる
+#+begin_src R
+df <- tibble(
+  group = c(1:2, 1),
+  item_id = c(1:2, 2),
+  item_name = c("a", "b", "b"),
+  value1 = 1:3,
+  value2 = 4:6)
+df
 #+end_src
 
 #+RESULTS:
-| 時期 | 地域   | 数量 |
-|------+--------+------|
-| 中期 | 厚沢部 |   18 |
-| 後期 | 江差   |   21 |
-| 晩期 | 江差   |    6 |
-| 晩期 | 厚沢部 |   32 |
-| 中期 | 江差   |    8 |
-| 後期 | 厚沢部 |   15 |
-| 後期 | 江差   |    2 |
-| 晩期 | 江差   |   21 |
-| 中期 | 厚沢部 |   17 |
-| 晩期 | 江差   |    7 |
+| group | item_id | item_name | value1 | value2 |
+|-------+---------+-----------+--------+--------|
+|     1 |       1 | a         |      1 |      4 |
+|     2 |       2 | b         |      2 |      5 |
+|     1 |       2 | b         |      3 |      6 |
+\\
 
-- 通常の 1 変数の summarize
-#+begin_src R :colnames yes
-data %>%
-  group_by(時期) %>%
-  summarize(出土点数 = sum(数量))
+- group と item_id を必須の組み合わせとした場合
+#+begin_src R
+df %>% complete(group, item_id)
+## df %>% complete(group, nesting(item_id, item_name))
 #+end_src
 
 #+RESULTS:
-| 時期 | 出土点数 |
-|------+----------|
-| 中期 |       43 |
-| 後期 |       38 |
-| 晩期 |       66 |
+| group | item_id | item_name | value1 | value2 |
+|-------+---------+-----------+--------+--------|
+|     1 |       1 | a         |      1 |      4 |
+|     1 |       2 | b         |      3 |      6 |
+|     2 |       1 | nil       |    nil |    nil |
+|     2 |       2 | b         |      2 |      5 |
+\\
 
-- 2 変数で summarize => spread
-#+begin_src R :colnames yes
-data %>%
-  group_by(時期, 地域) %>%
-  summarize(出土点数 = sum(数量)) %>%
-  spread(key = 地域, value = 出土点数)
+- item_id と item_name が依存関係にあるとする場合は ~nesting()~ を使う
+#+begin_src R
+df %>% complete(group, nesting(item_id, item_name))
 #+end_src
 
 #+RESULTS:
-| 時期 | 厚沢部 | 江差 |
-|------+--------+------|
-| 中期 |     35 |    8 |
-| 後期 |     15 |   23 |
-| 晩期 |     32 |   34 |
+| group | item_id | item_name | value1 | value2 |
+|-------+---------+-----------+--------+--------|
+|     1 |       1 | a         |      1 |      4 |
+|     1 |       2 | b         |      3 |      6 |
+|     2 |       1 | a         |    nil |    nil |
+|     2 |       2 | b         |      2 |      5 |
 
-- クロス集計表
-  https://qiita.com/nigimitama/items/35518304474648417788
-- Titanic データ利用
-#+begin_src R :colnames yes
-library(epitools)
-data <- expand.table(Titanic)
-
-# 生存者(Yes, No) と Age(Child, Adult) の集計
-data %>%
-  group_by(Survived, Age) %>%
-  tally() %>%
-  spread(Survived, n)
+- ~NA~ を置換する場合は ~replace_na()~ と同じ書式で指定する
+#+begin_src R
+df %>% complete(group, nesting(item_id, item_name), fill = list(value1 = 0, value2 = 0))
 #+end_src
 
 #+RESULTS:
-| Age   |   No | Yes |
-|-------+------+-----|
-| Child |   52 |  57 |
-| Adult | 1438 | 654 |
+| group | item_id | item_name | value1 | value2 |
+|-------+---------+-----------+--------+--------|
+|     1 |       1 | a         |      1 |      4 |
+|     1 |       2 | b         |      3 |      6 |
+|     2 |       1 | a         |      0 |      0 |
+|     2 |       2 | b         |      2 |      5 |
+\\
 
 * 実行環境
 
@@ -699,4 +808,6 @@ loaded via a namespace (and not attached):
 - Blog
   - [[https://heavywatal.github.io/rstats/tidyr.html][tidyr — シンプルなデータ変形ツール@Heavy Watal]]
   - [[https://notchained.hatenablog.com/entry/2019/06/29/234050][Tokyo.Rでtidyr::pivot_longer()、tidyr::pivot_wider()について発表してきました@Technically, technophobic.]]
+  - [[https://notchained.hatenablog.com/entry/2016/01/19/215332][tidyr 0.4を使ってみる@Technically, technophobic.]]
   - [[https://stackoverflow.com/questions/29775461/how-can-i-spread-repeated-measures-of-multiple-variables-into-wide-format][How can I spread repeated measures of multiple variables into wide format?@stackoverflow]]
+  - [[https://qiita.com/kazutan/items/ab81958994426e67e017][tidyrの関数たちと向き合ってみる@Qiita]]
