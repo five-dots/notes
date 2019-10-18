@@ -37,7 +37,7 @@ Babel の実行には適切な ~org-babel-load-language~ の設定が必要で�
 | Language      | types, nse                                                         |
 | Import        | {readr}                                                            |
 | Table Data    | [[file:lang/r/package/dplyr/][ ~{dplyr}~ ]], [[file:./lang/r/package/tidyr.org][ ~{tidyr}~ ]], {purrrlyr}, {tibble}, {data.table}, {dtplyr} |
-| String        | regex, [[file:./lang/r/package/stringr.org][ ~{stringr}~ ]] [[file:./lang/r/package/glue.org][ ~{glue}~ ]], {readr}, {crayon} |
+| String        | regex, [[file:./lang/r/package/stringr.org][ ~{stringr}~ ]] [[file:./lang/r/package/glue.org][ ~{glue}~ ]], {readr}, {crayon}                     |
 | Factor        | {base}, {forcat}                                                   |
 | Date and Time | [[file:./lang/r/general/date_time.org][ ~{base}~ ]], [[file:./lang/r/package/lubridate.org][ ~{lubridate}~ ]], {hms}, {nanotime}                         |
 | Preprocessing | [[file:lang/r/package/recipes.org][ ~{recipes}~ ]]                                                        |
