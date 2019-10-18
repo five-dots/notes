@@ -5,7 +5,7 @@
 
 ~{tidyr}~ (タイディーアー) は、R の ~data.frame~ を操作するパッケージ。Tidy Data (整然データ) を作成するために用いられる。収録されている関数は、おおよそ 5 つほどのカテゴリーに分類できる。
 
-- 縦長 (longer)・横長 (wider) に変換する関数
+- ~data.frame~ を縦長 (longer)・横長 (wider) に変換する関数
 - ネストされた ~data.frame~ を作成するための関数
 - ~NA~ 処理の関数
 - 列の分割・結合の関数
@@ -59,44 +59,13 @@ packageVersion("tidyr")
 : [1] ‘1.0.0’
 \\
 
-* 全関数リスト
-
-#+begin_src R :results output :exports both
-pacman::p_funs(tidyr)
-#+end_src
-
-#+RESULTS:
-#+begin_example
- [1] "%>%"               "as_tibble"         "build_longer_spec"
- [4] "build_wider_spec"  "chop"              "complete"         
- [7] "complete_"         "contains"          "crossing"         
-[10] "crossing_"         "drop_na"           "drop_na_"         
-[13] "ends_with"         "everything"        "expand"           
-[16] "expand_"           "expand_grid"       "extract"          
-[19] "extract_"          "extract_numeric"   "fill"             
-[22] "fill_"             "full_seq"          "gather"           
-[25] "gather_"           "hoist"             "last_col"         
-[28] "matches"           "nest"              "nest_"            
-[31] "nest_legacy"       "nesting"           "nesting_"         
-[34] "num_range"         "one_of"            "pack"             
-[37] "pivot_longer"      "pivot_longer_spec" "pivot_wider"      
-[40] "pivot_wider_spec"  "replace_na"        "separate"         
-[43] "separate_"         "separate_rows"     "separate_rows_"   
-[46] "spread"            "spread_"           "starts_with"      
-[49] "tibble"            "tidyr_legacy"      "tribble"          
-[52] "unchop"            "uncount"           "unite"            
-[55] "unite_"            "unnest"            "unnest_"          
-[58] "unnest_auto"       "unnest_legacy"     "unnest_longer"    
-[61] "unnest_wider"      "unpack"
-#+end_example
-
 * 関数リスト
 ** 縦横変換
 *** ★★★ ~pivot_longer(data, cols, names_to = "name", names_prefix = NULL, names_sep = NULL, names_pattern = NULL, names_ptypes = list(), names_repair = "check_unique", values_to = "value", values_drop_na = FALSE, values_ptypes = list())~.
 
-- 横 -> 縦の Tidy Data へ変換
+- 横長から縦長の Tidy Data へ変換
 - ~gather()~ の後継
-- ~cols~ でまとめる列を指定 + ~names_*~ でラベル列の操作 + ~values_*~ で値列の操作
+- ~cols~ でまとめる列を指定 + ~names_*~ で列名の操作 + ~values_*~ で値列の操作
 - これまで ~separate()~ や ~unite()~ と組み合わせていた処理も一括で行うことができる
 - ~cols~ での列選択方法
   - ~Sepal.Width~ (単一の列を指定)
@@ -184,7 +153,7 @@ pivot_wider(d_long, names_from = name, values_from = value)
 
 *** ★★★ ~gather(data, key = "key", value = "value", ..., na.rm = FALSE, convert = FALSE, factor_key = FALSE)~.
 
-- 横 -> 縦の Tidy Data へ変換
+- 横長から縦長の Tidy Data へ変換
 - Key-Value pair に変換
 - ~key~, ~value~ に指定したものが、カラム名になる
 - 最後にマイナスでまとめ上げる変数を指定する (date 等)
@@ -208,7 +177,7 @@ iris %>%
 
 *** ★★★ ~spread(data, key, value, fill = NA, convert = FALSE, drop = TRUE, sep = NULL)~.
 
-- 縦 -> 横への変換
+- 縦長から横長への変換
 - まずは、縦長データを作成
 #+begin_src R :colnames yes
 d <- iris %>% head(3L) %>% tibble::rownames_to_column("id")
@@ -293,7 +262,7 @@ dat %>%
 - ~data.frame~ をネストして *list of data.frame* (= 列が list になっている) のカラムを作る
 - 内側を ... で指定し、外側をマイナスで指定
 
-#+begin_src R :results output
+#+begin_src R :results output :exports both
 iris %>% nest(-Species)
 
 # 同じ結果
@@ -312,9 +281,10 @@ Warning message:
 All elements of `...` must be named.
 Did you want `data = c(Sepal.Length, Sepal.Width, Petal.Length, Petal.Width)`?
 #+end_example
+\\
 
 - ~dplyr::group_nest()~ と同じ機能
-#+begin_src R :results output
+#+begin_src R :results output :exports both
 iris %>% dplyr::group_nest(Species)
 #+end_src
 
@@ -351,7 +321,7 @@ iris %>%
 *** ★☆☆ ~chop(data, cols)~.
     
 - 列構造を維持したまま list of data.frame に集約する 
-#+begin_src R :colnames yes :results output
+#+begin_src R :colnames yes :results output :exports both
 df <- tibble(x = c(1, 1, 1, 2, 2, 3), y = 1:6, z = 6:1)
 df %>% chop(c(y, z))
 #+end_src
@@ -370,7 +340,7 @@ df %>% chop(c(y, z))
 
 - ~nest()~ との違い
 - ~nest()~ は複数列を 1 つの list of data.frame に集約するが ~chop()~ は列の構造を維持したまま 
-#+begin_src R :colnames yes :results output
+#+begin_src R :colnames yes :results output :exports both
 df %>% nest(data = c(y, z))
 #+end_src
 
@@ -381,6 +351,7 @@ df %>% nest(data = c(y, z))
 : 1     1        [3 × 2]
 : 2     2        [2 × 2]
 : 3     3        [1 × 2]
+\\
 
 *** ★☆☆ ~unchop(data, cols, keep_empty = FALSE, ptype = NULL)~.
 
@@ -527,6 +498,7 @@ df
 | hoge | hoge |
 | fuga | fuga |
 | piyo | piyo |
+\\
 
 - 複数列を 1 つにまとめる
 #+begin_src R
@@ -542,16 +514,18 @@ unite(df, xy, x:y)
 \\
 
 *** ★☆☆ ~extract(data, col, into, regex = "([[:alnum:]]+)", remove = TRUE, convert = FALSE, ...)~.
+\\
+
 ** 直積集合
 *** ★☆☆ ~expand_grid(...)~.
 
 - tibble 版の ~expand.grid()~
 - ~expand.grid()~ との違い
-  • Varies the first element fastest
-  • Never converts strings to factors
-  • Does not add any additional attributes
-  • Returns a tibble, not a data frame
-  • Can expand any generalised vector, including data frames
+  1. Varies the first element fastest
+  2. Never converts strings to factors
+  3. Does not add any additional attributes
+  4. Returns a tibble, not a data frame
+  5. Can expand any generalised vector, including data frames
 #+begin_src R
 expand_grid(vs = unique(mtcars$vs), cyl = unique(mtcars$cyl))
 #+end_src
@@ -565,6 +539,7 @@ expand_grid(vs = unique(mtcars$vs), cyl = unique(mtcars$cyl))
 |  1 |   6 |
 |  1 |   4 |
 |  1 |   8 |
+\\
 
 *** ★☆☆ ~nesting(...)~.
 
@@ -604,7 +579,7 @@ expand_grid(x = 1:3, y = 3:1)
 
 - 指定したデータの全ての組み合わせを作成する
 - ~left_join()~ と組み合わせて、implicit な欠損値を explicit な欠損値へ変換するために利用する
-#+begin_src R :results output
+#+begin_src R :results output :exports both
 mtcars$vs
 unique(mtcars$vs)
 
@@ -737,6 +712,7 @@ df %>% complete(group, nesting(item_id, item_name))
 |     1 |       2 | b         |      3 |      6 |
 |     2 |       1 | a         |    nil |    nil |
 |     2 |       2 | b         |      2 |      5 |
+\\
 
 - ~NA~ を置換する場合は ~replace_na()~ と同じ書式で指定する
 #+begin_src R
