@@ -1,0 +1,81 @@
+#+STARTUP: folded indent inlineimages latexpreview
+#+PROPERTY: header-args:R :results output :session *R:performance*
+
+* 目次                                                            :quote:toc:
+#+BEGIN_QUOTE
+- [[#r-オブジェクトに-append-する際のパフォーマンス][R オブジェクトに append する際のパフォーマンス]]
+  - [[#summary][summary]]
+  - [[#list][list]]
+  - [[#environment][environment]]
+- [[#参考リンク][参考リンク]]
+#+END_QUOTE
+
+* R オブジェクトに append する際のパフォーマンス
+** summary
+- [[https://stackoverflow.com/questions/17046336/here-we-go-again-append-an-element-to-a-list-in-r][ここ]]での議論
+- ~environment~ を使うのが早い
+
+** list
+
+- ~list~ にインデックスをインクリメントして追加
+#+begin_src R :results output
+Result <- list()
+AddItemNaive <- function(item) {
+  .GlobalEnv$Result[[length(.GlobalEnv$Result)+1]] <- item
+}
+system.time(for(i in seq_len(2e4)) AddItemNaive(i))
+#+end_src
+
+#+RESULTS:
+: 
+:    user  system elapsed 
+:   1.992   0.012   2.003
+
+- ~list~ のサイズを一括で増やす方法
+- 元議論では、速度の改善が見られたが、自分の環境では向上しない
+#+begin_src R :results output
+Counter <- 0
+Result <- list(NULL)
+Size <- 1
+
+AddItemDoubling <- function(item) {
+  if(.GlobalEnv$Counter == .GlobalEnv$Size) {
+      length(.GlobalEnv$Result) <- .GlobalEnv$Size <- .GlobalEnv$Size * 2
+  }
+
+  .GlobalEnv$Counter <- .GlobalEnv$Counter + 1
+  .GlobalEnv$Result[[.GlobalEnv$Counter]] <- item
+}
+system.time(for(i in seq_len(2e4)) AddItemDoubling(i))
+#+end_src
+
+#+RESULTS:
+: 
+:    user  system elapsed 
+:   1.867   0.008   1.875
+\\
+
+** environment
+
+- ~environment~ に追加
+#+begin_src R :results output
+Counter <- 0
+Result <- new.env()
+AddItemEnvir <- function(item) {
+  .GlobalEnv$Counter <- .GlobalEnv$Counter + 1
+  .GlobalEnv$Result[[as.character(.GlobalEnv$Counter)]] <- item
+}
+system.time(for(i in seq_len(2e4)) AddItemEnvir(i))
+#+end_src
+
+#+RESULTS:
+: 
+:    user  system elapsed 
+:   0.088   0.000   0.088
+\\
+
+* 参考リンク
+- [[https://stackoverflow.com/questions/17046336/here-we-go-again-append-an-element-to-a-list-in-r][Here we go again: append an element to a list in R@stackoverflow]]
+- [[https://adv-r.hadley.nz/perf-measure.html][Advanced R 2nd: Measuring performance]]
+- [[https://adv-r.hadley.nz/perf-improve.html][Advanced R 2nd: Improving performance]]
+- [[https://www.burns-stat.com/pages/Tutor/R_inferno.pdf][The R Inferno: Growing Objects(PDF)]]

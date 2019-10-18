@@ -71,6 +71,7 @@ class(splits2)
 #+RESULTS:
 : <120/30/150>
 : [1] "rsplit"
+\\
 
 ** ★★☆ ~training(x)~.
 
@@ -146,10 +147,10 @@ str(test)
 - 1000 件のデータを v = 4 で分割する例
 | Fold  | 1 - 250 | 251 - 500 | 501 - 750 | 751 - 1000 |
 |-------+---------+-----------+-----------+------------|
-| Fold1 | Train   | Train     | Train     | _Test_       |
-| Fold2 | Train   | Train     | _Test_      | Train      |
-| Fold3 | Train   | _Test_      | Train     | Train      |
-| Fold4 | _Test_    | Train     | Train     | Train      |
+| Fold1 | Train   | Train     | Train     | *Test*       |
+| Fold2 | Train   | Train     | *Test*      | Train      |
+| Fold3 | Train   | *Test*      | Train     | Train      |
+| Fold4 | *Test*    | Train     | Train     | Train      |
 \\
 
 - 120 件の訓練データを 90 + 30 件に分割できた
@@ -216,6 +217,7 @@ assessment(train_fold$splits[[1]]) %>% head()
 |            5 |         3.4 |          1.5 |         0.2 | setosa  |
 |          4.9 |         3.1 |          1.5 |         0.1 | setosa  |
 |          4.8 |         3.4 |          1.6 |         0.2 | setosa  |
+\\
 
 ** ★★★ ~rolling_origin(data, initial = 5, assess = 1, cumulative = TRUE, skip = 0, ...)~.
 
