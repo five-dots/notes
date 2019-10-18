@@ -30,34 +30,12 @@ packageVersion("rsample")
 : [1] ‘0.0.5’
 \\
 
-* 全関数リスト
-
-#+begin_src R :results output :exports both
-pacman::p_funs(rsample)
-#+end_src
-
-#+RESULTS:
-#+begin_example
- [1] "add_resample_id"       "analysis"              "apparent"             
- [4] "assessment"            "bootstraps"            "caret2rsample"        
- [7] "complement"            "form_pred"             "gather.rset"          
-[10] "group_vfold_cv"        "initial_split"         "initial_time_split"   
-[13] "int_bca"               "int_pctl"              "int_t"                
-[16] "loo_cv"                "make_strata"           "mc_cv"                
-[19] "nested_cv"             "populate"              "pretty.apparent"      
-[22] "pretty.bootstraps"     "pretty.group_vfold_cv" "pretty.loo_cv"        
-[25] "pretty.mc_cv"          "pretty.nested_cv"      "pretty.rolling_origin"
-[28] "pretty.vfold_cv"       "rolling_origin"        "rsample2caret"        
-[31] "testing"               "tidy"                  "training"             
-[34] "vfold_cv"
-#+end_example
-
 * 関数リスト
 ** ★★★ ~initial_split(data, prop = 3/4, strata = NULL, breaks = 4, ...)~.
 
 - ~rsplit~, ~mc_split~ class
 
-#+begin_src R :results output
+#+begin_src R :results output :exports both
 splits <- initial_split(iris, prop = 0.8)
 splits
 class(splits)
@@ -76,7 +54,7 @@ class(splits)
  
 ** ★★☆ ~initial_time_split(data, prop = 3/4, ...)~.
 
-#+begin_src R :results output
+#+begin_src R :results output :exports both
 splits2 <- initial_time_split(iris, prop = 0.8)
 splits2
 class(splits2)
@@ -106,7 +84,7 @@ head(train )
 \\
 
 - 80% のデータを訓練データとして抽出できた
-#+begin_src R :results output
+#+begin_src R :results output :exports both
 str(train)
 #+end_src
 
@@ -139,7 +117,7 @@ head(test)
 \\
 
 - 20% のデータを訓練データとして抽出できた
-#+begin_src R :results output
+#+begin_src R :results output :exports both
 str(test)
 #+end_src
 
@@ -167,7 +145,7 @@ str(test)
 \\
 
 - 120 件の訓練データを 90 + 30 件に分割できた
-#+begin_src R :results output
+#+begin_src R :results output :exports both
 train_fold <- vfold_cv(train, v = 4)
 train_fold
 #+end_src
@@ -188,7 +166,7 @@ train_fold
 \\
 
 - ~vfold_cv~, ~rset~ class
-#+begin_src R :results output
+#+begin_src R :results output :exports both
 class(train_fold)
 #+end_src
 
@@ -255,7 +233,7 @@ head(df)
 
 - 訓練データ 90 日、テストデータ 30 日、30 日スライドで分割
 - 末尾の収まらなかった部分は削除される
-#+begin_src R :results output
+#+begin_src R :results output :exports both
 df_rolled <- rolling_origin(df, initial = 90, assess = 30, skip = 30, cumulative = FALSE)
 df_rolled
 #+end_src
@@ -278,7 +256,7 @@ df_rolled
 \\
 
 - ~rolling_origin~ class
-#+begin_src R :results output
+#+begin_src R :results output :exports both
 class(df_rolled)
 #+end_src
 
@@ -288,7 +266,7 @@ class(df_rolled)
 \\
 
 - cumulative = TRUE でデータの起点を変えずに、データを増やしていける
-#+begin_src R :results output
+#+begin_src R :results output :exports both
 df_rolled <- rolling_origin(df, initial = 90, assess = 30, skip = 30, cumulative = TRUE)
 df_rolled
 #+end_src
