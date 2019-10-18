@@ -9,8 +9,7 @@
 * 目次                                                            :quote:toc:
 #+BEGIN_QUOTE
 - [[#ライブラリの読み込みとバージョンの確認][ライブラリの読み込みとバージョンの確認]]
-- [[#全関数リスト][全関数リスト]]
-- [[#glue-package][glue package]]
+- [[#関数リスト][関数リスト]]
   - [[#-glue-sep---envir--parentframe-open---close---na--na-transformer--identity_transformer][★★★ ~glue(..., .sep = "", .envir = parent.frame(), .open = "{", .close = "}", .na = "NA", .transformer = identity_transformer)~.]]
   - [[#-glue_datax--sep---envir--parentframe-open---close---na--na-transformer--identity_transformer-trim--true][★★☆ ~glue_data(.x, ..., .sep = "", .envir = parent.frame(), .open = "{", .close = "}", .na = "NA", .transformer = identity_transformer, .trim = TRUE)~.]]
   - [[#-glue_col-envir--parentframe-na--na][★☆☆ ~glue_col(..., .envir = parent.frame(), .na = "NA")~.]]
@@ -40,20 +39,7 @@ packageVersion("glue")
 : [1] ‘1.3.1’
 \\
 
-* 全関数リスト
-
-#+begin_src R
-pacman::p_funs(glue)
-#+end_src
-
-#+RESULTS:
-:  [1] "as_glue"              "backtick"             "collapse"            
-:  [4] "double_quote"         "glue"                 "glue_col"            
-:  [7] "glue_collapse"        "glue_data"            "glue_data_col"       
-: [10] "glue_data_sql"        "glue_sql"             "identity_transformer"
-: [13] "single_quote"         "trim"
-
-* glue package
+* 関数リスト
 ** ★★★ ~glue(..., .sep = "", .envir = parent.frame(), .open = "{", .close = "}", .na = "NA", .transformer = identity_transformer)~.
 
 - ~{var}~ の形式で変数を埋め込む
@@ -98,8 +84,8 @@ glue("My name is {name},",
 \\
 
 - 空白、空白行は削除される
-- \\ を入力すると改行しない
-- { を入力するときは、{{
+- ~\\~ を入力すると改行しない
+- ~{~ を入力するときは ~{{~
 #+begin_src R :exports both
 glue("
     A formatted string
@@ -175,7 +161,7 @@ mtcars %>% glue_data("{rownames(.)} has {hp} hp") %>% head()
 \\
 
 ** ★☆☆ ~glue_col(..., .envir = parent.frame(), .na = "NA")~.
-     
+
 - ~{crayon}~ package と組み合わせて、コンソール出力時に色をつける
 #+begin_src R :exports both
 library(crayon)
@@ -184,6 +170,7 @@ glue_col("{blue {Sys.Date()}}")
 
 #+RESULTS:
 : 2019-10-18
+\\
 
 ** ★☆☆ ~glue_data_col(.x, ..., .envir = parent.frame(), .na = "NA")~.
 \\
@@ -214,26 +201,6 @@ glue_sql("
 : FROM `iris`
 : WHERE `iris`.sepal_length > 2
 :   AND `iris`.species = 'setosa'
-\\
-
-#+begin_src R :exports both
-sql <- glue_sql("
-  SELECT {`var`}
-  FROM {`tbl`}
-  WHERE {`tbl`}.sepal_length > ?
-  ", .con = con)
-query <- DBI::dbSendQuery(con, sql)
-DBI::dbBind(query, list(num))
-DBI::dbFetch(query, n = 4)
-DBI::dbClearResult(query)
-#+end_src
-
-#+RESULTS:
-:   sepal_width
-: 1         3.5
-: 2         3.0
-: 3         3.2
-: 4         3.1
 \\
 
 ** ★☆☆ ~glue_data_sql(.x, ..., .con, .envir = parent.frame(), .na = DBI::SQL("NULL"))~.
