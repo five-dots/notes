@@ -1,0 +1,235 @@
+#+STARTUP: folded indent
+#+PROPERTY: header-args:R :results value :colnames yes :session *R:readr*
+
+* ~{readr}~: A fresh approach to string manipulation                 :noexport:
+
+~{stringr}~ (ストリンガー) は、R の文字列を操作するパッケージ。これも ~{tidyverse}~ の他のパッケージ群と同様 ~{stringr}~ に独自の機能がある、というよりも関数の文法や名前付けを体系的にわかりやすく整理したパッケージという印象。[[http://site.icu-project.org/][ICU4C]] という文字列操作のための C/C++ のライブラリをラップしたものが ~{stringi}~ で、さらにラップしたものが ~{stringr}~ という関係になっている。
+
+- 全ての関数が ~str_~ + 動詞 (何をするのか) という名前付けになっていて、わかりやすい
+- 第 1 引数に文字列ベクトル ~string~ を取る (そのためパイプと相性が良い)
+- 第 2 引数に正規表現 ~pattern~ を取る (正規表現に対応した関数の場合)
+\\
+
+* 目次                                                                :quote:
+#+BEGIN_QUOTE
+- [[#ライブラリの読み込みとバージョンの確認][ライブラリの読み込みとバージョンの確認]]
+- [[#全関数リスト][全関数リスト]]
+  - [[#抽出][抽出]]
+    - [[#-str_substring-start--1l-end---1l-開始終了位置で抽出][★★☆ ~str_sub(string, start = 1L, end = -1L)~ 開始・終了位置で抽出]]
+    - [[#-str_subsetstring-pattern-negate--false-マッチ要素を抽出][★★★ ~str_subset(string, pattern, negate = FALSE)~ マッチ要素を抽出]]
+    - [[#-str_extractstring-pattern-最初のマッチ部分を抽出][★★☆ ~str_extract(string, pattern)~ 最初のマッチ部分を抽出]]
+    - [[#-str_extract_allstring-pattern-simplify--false-全てのマッチ部分を抽出][★☆☆ ~str_extract_all(string, pattern, simplify = FALSE)~ 全てのマッチ部分を抽出]]
+    - [[#-str_matchstring-pattern-最初のマッチ部分を抽出][★☆☆ ~str_match(string, pattern)~ 最初のマッチ部分を抽出]]
+    - [[#-str_match_allstring-pattern-全てのマッチ部分を抽出][★☆☆ ~str_match_all(string, pattern)~ 全てのマッチ部分を抽出]]
+    - [[#-wordstring-start--1l-end--start-sep--fixed--単語を抽出][★☆☆ ~word(string, start = 1L, end = start, sep = fixed(" "))~ 単語を抽出]]
+  - [[#置換変換削除][置換・変換・削除]]
+    - [[#-str_substring-start--1l-end---1l-omit_na--false---value-開始終了位置で置換][★★☆ ~str_sub(string, start = 1L, end = -1L, omit_na = FALSE) <- value~ 開始・終了位置で置換]]
+    - [[#-str_replacestring-pattern-replacement-最初のマッチを置換][★★★ ~str_replace(string, pattern, replacement)~ 最初のマッチを置換]]
+    - [[#-str_replace_allstring-pattern-replacement-全てのマッチを置換][★★★ ~str_replace_all(string, pattern, replacement)~ 全てのマッチを置換]]
+    - [[#-str_removestring-pattern-マッチ部分を削除][★★★ ~str_remove(string, pattern)~ マッチ部分を削除]]
+    - [[#-str_remove_allstring-pattern-マッチを削除][★★★ ~str_remove_all(string, pattern)~ マッチを削除]]
+    - [[#-str_to_lowerstring-locale--en-小文字に変換][★★☆ ~str_to_lower(string, locale = "en")~ 小文字に変換]]
+    - [[#-str_to_upperstring-locale--en-大文字に変換][★★☆ ~str_to_upper(string, locale = "en")~ 大文字に変換]]
+    - [[#-str_to_titlestring-locale--en-タイトル形式に変換][★☆☆ ~str_to_title(string, locale = "en")~ タイトル形式に変換]]
+    - [[#-str_to_sentencestring-locale--en-センテンス形式に変換][★☆☆ ~str_to_sentence(string, locale = "en")~ センテンス形式に変換]]
+  - [[#結合分割][結合・分割]]
+    - [[#-str_c-sep---collapse--null-結合-][★★☆ ~str_c(..., sep = "", collapse = NULL)~ 結合 (~...~)]]
+    - [[#-str_flattenstring-collapse---結合-ベクトル][★★☆ ~str_flatten(string, collapse = "")~ 結合 (ベクトル)]]
+    - [[#-str_dupstring-times-複製して結合][★☆☆ ~str_dup(string, times)~ 複製して結合]]
+    - [[#-str_splitstring-pattern-n--inf-simplify--false-分割][★★★ ~str_split(string, pattern, n = Inf, simplify = FALSE)~ 分割]]
+    - [[#-str_split_fixedstring-pattern-n-固定長で分割][★☆☆ ~str_split_fixed(string, pattern, n)~ 固定長で分割]]
+  - [[#変数埋め込み][変数埋め込み]]
+    - [[#-str_interpstring-env--parentframe-format-付きで埋め込む][★☆☆ ~str_interp(string, env = parent.frame())~ format 付きで埋め込む]]
+    - [[#-str_glue-sep---envir--parentframe-glue][★☆☆ ~str_glue(..., .sep = "", .envir = parent.frame())~ glue()]]
+    - [[#-str_glue_datax--sep---envir--parentframe-na--na-glue_data][★☆☆ ~str_glue_data(.x, ..., .sep = "", .envir = parent.frame(), .na = "NA")~ glue_data()]]
+  - [[#正規表現マッチを検出][正規表現マッチを検出]]
+    - [[#-str_detectstring-pattern-negate--false-マッチの真偽][★★★ ~str_detect(string, pattern, negate = FALSE)~ マッチの真偽]]
+    - [[#-str_startsstring-pattern-negate--false-先頭マッチの真偽][★★★ ~str_starts(string, pattern, negate = FALSE)~ 先頭マッチの真偽]]
+    - [[#-str_endsstring-pattern-negate--false-末尾マッチの真偽][★★★ ~str_ends(string, pattern, negate = FALSE)~ 末尾マッチの真偽]]
+    - [[#-str_whichstring-pattern-negate--false-マッチしたインデックス][★★☆ ~str_which(string, pattern, negate = FALSE)~ マッチしたインデックス]]
+    - [[#-str_countstring-pattern---マッチした数をカウント][★☆☆ ~str_count(string, pattern = "")~ マッチした数をカウント]]
+    - [[#-str_locatestring-pattern-マッチした開始終了位置][★☆☆ ~str_locate(string, pattern)~ マッチした開始・終了位置]]
+    - [[#-str_locate_allstring-pattern-マッチした開始終了位置][★☆☆ ~str_locate_all(string, pattern)~ マッチした開始・終了位置]]
+  - [[#長さの操作調整][長さの操作・調整]]
+    - [[#-str_lengthstring-文字数をカウント][★★☆ ~str_length(string)~ 文字数をカウント]]
+    - [[#-str_trimstring-side--cboth-left-right-空白を除去][★★☆ ~str_trim(string, side = c("both", "left", "right"))~ 空白を除去]]
+    - [[#-str_squishstring-複数の空白を除去][★☆☆ ~str_squish(string)~ 複数の空白を除去]]
+    - [[#-str_padstring-width-side--cleft-right-both-pad----文字埋め][★★☆ ~str_pad(string, width, side = c("left", "right", "both"), pad = " ")~ 文字埋め]]
+    - [[#-str_truncstring-width-side--cright-left-center-ellipsis---文字埋め][★☆☆ ~str_trunc(string, width, side = c("right", "left", "center"), ellipsis = "...")~ 文字埋め]]
+    - [[#-str_wrapstring-width--80-indent--0-exdent--0-折り返す][★☆☆ ~str_wrap(string, width = 80, indent = 0, exdent = 0)~ 折り返す]]
+  - [[#並び替え][並び替え]]
+    - [[#-str_orderx-decreasing--false-na_last--true-locale--en-numeric--false--並び順][★☆☆ ~str_order(x, decreasing = FALSE, na_last = TRUE, locale = "en", numeric = FALSE, ...)~ 並び順]]
+    - [[#-str_sortx-decreasing--false-na_last--true-locale--en-numeric--false--ソート][★☆☆ ~str_sort(x, decreasing = FALSE, na_last = TRUE, locale = "en", numeric = FALSE, ...)~ ソート]]
+  - [[#その他][その他]]
+    - [[#-str_convstring-encoding-文字コード変換][★☆☆ ~str_conv(string, encoding)~ 文字コード変換]]
+    - [[#-str_viewstring-pattern-match--na-最初のマッチを-html-表示][★☆☆ ~str_view(string, pattern, match = NA)~ 最初のマッチを HTML 表示]]
+    - [[#-str_view_allstring-pattern-match--na-全てのマッチを-html-表示][★☆☆ ~str_view_all(string, pattern, match = NA)~ 全てのマッチを HTML 表示]]
+  - [[#正規表現オプション][正規表現オプション]]
+    - [[#-fixedpattern-ignore_case--false][★☆☆ ~fixed(pattern, ignore_case = FALSE)~.]]
+    - [[#-collpattern-ignore_case--false-locale--en-][★☆☆ ~coll(pattern, ignore_case = FALSE, locale = "en", ...)~.]]
+    - [[#-regexpattern-ignore_case--false-multiline--false-comments--false-dotall--false-][★☆☆ ~regex(pattern, ignore_case = FALSE, multiline = FALSE, comments = FALSE, dotall = FALSE, ...)~.]]
+    - [[#-boundarytype--ccharacter-line_break-sentence-word-skip_word_none--na-][★☆☆ ~boundary(type = c("character", "line_break", "sentence", "word"), skip_word_none = NA, ...)~.]]
+- [[#実行環境][実行環境]]
+- [[#参考リンク][参考リンク]]
+#+END_QUOTE
+
+* ライブラリの読み込みとバージョンの確認
+
+#+begin_src R :results silent
+library(readr)
+#+end_src
+\\
+
+- バージョン
+#+begin_src R :results output :exports both
+packageVersion("readr")
+#+end_src
+
+#+RESULTS:
+: [1] ‘1.3.1’
+\\
+
+* 全関数リスト
+
+#+begin_src R :results output
+pacman::p_funs(readr)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+  [1] "AccumulateCallback"      "as.col_spec"            
+  [3] "ChunkCallback"           "clipboard"              
+  [5] "col_character"           "col_date"               
+  [7] "col_datetime"            "col_double"             
+  [9] "col_factor"              "col_guess"              
+ [11] "col_integer"             "col_logical"            
+ [13] "col_number"              "col_skip"               
+ [15] "col_time"                "cols"                   
+ [17] "cols_condense"           "cols_only"              
+ [19] "count_fields"            "DataFrameCallback"      
+ [21] "datasource"              "date_names"             
+ [23] "date_names_lang"         "date_names_langs"       
+ [25] "default_locale"          "format_csv"             
+ [27] "format_csv2"             "format_delim"           
+ [29] "format_tsv"              "fwf_cols"               
+ [31] "fwf_empty"               "fwf_positions"          
+ [33] "fwf_widths"              "guess_encoding"         
+ [35] "guess_parser"            "ListCallback"           
+ [37] "locale"                  "melt_csv"               
+ [39] "melt_csv_chunked"        "melt_csv2"              
+ [41] "melt_csv2_chunked"       "melt_delim"             
+ [43] "melt_delim_chunked"      "melt_fwf"               
+ [45] "melt_table"              "melt_table2"            
+ [47] "melt_tsv"                "melt_tsv_chunked"       
+ [49] "output_column"           "parse_character"        
+ [51] "parse_date"              "parse_datetime"         
+ [53] "parse_double"            "parse_factor"           
+ [55] "parse_guess"             "parse_integer"          
+ [57] "parse_logical"           "parse_number"           
+ [59] "parse_time"              "parse_vector"           
+ [61] "problems"                "read_csv"               
+ [63] "read_csv_chunked"        "read_csv2"              
+ [65] "read_csv2_chunked"       "read_delim"             
+ [67] "read_delim_chunked"      "read_file"              
+ [69] "read_file_raw"           "read_fwf"               
+ [71] "read_lines"              "read_lines_chunked"     
+ [73] "read_lines_raw"          "read_lines_raw_chunked" 
+ [75] "read_log"                "read_rds"               
+ [77] "read_table"              "read_table2"            
+ [79] "read_tsv"                "read_tsv_chunked"       
+ [81] "readr_example"           "show_progress"          
+ [83] "SideEffectChunkCallback" "spec"                   
+ [85] "spec_csv"                "spec_csv2"              
+ [87] "spec_delim"              "spec_table"             
+ [89] "spec_table2"             "spec_tsv"               
+ [91] "stop_for_problems"       "tokenize"               
+ [93] "tokenizer_csv"           "tokenizer_delim"        
+ [95] "tokenizer_fwf"           "tokenizer_line"         
+ [97] "tokenizer_log"           "tokenizer_tsv"          
+ [99] "tokenizer_ws"            "type_convert"           
+[101] "write_csv"               "write_csv2"             
+[103] "write_delim"             "write_excel_csv"        
+[105] "write_excel_csv2"        "write_file"             
+[107] "write_lines"             "write_rds"              
+[109] "write_tsv"
+#+end_example
+
+* 関数リスト
+** Parser 文字列から特定の型へ変換する
+*** parse_number()
+
+#+begin_src R :results output :exports both
+parse_number("￥10,300 です。")
+#+end_src
+
+#+RESULTS:
+: [1] 10300
+
+*** parse_double()
+
+#+begin_src R :results output :exports both
+parse_double("6e23")
+#+end_src
+
+#+RESULTS:
+: [1] 6e+23
+
+*** parse_logical()
+
+- 1/0/T/F/TRUE/FALSE を大文字小文字問わず logical に変換
+#+begin_src R :results output :exports both
+parse_logical("TRUE")
+#+end_src
+
+#+RESULTS:
+: [1] TRUE
+
+* 実行環境
+
+#+begin_src R :results output :exports both
+sessionInfo()
+#+end_src
+
+#+RESULTS:
+#+begin_example
+R version 3.6.1 (2019-07-05)
+Platform: x86_64-pc-linux-gnu (64-bit)
+Running under: Ubuntu 18.04.3 LTS
+
+Matrix products: default
+BLAS:   /usr/lib/x86_64-linux-gnu/blas/libblas.so.3.7.1
+LAPACK: /usr/lib/x86_64-linux-gnu/lapack/liblapack.so.3.7.1
+
+locale:
+ [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C              
+ [3] LC_TIME=en_US.UTF-8        LC_COLLATE=en_US.UTF-8    
+ [5] LC_MONETARY=en_US.UTF-8    LC_MESSAGES=en_US.UTF-8   
+ [7] LC_PAPER=en_US.UTF-8       LC_NAME=C                 
+ [9] LC_ADDRESS=C               LC_TELEPHONE=C            
+[11] LC_MEASUREMENT=en_US.UTF-8 LC_IDENTIFICATION=C       
+
+attached base packages:
+[1] stats     graphics  grDevices utils     datasets  methods   base     
+
+other attached packages:
+[1] stringr_1.4.0
+
+loaded via a namespace (and not attached):
+[1] compiler_3.6.1 magrittr_1.5   tools_3.6.1    stringi_1.4.3
+#+end_example
+\\
+
+* 参考リンク
+
+- [[https://readr.tidyverse.org/][公式サイト]] 
+- [[https://cran.r-project.org/web/packages/readr/index.html][CRAN]]
+- [[https://cran.r-project.org/web/packages/readr/readr.pdf][Reference Manual]]
+- [[https://github.com/tidyverse/readr][Github Repo]]
+- [[https://rawgit.com/rstudio/cheatsheets/master/data-import.pdf][Cheatsheet(PDF)]]
+- [[https://r4ds.had.co.nz/][R for Data Science]]
+- Vignette
+  - [[https://cran.r-project.org/web/packages/readr/vignettes/locales.html][Locales]]
+  - [[https://cran.r-project.org/web/packages/readr/vignettes/readr.html][Introduction to readr]]
+- Blog
+  - [[https://heavywatal.github.io/rstats/readr.html][readr — 高速で柔軟なテーブル読み込み@Heavy Watal]]
+

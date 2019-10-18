@@ -16,7 +16,7 @@
 * 正規表現
 ** メタ文字
 
-- R では、\ はエスケープするために \\ とする
+- R では ~\~ はエスケープするために ~\\~ とする
 |----------+------------------------------------+------------------------|
 | 文字     | マッチ                             | メモ                   |
 |----------+------------------------------------+------------------------|
@@ -120,7 +120,7 @@ stringr::str_extract("Hello, my name is Michael Jordan.", "(?<=^Hello, ).*")
 \\
 
 - 先読み (以前にマッチ)
-#+begin_src R
+#+begin_src R :exports both
 stringr::str_extract("Hello, my name is Michael Jordan.", ".*(?=Michael Jordan)")
 #+end_src
 
