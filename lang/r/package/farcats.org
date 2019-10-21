@@ -39,7 +39,7 @@ pacman::p_funs(forcats)
 : [29] "lvls_expand"     "lvls_reorder"    "lvls_revalue"    "lvls_union"
 \\
 
-* forcats package
+* 関数リスト
 
 - ~fct_~ prefix が付く
 - ~fct_inorder()~ factor の順序を出現順にしたい
