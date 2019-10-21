@@ -1,0 +1,230 @@
+#+STARTUP: folded indent
+#+PROPERTY: header-args:R :results output :session *R:rvest*
+
+* ~{rvest}~: Simple web scraping for R                               :noexport:
+
+~{rvest}~ は R でスクレイピングを行うためのパッケージ。
+\\
+
+* 目次                                                                :quote:
+#+BEGIN_QUOTE
+- [[#ライブラリの読み込みとバージョンの確認][ライブラリの読み込みとバージョンの確認]]
+- [[#関数リスト][関数リスト]]
+  - [[#fromto-files][From/To Files]]
+    - [[#-read_jsonpath-simplifyvector--false-][★★☆ ~read_json(path, simplifyVector = FALSE, ...)~.]]
+    - [[#-parse_jsonjson-simplifyvector--false-][★☆☆ ~parse_json(json, simplifyVector = FALSE, ...)~.]]
+    - [[#-write_jsonx-path-][★☆☆ ~write_json(x, path, ...)~.]]
+  - [[#fromto-r-objects][From/To R Objects]]
+    - [[#-tojsonx-dataframe--crows-columns-values-matrix--crowmajor-columnmajor-date--ciso8601-epoch-posixt--cstring-iso8601-epoch-mongo-factor--cstring-integer-complex--cstring-list-raw--cbase64-hex-mongo-null--clist-null-na--cnull-string-auto_unbox--false-digits--4-pretty--false-force--false-][★★☆ ~toJSON(x, dataframe = c("rows", "columns", "values"), matrix = c("rowmajor", "columnmajor"), Date = c("ISO8601", "epoch"), POSIXt = c("string", "ISO8601", "epoch", "mongo"), factor = c("string", "integer"), complex = c("string", "list"), raw = c("base64", "hex", "mongo"), null = c("list", "null"), na = c("null", "string"), auto_unbox = FALSE, digits = 4, pretty = FALSE, force = FALSE, ...)~.]]
+    - [[#-fromjsontxt-simplifyvector--true-simplifydataframe--simplifyvector-simplifymatrix--simplifyvector-flatten--false-][★★★ ~fromJSON(txt, simplifyVector = TRUE, simplifyDataFrame = simplifyVector, simplifyMatrix = simplifyVector, flatten = FALSE, ...)~.]]
+  - [[#others][Others]]
+    - [[#-base64_decinput][★☆☆ ~base64_dec(input)~.]]
+    - [[#-base64_encinput][★☆☆ ~base64_enc(input)~.]]
+    - [[#-flattenx-recursive--true][★☆☆ ~flatten(x, recursive = TRUE)~.]]
+    - [[#-minifytxt][★☆☆ ~minify(txt)~.]]
+    - [[#-prettifytxt-indent--4][★☆☆ ~prettify(txt, indent = 4)~.]]
+    - [[#-rbind_pagespages][★☆☆ ~rbind_pages(pages)~.]]
+    - [[#-serializejsonx-digits--8-pretty--false][★☆☆ ~serializeJSON(x, digits = 8, pretty = FALSE)~.]]
+    - [[#-stream_incon-handler--null-pagesize--500-verbose--true-][★☆☆ ~stream_in(con, handler = NULL, pagesize = 500, verbose = TRUE, ...)~.]]
+    - [[#-stream_outx-con--stdout-pagesize--500-verbose--true-prefix---][★☆☆ ~stream_out(x, con = stdout(), pagesize = 500, verbose = TRUE, prefix = "", ...)~.]]
+    - [[#-unboxx][★☆☆ ~unbox(x)~.]]
+    - [[#-unserializejsontxt][★☆☆ ~unserializeJSON(txt)~.]]
+    - [[#-validatetxt][★☆☆ ~validate(txt)~.]]
+- [[#実行環境][実行環境]]
+- [[#参考リンク][参考リンク]]
+#+END_QUOTE
+
+* ライブラリの読み込みとバージョンの確認
+  
+#+begin_src R :results silent
+library(rvest)
+library(tidyverse)
+#+end_src
+\\
+
+- バージョン
+#+begin_src R :exports both
+packageVersion("rvest")
+#+end_src
+
+#+RESULTS:
+: [1] ‘0.3.4’
+\\
+
+* 全関数リスト
+
+#+begin_src R
+pacman::p_funs(rvest)
+#+end_src
+
+#+RESULTS:
+:  [1] "%>%"             "back"            "follow_link"     "google_form"    
+:  [5] "guess_encoding"  "html"            "html_attr"       "html_attrs"     
+:  [9] "html_children"   "html_form"       "html_name"       "html_node"      
+: [13] "html_nodes"      "html_session"    "html_table"      "html_tag"       
+: [17] "html_text"       "is.session"      "jump_to"         "minimal_html"   
+: [21] "pluck"           "repair_encoding" "session_history" "set_values"     
+: [25] "submit_form"     "xml"             "xml_node"        "xml_nodes"      
+: [29] "xml_tag"
+
+* 基本
+
+- ~xml2::read_html()~ もしくは ~xml2::read_xml()~ で読み込む
+- ~xml_document~ class
+#+begin_src R :exports both
+lego_movie <- xml2::read_html("http://www.imdb.com/title/tt1490017/")
+lego_movie
+#+end_src
+
+#+RESULTS:
+: {html_document}
+: <html xmlns:og="http://ogp.me/ns#" xmlns:fb="http://www.facebook.com/2008/fbml">
+: [1] <head>\n<meta http-equiv="Content-Type" content="text/html; charset=UTF-8 ...
+: [2] <body id="styleguide-v2" class="fixed">\n            <img height="1" widt ...
+: <pointer: 0x556e9506d3c0>
+: <pointer: 0x556e950bad70>
+\\
+
+- ~html_nodes()~ でフィルタする
+- CSS Selector もしくは XPath で指定
+- html_text() でテキスト
+#+begin_src R :exports both
+lego_movie %>%
+  html_nodes("strong span") %>%
+  html_text()
+#+end_src
+
+#+RESULTS:
+: [1] "7.8"
+\\ 
+
+- ~html_attr()~ で指定した属性を抽出
+#+begin_src R :exports both
+lego_movie %>%
+  html_nodes("#titleCast .primary_photo img") %>%
+  html_attr("alt")
+#+end_src
+
+#+RESULTS:
+:  [1] "Will Arnett"     "Elizabeth Banks" "Craig Berry"     "Alison Brie"    
+:  [5] "David Burrows"   "Anthony Daniels" "Charlie Day"     "Amanda Farinos" 
+:  [9] "Keith Ferguson"  "Will Ferrell"    "Will Forte"      "Dave Franco"    
+: [13] "Morgan Freeman"  "Todd Hansen"     "Jonah Hill"
+\\
+
+- 画像の URL も抽出できる
+#+begin_src R :exports both
+lego_movie %>%
+  html_nodes(".poster img") %>%
+  html_attr("src")
+#+end_src
+
+#+RESULTS:
+: [1] "https://m.media-amazon.com/images/M/MV5BMTg4MDk1ODExN15BMl5BanBnXkFtZTgwNzIyNjg3MDE@._V1_UX182_CR0,0,182,268_AL_.jpg"
+\\
+
+- 情報抽出の関数
+  - html_text(x, trim = FALSE)
+  - html_name(x)
+  - html_children(x)
+  - html_attrs(x)
+  - html_attr(x, name, default = NA_character_)
+
+- table => data.frame 変換
+~html_table(x, header = NA, trim = TRUE, fill = FALSE, dec = ".")~
+#+begin_src R :results silent
+tdist <- read_html("http://en.wikipedia.org/wiki/Student%27s_t-distribution")
+tdist_tbl <- tdist %>%
+  html_node("table.infobox") %>%
+  html_table(header = FALSE)
+#+end_src
+
+- フォームの送信
+  - html_form(x)
+  - set_values(form, ...)
+  - submit_form(session, form, submit = NULL, ...)
+
+- Encoding
+  - guess_encoding(x)
+  - repair_encoding(x, from = NULL)
+
+- ブラウザのナビゲーション
+  - html_session(url, ...)
+  - jump_to(x, url, ...)
+  - follow_link(x, i, css, xpath, ...)
+  - session_history(x)
+  - back(x)
+
+- XML 操作
+  - read_xml()
+  - xml(x, ..., encoding = "")
+  - xml_node(x, css, xpath)
+  - xml_nodes(x, css, xpath)
+  - xml_attr()
+  - xml_attrs()
+  - xml_text()
+  - xml_name()
+
+- PhantomJs を使う ([[https://www.datacamp.com/community/tutorials/scraping-javascript-generated-data-with-r][参考]])
+  system コマンドで js を実行し、html を保存する
+  system("full_path_to_phantomjs.exe file_name.js")
+\\
+
+* 実行環境
+
+#+begin_src R :results output :exports both
+sessionInfo()
+#+end_src
+
+#+RESULTS:
+#+begin_example
+R version 3.6.1 (2019-07-05)
+Platform: x86_64-pc-linux-gnu (64-bit)
+Running under: Ubuntu 18.04.3 LTS
+
+Matrix products: default
+BLAS:   /usr/lib/x86_64-linux-gnu/blas/libblas.so.3.7.1
+LAPACK: /usr/lib/x86_64-linux-gnu/lapack/liblapack.so.3.7.1
+
+locale:
+ [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C              
+ [3] LC_TIME=en_US.UTF-8        LC_COLLATE=en_US.UTF-8    
+ [5] LC_MONETARY=en_US.UTF-8    LC_MESSAGES=en_US.UTF-8   
+ [7] LC_PAPER=en_US.UTF-8       LC_NAME=C                 
+ [9] LC_ADDRESS=C               LC_TELEPHONE=C            
+[11] LC_MEASUREMENT=en_US.UTF-8 LC_IDENTIFICATION=C       
+
+attached base packages:
+[1] stats     graphics  grDevices utils     datasets  methods   base     
+
+other attached packages:
+ [1] forcats_0.4.0   stringr_1.4.0   dplyr_0.8.3     purrr_0.3.3    
+ [5] readr_1.3.1     tidyr_1.0.0     tibble_2.1.3    ggplot2_3.2.1  
+ [9] tidyverse_1.2.1 jsonlite_1.6   
+
+loaded via a namespace (and not attached):
+ [1] Rcpp_1.0.2        cellranger_1.1.0  pillar_1.4.2      compiler_3.6.1   
+ [5] prettyunits_1.0.2 progress_1.2.2    tools_3.6.1       zeallot_0.1.0    
+ [9] lubridate_1.7.4   lifecycle_0.1.0   nlme_3.1-141      gtable_0.3.0     
+[13] lattice_0.20-38   pkgconfig_2.0.3   rlang_0.4.0       cli_1.9.9.9000   
+[17] rstudioapi_0.10   haven_2.1.1       withr_2.1.2       xml2_1.2.2       
+[21] httr_1.4.1        generics_0.0.2    vctrs_0.2.0       hms_0.5.1        
+[25] grid_3.6.1        tidyselect_0.2.5  glue_1.3.1        R6_2.4.0         
+[29] fansi_0.4.0       readxl_1.3.1      modelr_0.1.5      magrittr_1.5     
+[33] backports_1.1.5   scales_1.0.0      rvest_0.3.4       assertthat_0.2.1 
+[37] colorspace_1.4-1  stringi_1.4.3     lazyeval_0.2.2    munsell_0.5.0    
+[41] broom_0.5.2       crayon_1.3.4
+#+end_example
+\\
+
+* 参考リンク
+
+- [[https://rvest.tidyverse.org/][公式サイト]]
+- [[https://cloud.r-project.org/web/packages/rvest/index.html][CRAN]]
+- [[https://cloud.r-project.org/web/packages/rvest/rvest.pdf][Reference Manual]]
+- [[https://github.com/tidyverse/rvest][Github Repo]]
+- Vignette
+  - [[https://cloud.r-project.org/web/packages/rvest/vignettes/selectorgadget.html][SelectorGadget]]
+- Blog
+  - [[https://www.datacamp.com/community/tutorials/scraping-javascript-generated-data-with-r][Web Scraping with R and PhantomJS@DataCamp]]
+    
