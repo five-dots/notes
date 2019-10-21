@@ -48,7 +48,7 @@ Babel の実行には適切な ~org-babel-load-language~ の設定が必要で�
 | Workflow           | {drake}, {mlr/mlr3}                                                 |
 | Utility            | {magrittr}, {zeallot}                                               |
 | Dataset            | [[file:./lang/r/general/dataset.org][ ~general~ ]], [[file:lang/r/finance/dataset.org][ ~finance~ ]]                                                |
-| Other              | [[file:./lang/r/general/five_problelms.org][ ~five problems~ ]]                                                     |
+| Other              | [[file:./lang/r/general/five_problems.org][ ~five problems~ ]]                                                     |
 |--------------------+---------------------------------------------------------------------|
 
 ** Python
