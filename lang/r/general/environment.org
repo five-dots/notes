@@ -1,40 +1,35 @@
 #+STARTUP: folded indent inlineimages latexpreview
 #+PROPERTY: header-args:R :results value :colnames yes :session *R:env*
 
-* R's environment in ~{base}~                                      :noexport:
+* R's environment in ~{base}~                                        :noexport:
 
 R の enviroment (環境) について、おもに Advanced R を読んだ上でのまとめ。
 
-* 目次                                                                :quote:
+* 目次                                                            :quote:toc:
 #+BEGIN_QUOTE
 - [[#environment-環境-とは][environment (環境) とは？]]
-- [[#search-path-and-basics][Search path and basics]]
+- [[#search-path-and-environments-basics][Search path and environments basics]]
   - [[#r_globalenv][R_GlobalEnv]]
   - [[#search-path][Search Path]]
   - [[#r_emptyenv][R_EmptyEnv]]
   - [[#autoloads][Autoloads]]
-- [[#operation][Operation]]
-- [[#operation-1][Operation]]
+- [[#environments-as-a-data-structure][Environments as a data structure]]
   - [[#reference-semantics][Reference Semantics]]
-  - [[#base-package][{base} package]]
-    - [[#newenvhash--true-parent--parentframe-size--29l][new.env(hash = TRUE, parent = parent.frame(), size = 29L)]]
-    - [[#lsname-pos---1l-envir--asenvironmentpos-allnames--false-pattern-sorted--true][ls(name, pos = -1L, envir = as.environment(pos), all.names = FALSE, pattern, sorted = TRUE)]]
-    - [[#lsstrpos---1-name-envir-allnames--false-pattern-mode--any][ls.str(pos = -1, name, envir, all.names = FALSE, pattern, mode = "any")]]
-    - [[#getx-pos---1-envir--asenvironmentpos-mode--any-inherits--true][get(x, pos = -1, envir = as.environment(pos), mode = "any", inherits = TRUE)]]
-    - [[#rm-list--character-pos---1-envir--asenvironmentpos-inherits--false][rm(..., list = character(), pos = -1, envir = as.environment(pos), inherits = FALSE)]]
-    - [[#existsx-where---1-envir---frame-mode--any-inherits--true][exists(x, where = -1, envir = , frame, mode = "any", inherits = TRUE)]]
-    - [[#asenvironmentx][as.environment(x)]]
-    - [[#parentframen--1][parent.frame(n = 1)]]
-    - [[#gettersetter-example][getter/setter example]]
-- [[#environment-in-function][Environment in Function]]
+  - [[#newenvhash--true-parent--parentframe-size--29l][new.env(hash = TRUE, parent = parent.frame(), size = 29L)]]
+  - [[#lsname-pos---1l-envir--asenvironmentpos-allnames--false-pattern-sorted--true][ls(name, pos = -1L, envir = as.environment(pos), all.names = FALSE, pattern, sorted = TRUE)]]
+  - [[#lsstrpos---1-name-envir-allnames--false-pattern-mode--any][ls.str(pos = -1, name, envir, all.names = FALSE, pattern, mode = "any")]]
+  - [[#getx-pos---1-envir--asenvironmentpos-mode--any-inherits--true][get(x, pos = -1, envir = as.environment(pos), mode = "any", inherits = TRUE)]]
+  - [[#rm-list--character-pos---1-envir--asenvironmentpos-inherits--false][rm(..., list = character(), pos = -1, envir = as.environment(pos), inherits = FALSE)]]
+  - [[#existsx-where---1-envir---frame-mode--any-inherits--true][exists(x, where = -1, envir = , frame, mode = "any", inherits = TRUE)]]
+  - [[#asenvironmentx][as.environment(x)]]
+  - [[#gettersetter-example][getter/setter example]]
+- [[#environments-in-function][Environments in Function]]
   - [[#basics][Basics]]
   - [[#enclosing-enviroment--biding-environment][Enclosing enviroment / Biding environment]]
   - [[#execution-environment][Execution environment]]
-  - [[#function-factory][Function factory]]
-  - [[#関数内から-globalenv-の値を得る][関数内から GlobalEnv の値を得る]]
+  - [[#function-factory-and-closure][Function factory and closure]]
+  - [[#関数内から-globalenv-の値を得る][関数内から ~.GlobalEnv~ の値を得る]]
   - [[#値の割当て][値の割当て]]
-- [[#rlang-package][rlang package]]
-- [[#環境の再帰呼び出しテンプレート][環境の再帰呼び出しテンプレート]]
 - [[#reference][Reference]]
 #+END_QUOTE
 
@@ -56,7 +51,7 @@ R の enviroment (環境) について、おもに Advanced R を読んだ上で
    - *Copy on modify semantics* ではなく、 *Reference semantics* を持つデータ構造として利用できる
 \\
      
-* Search path and basics
+* Search path and environments basics
 ** R_GlobalEnv
 
 - 現在の環境は、通常 ~R_GlobalEnv~
@@ -225,7 +220,7 @@ search()
 : [10] "Autoloads"         "package:base"
 \\
 
-* Operation
+* Environments as a data structure
 ** Reference Semantics
 
 - *Reference Semantics*
@@ -255,9 +250,9 @@ x_e$a # env だと元のオブジェクトが書き換わる
 : [1] 1
 : 
 : [1] 2
+\\
 
-** {base} package 
-*** new.env(hash = TRUE, parent = parent.frame(), size = 29L)
+** new.env(hash = TRUE, parent = parent.frame(), size = 29L)
 
 #+begin_src R :exports both
 e <- new.env()
@@ -289,7 +284,7 @@ parent.env(e2)
 : <environment: R_EmptyEnv>
 \\
 
-*** ls(name, pos = -1L, envir = as.environment(pos), all.names = FALSE, pattern, sorted = TRUE)
+** ls(name, pos = -1L, envir = as.environment(pos), all.names = FALSE, pattern, sorted = TRUE)
 
 #+begin_src R :exports both
 ls(e)
@@ -304,7 +299,7 @@ ls(e, all.names = TRUE) # .も表示
 : [1] ".c" "a"  "b"
 \\
 
-*** ls.str(pos = -1, name, envir, all.names = FALSE, pattern, mode = "any")
+** ls.str(pos = -1, name, envir, all.names = FALSE, pattern, mode = "any")
 
 #+begin_src R :exports both
 ls.str(e)
@@ -315,11 +310,11 @@ ls.str(e)
 : b :  chr "a"
 \\
 
-*** get(x, pos = -1, envir = as.environment(pos), mode = "any", inherits = TRUE)
+** get(x, pos = -1, envir = as.environment(pos), mode = "any", inherits = TRUE)
  
 - 指定した環境にない場合は、親環境を探しに行く
 - inherits = FALSE で親環境を探さない
-#+begin_src R
+#+begin_src R :exports both
 c <- 20
 get("c", envir = e)
 get("c", envir = e, inherits = FALSE)
@@ -330,8 +325,9 @@ get("c", envir = e, inherits = FALSE)
 : [1] 20
 : 
 : Error in get("c", envir = e, inherits = FALSE) : object 'c' not found
+\\
 
-*** rm(..., list = character(), pos = -1, envir = as.environment(pos), inherits = FALSE)
+** rm(..., list = character(), pos = -1, envir = as.environment(pos), inherits = FALSE)
 
 - ~NULL~ では消せない (~list~ では消すことができる)
 #+begin_src R :exports both
@@ -342,6 +338,7 @@ ls(e)
 #+RESULTS:
 : 
 : [1] "a" "b"
+\\
 
 - ~rm()~ で消す
 #+begin_src R :exports both
@@ -352,10 +349,11 @@ ls(e)
 #+RESULTS:
 : 
 : [1] "b"
+\\
 
-*** exists(x, where = -1, envir = , frame, mode = "any", inherits = TRUE)
+** exists(x, where = -1, envir = , frame, mode = "any", inherits = TRUE)
 
-#+begin_src R
+#+begin_src R :exports both
 ls(e)
 exists("a", envir = e)
 exists("b", envir = e) # get() と同じく、指定した環境になければ、親を探す
@@ -367,8 +365,9 @@ exists("b", envir = e) # get() と同じく、指定した環境になければ�
 : [1] FALSE
 : 
 : [1] TRUE
+\\
 
-*** as.environment(x)
+** as.environment(x)
 
 - Search path のインデックスか、パッケージ名で環境を取得できる
 #+begin_src R :exports both
@@ -395,18 +394,7 @@ attr(,"path")
 #+end_example
 \\
 
-*** parent.frame(n = 1)
-
-- Calling enviroment = 関数を呼び出している環境 (~parent.env()~ ではない)
-#+begin_src R :exports both
-parent.frame()
-#+end_src
-
-#+RESULTS:
-: <environment: R_GlobalEnv>
-\\
-
-*** getter/setter example
+** getter/setter example
 
 - 環境で getter/setter 関数を利用する例
 - ~on.exit()~ で reset するために、setter では invisible() で設定前の値を返す
@@ -434,11 +422,12 @@ ls.str(my_env)
 : [1] 1
 : 
 : a :  num 2
+\\
 
-* Environment in Function
+* Environments in Function
 ** Basics
 
-- _Enclosing enviroment_ ::
+1. *Enclosing enviroment*
   - 作成された場所
   - すべての関数が必ず 1 つ持つ (変わらない)
   - how the function finds values
@@ -447,21 +436,22 @@ ls.str(my_env)
     - 親環境が、必要な全ての外部 package が import された特別な環境になっている
     - 外部の package に同名の関数があっても影響を受けないようにしている (= globalenv を探さない)
   
-- _Biding enviroment_ ::
+2. *Binding enviroment*
   - 関数が格納されている場所
   - how we find the function = search path
   - *package environment*
     - export された関数を持つ (search path に置かれる)
     - namespace env に Enclose されている
    
-- _Execution enviroment_ ::
+3. *Execution enviroment*
   - 関数内の環境
   - 毎回 fresh start される
   
-- _Calling enviroment_ ::
+4. *Calling enviroment*
   - どの環境から関数が呼ばれたか
   - ~parent.frame()~ でアクセスできる
   - 通常は ~R_GlobalEnv~
+\\
 
 ** Enclosing enviroment / Biding environment
 
@@ -540,6 +530,7 @@ h()
 \\
 
 - ~parent.env()~ と ~parent.frame()~ が紛らわしい
+- parent.frame = Calling enviroment = 関数を呼び出している環境 (~parent.env()~ ではない)
 #+begin_src R :exports both
 i <- function() {
   print(parent.env(environment()))
@@ -608,9 +599,10 @@ i()
 : [1] 10
 \\
 
-** 関数内から .GlobalEnv の値を得る
+** 関数内から ~.GlobalEnv~ の値を得る
 
 - Dynamic Scoping (Interactive Data Analysis では便利)
+- ~get()~ を利用するか ~.GlobalEnv$~ でアクセスする
 #+begin_src R :exports both
 f2 <- function() {
   x <- 10
@@ -620,6 +612,7 @@ f2 <- function() {
     list(defined = def, called = cll)
   }
 }
+
 g2 <- f2()
 x <- 20
 str(g2())
@@ -652,7 +645,7 @@ ls()
 
 - ~<<-~
 - 親環境をさかのぼって変更する
-- 通常は利用しない方が良いが、Closure と組み合わせて使う
+- 通常は利用しない方が良いが、Closure と組み合わせて使うと便利
 #+begin_src R :exports both
 x <- 0
 f <- function() {
@@ -696,38 +689,6 @@ x
 : [1] 0.8595137
 : [1] 0.6320141
 \\
-
-* 環境の再帰呼び出しテンプレート
-
-- Recursive case
-#+begin_src R
-f <- function(..., env = parent.frame()) {
-  if (identical(env, emptyenv())) {
-    # base case
-  } else if (success) {
-    # success case
-  } else {
-    # recursive case
-    f(..., env = parent.env(env))
-  }
-}
-#+end_src
-
-- Loop case
-#+begin_src R
-is_empty <- function(x) identical(x, emptyenv())
-f2 <- function(..., env = parent.frame()) {
-  while (!is_empty(env)) {
-    if (success) {
-      # success case
-      return()
-    }
-    # inspect parent
-    env <- parent.env(env)
-  }
-  # base case
-}
-#+end_src
 
 * Reference
 
