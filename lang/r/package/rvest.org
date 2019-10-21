@@ -6,30 +6,11 @@
 ~{rvest}~ は R でスクレイピングを行うためのパッケージ。
 \\
 
-* 目次                                                                :quote:
+* 目次                                                            :quote:toc:
 #+BEGIN_QUOTE
 - [[#ライブラリの読み込みとバージョンの確認][ライブラリの読み込みとバージョンの確認]]
-- [[#関数リスト][関数リスト]]
-  - [[#fromto-files][From/To Files]]
-    - [[#-read_jsonpath-simplifyvector--false-][★★☆ ~read_json(path, simplifyVector = FALSE, ...)~.]]
-    - [[#-parse_jsonjson-simplifyvector--false-][★☆☆ ~parse_json(json, simplifyVector = FALSE, ...)~.]]
-    - [[#-write_jsonx-path-][★☆☆ ~write_json(x, path, ...)~.]]
-  - [[#fromto-r-objects][From/To R Objects]]
-    - [[#-tojsonx-dataframe--crows-columns-values-matrix--crowmajor-columnmajor-date--ciso8601-epoch-posixt--cstring-iso8601-epoch-mongo-factor--cstring-integer-complex--cstring-list-raw--cbase64-hex-mongo-null--clist-null-na--cnull-string-auto_unbox--false-digits--4-pretty--false-force--false-][★★☆ ~toJSON(x, dataframe = c("rows", "columns", "values"), matrix = c("rowmajor", "columnmajor"), Date = c("ISO8601", "epoch"), POSIXt = c("string", "ISO8601", "epoch", "mongo"), factor = c("string", "integer"), complex = c("string", "list"), raw = c("base64", "hex", "mongo"), null = c("list", "null"), na = c("null", "string"), auto_unbox = FALSE, digits = 4, pretty = FALSE, force = FALSE, ...)~.]]
-    - [[#-fromjsontxt-simplifyvector--true-simplifydataframe--simplifyvector-simplifymatrix--simplifyvector-flatten--false-][★★★ ~fromJSON(txt, simplifyVector = TRUE, simplifyDataFrame = simplifyVector, simplifyMatrix = simplifyVector, flatten = FALSE, ...)~.]]
-  - [[#others][Others]]
-    - [[#-base64_decinput][★☆☆ ~base64_dec(input)~.]]
-    - [[#-base64_encinput][★☆☆ ~base64_enc(input)~.]]
-    - [[#-flattenx-recursive--true][★☆☆ ~flatten(x, recursive = TRUE)~.]]
-    - [[#-minifytxt][★☆☆ ~minify(txt)~.]]
-    - [[#-prettifytxt-indent--4][★☆☆ ~prettify(txt, indent = 4)~.]]
-    - [[#-rbind_pagespages][★☆☆ ~rbind_pages(pages)~.]]
-    - [[#-serializejsonx-digits--8-pretty--false][★☆☆ ~serializeJSON(x, digits = 8, pretty = FALSE)~.]]
-    - [[#-stream_incon-handler--null-pagesize--500-verbose--true-][★☆☆ ~stream_in(con, handler = NULL, pagesize = 500, verbose = TRUE, ...)~.]]
-    - [[#-stream_outx-con--stdout-pagesize--500-verbose--true-prefix---][★☆☆ ~stream_out(x, con = stdout(), pagesize = 500, verbose = TRUE, prefix = "", ...)~.]]
-    - [[#-unboxx][★☆☆ ~unbox(x)~.]]
-    - [[#-unserializejsontxt][★☆☆ ~unserializeJSON(txt)~.]]
-    - [[#-validatetxt][★☆☆ ~validate(txt)~.]]
+- [[#全関数リスト][全関数リスト]]
+- [[#基本][基本]]
 - [[#実行環境][実行環境]]
 - [[#参考リンク][参考リンク]]
 #+END_QUOTE
@@ -53,7 +34,7 @@ packageVersion("rvest")
 
 * 全関数リスト
 
-#+begin_src R
+#+begin_src R :exports both
 pacman::p_funs(rvest)
 #+end_src
 
@@ -138,6 +119,7 @@ tdist_tbl <- tdist %>%
   html_node("table.infobox") %>%
   html_table(header = FALSE)
 #+end_src
+\\
 
 - フォームの送信
   - html_form(x)
