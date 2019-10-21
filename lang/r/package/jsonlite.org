@@ -105,7 +105,7 @@ head(json2)
 ** From/To R Objects
 *** ★★☆ ~toJSON(x, dataframe = c("rows", "columns", "values"), matrix = c("rowmajor", "columnmajor"), Date = c("ISO8601", "epoch"), POSIXt = c("string", "ISO8601", "epoch", "mongo"), factor = c("string", "integer"), complex = c("string", "list"), raw = c("base64", "hex", "mongo"), null = c("list", "null"), na = c("null", "string"), auto_unbox = FALSE, digits = 4, pretty = FALSE, force = FALSE, ...)~.
 
-#+begin_src R
+#+begin_src R :exports both
 iris_j <- toJSON(iris[1:10, ])
 iris_j
 #+end_src

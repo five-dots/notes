@@ -48,7 +48,7 @@ Babel の実行には適切な ~org-babel-load-language~ の設定が必要で�
 | Performance Metric | [[file:./lang/r/package/yardstick/][ ~{yardstick*}~ ]], {PerformanceAnalytics}                                |
 | Workflow           | {drake}, {mlr/mlr3}                                                   |
 |--------------------+-----------------------------------------------------------------------|
-| Data Format        | [[file:./lang/r/package/jsonlite.org][ ~{jsonlite}~ ]], {xml2}                                                  |
+| Data Format        | [[file:./lang/r/package/jsonlite.org][ ~{jsonlite*}~ ]], {xml2}                                                 |
 | Application        | [[file:./lang/r/package/fs.org][ ~{fs*}~ ]], {database}                                                   |
 | HTTP               | [[file:./lang/r/package/curl.org][ ~{curl*}~ ]], [[file:./lang/r/package/httr.org][ ~{httr*}~ ]], [[file:./lang/r/package/rvest.org][ ~{rvest}~ ]]                                       |
 | Utility            | {magrittr}, {zeallot}                                                 |
