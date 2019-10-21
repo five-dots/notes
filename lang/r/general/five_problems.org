@@ -1,0 +1,172 @@
+#+STARTUP: folded indent
+#+PROPERTY: header-args:R :results output :session *R:five-problems*
+
+* 出典
+
+- [[https://www.shiftedup.com/2015/05/07/five-programming-problems-every-software-engineer-should-be-able-to-solve-in-less-than-1-hour][Five programming problems every Software Engineer should be able to solve in less than 1 hour]]
+- [[https://qiita.com/mpyw/items/bc58e20eee7d6caea704][1 時間以内に解けなければプログラマ失格となってしまう 5 つの問題を PHP で解く
+]]
+* 問題 1: for ループ、while ループ、および再帰を使用して、リスト内の数字の合計を計算する 3 つの関数を記述せよ。
+** for
+
+#+begin_src R
+sum_for <- function(x) {
+  ans <- 0
+  for (i in x) ans <- ans + i
+  ans
+}
+
+x <- c(1, 2, 3, 4, 5)
+sum_for(x)
+#+end_src
+
+#+RESULTS:
+: 
+: [1] 15
+\\
+
+** while
+
+#+begin_src R
+sum_while <- function(x) {
+  i <- 1
+  ans <- 0
+  while (i <= length(x)) {
+    ans <- ans + x[i]
+    i <- i + 1
+  }
+  ans
+}
+
+x <- c(1, 2, 3, 4, 5)
+sum_while(x)
+#+end_src
+
+#+RESULTS:
+: 
+: [1] 15
+\\
+
+** 再帰
+
+- vector index [5] -> [4] -> ... -> [0] となるように足していく
+- [0] がベースケース
+
+#+begin_src R
+sum_rec <- function(x) {
+  if (length(x) == 0) return(0)
+
+  x[length(x)] + sum_rec(x[1:length(x)-1])
+}
+
+x <- c(1, 2, 3, 4, 5)
+sum_rec(x)
+#+end_src
+
+#+RESULTS:
+: 
+: [1] 15
+\\
+
+* 問題 2: 交互に要素を取ることで、2つのリストを結合する関数を記述せよ。例えば [a, b, c]と[1, 2, 3]という 2 つのリストを与えると、関数は [a, 1, b, 2, c, 3]を返す。
+
+#+begin_src R
+combine <- function(l1, l2) {
+  ans <- list()
+  for (i in 1:length(l1)) {
+    ans <- append(ans, l1[i])
+    ans <- append(ans, l2[i])
+  }
+  ans
+}
+
+l1 <- list("a", "b", "c")
+l2 <- list(1, 2, 3)
+combine(l1, l2)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+[[1]]
+[1] "a"
+
+[[2]]
+[1] 1
+
+[[3]]
+[1] "b"
+
+[[4]]
+[1] 2
+
+[[5]]
+[1] "c"
+
+[[6]]
+[1] 3
+#+end_example
+
+* 問題 3: 最初の 100 個のフィボナッチ数のリストを計算する関数を記述せよ。定義では、フィボナッチ数列の最初の 2 つの数字は 0 と 1 で、次の数は前の 2 つの合計となる。例えば最初の 10 個のフィボナッチ数列は、0, 1, 1, 2, 3, 5, 8, 13, 21, 34 となる。
+
+#+begin_src R
+fibo_100 <- function() {
+  ans <- c(0, 1)
+  while (length(ans) < 100) {
+    ans <- c(ans, sum(tail(ans , 2)))
+  }
+  ans
+}
+fibo_100()
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+  [1] 0.000000e+00 1.000000e+00 1.000000e+00 2.000000e+00 3.000000e+00
+  [6] 5.000000e+00 8.000000e+00 1.300000e+01 2.100000e+01 3.400000e+01
+ [11] 5.500000e+01 8.900000e+01 1.440000e+02 2.330000e+02 3.770000e+02
+ [16] 6.100000e+02 9.870000e+02 1.597000e+03 2.584000e+03 4.181000e+03
+ [21] 6.765000e+03 1.094600e+04 1.771100e+04 2.865700e+04 4.636800e+04
+ [26] 7.502500e+04 1.213930e+05 1.964180e+05 3.178110e+05 5.142290e+05
+ [31] 8.320400e+05 1.346269e+06 2.178309e+06 3.524578e+06 5.702887e+06
+ [36] 9.227465e+06 1.493035e+07 2.415782e+07 3.908817e+07 6.324599e+07
+ [41] 1.023342e+08 1.655801e+08 2.679143e+08 4.334944e+08 7.014087e+08
+ [46] 1.134903e+09 1.836312e+09 2.971215e+09 4.807527e+09 7.778742e+09
+ [51] 1.258627e+10 2.036501e+10 3.295128e+10 5.331629e+10 8.626757e+10
+ [56] 1.395839e+11 2.258514e+11 3.654353e+11 5.912867e+11 9.567220e+11
+ [61] 1.548009e+12 2.504731e+12 4.052740e+12 6.557470e+12 1.061021e+13
+ [66] 1.716768e+13 2.777789e+13 4.494557e+13 7.272346e+13 1.176690e+14
+ [71] 1.903925e+14 3.080615e+14 4.984540e+14 8.065155e+14 1.304970e+15
+ [76] 2.111485e+15 3.416455e+15 5.527940e+15 8.944394e+15 1.447233e+16
+ [81] 2.341673e+16 3.788906e+16 6.130579e+16 9.919485e+16 1.605006e+17
+ [86] 2.596955e+17 4.201961e+17 6.798916e+17 1.100088e+18 1.779979e+18
+ [91] 2.880067e+18 4.660047e+18 7.540114e+18 1.220016e+19 1.974027e+19
+ [96] 3.194043e+19 5.168071e+19 8.362114e+19 1.353019e+20 2.189230e+20
+#+end_example
+
+* 問題 4: 正の整数のリストを与えられたとき、数を並び替えて可能な最大数を返す関数を記述せよ。例えば、[50, 2, 1, 9]が与えられた時、95021 が答えとなる。
+
+#+begin_src R
+arrange_max <- function(x) {
+  perm <- e1071::permutations(length(x))
+
+  nums <- purrr::map_int(1:nrow(perm), function(indexes) {
+    row <- x[perm[indexes,]]
+    str <- stringr::str_flatten(row)
+    as.integer(str)
+  })
+
+  max(nums)
+}
+
+x <- c(50, 2, 1, 9)
+arrange_max(x)
+#+end_src
+
+#+RESULTS:
+: 
+: [1] 95021
+\\
+
+* 問題 5: 1,2,…,9 の数をこの順序で、”+”、”-“、またはななにもせず結果が 100 となるあらゆる組合せを出力するプログラムを記述せよ。例えば、1 + 2 + 34 – 5 + 67 – 8 + 9 = 100 となる 。

@@ -31,24 +31,25 @@ Babel の実行には適切な ~org-babel-load-language~ の設定が必要で�
 * プログラミング言語
 ** R
 
-|--------------------+--------------------------------------------------------------------|
-| Category           | Notes                                                              |
-|--------------------+--------------------------------------------------------------------|
-| Language           | types, nse, [[file:./lang/r/general/performance.org][ ~performance~ ]]                                          |
-| Import             | [[file:./lang/r/package/readr.org][ ~{readr}~ ]]                                                          |
-| Table Data         | [[file:lang/r/package/dplyr/][ ~{dplyr}~ ]], [[file:./lang/r/package/tidyr.org][ ~{tidyr}~ ]], {purrrlyr}, {tibble}, {data.table}, {dtplyr} |
-| String             | [[file:./lang/r/general/regex.org][ ~regex~ ]], [[file:./lang/r/package/stringr.org][ ~{stringr}~ ]] [[file:./lang/r/package/glue.org][ ~{glue}~ ]], [[file:./lang/r/package/crayon.org][ ~{crayon}~ ]]                          |
-| Factor             | {base}, {forcat}                                                   |
-| Date and Time      | [[file:./lang/r/general/date_time.org][ ~{base}~ ]], [[file:./lang/r/package/lubridate.org][ ~{lubridate}~ ]], {hms}, {nanotime}                         |
-| Preprocessing      | [[file:lang/r/package/rsample.org][ ~{rsample}~ ]], [[file:lang/r/package/recipes/][ ~{recipes}~ ]]                                           |
-| Modeling           | [[file:./lang/r/package/parsnip/][ ~{parsnip}~ ]], {tune}, {dials}                                       |
-| Testing            | [[file:./lang/r/package/infer.org][ ~{infer}~ ]]                                                          |
-| Performance Metric | [[file:./lang/r/package/yardstick/][ ~{yardstick}~ ]], {PerformanceAnalytics}                              |
-| Assertion          | [[file:./lang/r/package/assertthat.org][ ~{assertthat}~ ]], {assertr}                                          |
-| Workflow           | {drake}, {mlr/mlr3}                                                |
-| Utility            | {magrittr}, {zeallot}                                              |
-| Dataset            | [[file:./lang/r/general/dataset.org][ ~general~ ]], [[file:lang/r/finance/dataset.org][ ~finance~ ]]                                               |
-|--------------------+--------------------------------------------------------------------|
+|--------------------+---------------------------------------------------------------------|
+| Category           | Notes                                                               |
+|--------------------+---------------------------------------------------------------------|
+| Language           | types, nse, [[file:./lang/r/general/performance.org][ ~performance~ ]]                                           |
+| Import             | [[file:./lang/r/package/readr.org][ ~{readr*}~ ]]                                                          |
+| Table Data         | [[file:lang/r/package/dplyr/][ ~{dplyr*}~ ]], [[file:./lang/r/package/tidyr.org][ ~{tidyr}~ ]], {purrrlyr}, {tibble}, {data.table}, {dtplyr} |
+| String             | [[file:./lang/r/general/regex.org][ ~regex~ ]], [[file:./lang/r/package/stringr.org][ ~{stringr}~ ]] [[file:./lang/r/package/glue.org][ ~{glue}~ ]], [[file:./lang/r/package/crayon.org][ ~{crayon}~ ]]                           |
+| Factor             | {base}, {forcat}                                                    |
+| Date and Time      | [[file:./lang/r/general/date_time.org][ ~{base}~ ]], [[file:./lang/r/package/lubridate.org][ ~{lubridate}~ ]], {hms}, {nanotime}                          |
+| Preprocessing      | [[file:lang/r/package/rsample.org][ ~{rsample}~ ]], [[file:lang/r/package/recipes/][ ~{recipes*}~ ]]                                           |
+| Modeling           | [[file:./lang/r/package/parsnip/][ ~{parsnip*}~ ]], {dials}, [[file:./lang/r/package/tune/][ ~{tune}~ ]]                                     |
+| Testing            | [[file:./lang/r/package/infer.org][ ~{infer*}~ ]]                                                          |
+| Performance Metric | [[file:./lang/r/package/yardstick/][ ~{yardstick*}~ ]], {PerformanceAnalytics}                              |
+| Assertion          | [[file:./lang/r/package/assertthat.org][ ~{assertthat}~ ]], {assertr}                                           |
+| Workflow           | {drake}, {mlr/mlr3}                                                 |
+| Utility            | {magrittr}, {zeallot}                                               |
+| Dataset            | [[file:./lang/r/general/dataset.org][ ~general~ ]], [[file:lang/r/finance/dataset.org][ ~finance~ ]]                                                |
+| Other              | [[file:./lang/r/general/five_problelms.org][ ~five problems~ ]]                                                     |
+|--------------------+---------------------------------------------------------------------|
 
 ** Python
 ** Emacs Lisp
