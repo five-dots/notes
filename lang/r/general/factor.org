@@ -3,7 +3,7 @@
 
 * ~factor~ in ~{base}~ R                                               :noexport:
 
-{base} パッケージでの ファクター (因子型) についてのノート。{forcat} その他のパッケージでの因子型の扱いについては、別ノートで扱う。
+~{base}~ パッケージでの ファクター型 (因子型) についてのノート。 ~{forcat}~ その他のパッケージでの因子型の扱いについては、別ノートで扱う。
 \\
 
 * 目次                                                            :toc:quote:
@@ -16,11 +16,9 @@
 
 - カテゴリカルデータ (離散変数からなるデータ) を扱う
 - ~integer~ vector に ~class~, ~levels~ の 2 つの ~attribute~ を加えたもの
-\\
-
-メリット
-- 決められた範囲の集合を扱うのに便利 (範囲を絞ったり、欠損値を明らかにできる)
-- 文字列をアルファベット順以外の方法で整列することができる
+- メリット
+  - 決められた範囲の集合を扱うのに便利 (範囲を絞ったり、欠損値を明らかにできる)
+  - 文字列をアルファベット順以外の方法で整列することができる
 
 * 基本
 
@@ -54,6 +52,19 @@ factor(x1)
 : 
 : [1] Dec Apr Jan Mar
 : Levels: Apr Dec Jan Mar
+\\
+
+- ~attributes~ は ~$class~ と ~$levels~
+#+begin_src R :exports both
+attributes(y1)
+#+end_src
+
+#+RESULTS:
+: $levels
+:  [1] "Jan" "Feb" "Mar" "Apr" "May" "Jon" "Jul" "Aug" "Sep" "Oct" "Nov" "Dec"
+: 
+: $class
+: [1] "factor"
 \\
 
 - 変数の範囲を事前に指定できるので、欠損値も明らかにしやすい
