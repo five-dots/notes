@@ -3,7 +3,7 @@
 
 * ~{fs}~: Provide cross platform file operations based on libuv      :noexport:
 
-~{fs}~ は ~libuv~ を使った、ファイルシステム操作のためのパッケージ。 ~{base}~ に含まれる関数の主な違いとして、以下の点が挙げられている。
+~{fs}~ は ~libuv~ を使ったファイルシステム操作のためのパッケージ。 ~{base}~ に含まれる関数の主な違いとして、以下の点が挙げられている。
 
 - 全ての関数がベクトル化されている (パスのベクトルを受け取ることができる)
 - 全ての返り値の名前にパス情報を含めている
@@ -122,20 +122,21 @@ created_file
 *** Copy
 **** ★★☆ ~dir_copy(path, new_path, overwrite = FALSE)~.
 
-#+begin_src R
+#+begin_src R :exports results
 copied_dir <- dir_copy("/tmp/fs_tmp/", "/tmp/fs_tmp2/")
 copied_dir
 #+end_src
 
 #+RESULTS:
 : /tmp/fs_tmp2
+\\
 
 **** ★★☆ ~file_copy(path, new_path, overwrite = FALSE)~.
 **** ★★☆ ~link_copy(path, new_path, overwrite = FALSE)~.
 *** Existence
 **** ★★☆ ~dir_exists(path)~.
 
-#+begin_src R
+#+begin_src R :exports both
 dir_exists("/tmp/fs_tmp/")
 dir_exists("/tmp/fs_tmp")
 #+end_src
@@ -145,6 +146,7 @@ dir_exists("/tmp/fs_tmp")
 :        TRUE
 : /tmp/fs_tmp 
 :        TRUE
+\\
 
 **** ★★☆ ~file_exists(path)~.
 **** ★★☆ ~link_exists(path)~.
@@ -179,6 +181,7 @@ dir_tree("/tmp/fs_tmp")
 #+RESULTS:
 : /tmp/fs_tmp
 : └── test.txt
+\\
 
 *** ★☆☆ ~dir_walk(path = ".", fun, all = FALSE, recurse = FALSE, type = "any", fail = TRUE)~.
 ** File
@@ -235,6 +238,7 @@ dir_tree("/tmp/fs_tmp")
 *** ★☆☆ ~fs_perms(x, ...)~.
 *** ★☆☆ ~group_ids()~.
 *** ★☆☆ ~user_ids()~.
+\\
 * 実行環境
 
 #+begin_src R :results output :exports both

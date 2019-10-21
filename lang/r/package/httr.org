@@ -1,0 +1,669 @@
+#+STARTUP: folded indent
+#+PROPERTY: header-args:R :results output :session *R:httr*
+
+* ~{httr}~: a friendly http package for R                            :noexport:
+
+~{httr}~ は R から Web API へアクセスするためのパッケージ。 ~{httr}~ 自身は ~{curl}~ パッケージのラッパーの位置付け。(さらに ~{curl}~ は ~libcurl~ のラッパーとなっている)
+\\
+
+* 目次                                                                :quote:
+#+BEGIN_QUOTE
+- [[#ライブラリの読み込みとバージョンの確認][ライブラリの読み込みとバージョンの確認]]
+- [[#全関数リスト][全関数リスト]]
+  - [[#抽出][抽出]]
+    - [[#-str_substring-start--1l-end---1l-開始終了位置で抽出][★★☆ ~str_sub(string, start = 1L, end = -1L)~ 開始・終了位置で抽出]]
+    - [[#-str_subsetstring-pattern-negate--false-マッチ要素を抽出][★★★ ~str_subset(string, pattern, negate = FALSE)~ マッチ要素を抽出]]
+    - [[#-str_extractstring-pattern-最初のマッチ部分を抽出][★★☆ ~str_extract(string, pattern)~ 最初のマッチ部分を抽出]]
+    - [[#-str_extract_allstring-pattern-simplify--false-全てのマッチ部分を抽出][★☆☆ ~str_extract_all(string, pattern, simplify = FALSE)~ 全てのマッチ部分を抽出]]
+    - [[#-str_matchstring-pattern-最初のマッチ部分を抽出][★☆☆ ~str_match(string, pattern)~ 最初のマッチ部分を抽出]]
+    - [[#-str_match_allstring-pattern-全てのマッチ部分を抽出][★☆☆ ~str_match_all(string, pattern)~ 全てのマッチ部分を抽出]]
+    - [[#-wordstring-start--1l-end--start-sep--fixed--単語を抽出][★☆☆ ~word(string, start = 1L, end = start, sep = fixed(" "))~ 単語を抽出]]
+  - [[#置換変換削除][置換・変換・削除]]
+    - [[#-str_substring-start--1l-end---1l-omit_na--false---value-開始終了位置で置換][★★☆ ~str_sub(string, start = 1L, end = -1L, omit_na = FALSE) <- value~ 開始・終了位置で置換]]
+    - [[#-str_replacestring-pattern-replacement-最初のマッチを置換][★★★ ~str_replace(string, pattern, replacement)~ 最初のマッチを置換]]
+    - [[#-str_replace_allstring-pattern-replacement-全てのマッチを置換][★★★ ~str_replace_all(string, pattern, replacement)~ 全てのマッチを置換]]
+    - [[#-str_removestring-pattern-マッチ部分を削除][★★★ ~str_remove(string, pattern)~ マッチ部分を削除]]
+    - [[#-str_remove_allstring-pattern-マッチを削除][★★★ ~str_remove_all(string, pattern)~ マッチを削除]]
+    - [[#-str_to_lowerstring-locale--en-小文字に変換][★★☆ ~str_to_lower(string, locale = "en")~ 小文字に変換]]
+    - [[#-str_to_upperstring-locale--en-大文字に変換][★★☆ ~str_to_upper(string, locale = "en")~ 大文字に変換]]
+    - [[#-str_to_titlestring-locale--en-タイトル形式に変換][★☆☆ ~str_to_title(string, locale = "en")~ タイトル形式に変換]]
+    - [[#-str_to_sentencestring-locale--en-センテンス形式に変換][★☆☆ ~str_to_sentence(string, locale = "en")~ センテンス形式に変換]]
+  - [[#結合分割][結合・分割]]
+    - [[#-str_c-sep---collapse--null-結合-][★★☆ ~str_c(..., sep = "", collapse = NULL)~ 結合 (~...~)]]
+    - [[#-str_flattenstring-collapse---結合-ベクトル][★★☆ ~str_flatten(string, collapse = "")~ 結合 (ベクトル)]]
+    - [[#-str_dupstring-times-複製して結合][★☆☆ ~str_dup(string, times)~ 複製して結合]]
+    - [[#-str_splitstring-pattern-n--inf-simplify--false-分割][★★★ ~str_split(string, pattern, n = Inf, simplify = FALSE)~ 分割]]
+    - [[#-str_split_fixedstring-pattern-n-固定長で分割][★☆☆ ~str_split_fixed(string, pattern, n)~ 固定長で分割]]
+  - [[#変数埋め込み][変数埋め込み]]
+    - [[#-str_interpstring-env--parentframe-format-付きで埋め込む][★☆☆ ~str_interp(string, env = parent.frame())~ format 付きで埋め込む]]
+    - [[#-str_glue-sep---envir--parentframe-glue][★☆☆ ~str_glue(..., .sep = "", .envir = parent.frame())~ glue()]]
+    - [[#-str_glue_datax--sep---envir--parentframe-na--na-glue_data][★☆☆ ~str_glue_data(.x, ..., .sep = "", .envir = parent.frame(), .na = "NA")~ glue_data()]]
+  - [[#正規表現マッチを検出][正規表現マッチを検出]]
+    - [[#-str_detectstring-pattern-negate--false-マッチの真偽][★★★ ~str_detect(string, pattern, negate = FALSE)~ マッチの真偽]]
+    - [[#-str_startsstring-pattern-negate--false-先頭マッチの真偽][★★★ ~str_starts(string, pattern, negate = FALSE)~ 先頭マッチの真偽]]
+    - [[#-str_endsstring-pattern-negate--false-末尾マッチの真偽][★★★ ~str_ends(string, pattern, negate = FALSE)~ 末尾マッチの真偽]]
+    - [[#-str_whichstring-pattern-negate--false-マッチしたインデックス][★★☆ ~str_which(string, pattern, negate = FALSE)~ マッチしたインデックス]]
+    - [[#-str_countstring-pattern---マッチした数をカウント][★☆☆ ~str_count(string, pattern = "")~ マッチした数をカウント]]
+    - [[#-str_locatestring-pattern-マッチした開始終了位置][★☆☆ ~str_locate(string, pattern)~ マッチした開始・終了位置]]
+    - [[#-str_locate_allstring-pattern-マッチした開始終了位置][★☆☆ ~str_locate_all(string, pattern)~ マッチした開始・終了位置]]
+  - [[#長さの操作調整][長さの操作・調整]]
+    - [[#-str_lengthstring-文字数をカウント][★★☆ ~str_length(string)~ 文字数をカウント]]
+    - [[#-str_trimstring-side--cboth-left-right-空白を除去][★★☆ ~str_trim(string, side = c("both", "left", "right"))~ 空白を除去]]
+    - [[#-str_squishstring-複数の空白を除去][★☆☆ ~str_squish(string)~ 複数の空白を除去]]
+    - [[#-str_padstring-width-side--cleft-right-both-pad----文字埋め][★★☆ ~str_pad(string, width, side = c("left", "right", "both"), pad = " ")~ 文字埋め]]
+    - [[#-str_truncstring-width-side--cright-left-center-ellipsis---文字埋め][★☆☆ ~str_trunc(string, width, side = c("right", "left", "center"), ellipsis = "...")~ 文字埋め]]
+    - [[#-str_wrapstring-width--80-indent--0-exdent--0-折り返す][★☆☆ ~str_wrap(string, width = 80, indent = 0, exdent = 0)~ 折り返す]]
+  - [[#並び替え][並び替え]]
+    - [[#-str_orderx-decreasing--false-na_last--true-locale--en-numeric--false--並び順][★☆☆ ~str_order(x, decreasing = FALSE, na_last = TRUE, locale = "en", numeric = FALSE, ...)~ 並び順]]
+    - [[#-str_sortx-decreasing--false-na_last--true-locale--en-numeric--false--ソート][★☆☆ ~str_sort(x, decreasing = FALSE, na_last = TRUE, locale = "en", numeric = FALSE, ...)~ ソート]]
+  - [[#その他][その他]]
+    - [[#-str_convstring-encoding-文字コード変換][★☆☆ ~str_conv(string, encoding)~ 文字コード変換]]
+    - [[#-str_viewstring-pattern-match--na-最初のマッチを-html-表示][★☆☆ ~str_view(string, pattern, match = NA)~ 最初のマッチを HTML 表示]]
+    - [[#-str_view_allstring-pattern-match--na-全てのマッチを-html-表示][★☆☆ ~str_view_all(string, pattern, match = NA)~ 全てのマッチを HTML 表示]]
+  - [[#正規表現オプション][正規表現オプション]]
+    - [[#-fixedpattern-ignore_case--false][★☆☆ ~fixed(pattern, ignore_case = FALSE)~.]]
+    - [[#-collpattern-ignore_case--false-locale--en-][★☆☆ ~coll(pattern, ignore_case = FALSE, locale = "en", ...)~.]]
+    - [[#-regexpattern-ignore_case--false-multiline--false-comments--false-dotall--false-][★☆☆ ~regex(pattern, ignore_case = FALSE, multiline = FALSE, comments = FALSE, dotall = FALSE, ...)~.]]
+    - [[#-boundarytype--ccharacter-line_break-sentence-word-skip_word_none--na-][★☆☆ ~boundary(type = c("character", "line_break", "sentence", "word"), skip_word_none = NA, ...)~.]]
+- [[#実行環境][実行環境]]
+- [[#参考リンク][参考リンク]]
+#+END_QUOTE
+
+* ライブラリの読み込みとバージョンの確認
+
+#+begin_src R :results silent
+library(httr)
+library(tidyverse)
+#+end_src
+\\
+
+- バージョン
+#+begin_src R :exports both
+packageVersion("httr")
+#+end_src
+
+#+RESULTS:
+: [1] ‘1.4.1’
+\\
+
+* 基本
+** 概要
+
+- ~libcurl~ をラップした ~{curl}~ のラッパー
+- 同じウェブサイトであれば、自動的に接続が使いまわされる
+\\
+
+- 対応している HTTP メソッド
+#+begin_src R :exports both
+pacman::p_funs(httr) %>% str_subset("[A-Z]{2}")
+#+end_src
+
+#+RESULTS:
+: [1] "BROWSE" "DELETE" "GET"    "HEAD"   "PATCH"  "POST"   "PUT"    "RETRY" 
+: [9] "VERB"
+
+** レスポンス
+*** GET(url = NULL, config = list(), ..., handle = NULL)
+
+レスポンスの構成要素
+- Status
+- Header
+- Body
+
+#+begin_src R :exports both
+r <- GET("http://httpbin.org/get")
+class(r)
+r
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+[1] "response"
+
+Response [http://httpbin.org/get]
+  Date: 2019-10-21 08:08
+  Status: 200
+  Content-Type: application/json
+  Size: 313 B
+{
+  "args": {}, 
+  "headers": {
+    "Accept": "application/json, text/xml, application/xml, */*", 
+    "Accept-Encoding": "gzip, deflate", 
+    "Host": "httpbin.org", 
+    "User-Agent": "libcurl/7.65.1 r-curl/3.3 httr/1.4.1"
+  }, 
+  "origin": "164.70.196.53, 164.70.196.53", 
+  "url": "https://httpbin.org/get"
+...
+#+end_example
+\\
+
+*** http_status(x)
+
+- レスポンスのオブジェクトから情報を抽出する関数が用意されている
+
+#+begin_src R :results output
+http_status(r)
+#+end_src
+
+#+RESULTS:
+: $category
+: [1] "Success"
+: 
+: $reason
+: [1] "OK"
+: 
+: $message
+: [1] "Success: (200) OK"
+\\
+
+*** status_code(x)
+
+- Status Code Only
+
+#+begin_src R :exports both
+status_code(r)
+#+end_src
+
+#+RESULTS:
+: [1] 200
+\\
+
+*** headers(x)
+
+#+begin_src R :exports both
+headers(r)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+$`access-control-allow-credentials`
+[1] "true"
+
+$`access-control-allow-origin`
+[1] "*"
+
+$`content-encoding`
+[1] "gzip"
+
+$`content-type`
+[1] "application/json"
+
+$date
+[1] "Mon, 21 Oct 2019 08:08:04 GMT"
+
+$`referrer-policy`
+[1] "no-referrer-when-downgrade"
+
+$server
+[1] "nginx"
+
+$`x-content-type-options`
+[1] "nosniff"
+
+$`x-frame-options`
+[1] "DENY"
+
+$`x-xss-protection`
+[1] "1; mode=block"
+
+$`content-length`
+[1] "217"
+
+$connection
+[1] "keep-alive"
+
+attr(,"class")
+[1] "insensitive" "list"
+#+end_example
+\\
+
+*** content(x, as = NULL, type = NULL, encoding = NULL, ...)
+
+- type = "text"
+#+begin_src R :exports both
+content(r, "text")
+#+end_src
+
+#+RESULTS:
+: No encoding supplied: defaulting to UTF-8.
+: [1] "{\n  \"args\": {}, \n  \"headers\": {\n    \"Accept\": \"application/json, text/xml, application/xml, */*\", \n    \"Accept-Encoding\": \"gzip, deflate\", \n    \"Host\": \"httpbin.org\", \n    \"User-Agent\": \"libcurl/7.65.1 r-curl/3.3 httr/1.4.1\"\n  }, \n  \"origin\": \"164.70.196.53, 164.70.196.53\", \n  \"url\": \"https://httpbin.org/get\"\n}\n"
+
+- 文字コードの検出
+#+begin_src R :exports both
+stringi::stri_enc_detect(content(r, "raw"))
+#+end_src
+
+#+RESULTS:
+#+begin_example
+[[1]]
+     Encoding Language Confidence
+1  ISO-8859-1       en       0.39
+2  ISO-8859-2       ro       0.17
+3       UTF-8                0.15
+4    UTF-16BE                0.10
+5    UTF-16LE                0.10
+6  ISO-8859-9       tr       0.10
+7   Shift_JIS       ja       0.10
+8     GB18030       zh       0.10
+9      EUC-JP       ja       0.10
+10     EUC-KR       ko       0.10
+11       Big5       zh       0.10
+#+end_example
+\\
+
+- エンコードを指定して再度実行
+#+begin_src R :exports both
+content(r, "text", encoding = "ISO-8859-1")
+#+end_src
+
+#+RESULTS:
+: [1] "{\n  \"args\": {}, \n  \"headers\": {\n    \"Accept\": \"application/json, text/xml, application/xml, */*\", \n    \"Accept-Encoding\": \"gzip, deflate\", \n    \"Host\": \"httpbin.org\", \n    \"User-Agent\": \"libcurl/7.65.1 r-curl/3.3 httr/1.4.1\"\n  }, \n  \"origin\": \"164.70.196.53, 164.70.196.53\", \n  \"url\": \"https://httpbin.org/get\"\n}\n"
+
+- Raw Byte で表示
+- type = "raw"
+#+begin_src R :exports both
+content(r, "raw")
+#+end_src
+
+#+RESULTS:
+#+begin_example
+  [1] 7b 0a 20 20 22 61 72 67 73 22 3a 20 7b 7d 2c 20 0a 20 20 22 68 65 61 64 65
+ [26] 72 73 22 3a 20 7b 0a 20 20 20 20 22 41 63 63 65 70 74 22 3a 20 22 61 70 70
+ [51] 6c 69 63 61 74 69 6f 6e 2f 6a 73 6f 6e 2c 20 74 65 78 74 2f 78 6d 6c 2c 20
+ [76] 61 70 70 6c 69 63 61 74 69 6f 6e 2f 78 6d 6c 2c 20 2a 2f 2a 22 2c 20 0a 20
+[101] 20 20 20 22 41 63 63 65 70 74 2d 45 6e 63 6f 64 69 6e 67 22 3a 20 22 67 7a
+[126] 69 70 2c 20 64 65 66 6c 61 74 65 22 2c 20 0a 20 20 20 20 22 48 6f 73 74 22
+[151] 3a 20 22 68 74 74 70 62 69 6e 2e 6f 72 67 22 2c 20 0a 20 20 20 20 22 55 73
+[176] 65 72 2d 41 67 65 6e 74 22 3a 20 22 6c 69 62 63 75 72 6c 2f 37 2e 35 38 2e
+[201] 30 20 72 2d 63 75 72 6c 2f 33 2e 33 20 68 74 74 72 2f 31 2e 34 2e 30 22 0a
+[226] 20 20 7d 2c 20 0a 20 20 22 6f 72 69 67 69 6e 22 3a 20 22 31 36 34 2e 37 30
+[251] 2e 31 39 36 2e 35 33 2c 20 31 36 34 2e 37 30 2e 31 39 36 2e 35 33 22 2c 20
+[276] 0a 20 20 22 75 72 6c 22 3a 20 22 68 74 74 70 73 3a 2f 2f 68 74 74 70 62 69
+[301] 6e 2e 6f 72 67 2f 67 65 74 22 0a 7d 0a
+#+end_example
+\\
+
+- type = "parsed"
+- mime type を見て parser を自動で選択する
+- 例えば、application/json なら ~jsonlite::fromJSON()~ を使う
+#+begin_src R :exports both
+content(r, "parsed")
+#+end_src
+
+#+RESULTS:
+#+begin_example
+$args
+named list()
+
+$data
+[1] ""
+
+$files
+named list()
+
+$form
+named list()
+
+$headers
+$headers$Accept
+[1] "application/json, text/xml, application/xml, */*"
+
+$headers$`Accept-Encoding`
+[1] "gzip, deflate"
+
+$headers$`Content-Length`
+[1] "0"
+
+$headers$Host
+[1] "httpbin.org"
+
+$headers$`User-Agent`
+[1] "libcurl/7.65.1 r-curl/3.3 httr/1.4.1"
+
+
+$json
+NULL
+
+$origin
+[1] "164.70.196.53, 164.70.196.53"
+
+$url
+[1] "https://httpbin.org/post"
+#+end_example
+\\
+
+*** cookies(x)
+
+- query = list() で名前付きパラメタを渡す
+#+begin_src R :exports both
+r <- GET("http://httpbin.org/cookies/set", query = list(a = 1))
+cookies(r)
+#+end_src
+
+#+RESULTS:
+: 
+:        domain  flag path secure expiration name value
+: 1 httpbin.org FALSE    /  FALSE       <
+:    a     1
+\\
+
+- 同じドメインの場合は、クッキーは自動的に永続化される
+#+begin_src R :exports both
+r <- GET("http://httpbin.org/cookies/set", query = list(b = 1))
+cookies(r)
+#+end_src
+
+#+RESULTS:
+: 
+:        domain  flag path secure expiration name value
+: 1 httpbin.org FALSE    /  FALSE       <
+:    a     1
+: 2 httpbin.org FALSE    /  FALSE       <
+:    b     1
+\\
+
+- リセットする
+#+begin_src R :results silent :exports both
+handle_reset("http://httpbin.org/")
+#+end_src
+\\
+
+*** Error Handling
+
+リクエストが成功しなかった場合に、例外を出すことができる
+
+#+begin_src R :exports both
+r_fail <- GET("http://httpbin.org/hoget")
+message_for_status(r_fail) # Message
+warn_for_status(r_fail)    # Warning
+stop_for_status(r_fail)    # Error
+#+end_src
+
+#+RESULTS:
+: 
+: Not Found (HTTP 404)
+: Warning message:
+: Not Found (HTTP 404).
+: 
+: Error: Not Found (HTTP 404).
+\\
+
+** リクエスト
+*** Qeury
+
+- 名前付きリストでクエリ文字列を渡す (NULL は自動で削除)
+#+begin_src R :exports both
+r <- GET("http://httpbin.org/get", query = list(key1 = "value1", `key 2`= "value2", key3 = NULL))
+content(r)$args
+#+end_src
+
+#+RESULTS:
+: 
+: $`key 2`
+: [1] "value2"
+: 
+: $key1
+: [1] "value1"
+\\
+
+*** Custome Header
+
+#+begin_src R :exports both
+r <- GET("http://httpbin.org/get", add_headers(Name = "Shun"))
+content(r)$headers
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+$Accept
+[1] "application/json, text/xml, application/xml, */*"
+
+$`Accept-Encoding`
+[1] "gzip, deflate"
+
+$Host
+[1] "httpbin.org"
+
+$Name
+[1] "Shun"
+
+$`User-Agent`
+[1] "libcurl/7.65.1 r-curl/3.3 httr/1.4.1"
+#+end_example
+\\
+
+*** Cookie
+
+#+begin_src R :exports both
+r <- GET("http://httpbin.org/cookies", set_cookies("MeWant" = "cookies"))
+content(r)$cookies
+#+end_src
+
+#+RESULTS:
+: 
+: $MeWant
+: [1] "cookies"
+\\
+
+*** Body
+
+- Request Body は POST に名前付きリストで渡す
+- encode でデータの渡し方を指定するする
+- verbose() で
+
+#+begin_src R :exports both
+url <- "http://httpbin.org/post"
+body <- list(a = 1, b = 2, c = 3)
+
+r <- POST(url, body, encode = "multipart", verbose())
+r <- POST(url, body, encode = "form", verbose())
+r <- POST(url, body, encode = "json", verbose())
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+-
+POST /post HTTP/1.1
+-
+Host: httpbin.org
+-
+User-Agent: libcurl/7.65.1 r-curl/3.3 httr/1.4.1
+-
+Accept-Encoding: gzip, deflate
+-
+Accept: application/json, text/xml, application/xml, */*
+-
+Content-Length: 0
+-
+
+<- HTTP/1.1 200 OK
+<- Access-Control-Allow-Credentials: true
+<- Access-Control-Allow-Origin: *
+<- Content-Encoding: gzip
+<- Content-Type: application/json
+<- Date: Mon, 21 Oct 2019 08:15:26 GMT
+<- Referrer-Policy: no-referrer-when-downgrade
+<- Server: nginx
+<- X-Content-Type-Options: nosniff
+<- X-Frame-Options: DENY
+<- X-XSS-Protection: 1; mode=block
+<- Content-Length: 252
+<- Connection: keep-alive
+<-
+
+-
+POST /post HTTP/1.1
+-
+Host: httpbin.org
+-
+User-Agent: libcurl/7.65.1 r-curl/3.3 httr/1.4.1
+-
+Accept-Encoding: gzip, deflate
+-
+Accept: application/json, text/xml, application/xml, */*
+-
+Content-Length: 0
+-
+
+<- HTTP/1.1 200 OK
+<- Access-Control-Allow-Credentials: true
+<- Access-Control-Allow-Origin: *
+<- Content-Encoding: gzip
+<- Content-Type: application/json
+<- Date: Mon, 21 Oct 2019 08:15:26 GMT
+<- Referrer-Policy: no-referrer-when-downgrade
+<- Server: nginx
+<- X-Content-Type-Options: nosniff
+<- X-Frame-Options: DENY
+<- X-XSS-Protection: 1; mode=block
+<- Content-Length: 252
+<- Connection: keep-alive
+<-
+
+-
+POST /post HTTP/1.1
+-
+Host: httpbin.org
+-
+User-Agent: libcurl/7.65.1 r-curl/3.3 httr/1.4.1
+-
+Accept-Encoding: gzip, deflate
+-
+Accept: application/json, text/xml, application/xml, */*
+-
+Content-Length: 0
+-
+
+<- HTTP/1.1 200 OK
+<- Access-Control-Allow-Credentials: true
+<- Access-Control-Allow-Origin: *
+<- Content-Encoding: gzip
+<- Content-Type: application/json
+<- Date: Mon, 21 Oct 2019 08:15:27 GMT
+<- Referrer-Policy: no-referrer-when-downgrade
+<- Server: nginx
+<- X-Content-Type-Options: nosniff
+<- X-Frame-Options: DENY
+<- X-XSS-Protection: 1; mode=block
+<- Content-Length: 252
+<- Connection: keep-alive
+<-
+#+end_example
+\\
+
+* Vignette: Best practices for API packages 
+
+#+begin_src R
+github_GET <- function(path, ..., pat = github_pat()) {
+  auth <- github_auth(pat)
+  req <- GET("https://api.github.com", path = path, auth, ...)
+  github_check(req)
+
+  req
+}
+
+github_POST <- function(path, body, ..., pat = github_pat()) {
+  auth <- github_auth(pat)
+
+  stopifnot(is.list(body))
+  body_json <- jsonlite::toJSON(body)
+
+  req <- POST("https://api.github.com", path = path, body = body_json,
+    auth, post, ...)
+  github_check(req)
+
+  req
+}
+
+github_auth <- function(pat = github_pat()) {
+  authenticate(pat, "x-oauth-basic", "basic")
+}
+
+github_check <- function(req) {
+  if (req$status_code < 400) return(invisible())
+
+  message <- github_parse(req)$message
+  stop("HTTP failure: ", req$status_code, "\n", message, call. = FALSE)
+}
+
+# JSON => R Object
+github_parse <- function(req) {
+  text <- content(req, as = "text")
+  # 正しく情報を取得できているか確認
+  if (identical(text, "")) stop("No output to parse", call. = FALSE)
+  jsonlite::fromJSON(text, simplifyVector = FALSE)
+}
+
+# 環境変数にトークンを入れておく
+github_pat <- function() {
+  Sys.getenv('GITHUB_PAT')
+}
+
+has_pat <- function() !identical(github_pat(), "")
+#+end_src
+
+#+RESULTS:
+* 実行環境
+
+#+begin_src R :results output :exports both
+sessionInfo()
+#+end_src
+
+#+RESULTS:
+#+begin_example
+R version 3.6.1 (2019-07-05)
+Platform: x86_64-pc-linux-gnu (64-bit)
+Running under: Ubuntu 18.04.3 LTS
+
+Matrix products: default
+BLAS:   /usr/lib/x86_64-linux-gnu/blas/libblas.so.3.7.1
+LAPACK: /usr/lib/x86_64-linux-gnu/lapack/liblapack.so.3.7.1
+
+locale:
+ [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C              
+ [3] LC_TIME=en_US.UTF-8        LC_COLLATE=en_US.UTF-8    
+ [5] LC_MONETARY=en_US.UTF-8    LC_MESSAGES=en_US.UTF-8   
+ [7] LC_PAPER=en_US.UTF-8       LC_NAME=C                 
+ [9] LC_ADDRESS=C               LC_TELEPHONE=C            
+[11] LC_MEASUREMENT=en_US.UTF-8 LC_IDENTIFICATION=C       
+
+attached base packages:
+[1] stats     graphics  grDevices utils     datasets  methods   base     
+
+other attached packages:
+ [1] forcats_0.4.0   stringr_1.4.0   dplyr_0.8.3     purrr_0.3.3    
+ [5] readr_1.3.1     tidyr_1.0.0     tibble_2.1.3    ggplot2_3.2.1  
+ [9] tidyverse_1.2.1 httr_1.4.1     
+
+loaded via a namespace (and not attached):
+ [1] Rcpp_1.0.2        cellranger_1.1.0  pillar_1.4.2      compiler_3.6.1   
+ [5] prettyunits_1.0.2 progress_1.2.2    tools_3.6.1       zeallot_0.1.0    
+ [9] jsonlite_1.6      lubridate_1.7.4   lifecycle_0.1.0   nlme_3.1-141     
+[13] gtable_0.3.0      lattice_0.20-38   pkgconfig_2.0.3   rlang_0.4.0      
+[17] cli_1.9.9.9000    rstudioapi_0.10   haven_2.1.1       withr_2.1.2      
+[21] xml2_1.2.2        generics_0.0.2    vctrs_0.2.0       hms_0.5.1        
+[25] grid_3.6.1        tidyselect_0.2.5  glue_1.3.1        R6_2.4.0         
+[29] fansi_0.4.0       readxl_1.3.1      pacman_0.5.1      modelr_0.1.5     
+[33] magrittr_1.5      backports_1.1.5   scales_1.0.0      rvest_0.3.4      
+[37] assertthat_0.2.1  colorspace_1.4-1  stringi_1.4.3     lazyeval_0.2.2   
+[41] munsell_0.5.0     broom_0.5.2       crayon_1.3.4
+#+end_example
+\\
+
+* 参考リンク
+
+- [[https://httr.r-lib.org/][公式サイト]]
+- [[https://cran.r-project.org/web/packages/httr/index.html][CRAN]]
+- [[https://cran.r-project.org/web/packages/httr/httr.pdf][Reference Manual]]
+- [[https://github.com/r-lib/httr][Github Repo]]
+- Vignette
+  - [[https://cran.r-project.org/web/packages/httr/vignettes/quickstart.html][Getting started with httr]] ([[https://qiita.com/nakamichi/items/14f9952445089927c38e][日本語訳@Qiita]])
+  - [[https://cran.r-project.org/web/packages/httr/vignettes/api-packages.html][Best practices for API packages]]
+  - [[https://cran.r-project.org/web/packages/httr/vignettes/secrets.html][Managing secrets]]
+- Blog
+  - [[https://qiita.com/komde/items/22c8a4f809e46cdd70f8][httr を使って R から REST API を叩く@Qiita]]

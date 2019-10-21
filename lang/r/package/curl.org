@@ -1,0 +1,724 @@
+#+STARTUP: folded indent
+#+PROPERTY: header-args:R :results output :session *R:curl*
+
+* ~{curl}~: A Modern and Flexible Web Client for R                   :noexport:
+
+~{curl}~ は libcurl のラッパーパッケージ。
+\\
+
+* 目次                                                            :quote:toc:
+#+BEGIN_QUOTE
+- [[#ライブラリの読み込みとバージョンの確認][ライブラリの読み込みとバージョンの確認]]
+- [[#全関数リスト][全関数リスト]]
+- [[#関数リスト][関数リスト]]
+  - [[#curl][Curl]]
+    - [[#curlurl--httphttpbinorgget-open---handle--new_handle][curl(url = "http://httpbin.org/get", open = "", handle = new_handle())]]
+    - [[#curl_downloadurl-destfile-quiet--true-mode--wb-handle--new_handle][curl_download(url, destfile, quiet = TRUE, mode = "wb", handle = new_handle())]]
+    - [[#curl_echohandle-port--9359-progress--interactive-file--null][curl_echo(handle, port = 9359, progress = interactive(), file = NULL)]]
+    - [[#curl_escapeurl][curl_escape(url)]]
+    - [[#curl_fetch_diskurl-path-handle--new_handle][curl_fetch_disk(url, path, handle = new_handle())]]
+    - [[#curl_fetch_echourl-handle--new_handle][curl_fetch_echo(url, handle = new_handle())]]
+    - [[#curl_fetch_memoryurl-handle--new_handle][curl_fetch_memory(url, handle = new_handle())]]
+    - [[#curl_fetch_multiurl-done--null-fail--null-pool--null-data--null-handle--new_handle][curl_fetch_multi(url, done = NULL, fail = NULL, pool = NULL, data = NULL, handle = new_handle())]]
+    - [[#curl_fetch_streamurl-fun-handle--new_handle][curl_fetch_stream(url, fun, handle = new_handle())]]
+    - [[#curl_optionsfilter--][curl_options(filter = "")]]
+    - [[#curl_unescapeurl][curl_unescape(url)]]
+    - [[#curl_version][curl_version()]]
+  - [[#handle][Handle]]
+    - [[#new_handle][new_handle(...)]]
+    - [[#handle_cookieshandle][handle_cookies(handle)]]
+    - [[#handle_datahandle][handle_data(handle)]]
+    - [[#handle_resethandle][handle_reset(handle)]]
+    - [[#handle_setformhandle--list--list][handle_setform(handle, ..., .list = list())]]
+    - [[#handle_setheadershandle--list--list][handle_setheaders(handle, ..., .list = list())]]
+    - [[#handle_setopthandle--list--list][handle_setopt(handle, ..., .list = list())]]
+  - [[#multi][Multi]]
+    - [[#multi_addhandle-done--null-fail--null-data--null-pool--null][multi_add(handle, done = NULL, fail = NULL, data = NULL, pool = NULL)]]
+    - [[#multi_cancelhandle][multi_cancel(handle)]]
+    - [[#multi_fdsetpool--null][multi_fdset(pool = NULL)]]
+    - [[#multi_listpool--null][multi_list(pool = NULL)]]
+    - [[#multi_runtimeout--inf-poll--false-pool--null][multi_run(timeout = Inf, poll = FALSE, pool = NULL)]]
+    - [[#multi_settotal_con--50-host_con--6-multiplex--true-pool--null][multi_set(total_con = 50, host_con = 6, multiplex = TRUE, pool = NULL)]]
+  - [[#parse][Parse]]
+    - [[#parse_datedatestring][parse_date(datestring)]]
+    - [[#parse_headerstxt-multiple--false][parse_headers(txt, multiple = FALSE)]]
+    - [[#parse_headers_listtxt][parse_headers_list(txt)]]
+  - [[#other][Other]]
+    - [[#file_writerpath][file_writer(path)]]
+    - [[#form_datavalue-type--null][form_data(value, type = NULL)]]
+    - [[#form_filepath-type--null][form_file(path, type = NULL)]]
+    - [[#has_internet][has_internet()]]
+    - [[#ie_get_proxy_for_urltarget_url--httpwwwgooglecom][ie_get_proxy_for_url(target_url = "http://www.google.com")]]
+    - [[#ie_proxy_info][ie_proxy_info()]]
+    - [[#new_pooltotal_con--100-host_con--6-multiplex--true][new_pool(total_con = 100, host_con = 6, multiplex = TRUE)]]
+    - [[#nslookuphost-ipv4_only--false-multiple--false-error--true][nslookup(host, ipv4_only = FALSE, multiple = FALSE, error = TRUE)]]
+- [[#実行環境][実行環境]]
+- [[#参考リンク][参考リンク]]
+#+END_QUOTE
+
+* ライブラリの読み込みとバージョンの確認
+
+#+begin_src R :results silent
+library(curl)
+#+end_src
+\\
+
+- バージョン
+#+begin_src R :exports both
+packageVersion("curl")
+#+end_src
+
+#+RESULTS:
+: [1] ‘3.3’
+\\
+
+* 全関数リスト
+
+#+begin_src R :exports both
+pacman::p_funs(curl)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+ [1] "curl"                 "curl_download"        "curl_echo"           
+ [4] "curl_escape"          "curl_fetch_disk"      "curl_fetch_echo"     
+ [7] "curl_fetch_memory"    "curl_fetch_multi"     "curl_fetch_stream"   
+[10] "curl_options"         "curl_unescape"        "curl_version"        
+[13] "file_writer"          "form_data"            "form_file"           
+[16] "handle_cookies"       "handle_data"          "handle_reset"        
+[19] "handle_setform"       "handle_setheaders"    "handle_setopt"       
+[22] "has_internet"         "ie_get_proxy_for_url" "ie_proxy_info"       
+[25] "multi_add"            "multi_cancel"         "multi_fdset"         
+[28] "multi_list"           "multi_run"            "multi_set"           
+[31] "new_handle"           "new_pool"             "nslookup"            
+[34] "parse_date"           "parse_headers"        "parse_headers_list"
+#+end_example
+\\
+
+* 関数リスト
+** Curl
+*** curl(url = "http://httpbin.org/get", open = "", handle = new_handle())
+
+- ~curl()~ によって、R の ~connection~ オブジェクトを作成
+- レスポンスを非同期的に読み込むことができる
+#+begin_src R :exports both
+con <- curl("https://httpbin.org/get")
+class(con)
+#+end_src
+
+#+RESULTS:
+: [1] "curl"       "connection"
+\\
+
+- ~base::open()~ は ~connection~ オブジェクトを引数に取る
+- 3 行取得する例
+#+begin_src R :exports both
+open(con)
+out <- readLines(con, n = 3)
+cat(out, sep = "\n")
+#+end_src
+
+#+RESULTS:
+: {
+:   "args": {}, 
+:   "headers": {
+\\
+
+- さらに 3 行取得
+#+begin_src R :exports both
+out <- readLines(con, n = 3)
+cat(out, sep = "\n")
+#+end_src
+
+#+RESULTS:
+:     "Accept": "*/*", 
+:     "Accept-Encoding": "gzip, deflate", 
+:     "Host": "httpbin.org",
+\\
+
+- ~base::close()~ で connection を閉じる
+#+begin_src R :results silent :exports both
+close(con)
+#+end_src
+\\
+
+*** curl_download(url, destfile, quiet = TRUE, mode = "wb", handle = new_handle())
+
+- 大きなデータをダウンロードする場合につかう
+#+begin_src R :exports both
+tmp <- tempfile()
+curl_download("https://httpbin.org/get", tmp)
+cat(readLines(tmp), sep = "\n")
+#+end_src
+
+#+RESULTS:
+#+begin_example
+{
+  "args": {}, 
+  "headers": {
+    "Accept": "*/*", 
+    "Accept-Encoding": "gzip, deflate", 
+    "Host": "httpbin.org", 
+    "User-Agent": "R (3.6.1 x86_64-pc-linux-gnu x86_64 linux-gnu)"
+  }, 
+  "origin": "164.70.196.53, 164.70.196.53", 
+  "url": "https://httpbin.org/get"
+}
+#+end_example
+\\
+
+*** curl_echo(handle, port = 9359, progress = interactive(), file = NULL)
+*** curl_escape(url)
+*** curl_fetch_disk(url, path, handle = new_handle())
+*** curl_fetch_echo(url, handle = new_handle())
+*** curl_fetch_memory(url, handle = new_handle())
+
+- レスポンスをメモリに読み込む
+#+begin_src R :exports both
+req <- curl_fetch_memory("https://httpbin.org/get")
+str(req)
+#+end_src
+
+#+RESULTS:
+: List of 7
+:  $ url        : chr "https://httpbin.org/get"
+:  $ status_code: int 200
+:  $ type       : chr "application/json"
+:  $ headers    : raw [1:378] 48 54 54 50 ...
+:  $ modified   : POSIXct[1:1], format: NA
+:  $ times      : Named num [1:6] 0 0.000134 0.000143 0.000384 0.40795 ...
+:   ..- attr(*, "names")= chr [1:6] "redirect" "namelookup" "connect" "pretransfer" ...
+:  $ content    : raw [1:278] 7b 0a 20 20 ...
+\\
+
+- ヘッダーのみ取り出す
+#+begin_src R :exports both
+parse_headers(req$headers)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+ [1] "HTTP/1.1 200 OK"                            
+ [2] "Access-Control-Allow-Credentials: true"     
+ [3] "Access-Control-Allow-Origin: *"             
+ [4] "Content-Encoding: gzip"                     
+ [5] "Content-Type: application/json"             
+ [6] "Date: Mon, 21 Oct 2019 07:45:59 GMT"        
+ [7] "Referrer-Policy: no-referrer-when-downgrade"
+ [8] "Server: nginx"                              
+ [9] "X-Content-Type-Options: nosniff"            
+[10] "X-Frame-Options: DENY"                      
+[11] "X-XSS-Protection: 1; mode=block"            
+[12] "Content-Length: 196"                        
+[13] "Connection: keep-alive"
+#+end_example
+
+- base::rawToChar() でパースする
+#+begin_src R :exports both
+cat(rawToChar(req$content))
+#+end_src
+
+#+RESULTS:
+#+begin_example
+{
+  "args": {}, 
+  "headers": {
+    "Accept": "*/*", 
+    "Accept-Encoding": "gzip, deflate", 
+    "Host": "httpbin.org", 
+    "User-Agent": "R (3.6.1 x86_64-pc-linux-gnu x86_64 linux-gnu)"
+  }, 
+  "origin": "164.70.196.53, 164.70.196.53", 
+  "url": "https://httpbin.org/get"
+}
+#+end_example
+\\
+
+*** curl_fetch_multi(url, done = NULL, fail = NULL, pool = NULL, data = NULL, handle = new_handle())
+
+- HTTP2 Multiplexing を使って、非同期でリクエストを行う
+- Multiplexing: 単一の TCP 接続を論理的なストリームに分割して並列処理
+- libcurl 7.43.0 から HTTP2/Multiplexing をサポート
+- 結果を callback 関数で処理する
+
+#+begin_src R :exports both
+pool <- new_pool()
+cb <- function(req){cat("done:", req$url, ": HTTP:", req$status, "\n")}
+curl_fetch_multi('https://www.google.com', done = cb, pool = pool)
+curl_fetch_multi('https://cloud.r-project.org', done = cb, pool = pool)
+curl_fetch_multi('https://httpbin.org/blabla', done = cb, pool = pool)
+
+multi_run(pool = pool)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+done: https://www.google.com : HTTP: 200 
+done: https://cloud.r-project.org : HTTP: 200 
+done: https://httpbin.org/blabla : HTTP: 404 
+$success
+[1] 3
+
+$error
+[1] 0
+
+$pending
+[1] 0
+#+end_example
+\\
+
+*** curl_fetch_stream(url, fun, handle = new_handle())
+*** curl_options(filter = "")
+
+- libcurl のオプション一覧
+#+begin_src R :exports both
+curl_options()
+#+end_src
+
+#+RESULTS:
+#+begin_example
+      abstract_unix_socket            accept_encoding 
+                     10264                      10102 
+          accepttimeout_ms              address_scope 
+                       212                        171 
+                    altsvc                altsvc_ctrl 
+                     10287                        286 
+                    append                autoreferer 
+                        50                         58 
+                buffersize                     cainfo 
+                        98                      10065 
+                    capath                   certinfo 
+                     10097                        172 
+        chunk_bgn_function                 chunk_data 
+                     20198                      10201 
+        chunk_end_function            closesocketdata 
+                     20199                      10209 
+       closesocketfunction               connect_only 
+                     20208                        141 
+                connect_to             connecttimeout 
+                     10243                         78 
+         connecttimeout_ms conv_from_network_function 
+                       156                      20142 
+   conv_from_utf8_function   conv_to_network_function 
+                     20144                      20143 
+                    cookie                 cookiefile 
+                     10022                      10031 
+                 cookiejar                 cookielist 
+                     10082                      10135 
+             cookiesession             copypostfields 
+                        96                      10165 
+                      crlf                    crlfile 
+                        27                      10169 
+                     curlu              customrequest 
+                     10282                      10036 
+                 debugdata              debugfunction 
+                     10095                      20094 
+          default_protocol                dirlistonly 
+                     10238                         48 
+  disallow_username_in_url          dns_cache_timeout 
+                       278                         92 
+             dns_interface              dns_local_ip4 
+                     10221                      10222 
+             dns_local_ip6                dns_servers 
+                     10223                      10211 
+     dns_shuffle_addresses       dns_use_global_cache 
+                       275                         91 
+                   doh_url                  egdsocket 
+                     10279                      10077 
+               errorbuffer      expect_100_timeout_ms 
+                     10010                        227 
+               failonerror                   filetime 
+                        45                         69 
+              fnmatch_data           fnmatch_function 
+                     10202                      20200 
+            followlocation               forbid_reuse 
+                        52                         75 
+             fresh_connect                ftp_account 
+                        74                      10134 
+   ftp_alternative_to_user    ftp_create_missing_dirs 
+                     10147                        110 
+            ftp_filemethod       ftp_response_timeout 
+                       138                        112 
+          ftp_skip_pasv_ip                ftp_ssl_ccc 
+                       137                        154 
+              ftp_use_eprt               ftp_use_epsv 
+                       106                         85 
+              ftp_use_pret                    ftpport 
+                       188                      10017 
+                ftpsslauth          gssapi_delegation 
+                       129                        210 
+ happy_eyeballs_timeout_ms            haproxyprotocol 
+                       271                        274 
+                    header                 headerdata 
+                        42                      10029 
+            headerfunction                  headeropt 
+                     20079                        229 
+            http09_allowed             http200aliases 
+                       285                      10104 
+     http_content_decoding     http_transfer_decoding 
+                       158                        157 
+              http_version                   httpauth 
+                        84                        107 
+                   httpget                 httpheader 
+                        80                      10023 
+                  httppost            httpproxytunnel 
+                     10024                         61 
+     ignore_content_length                 infilesize 
+                       136                         14 
+          infilesize_large                  interface 
+                     30115                      10062 
+            interleavedata         interleavefunction 
+                     10195                      20196 
+                 ioctldata              ioctlfunction 
+                     10131                      20130 
+                 ipresolve                 issuercert 
+                       113                      10170 
+     keep_sending_on_error                  keypasswd 
+                       245                      10026 
+                  krblevel                  localport 
+                     10063                        139 
+            localportrange              login_options 
+                       140                      10224 
+           low_speed_limit             low_speed_time 
+                        19                         20 
+                 mail_auth                  mail_from 
+                     10217                      10186 
+                 mail_rcpt       max_recv_speed_large 
+                     10187                      30146 
+      max_send_speed_large                maxage_conn 
+                     30145                        288 
+               maxconnects                maxfilesize 
+                        71                        114 
+         maxfilesize_large                  maxredirs 
+                     30117                         68 
+                  mimepost                      netrc 
+                     10269                         51 
+                netrc_file        new_directory_perms 
+                     10118                        160 
+            new_file_perms                     nobody 
+                       159                         44 
+                noprogress                    noproxy 
+                        43                      10177 
+                  nosignal                 obsolete40 
+                        99                      10040 
+                obsolete72             opensocketdata 
+                        72                      10164 
+        opensocketfunction                   password 
+                     20163                      10174 
+                path_as_is            pinnedpublickey 
+                       234                      10230 
+                  pipewait                       port 
+                       237                          3 
+                      post                 postfields 
+                        47                      10015 
+             postfieldsize        postfieldsize_large 
+                        60                      30120 
+                 postquote                  postredir 
+                     10039                        161 
+                 pre_proxy                   prequote 
+                     10262                      10093 
+                   private               progressdata 
+                     10103                      10057 
+          progressfunction                  protocols 
+                     20056                        181 
+                     proxy               proxy_cainfo 
+                     10004                      10246 
+              proxy_capath              proxy_crlfile 
+                     10247                      10260 
+           proxy_keypasswd      proxy_pinnedpublickey 
+                     10258                      10263 
+        proxy_service_name      proxy_ssl_cipher_list 
+                     10235                      10259 
+         proxy_ssl_options       proxy_ssl_verifyhost 
+                       261                        249 
+      proxy_ssl_verifypeer              proxy_sslcert 
+                       248                      10254 
+         proxy_sslcerttype               proxy_sslkey 
+                     10255                      10256 
+          proxy_sslkeytype           proxy_sslversion 
+                     10257                        250 
+       proxy_tls13_ciphers     proxy_tlsauth_password 
+                     10277                      10252 
+        proxy_tlsauth_type     proxy_tlsauth_username 
+                     10253                      10251 
+       proxy_transfer_mode                  proxyauth 
+                       166                        111 
+               proxyheader              proxypassword 
+                     10228                      10176 
+                 proxyport                  proxytype 
+                        59                        101 
+             proxyusername               proxyuserpwd 
+                     10175                      10006 
+                       put                      quote 
+                        54                      10028 
+               random_file                      range 
+                     10076                      10007 
+                  readdata               readfunction 
+                     10009                      20012 
+           redir_protocols                    referer 
+                       182                      10016 
+            request_target                    resolve 
+                     10266                      10203 
+       resolver_start_data    resolver_start_function 
+                     10273                      20272 
+               resume_from          resume_from_large 
+                        21                      30116 
+          rtsp_client_cseq               rtsp_request 
+                       193                        189 
+          rtsp_server_cseq            rtsp_session_id 
+                       194                      10190 
+           rtsp_stream_uri             rtsp_transport 
+                     10191                      10192 
+                   sasl_ir                   seekdata 
+                       218                      10168 
+              seekfunction               service_name 
+                     20167                      10236 
+                     share                sockoptdata 
+                     10100                      10149 
+           sockoptfunction                socks5_auth 
+                     20148                        267 
+         socks5_gssapi_nec      socks5_gssapi_service 
+                       180                      10179 
+            ssh_auth_types            ssh_compression 
+                       151                        268 
+   ssh_host_public_key_md5                ssh_keydata 
+                     10162                      10185 
+           ssh_keyfunction             ssh_knownhosts 
+                     20184                      10183 
+       ssh_private_keyfile         ssh_public_keyfile 
+                     10153                      10152 
+           ssl_cipher_list               ssl_ctx_data 
+                     10083                      10109 
+          ssl_ctx_function            ssl_enable_alpn 
+                     20108                        226 
+            ssl_enable_npn             ssl_falsestart 
+                       225                        233 
+               ssl_options        ssl_sessionid_cache 
+                       216                        150 
+            ssl_verifyhost             ssl_verifypeer 
+                        81                         64 
+          ssl_verifystatus                    sslcert 
+                       232                      10025 
+               sslcerttype                  sslengine 
+                     10086                      10089 
+         sslengine_default                     sslkey 
+                        90                      10087 
+                sslkeytype                 sslversion 
+                     10088                         32 
+                    stderr             stream_depends 
+                     10037                      10240 
+          stream_depends_e              stream_weight 
+                     10241                        239 
+  suppress_connect_headers               tcp_fastopen 
+                       265                        244 
+             tcp_keepalive               tcp_keepidle 
+                       213                        214 
+             tcp_keepintvl                tcp_nodelay 
+                       215                        121 
+             telnetoptions               tftp_blksize 
+                     10070                        178 
+           tftp_no_options              timecondition 
+                       242                         33 
+                   timeout                 timeout_ms 
+                        13                        155 
+                 timevalue            timevalue_large 
+                        34                      30270 
+             tls13_ciphers           tlsauth_password 
+                     10276                      10205 
+              tlsauth_type           tlsauth_username 
+                     10206                      10204 
+               trailerdata            trailerfunction 
+                     10284                      20283 
+         transfer_encoding               transfertext 
+                       207                         53 
+          unix_socket_path          unrestricted_auth 
+                     10231                        105 
+        upkeep_interval_ms                     upload 
+                       281                         46 
+         upload_buffersize                        url 
+                       280                      10002 
+                   use_ssl                  useragent 
+                       119                      10018 
+                  username                    userpwd 
+                     10173                      10005 
+                   verbose              wildcardmatch 
+                        41                        197 
+                 writedata              writefunction 
+                     10001                      20011 
+          xferinfofunction             xoauth2_bearer 
+                     20219                      10220
+#+end_example
+\\
+
+*** curl_unescape(url)
+*** curl_version()
+
+#+begin_src R :exports both
+curl_version()
+#+end_src
+
+#+RESULTS:
+#+begin_example
+$version
+[1] "7.65.1"
+
+$ssl_version
+[1] "OpenSSL/1.1.1"
+
+$libz_version
+[1] "1.2.11"
+
+$libssh_version
+[1] NA
+
+$libidn_version
+[1] "2.0.4"
+
+$host
+[1] "x86_64-pc-linux-gnu"
+
+$protocols
+ [1] "dict"   "file"   "ftp"    "ftps"   "gopher" "http"   "https"  "imap"  
+ [9] "imaps"  "ldap"   "ldaps"  "pop3"   "pop3s"  "rtmp"   "rtsp"   "smb"   
+[17] "smbs"   "smtp"   "smtps"  "telnet" "tftp"  
+
+$ipv6
+[1] TRUE
+
+$http2
+[1] TRUE
+
+$idn
+[1] TRUE
+#+end_example
+\\
+
+** Handle
+*** new_handle(...)
+
+- curl ハンドルオブジェクトの作成
+#+begin_src R
+h <- new_handle()
+handle_setopt(h, copypostfields = "moo=moomooo");
+handle_setheaders(h,
+  "Content-Type" = "text/moo",
+  "Cache-Control" = "no-cache",
+  "User-Agent" = "A cow"
+)
+h
+#+end_src
+
+#+RESULTS:
+: <curl handle> (empty)
+
+*** handle_cookies(handle)
+
+- ハンドルオブジェクトから cookie を抜き出す
+#+begin_src R :results output
+h <- new_handle()
+# サーバにクッキーを設定してくれるよう依頼
+req <- curl_fetch_memory("http://httpbin.org/cookies/set?foo=123&bar=ftw", handle = h)
+req <- curl_fetch_memory("http://httpbin.org/cookies/set?baz=moooo", handle = h)
+handle_cookies(h)
+h
+#+end_src
+
+#+RESULTS:
+:        domain  flag path secure expiration name value
+: 1 httpbin.org FALSE    /  FALSE       <
+:  foo   123
+: 2 httpbin.org FALSE    /  FALSE       <
+:  bar   ftw
+: 3 httpbin.org FALSE    /  FALSE       <
+:  baz moooo
+: <curl
+: (http://httpbin.org/cookies)
+\\
+
+- ハンドルをリセットとするとオプション・ヘッダをデフォルト値に戻す
+- クッキーは削除されない
+#+begin_src R :results output
+handle_reset(h)
+handle_cookies(h)
+#+end_src
+
+#+RESULTS:
+:        domain  flag path secure expiration name value
+: 1 httpbin.org FALSE    /  FALSE       <
+:  foo   123
+: 2 httpbin.org FALSE    /  FALSE       <
+:  bar   ftw
+: 3 httpbin.org FALSE    /  FALSE       <
+:  baz moooo
+
+*** handle_data(handle)
+*** handle_reset(handle)
+*** handle_setform(handle, ..., .list = list())
+*** handle_setheaders(handle, ..., .list = list())
+*** handle_setopt(handle, ..., .list = list())
+** Multi
+*** multi_add(handle, done = NULL, fail = NULL, data = NULL, pool = NULL)
+*** multi_cancel(handle)
+*** multi_fdset(pool = NULL)
+*** multi_list(pool = NULL)
+*** multi_run(timeout = Inf, poll = FALSE, pool = NULL)
+*** multi_set(total_con = 50, host_con = 6, multiplex = TRUE, pool = NULL)
+** Parse
+*** parse_date(datestring)
+*** parse_headers(txt, multiple = FALSE)
+*** parse_headers_list(txt)
+** Other
+*** file_writer(path)
+*** form_data(value, type = NULL)
+*** form_file(path, type = NULL)
+*** has_internet()
+*** ie_get_proxy_for_url(target_url = "http://www.google.com")
+*** ie_proxy_info()
+*** new_pool(total_con = 100, host_con = 6, multiplex = TRUE)
+*** nslookup(host, ipv4_only = FALSE, multiple = FALSE, error = TRUE)
+* 実行環境
+
+#+begin_src R :results output :exports both
+sessionInfo()
+#+end_src
+
+#+RESULTS:
+#+begin_example
+R version 3.6.1 (2019-07-05)
+Platform: x86_64-pc-linux-gnu (64-bit)
+Running under: Ubuntu 18.04.3 LTS
+
+Matrix products: default
+BLAS:   /usr/lib/x86_64-linux-gnu/blas/libblas.so.3.7.1
+LAPACK: /usr/lib/x86_64-linux-gnu/lapack/liblapack.so.3.7.1
+
+locale:
+ [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C              
+ [3] LC_TIME=en_US.UTF-8        LC_COLLATE=en_US.UTF-8    
+ [5] LC_MONETARY=en_US.UTF-8    LC_MESSAGES=en_US.UTF-8   
+ [7] LC_PAPER=en_US.UTF-8       LC_NAME=C                 
+ [9] LC_ADDRESS=C               LC_TELEPHONE=C            
+[11] LC_MEASUREMENT=en_US.UTF-8 LC_IDENTIFICATION=C       
+
+attached base packages:
+[1] stats     graphics  grDevices utils     datasets  methods   base     
+
+other attached packages:
+[1] curl_3.3
+
+loaded via a namespace (and not attached):
+[1] compiler_3.6.1
+#+end_example
+\\
+
+* 参考リンク
+
+- [[https://jeroen.cran.dev/curl/][公式サイト]]
+- [[https://cran.r-project.org/web/packages/curl/index.html][CRAN]] 
+- [[https://cran.r-project.org/web/packages/curl/curl.pdf][Reference Manual]]
+- [[https://github.com/jeroen/curl][Github Repo]]
+- Vignette
+  - [[https://cran.r-project.org/web/packages/curl/vignettes/intro.html][The curl package: a modern R interface to libcurl]] ([[https://qiita.com/nakamichi/items/8ddea676b4afbfbc200b][日本語訳@Qitta]])
+  - [[https://cran.r-project.org/web/packages/curl/vignettes/windows.html][Proxies and Certificates on Windows Networks]]
+- Blog
+    
