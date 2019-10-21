@@ -1,0 +1,93 @@
+#+STARTUP: folded indent
+#+PROPERTY: header-args:R :results output :session *R:equality*
+
+* Equality comparison in R                                         :noexport:
+* 目次                                                            :toc:quote:
+#+BEGIN_QUOTE
+- [[#関数リスト][関数リスト]]
+  - [[#-identicalx-y-numeq--true-singlena--true-attribasset--true-ignorebytecode--true-ignoreenvironment--false-ignoresrcref--true][★★☆ ~identical(x, y, num.eq = TRUE, single.NA = TRUE, attrib.as.set = TRUE, ignore.bytecode = TRUE, ignore.environment = FALSE, ignore.srcref = TRUE)~.]]
+  - [[#-all-narm--false][★★★ ~all(..., na.rm = FALSE)~.]]
+  - [[#-allequaltarget-current-][★★☆ ~all.equal(target, current, ...)~.]]
+  - [[#-istruex--isfalsex][★☆☆ ~isTRUE(x)~ / ~isFALSE(x)~.]]
+  - [[#-dplyrnearx-y-tol--machinedoubleeps05][★★☆ ~dplyr::near(x, y, tol = .Machine$double.eps^0.5)~.]]
+#+END_QUOTE
+
+* 関数リスト
+** ★★☆ ~identical(x, y, num.eq = TRUE, single.NA = TRUE, attrib.as.set = TRUE, ignore.bytecode = TRUE, ignore.environment = FALSE, ignore.srcref = TRUE)~.
+
+- 比較対象が ~NULL~ だった場合も ~TRUE~ / ~FALSE~ で返してくれる
+- ~integer~ と ~double~ などの型も厳密に比較
+
+#+begin_src R :exports both
+1 == NULL # logical(0)
+identical(1, NULL)
+identical(1, 1.) # 1 も double として扱われている
+identical(1, as.integer(1))
+#+end_src
+
+#+RESULTS:
+: logical(0)
+: 
+: [1] FALSE
+: 
+: [1] TRUE
+: 
+: [1] FALSE
+\\
+
+- 環境の比較は ~==~ ではできない
+- ~identical()~ を使う
+#+begin_src R :exports both
+identical(environment(), globalenv())
+#+end_src
+
+#+RESULTS:
+: [1] TRUE
+\\
+
+** ★★★ ~all(..., na.rm = FALSE)~.
+
+#+begin_src R :exports both
+all(TRUE, TRUE, FALSE)
+all(TRUE, TRUE, TRUE)
+#+end_src
+
+#+RESULTS:
+: [1] FALSE
+: 
+: [1] TRUE
+\\
+
+** ★★☆ ~all.equal(target, current, ...)~.
+
+- ~all.equal()~ オブジェクトが *Nearly equal* かを調べる
+- ~numeric~, ~list~, ~enviroment~ など向けの S3 メソッド
+- S3 for numeric (tolerance が設定されている)
+  ~all.equal(target, current, tolerance = sqrt(.Machine$double.eps), scale = NULL, countEQ = FALSE, formatFUN = function(err, what) format(err), ..., check.attributes = TRUE)~
+
+#+begin_src R :exports both
+x <- 1.0
+y <- 0.99999999999
+all.equal(x, y)
+#+end_src
+
+#+RESULTS:
+: 
+: [1] TRUE
+\\
+  
+** ★☆☆ ~isTRUE(x)~ / ~isFALSE(x)~.
+\\
+** ★★☆ ~dplyr::near(x, y, tol = .Machine$double.eps^0.5)~.
+
+- Vectorized ~all.equal()~
+#+begin_src R :exports both
+x <- rep(1, 10)
+y <- rep(0.999999999999, 10)
+dplyr::near(x, y)
+#+end_src
+
+#+RESULTS:
+: 
+:  [1] TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE
+\\

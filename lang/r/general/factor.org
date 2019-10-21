@@ -1,0 +1,78 @@
+#+STARTUP: folded indent
+#+PROPERTY: header-args:R :results output :session *R:factor*
+
+* ~factor~ in ~{base}~ R                                               :noexport:
+
+{base} パッケージでの ファクター (因子型) についてのノート。{forcat} その他のパッケージでの因子型の扱いについては、別ノートで扱う。
+\\
+
+* 目次                                                            :toc:quote:
+#+BEGIN_QUOTE
+- [[#factor-とは][factor とは？]]
+- [[#基本][基本]]
+#+END_QUOTE
+
+* factor とは？
+
+- カテゴリカルデータ (離散変数からなるデータ) を扱う
+- ~integer~ vector に ~class~, ~levels~ の 2 つの ~attribute~ を加えたもの
+\\
+
+メリット
+- 決められた範囲の集合を扱うのに便利 (範囲を絞ったり、欠損値を明らかにできる)
+- 文字列をアルファベット順以外の方法で整列することができる
+
+* 基本
+
+- ~factor()~ 関数に ~levels~ (水準) を指定して作成する
+#+begin_src R :exports both
+x1 <- c("Dec", "Apr", "Jan", "Mar")
+
+month_levels <- c(
+  "Jan", "Feb", "Mar", "Apr", "May", "Jon",
+  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+)
+
+# factor 関数で levels を指定して作成
+y1 <- factor(x1, levels = month_levels)
+y1
+
+# factor 順にソートされる
+sort(y1) 
+
+# levels を指定しないと文字列のソート
+factor(x1) 
+#+end_src
+
+#+RESULTS:
+: 
+: [1] Dec Apr Jan Mar
+: Levels: Jan Feb Mar Apr May Jon Jul Aug Sep Oct Nov Dec
+: 
+: [1] Jan Mar Apr Dec
+: Levels: Jan Feb Mar Apr May Jon Jul Aug Sep Oct Nov Dec
+: 
+: [1] Dec Apr Jan Mar
+: Levels: Apr Dec Jan Mar
+\\
+
+- 変数の範囲を事前に指定できるので、欠損値も明らかにしやすい
+- ~table()~ でファクター毎の要約
+#+begin_src R :exports both
+sex_char <- c("m", "m", "m")
+table(sex_char)
+
+sex_factor <- factor(sex_char, levels = c("m", "f"))
+table(sex_factor)
+#+end_src
+
+#+RESULTS:
+: 
+: sex_char
+: m 
+: 3
+: 
+: sex_factor
+: m f 
+: 3 0
+\\

@@ -1,0 +1,117 @@
+#+STARTUP: folded indent
+#+PROPERTY: header-args:R :results output :session *R:forcats*
+
+* Overview
+
+- カテゴリカル・データを扱う
+- integer vector に class, levels の 2 つの attribute を加えたもの
+
+メリット
+- 決められた範囲の集合を扱うのに便利 (範囲を絞ったり、欠損値を明らかにできる)
+- 文字列をアルファベット順以外の方法で整列することができる
+
+* ライブラリの読み込みとバージョンの確認
+
+#+begin_src R :results silent
+library(forcats)
+#+end_src
+\\
+
+- バージョン
+#+begin_src R :exports both
+packageVersion("forcats")
+#+end_src
+
+#+RESULTS:
+: [1] ‘0.4.0’
+\\
+
+* Packages
+
+#+begin_src R :results silent
+library(forcats)
+library(readr)
+#+end_src
+
+* readr package
+
+#+begin_src R
+parse_factor(x1, levels = month_levels)
+#+end_src
+
+#+RESULTS:
+: 
+: [1] Dec Apr Jan Mar
+: Levels: Jan Feb Mar Apr May Jon Jul Aug Sep Oct Nov Dec
+
+* forcats package
+
+- forcats package は fct_ prefix
+- 全関数リスト
+#+begin_src R
+fct_anon()
+fct_c()
+fct_collapse()
+fct_count()
+fct_cross()
+fct_drop()
+fct_expand()
+fct_explicit_na()
+fct_infreq()
+fct_inorder()
+fct_inseq()
+fct_lump()
+fct_lump_min()
+fct_match()
+fct_other()
+fct_recode()
+fct_relabel()
+fct_relevel()
+fct_reorder()
+fct_reorder2()
+fct_rev()
+fct_shift()
+fct_shuffle()
+fct_unify()
+fct_unique()
+#+end_src
+
+- fct_inorder(): factor の順序を出現順にしたい
+#+begin_src R
+factor(x1, levels = unique(x1))
+factor(x1) %>% fct_inorder()
+#+end_src
+
+#+RESULTS:
+: [1] Dec Apr Jan Mar
+: Levels: Dec Apr Jan Mar
+: 
+: [1] Dec Apr Jan Mar
+: Levels: Dec Apr Jan Mar
+
+
+- GSS 総合的社会調査データセット
+
+#+begin_src R :results value :colnames yes
+data(gss_cat)
+head(gss_cat)
+#+end_src
+
+#+RESULTS:
+| year | marital       | age | race  | rincome        | partyid            | relig              | denom            | tvhours |
+|------+---------------+-----+-------+----------------+--------------------+--------------------+------------------+---------|
+| 2000 | Never married |  26 | White | $8000 to 9999  | Ind,near rep       | Protestant         | Southern baptist |      12 |
+| 2000 | Divorced      |  48 | White | $8000 to 9999  | Not str republican | Protestant         | Baptist-dk which |     nil |
+| 2000 | Widowed       |  67 | White | Not applicable | Independent        | Protestant         | No denomination  |       2 |
+| 2000 | Never married |  39 | White | Not applicable | Ind,near rep       | Orthodox-christian | Not applicable   |       4 |
+| 2000 | Divorced      |  25 | White | Not applicable | Not str democrat   | None               | Not applicable   |       1 |
+| 2000 | Married       |  25 | White | $20000 - 24999 | Strong democrat    | Protestant         | Southern baptist |     nil |
+
+# count() でファクタ数の確認
+gss_cat %>% count(race)
+gss_cat %>% count(rincome)
+gss_cat %>% count(partyid)
+gss_cat %>% count(relig)
+gss_cat %>% count(denom)
+
+ggplot(gss_cat, aes(race)) + geom_bar()
