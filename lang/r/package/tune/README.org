@@ -1,0 +1,632 @@
+#+STARTUP: folded indent
+#+PROPERTY: header-args:R :results output :colnames yes :session *R:tune* :width 640 :height 480
+
+* ~{tune}~: Tools for tidy parameter tuning                          :noexport:
+
+~{tune}~ モデルのパラメタチューニングを tidyverse 的な手法で行うためのパッケージ。 ~{tidymodels}~ に含まれる。
+
+- 執筆時点では、また CRAN には登録されていない。 (Experimental の位置づけ)
+- ~{tidymodels}~ の ~{recipes}~, ~{parsnip}~, ~{dials}~ と組み合わせて利用する前提。 ~{recipes}~ の前処理パラメタと ~{parsnip}~ のモデルパラメタをチューニングする。
+- 現在開発中の ~{workflows}~ と組み合わせると後処理のパラメターも守備範囲に入ってくる模様。
+\\
+
+* 目次                                                                :quote:
+* ライブラリの読み込みとバージョンの確認
+
+#+begin_src R :results silent
+library(tune)
+library(tidyverse)
+library(tidymodels)
+#+end_src
+\\
+
+- バージョン
+#+begin_src R :results output :exports both
+packageVersion("tune")
+#+end_src
+
+#+RESULTS:
+: [1] ‘0.0.0.9002’
+\\
+
+* Vignette: Getting Started with {tune}
+** データセット
+
+- {AmesHousing}
+- Latitude (緯度) と Longtude (経度) から 住宅価格を予測
+#+begin_src R
+library(AmesHousing)
+ames <- make_ames()
+names(ames)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+ [1] "MS_SubClass"        "MS_Zoning"          "Lot_Frontage"      
+ [4] "Lot_Area"           "Street"             "Alley"             
+ [7] "Lot_Shape"          "Land_Contour"       "Utilities"         
+[10] "Lot_Config"         "Land_Slope"         "Neighborhood"      
+[13] "Condition_1"        "Condition_2"        "Bldg_Type"         
+[16] "House_Style"        "Overall_Qual"       "Overall_Cond"      
+[19] "Year_Built"         "Year_Remod_Add"     "Roof_Style"        
+[22] "Roof_Matl"          "Exterior_1st"       "Exterior_2nd"      
+[25] "Mas_Vnr_Type"       "Mas_Vnr_Area"       "Exter_Qual"        
+[28] "Exter_Cond"         "Foundation"         "Bsmt_Qual"         
+[31] "Bsmt_Cond"          "Bsmt_Exposure"      "BsmtFin_Type_1"    
+[34] "BsmtFin_SF_1"       "BsmtFin_Type_2"     "BsmtFin_SF_2"      
+[37] "Bsmt_Unf_SF"        "Total_Bsmt_SF"      "Heating"           
+[40] "Heating_QC"         "Central_Air"        "Electrical"        
+[43] "First_Flr_SF"       "Second_Flr_SF"      "Low_Qual_Fin_SF"   
+[46] "Gr_Liv_Area"        "Bsmt_Full_Bath"     "Bsmt_Half_Bath"    
+[49] "Full_Bath"          "Half_Bath"          "Bedroom_AbvGr"     
+[52] "Kitchen_AbvGr"      "Kitchen_Qual"       "TotRms_AbvGrd"     
+[55] "Functional"         "Fireplaces"         "Fireplace_Qu"      
+[58] "Garage_Type"        "Garage_Finish"      "Garage_Cars"       
+[61] "Garage_Area"        "Garage_Qual"        "Garage_Cond"       
+[64] "Paved_Drive"        "Wood_Deck_SF"       "Open_Porch_SF"     
+[67] "Enclosed_Porch"     "Three_season_porch" "Screen_Porch"      
+[70] "Pool_Area"          "Pool_QC"            "Fence"             
+[73] "Misc_Feature"       "Misc_Val"           "Mo_Sold"           
+[76] "Year_Sold"          "Sale_Type"          "Sale_Condition"    
+[79] "Sale_Price"         "Longitude"          "Latitude"
+#+end_example
+\\
+
+** 訓練データとテストデータに分割
+
+#+begin_src R :results silent
+set.seed(4595)
+data_split <- initial_split(ames, strata = "Sale_Price")
+ames_train <- training(data_split)
+ames_test  <- testing(data_split)
+#+end_src
+
+** プロット (住宅価格 vs 緯度・経度)
+
+#+begin_src R :results graphics :file (my/get-babel-file)
+ames_train %>%
+  dplyr::select(Sale_Price, Longitude, Latitude) %>%
+  tidyr::pivot_longer(cols = c(Longitude, Latitude),
+                      names_to = "predictor", values_to = "value") %>%
+  ggplot(aes(x = value, Sale_Price)) +
+  geom_point(alpha = .2) +
+  ## geom_smooth() using method = gam
+  ## formula 'y ~ s(x, bs = "cs")'
+  geom_smooth(se = FALSE) +
+  scale_y_log10() +
+  facet_wrap(~ predictor, scales = "free_x")
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-daWsY8.png]]
+
+** recipe 作成 with チューニングパラメタ
+
+- Natural Spline モデルの deg_free をチューニングパラメタに設定
+- パラメタに ~tune::tune()~ を設定するとチューニングされるべきパラメタとして Placeholder を置くことができる
+#+begin_src R
+ames_rec <- recipe(Sale_Price ~ Longitude + Latitude, data = ames_train) %>%
+  step_log(Sale_Price, base = 10) %>%
+  step_ns(Longitude, deg_free = tune("long df")) %>%
+  step_ns(Latitude, deg_free = tune("lat df"))
+
+## recipe からパラメタを抽出する
+dials::parameters(ames_rec)
+#+end_src
+
+#+RESULTS:
+: 
+: Collection of 2 parameters for tuning
+: 
+:       id parameter type object class
+:  long df       deg_free    nparam[+]
+:   lat df       deg_free    nparam[+]
+\\
+
+- ~{dials}~ パッケージには、パラメタの範囲のテンプレートが用意されている
+- デフォルトでは ~deg_free()~ 使われているので ~spline_degree()~ に変更する
+#+begin_src R
+dials::deg_free()
+dials::spline_degree()
+
+## deg_free -> spline に更新する
+ames_param <- ames_rec %>%
+  dials::parameters() %>%
+  update(
+    `long df` = spline_degree(),
+    `lat df` = spline_degree())
+ames_param
+#+end_src
+
+#+RESULTS:
+#+begin_example
+Degrees of Freedom  (quantitative)
+Range: [1, 5]
+
+Piecewise Polynomial Degree  (quantitative)
+Range: [3, 10]
+
+Collection of 2 parameters for tuning
+
+      id parameter type object class
+ long df       deg_free    nparam[+]
+  lat df       deg_free    nparam[+]
+#+end_example
+\\
+
+** グリッドサーチのためのパラメタ生成
+
+- {dials} パッケージには、グリッドサーチのためのパラメタを生成するための関数を収録
+  - ~dials::grid_latin_hypercube()~
+  - ~dials::grid_max_entropy()~
+  - ~dials::grid_random()~
+  - ~dials::grid_regular()~
+
+#+begin_src R
+spline_grid <- grid_max_entropy(ames_param, size = 10)
+data.frame(spline_grid)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+   long.df lat.df
+1        3      6
+2       10     10
+3        8      7
+4        3     10
+5        7     10
+6        4      3
+7        4      8
+8        7      4
+9        5      6
+10      10      5
+#+end_example
+\\
+
+- 当然 ~base::expand.grid()~ を使ってもよい
+#+begin_src R
+df_vals <- seq(2, 18, by = 2)
+spline_grid <- expand.grid(`long df` = df_vals, `lat df` = df_vals)
+spline_grid
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+   long df lat df
+1        2      2
+2        4      2
+3        6      2
+4        8      2
+5       10      2
+6       12      2
+7       14      2
+8       16      2
+9       18      2
+10       2      4
+11       4      4
+12       6      4
+13       8      4
+14      10      4
+15      12      4
+16      14      4
+17      16      4
+18      18      4
+19       2      6
+20       4      6
+21       6      6
+22       8      6
+23      10      6
+24      12      6
+25      14      6
+26      16      6
+27      18      6
+28       2      8
+29       4      8
+30       6      8
+31       8      8
+32      10      8
+33      12      8
+34      14      8
+35      16      8
+36      18      8
+37       2     10
+38       4     10
+39       6     10
+40       8     10
+41      10     10
+42      12     10
+43      14     10
+44      16     10
+45      18     10
+46       2     12
+47       4     12
+48       6     12
+49       8     12
+50      10     12
+51      12     12
+52      14     12
+53      16     12
+54      18     12
+55       2     14
+56       4     14
+57       6     14
+58       8     14
+59      10     14
+60      12     14
+61      14     14
+62      16     14
+63      18     14
+64       2     16
+65       4     16
+66       6     16
+67       8     16
+68      10     16
+69      12     16
+70      14     16
+71      16     16
+72      18     16
+73       2     18
+74       4     18
+75       6     18
+76       8     18
+77      10     18
+78      12     18
+79      14     18
+80      16     18
+81      18     18
+#+end_example
+\\
+
+** グリッドサーチの実行
+
+- Linear Reression を適応
+- ~tune_grid()~ で全パラメタのモデル当てはめ
+
+#+begin_src R :results silent
+lm_mod <- linear_reg() %>% set_engine("lm")
+
+# 10 分割する
+set.seed(2453)
+cv_splits <- vfold_cv(ames_train, v = 10, strata = "Sale_Price")
+
+# 計算
+ames_res <- tune_grid(ames_rec, model = lm_mod, rs = cv_splits, grid = spline_grid)
+#+end_src
+
+** パフォーマンス評価
+
+- ~tune_results~ class
+- ~.metrics~ に ~{yardstick}~ で計算された評価指標が入る
+#+begin_src R
+class(ames_res)
+ames_res$.metrics[[1]] %>%
+  data.frame() %>%
+  head()
+#+end_src
+
+#+RESULTS:
+#+begin_example
+[1] "tune_results" "tune_results" "vfold_cv"     "rset"         "tbl_df"      
+[6] "tbl"          "data.frame"
+
+  long.df lat.df .metric .estimator .estimate
+1       2      2    rmse   standard 0.1495513
+2       2      2     rsq   standard 0.3619807
+3       4      2    rmse   standard 0.1497801
+4       4      2     rsq   standard 0.3600820
+5       6      2    rmse   standard 0.1457032
+6       6      2     rsq   standard 0.3948914
+#+end_example
+\\
+
+- ~estimate()~ でパフォーマンスの要約
+#+begin_src R
+estimates <- estimate(ames_res)
+rmse_vals <- estimates %>%
+  dplyr::filter(.metric == "rmse") %>%
+  arrange(mean)
+  
+rmse_vals %>% data.frame() %>% head()
+#+end_src
+
+#+RESULTS:
+: 
+:   long.df lat.df .metric .estimator      mean  n     std_err
+: 1      16     16    rmse   standard 0.1279916 10 0.002436837
+: 2      16     18    rmse   standard 0.1280480 10 0.002468083
+: 3      16     12    rmse   standard 0.1281445 10 0.002351749
+: 4      18     16    rmse   standard 0.1283325 10 0.002391803
+: 5      18     18    rmse   standard 0.1283937 10 0.002424013
+: 6      16     14    rmse   standard 0.1284205 10 0.002294357
+\\
+
+- RMSE vs. Regressors
+#+begin_src R :results graphics :file (my/get-babel-file)
+rmse_vals %>%
+  ## convert to factors for easier plotting
+  mutate(`lat df` = factor(format(`lat df`))) %>%
+  ggplot(aes(x = `long df`, y = mean, col = `lat df`)) +
+  geom_point() +
+  geom_line() +
+  ylab("Mean RMSE")
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-VTtjjJ.png]]
+
+#+begin_src R :results graphics :file (my/get-babel-file)
+ames_train %>%
+  dplyr::select(Sale_Price, Longitude, Latitude) %>%
+  tidyr::pivot_longer(cols = c(Longitude, Latitude),
+                      names_to = "predictor", values_to = "value") %>%
+  ggplot(aes(x = value, Sale_Price)) +
+  geom_point(alpha = .2) +
+  geom_smooth(se = FALSE, method = lm, formula = y ~ splines::ns(x, df = 3),  col = "red")  +
+  geom_smooth(se = FALSE, method = lm, formula = y ~ splines::ns(x, df = 16)) +
+  scale_y_log10() +
+  facet_wrap(~ predictor, scales = "free_x")
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-vlnNzm.png]]
+
+** workflow() を使った場合
+
+- ~workflow()~ + ~add_model(parsnip_model)~ + ~add_recipe(recipe)~
+- ~workflow()~ 関数は、現在 ~{tune}~ に収録されているが、将来的には ~{workflows}~ に移管される模様
+- この時点では、以下の 4 つがチューニングパラメタ
+  - 前処理パラメタ "long df", "lat df"
+  - モデルパラメタ "neighbors", "weight_func"
+
+#+begin_src R
+knn_mod <- nearest_neighbor(neighbors = tune(), weight_func = tune()) %>%
+  set_engine("kknn") %>%
+  set_mode("regression")
+
+knn_wflow <- workflow() %>%
+  add_model(knn_mod) %>%
+  add_recipe(ames_rec)
+knn_wflow
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+workflow object
+ model object:
+K-Nearest Neighbor Model Specification (regression)
+
+Main Arguments:
+  neighbors = tune()
+  weight_func = tune()
+
+Computational engine: kknn 
+
+ recipe:
+Data Recipe
+
+Inputs:
+
+      role #variables
+   outcome          1
+ predictor          2
+
+Operations:
+
+Log transformation on Sale_Price
+Natural Splines on Longitude
+Natural Splines on Latitude
+#+end_example
+
+#+begin_src R
+parameters(knn_wflow)
+#+end_src
+
+#+RESULTS:
+: Collection of 4 parameters for tuning
+: 
+:           id parameter type object class
+:    neighbors      neighbors    nparam[+]
+:  weight_func    weight_func    dparam[+]
+:      long df       deg_free    nparam[+]
+:       lat df       deg_free    nparam[+]
+
+** パラメタの更新
+
+#+begin_src R
+knn_param <- knn_wflow %>% 
+  parameters() %>% 
+    update(
+    `long df` = spline_degree(c(2, 18)), 
+    `lat df` = spline_degree(c(2, 18)),
+    neighbors = neighbors(c(3, 50)),
+    weight_func = weight_func(values = c("rectangular", "inv", "gaussian", "triangular")))
+knn_param 
+#+end_src
+
+#+RESULTS:
+: 
+: Collection of 4 parameters for tuning
+: 
+:           id parameter type object class
+:    neighbors      neighbors    nparam[+]
+:  weight_func    weight_func    dparam[+]
+:      long df       deg_free    nparam[+]
+:       lat df       deg_free    nparam[+]
+
+** ベイズ的最適化 by tune_Bayes()
+
+- グリッドサーチではなく、ベイズ的最適化で最適パラメタを探索する
+
+#+begin_src R :results
+ctrl <- Bayes_control(verbose = TRUE)
+set.seed(8154)
+knn_search <- tune_Bayes(knn_wflow, rs = cv_splits, initial = 5, iter = 20,
+                         param_info = knn_param, control = ctrl)
+#+end_src
+
+#+begin_src R :results value
+estimate(knn_search) %>% 
+  dplyr::filter(.metric == "rmse") %>% 
+  arrange(mean) %>%
+  mutate_if(is.numeric, round, digits = 3) %>%
+  data.frame()
+#+end_src
+
+#+RESULTS:
+| neighbors | weight_func | long.df | lat.df | .iter | .metric | .estimator |  mean |  n | std_err |
+|-----------+-------------+---------+--------+-------+---------+------------+-------+----+---------|
+|        28 | inv         |      16 |     10 |     0 | rmse    | standard   | 0.099 | 10 |   0.003 |
+|        14 | gaussian    |      18 |      9 |     4 | rmse    | standard   |   0.1 | 10 |   0.003 |
+|         5 | gaussian    |       8 |     14 |     0 | rmse    | standard   | 0.101 | 10 |   0.003 |
+|         3 | rectangular |      15 |     10 |     1 | rmse    | standard   | 0.101 | 10 |   0.003 |
+|        20 | inv         |       5 |     18 |     5 | rmse    | standard   | 0.103 | 10 |   0.003 |
+|        47 | gaussian    |      18 |     18 |     2 | rmse    | standard   | 0.104 | 10 |   0.003 |
+|         4 | inv         |      18 |      3 |     8 | rmse    | standard   | 0.104 | 10 |   0.003 |
+|        36 | gaussian    |       9 |      6 |     0 | rmse    | standard   | 0.105 | 10 |   0.003 |
+|        44 | gaussian    |       5 |      2 |     3 | rmse    | standard   | 0.109 | 10 |   0.003 |
+|         4 | rectangular |       2 |     14 |     7 | rmse    | standard   | 0.109 | 10 |   0.004 |
+|        34 | rectangular |      18 |     14 |    10 | rmse    | standard   | 0.113 | 10 |   0.003 |
+|        28 | rectangular |       2 |      2 |     9 | rmse    | standard   | 0.114 | 10 |   0.003 |
+|        18 | rectangular |      13 |      3 |     0 | rmse    | standard   | 0.114 | 10 |   0.003 |
+|        47 | rectangular |       3 |     16 |     0 | rmse    | standard   | 0.127 | 10 |   0.003 |
+|        49 | rectangular |      18 |      2 |     6 | rmse    | standard   |  0.13 | 10 |   0.002 |
+\\
+
+* 全関数リスト
+
+#+begin_src R :results output
+pacman::p_funs(tune)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+ [1] "add_formula"               "add_model"                
+ [3] "add_recipe"                "autoplot"                 
+ [5] "Bayes_control"             "collect_metrics"          
+ [7] "collect_predictions"       "conf_bound"               
+ [9] "estimate"                  "exp_improve"              
+[11] "expo_decay"                "grid_control"             
+[13] "load_pkgs"                 "min_grid"                 
+[15] "min_grid.boost_tree"       "min_grid.linear_reg"      
+[17] "min_grid.logistic_reg"     "min_grid.mars"            
+[19] "min_grid.multinom_reg"     "min_grid.nearest_neighbor"
+[21] "no_param"                  "outcome_names"            
+[23] "parameters"                "prob_improve"             
+[25] "select_best"               "tunable"                  
+[27] "tune"                      "tune_args"                
+[29] "tune_Bayes"                "tune_grid"                
+[31] "workflow"
+#+end_example
+
+* 関数リスト
+** tune(id = "")
+
+- 最適化されるパラメタの Placeholder
+- ~call~ class (関数呼び出し)
+
+#+begin_src R
+tune()
+class(tune())
+tune("your name here") ## パラメタのラベル
+#+end_src
+
+#+RESULTS:
+: tune()
+: [1] "call"
+: tune("your name here")
+
+** tune_grid(object, model, rs, grid = NULL, perf = NULL, control = grid_control(), ...)
+** tune_Bayes(object, model, rs, iter = 10, param_info = NULL, perf = NULL, objective = exp_improve(), initial = NULL, control = Bayes_control(), ...)
+** tune_args(object, full = FALSE, ...)
+* 実行環境
+
+#+begin_src R :results output :exports both
+sessionInfo()
+#+end_src
+
+#+RESULTS:
+#+begin_example
+R version 3.6.1 (2019-07-05)
+Platform: x86_64-pc-linux-gnu (64-bit)
+Running under: Ubuntu 18.04.3 LTS
+
+Matrix products: default
+BLAS:   /usr/lib/x86_64-linux-gnu/blas/libblas.so.3.7.1
+LAPACK: /usr/lib/x86_64-linux-gnu/lapack/liblapack.so.3.7.1
+
+locale:
+ [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C              
+ [3] LC_TIME=en_US.UTF-8        LC_COLLATE=en_US.UTF-8    
+ [5] LC_MONETARY=en_US.UTF-8    LC_MESSAGES=en_US.UTF-8   
+ [7] LC_PAPER=en_US.UTF-8       LC_NAME=C                 
+ [9] LC_ADDRESS=C               LC_TELEPHONE=C            
+[11] LC_MEASUREMENT=en_US.UTF-8 LC_IDENTIFICATION=C       
+
+attached base packages:
+[1] stats     graphics  grDevices utils     datasets  methods   base     
+
+other attached packages:
+ [1] yardstick_0.0.4  rsample_0.0.5    recipes_0.1.7    parsnip_0.0.3.1 
+ [5] infer_0.5.0      dials_0.0.3      scales_1.0.0     broom_0.5.2     
+ [9] tidymodels_0.0.3 forcats_0.4.0    stringr_1.4.0    dplyr_0.8.3     
+[13] purrr_0.3.2      readr_1.3.1      tidyr_1.0.0      tibble_2.1.3    
+[17] ggplot2_3.2.1    tidyverse_1.2.1 
+
+loaded via a namespace (and not attached):
+  [1] readxl_1.3.1        backports_1.1.5     tidytext_0.2.2     
+  [4] plyr_1.8.4          igraph_1.2.4.1      lazyeval_0.2.2     
+  [7] splines_3.6.1       crosstalk_1.0.0     listenv_0.7.0      
+ [10] SnowballC_0.6.0     rstantools_2.0.0    inline_0.3.15      
+ [13] digest_0.6.21       htmltools_0.4.0     rsconnect_0.8.15   
+ [16] magrittr_1.5        globals_0.12.4      modelr_0.1.5       
+ [19] gower_0.2.1         matrixStats_0.55.0  xts_0.11-2         
+ [22] prettyunits_1.0.2   colorspace_1.4-1    rvest_0.3.4        
+ [25] haven_2.1.1         xfun_0.10           callr_3.3.2        
+ [28] crayon_1.3.4        jsonlite_1.6        lme4_1.1-21        
+ [31] zeallot_0.1.0       survival_2.44-1.1   zoo_1.8-6          
+ [34] glue_1.3.1          gtable_0.3.0        ipred_0.9-9        
+ [37] pkgbuild_1.0.6      rstan_2.19.2        miniUI_0.1.1.1     
+ [40] Rcpp_1.0.2          xtable_1.8-3        stats4_3.6.1       
+ [43] lava_1.6.6          StanHeaders_2.19.0  prodlim_2018.04.18 
+ [46] DT_0.9              htmlwidgets_1.5.1   httr_1.4.1         
+ [49] threejs_0.3.1       pkgconfig_2.0.3     loo_2.1.0          
+ [52] nnet_7.3-12         tidyselect_0.2.5    rlang_0.4.0        
+ [55] DiceDesign_1.8-1    reshape2_1.4.3      later_1.0.0        
+ [58] munsell_0.5.0       cellranger_1.1.0    tools_3.6.1        
+ [61] cli_1.1.0           generics_0.0.2      ggridges_0.5.1     
+ [64] fastmap_1.0.1       processx_3.4.1      knitr_1.25         
+ [67] future_1.14.0       nlme_3.1-141        mime_0.7           
+ [70] rstanarm_2.19.2     xml2_1.2.2          tokenizers_0.2.1   
+ [73] compiler_3.6.1      bayesplot_1.7.0     shinythemes_1.1.2  
+ [76] rstudioapi_0.10     tidyposterior_0.0.2 stringi_1.4.3      
+ [79] ps_1.3.0            lattice_0.20-38     Matrix_1.2-17      
+ [82] nloptr_1.2.1        markdown_1.1        shinyjs_1.0        
+ [85] vctrs_0.2.0         pillar_1.4.2        lifecycle_0.1.0    
+ [88] furrr_0.1.0         httpuv_1.5.2        R6_2.4.0           
+ [91] promises_1.1.0      gridExtra_2.3       janeaustenr_0.1.5  
+ [94] codetools_0.2-16    boot_1.3-23         colourpicker_1.0   
+ [97] MASS_7.3-51.4       gtools_3.8.1        assertthat_0.2.1   
+[100] withr_2.1.2         shinystan_2.5.0     parallel_3.6.1     
+[103] hms_0.5.1           grid_3.6.1          rpart_4.1-15       
+[106] timeDate_3043.102   class_7.3-15        minqa_1.2.4        
+[109] pROC_1.15.3         tidypredict_0.4.3   shiny_1.4.0        
+[112] lubridate_1.7.4     base64enc_0.1-3     dygraphs_1.1.1.6
+#+end_example
+\\
+
+* 参考リンク
+
+- [[https://tidymodels.github.io/tune/][公式サイト]]
+- (執筆時点では CRAN version なし)
+- [[https://github.com/tidymodels/tune][Github Repo]]
+- Vignette
+  - [[https://tidymodels.github.io/tune/articles/getting_started.html][Getting Started with tune]]
+  - [[https://tidymodels.github.io/tune/articles/grid.html][Grid Search]]
+  - [[https://tidymodels.github.io/tune/articles/extras/svm_classification.html][Classification Example]]
+  - [[https://tidymodels.github.io/tune/articles/extras/text_analysis.html][Text Analysis Example]]
+  - [[https://tidymodels.github.io/tune/articles/extras/optimizations.html][Optimizations and Parallel Processing]]
+  - [[https://tidymodels.github.io/tune/articles/acquisition_functions.html][Acquisition Functions]]

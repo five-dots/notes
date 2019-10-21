@@ -374,3 +374,4 @@ loaded via a namespace (and not attached):
 - Blog
   - [[https://dropout009.hatenablog.com/entry/2019/01/06/124932][tidymodelsによるtidyな機械学習フロー（その1）@Dropout]]
   - [[https://dropout009.hatenablog.com/entry/2019/01/09/214233][tidymodelsによるtidyな機械学習フロー（その2：Cross Varidation）@Dropout]]
+  - [[https://speakerdeck.com/s_uryu/tidymodels][tidymodelsによるモデル構築と運用@speakerdeck]]

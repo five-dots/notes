@@ -41,11 +41,11 @@ Babel の実行には適切な ~org-babel-load-language~ の設定が必要で�
 | Factor             | {base}, {forcat}                                                   |
 | Date and Time      | [[file:./lang/r/general/date_time.org][ ~{base}~ ]], [[file:./lang/r/package/lubridate.org][ ~{lubridate}~ ]], {hms}, {nanotime}                         |
 | Preprocessing      | [[file:lang/r/package/rsample.org][ ~{rsample}~ ]], [[file:lang/r/package/recipes/][ ~{recipes}~ ]]                                           |
-| Modeling           | [[file:./lang/r/package/parsnip/][ ~{parsnip}~ ]]                                                        |
+| Modeling           | [[file:./lang/r/package/parsnip/][ ~{parsnip}~ ]], {tune}, {dials}                                       |
 | Testing            | [[file:./lang/r/package/infer.org][ ~{infer}~ ]]                                                          |
 | Performance Metric | [[file:./lang/r/package/yardstick/][ ~{yardstick}~ ]], {PerformanceAnalytics}                              |
 | Assertion          | [[file:./lang/r/package/assertthat.org][ ~{assertthat}~ ]], {assertr}                                          |
-| Workflow           | {drake}                                                            |
+| Workflow           | {drake}, {mlr/mlr3}                                                |
 | Utility            | {magrittr}, {zeallot}                                              |
 | Dataset            | [[file:./lang/r/general/dataset.org][ ~general~ ]], [[file:lang/r/finance/dataset.org][ ~finance~ ]]                                               |
 |--------------------+--------------------------------------------------------------------|

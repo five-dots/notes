@@ -31,7 +31,6 @@
 * ライブラリの読み込みとバージョンの確認
 
 #+begin_src R :results silent
-# install.packages("recipes")
 library(recipes)
 #+end_src
 \\
@@ -625,3 +624,4 @@ loaded via a namespace (and not attached):
   - [[https://blog.hoxo-m.com/entry/2018/08/26/161144][モデルで扱うデータの前処理をrecipesで行う@株式会社ホクソエムのブログ]]
   - [[https://www.slideshare.net/YutakaKuroki/tokyo-r-20181110][Rパッケージ recipes の紹介　「うまい飯を作る」@SlideShare]]
   - [[https://dropout009.hatenablog.com/entry/2019/01/06/124932][tidymodelsによるtidyな機械学習フロー（その1）@Dropout]]
+  - [[https://speakerdeck.com/s_uryu/tidymodels][tidymodelsによるモデル構築と運用@speakerdeck]]
