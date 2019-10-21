@@ -1,0 +1,248 @@
+#+STARTUP: folded indent
+#+PROPERTY: header-args:R :results output :session *R:jsonlite*
+
+* ~{jsonlite}~: A Robust, High Performance JSON Parser and Generator for R :noexport:
+
+~{jsonlite}~ は R で JSON を扱うためのパッケージ。
+\\
+
+* 目次                                                                :quote:
+#+BEGIN_QUOTE
+- [[#ライブラリの読み込みとバージョンの確認][ライブラリの読み込みとバージョンの確認]]
+- [[#全関数リスト][全関数リスト]]
+  - [[#抽出][抽出]]
+    - [[#-str_substring-start--1l-end---1l-開始終了位置で抽出][★★☆ ~str_sub(string, start = 1L, end = -1L)~ 開始・終了位置で抽出]]
+    - [[#-str_subsetstring-pattern-negate--false-マッチ要素を抽出][★★★ ~str_subset(string, pattern, negate = FALSE)~ マッチ要素を抽出]]
+    - [[#-str_extractstring-pattern-最初のマッチ部分を抽出][★★☆ ~str_extract(string, pattern)~ 最初のマッチ部分を抽出]]
+    - [[#-str_extract_allstring-pattern-simplify--false-全てのマッチ部分を抽出][★☆☆ ~str_extract_all(string, pattern, simplify = FALSE)~ 全てのマッチ部分を抽出]]
+    - [[#-str_matchstring-pattern-最初のマッチ部分を抽出][★☆☆ ~str_match(string, pattern)~ 最初のマッチ部分を抽出]]
+    - [[#-str_match_allstring-pattern-全てのマッチ部分を抽出][★☆☆ ~str_match_all(string, pattern)~ 全てのマッチ部分を抽出]]
+    - [[#-wordstring-start--1l-end--start-sep--fixed--単語を抽出][★☆☆ ~word(string, start = 1L, end = start, sep = fixed(" "))~ 単語を抽出]]
+  - [[#置換変換削除][置換・変換・削除]]
+    - [[#-str_substring-start--1l-end---1l-omit_na--false---value-開始終了位置で置換][★★☆ ~str_sub(string, start = 1L, end = -1L, omit_na = FALSE) <- value~ 開始・終了位置で置換]]
+    - [[#-str_replacestring-pattern-replacement-最初のマッチを置換][★★★ ~str_replace(string, pattern, replacement)~ 最初のマッチを置換]]
+    - [[#-str_replace_allstring-pattern-replacement-全てのマッチを置換][★★★ ~str_replace_all(string, pattern, replacement)~ 全てのマッチを置換]]
+    - [[#-str_removestring-pattern-マッチ部分を削除][★★★ ~str_remove(string, pattern)~ マッチ部分を削除]]
+    - [[#-str_remove_allstring-pattern-マッチを削除][★★★ ~str_remove_all(string, pattern)~ マッチを削除]]
+    - [[#-str_to_lowerstring-locale--en-小文字に変換][★★☆ ~str_to_lower(string, locale = "en")~ 小文字に変換]]
+    - [[#-str_to_upperstring-locale--en-大文字に変換][★★☆ ~str_to_upper(string, locale = "en")~ 大文字に変換]]
+    - [[#-str_to_titlestring-locale--en-タイトル形式に変換][★☆☆ ~str_to_title(string, locale = "en")~ タイトル形式に変換]]
+    - [[#-str_to_sentencestring-locale--en-センテンス形式に変換][★☆☆ ~str_to_sentence(string, locale = "en")~ センテンス形式に変換]]
+  - [[#結合分割][結合・分割]]
+    - [[#-str_c-sep---collapse--null-結合-][★★☆ ~str_c(..., sep = "", collapse = NULL)~ 結合 (~...~)]]
+    - [[#-str_flattenstring-collapse---結合-ベクトル][★★☆ ~str_flatten(string, collapse = "")~ 結合 (ベクトル)]]
+    - [[#-str_dupstring-times-複製して結合][★☆☆ ~str_dup(string, times)~ 複製して結合]]
+    - [[#-str_splitstring-pattern-n--inf-simplify--false-分割][★★★ ~str_split(string, pattern, n = Inf, simplify = FALSE)~ 分割]]
+    - [[#-str_split_fixedstring-pattern-n-固定長で分割][★☆☆ ~str_split_fixed(string, pattern, n)~ 固定長で分割]]
+  - [[#変数埋め込み][変数埋め込み]]
+    - [[#-str_interpstring-env--parentframe-format-付きで埋め込む][★☆☆ ~str_interp(string, env = parent.frame())~ format 付きで埋め込む]]
+    - [[#-str_glue-sep---envir--parentframe-glue][★☆☆ ~str_glue(..., .sep = "", .envir = parent.frame())~ glue()]]
+    - [[#-str_glue_datax--sep---envir--parentframe-na--na-glue_data][★☆☆ ~str_glue_data(.x, ..., .sep = "", .envir = parent.frame(), .na = "NA")~ glue_data()]]
+  - [[#正規表現マッチを検出][正規表現マッチを検出]]
+    - [[#-str_detectstring-pattern-negate--false-マッチの真偽][★★★ ~str_detect(string, pattern, negate = FALSE)~ マッチの真偽]]
+    - [[#-str_startsstring-pattern-negate--false-先頭マッチの真偽][★★★ ~str_starts(string, pattern, negate = FALSE)~ 先頭マッチの真偽]]
+    - [[#-str_endsstring-pattern-negate--false-末尾マッチの真偽][★★★ ~str_ends(string, pattern, negate = FALSE)~ 末尾マッチの真偽]]
+    - [[#-str_whichstring-pattern-negate--false-マッチしたインデックス][★★☆ ~str_which(string, pattern, negate = FALSE)~ マッチしたインデックス]]
+    - [[#-str_countstring-pattern---マッチした数をカウント][★☆☆ ~str_count(string, pattern = "")~ マッチした数をカウント]]
+    - [[#-str_locatestring-pattern-マッチした開始終了位置][★☆☆ ~str_locate(string, pattern)~ マッチした開始・終了位置]]
+    - [[#-str_locate_allstring-pattern-マッチした開始終了位置][★☆☆ ~str_locate_all(string, pattern)~ マッチした開始・終了位置]]
+  - [[#長さの操作調整][長さの操作・調整]]
+    - [[#-str_lengthstring-文字数をカウント][★★☆ ~str_length(string)~ 文字数をカウント]]
+    - [[#-str_trimstring-side--cboth-left-right-空白を除去][★★☆ ~str_trim(string, side = c("both", "left", "right"))~ 空白を除去]]
+    - [[#-str_squishstring-複数の空白を除去][★☆☆ ~str_squish(string)~ 複数の空白を除去]]
+    - [[#-str_padstring-width-side--cleft-right-both-pad----文字埋め][★★☆ ~str_pad(string, width, side = c("left", "right", "both"), pad = " ")~ 文字埋め]]
+    - [[#-str_truncstring-width-side--cright-left-center-ellipsis---文字埋め][★☆☆ ~str_trunc(string, width, side = c("right", "left", "center"), ellipsis = "...")~ 文字埋め]]
+    - [[#-str_wrapstring-width--80-indent--0-exdent--0-折り返す][★☆☆ ~str_wrap(string, width = 80, indent = 0, exdent = 0)~ 折り返す]]
+  - [[#並び替え][並び替え]]
+    - [[#-str_orderx-decreasing--false-na_last--true-locale--en-numeric--false--並び順][★☆☆ ~str_order(x, decreasing = FALSE, na_last = TRUE, locale = "en", numeric = FALSE, ...)~ 並び順]]
+    - [[#-str_sortx-decreasing--false-na_last--true-locale--en-numeric--false--ソート][★☆☆ ~str_sort(x, decreasing = FALSE, na_last = TRUE, locale = "en", numeric = FALSE, ...)~ ソート]]
+  - [[#その他][その他]]
+    - [[#-str_convstring-encoding-文字コード変換][★☆☆ ~str_conv(string, encoding)~ 文字コード変換]]
+    - [[#-str_viewstring-pattern-match--na-最初のマッチを-html-表示][★☆☆ ~str_view(string, pattern, match = NA)~ 最初のマッチを HTML 表示]]
+    - [[#-str_view_allstring-pattern-match--na-全てのマッチを-html-表示][★☆☆ ~str_view_all(string, pattern, match = NA)~ 全てのマッチを HTML 表示]]
+  - [[#正規表現オプション][正規表現オプション]]
+    - [[#-fixedpattern-ignore_case--false][★☆☆ ~fixed(pattern, ignore_case = FALSE)~.]]
+    - [[#-collpattern-ignore_case--false-locale--en-][★☆☆ ~coll(pattern, ignore_case = FALSE, locale = "en", ...)~.]]
+    - [[#-regexpattern-ignore_case--false-multiline--false-comments--false-dotall--false-][★☆☆ ~regex(pattern, ignore_case = FALSE, multiline = FALSE, comments = FALSE, dotall = FALSE, ...)~.]]
+    - [[#-boundarytype--ccharacter-line_break-sentence-word-skip_word_none--na-][★☆☆ ~boundary(type = c("character", "line_break", "sentence", "word"), skip_word_none = NA, ...)~.]]
+- [[#実行環境][実行環境]]
+- [[#参考リンク][参考リンク]]
+#+END_QUOTE
+
+* ライブラリの読み込みとバージョンの確認
+  
+#+begin_src R :results silent
+library(jsonlite)
+library(tidyverse)
+#+end_src
+\\
+
+- バージョン
+#+begin_src R :exports both
+packageVersion("jsonlite")
+#+end_src
+
+#+RESULTS:
+: [1] ‘1.6’
+\\
+
+* 関数リスト
+** From/To Files
+*** read_json(path, simplifyVector = FALSE, ...)
+
+- デフォルトは ~list~ で読み込む
+#+begin_src R :exports both
+tmp <- R.utils::tmpfile()
+write_json(iris, tmp)
+json <- read_json(tmp)
+json[[1]]
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+$Sepal.Length
+[1] 5.1
+
+$Sepal.Width
+[1] 3.5
+
+$Petal.Length
+[1] 1.4
+
+$Petal.Width
+[1] 0.2
+
+$Species
+[1] "setosa"
+#+end_example
+\\
+
+- ~data.frame~ で読み込む
+#+begin_src R :results value :colnames yes
+json2 <- read_json(tmp, simplifyVector = TRUE)
+head(json2)
+#+end_src
+
+#+RESULTS:
+| Sepal.Length | Sepal.Width | Petal.Length | Petal.Width | Species |
+|--------------+-------------+--------------+-------------+---------|
+|          5.1 |         3.5 |          1.4 |         0.2 | setosa  |
+|          4.9 |           3 |          1.4 |         0.2 | setosa  |
+|          4.7 |         3.2 |          1.3 |         0.2 | setosa  |
+|          4.6 |         3.1 |          1.5 |         0.2 | setosa  |
+|            5 |         3.6 |          1.4 |         0.2 | setosa  |
+|          5.4 |         3.9 |          1.7 |         0.4 | setosa  |
+\\
+
+*** parse_json(json, simplifyVector = FALSE, ...)
+*** write_json(x, path, ...)
+** From/To R Objects
+*** toJSON(x, dataframe = c("rows", "columns", "values"), matrix = c("rowmajor", "columnmajor"), Date = c("ISO8601", "epoch"), POSIXt = c("string", "ISO8601", "epoch", "mongo"), factor = c("string", "integer"), complex = c("string", "list"), raw = c("base64", "hex", "mongo"), null = c("list", "null"), na = c("null", "string"), auto_unbox = FALSE, digits = 4, pretty = FALSE, force = FALSE, ...)
+
+#+begin_src R
+iris_j <- toJSON(iris[1:10, ])
+iris_j
+#+end_src
+
+#+RESULTS:
+: 
+: [{"Sepal.Length":5.1,"Sepal.Width":3.5,"Petal.Length":1.4,"Petal.Width":0.2,"Species":"setosa"},{"Sepal.Length":4.9,"Sepal.Width":3,"Petal.Length":1.4,"Petal.Width":0.2,"Species":"setosa"},{"Sepal.Length":4.7,"Sepal.Width":3.2,"Petal.Length":1.3,"Petal.Width":0.2,"Species":"setosa"},{"Sepal.Length":4.6,"Sepal.Width":3.1,"Petal.Length":1.5,"Petal.Width":0.2,"Species":"setosa"},{"Sepal.Length":5,"Sepal.Width":3.6,"Petal.Length":1.4,"Petal.Width":0.2,"Species":"setosa"},{"Sepal.Length":5.4,"Sepal.Width":3.9,"Petal.Length":1.7,"Petal.Width":0.4,"Species":"setosa"},{"Sepal.Length":4.6,"Sepal.Width":3.4,"Petal.Length":1.4,"Petal.Width":0.3,"Species":"setosa"},{"Sepal.Length":5,"Sepal.Width":3.4,"Petal.Length":1.5,"Petal.Width":0.2,"Species":"setosa"},{"Sepal.Length":4.4,"Sepal.Width":2.9,"Petal.Length":1.4,"Petal.Width":0.2,"Species":"setosa"},{"Sepal.Length":4.9,"Sepal.Width":3.1,"Petal.Length":1.5,"Petal.Width":0.1,"Species":"setosa"}]
+\\
+
+*** fromJSON(txt, simplifyVector = TRUE, simplifyDataFrame = simplifyVector, simplifyMatrix = simplifyVector, flatten = FALSE, ...)
+
+#+begin_src R :results value :colnames yes
+fromJSON(iris_j)
+#+end_src
+
+#+RESULTS:
+| Sepal.Length | Sepal.Width | Petal.Length | Petal.Width | Species |
+|--------------+-------------+--------------+-------------+---------|
+|          5.1 |         3.5 |          1.4 |         0.2 | setosa  |
+|          4.9 |           3 |          1.4 |         0.2 | setosa  |
+|          4.7 |         3.2 |          1.3 |         0.2 | setosa  |
+|          4.6 |         3.1 |          1.5 |         0.2 | setosa  |
+|            5 |         3.6 |          1.4 |         0.2 | setosa  |
+|          5.4 |         3.9 |          1.7 |         0.4 | setosa  |
+|          4.6 |         3.4 |          1.4 |         0.3 | setosa  |
+|            5 |         3.4 |          1.5 |         0.2 | setosa  |
+|          4.4 |         2.9 |          1.4 |         0.2 | setosa  |
+|          4.9 |         3.1 |          1.5 |         0.1 | setosa  |
+\\
+
+** Others
+*** base64_dec(input)
+*** base64_enc(input)
+*** flatten(x, recursive = TRUE)
+*** minify(txt)
+*** prettify(txt, indent = 4)
+*** rbind_pages(pages)
+*** serializeJSON(x, digits = 8, pretty = FALSE)
+*** stream_in(con, handler = NULL, pagesize = 500, verbose = TRUE, ...)
+*** stream_out(x, con = stdout(), pagesize = 500, verbose = TRUE, prefix = "", ...)
+*** unbox(x)
+*** unserializeJSON(txt)
+*** validate(txt)
+* 実行環境
+
+#+begin_src R :results output :exports both
+sessionInfo()
+#+end_src
+
+#+RESULTS:
+#+begin_example
+R version 3.6.1 (2019-07-05)
+Platform: x86_64-pc-linux-gnu (64-bit)
+Running under: Ubuntu 18.04.3 LTS
+
+Matrix products: default
+BLAS:   /usr/lib/x86_64-linux-gnu/blas/libblas.so.3.7.1
+LAPACK: /usr/lib/x86_64-linux-gnu/lapack/liblapack.so.3.7.1
+
+locale:
+ [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C              
+ [3] LC_TIME=en_US.UTF-8        LC_COLLATE=en_US.UTF-8    
+ [5] LC_MONETARY=en_US.UTF-8    LC_MESSAGES=en_US.UTF-8   
+ [7] LC_PAPER=en_US.UTF-8       LC_NAME=C                 
+ [9] LC_ADDRESS=C               LC_TELEPHONE=C            
+[11] LC_MEASUREMENT=en_US.UTF-8 LC_IDENTIFICATION=C       
+
+attached base packages:
+[1] stats     graphics  grDevices utils     datasets  methods   base     
+
+other attached packages:
+ [1] forcats_0.4.0   stringr_1.4.0   dplyr_0.8.3     purrr_0.3.3    
+ [5] readr_1.3.1     tidyr_1.0.0     tibble_2.1.3    ggplot2_3.2.1  
+ [9] tidyverse_1.2.1 jsonlite_1.6   
+
+loaded via a namespace (and not attached):
+ [1] Rcpp_1.0.2        cellranger_1.1.0  pillar_1.4.2      compiler_3.6.1   
+ [5] prettyunits_1.0.2 progress_1.2.2    tools_3.6.1       zeallot_0.1.0    
+ [9] lubridate_1.7.4   lifecycle_0.1.0   nlme_3.1-141      gtable_0.3.0     
+[13] lattice_0.20-38   pkgconfig_2.0.3   rlang_0.4.0       cli_1.9.9.9000   
+[17] rstudioapi_0.10   haven_2.1.1       withr_2.1.2       xml2_1.2.2       
+[21] httr_1.4.1        generics_0.0.2    vctrs_0.2.0       hms_0.5.1        
+[25] grid_3.6.1        tidyselect_0.2.5  glue_1.3.1        R6_2.4.0         
+[29] fansi_0.4.0       readxl_1.3.1      modelr_0.1.5      magrittr_1.5     
+[33] backports_1.1.5   scales_1.0.0      rvest_0.3.4       assertthat_0.2.1 
+[37] colorspace_1.4-1  stringi_1.4.3     lazyeval_0.2.2    munsell_0.5.0    
+[41] broom_0.5.2       crayon_1.3.4
+#+end_example
+\\
+
+* 参考リンク
+
+- [[https://arxiv.org/abs/1403.2805][公式サイト]]
+- [[https://cran.r-project.org/web/packages/jsonlite/index.html][CRAN]]
+- [[https://cran.r-project.org/web/packages/jsonlite/jsonlite.pdf][Reference Manual]]
+- [[https://github.com/jeroen/jsonlite][Github Repo]]
+- Vignette
+  - [[https://cran.r-project.org/web/packages/jsonlite/vignettes/json-aaquickstart.html][Getting started with JSON and jsonlite]]
+  - [[https://cran.r-project.org/web/packages/jsonlite/vignettes/json-apis.html][Fetching JSON data from REST APIs]]
+  - [[https://cran.r-project.org/web/packages/jsonlite/vignettes/json-paging.html][Combining pages of JSON data with jsonlite]]
+  - [[https://cran.r-project.org/web/packages/jsonlite/vignettes/json-mapping.pdf][A mapping between JSON data and R objects(PDF)]]
+  - [[https://cran.r-project.org/web/packages/jsonlite/vignettes/json-opencpu.pdf][Simple JSON RPC with OpenCPU(PDF)]]
+- Blog
+  - [[https://notchained.hatenablog.com/entry/2017/01/06/150736][メモ：RでJSONファイルを読み書きするときはjsonlite::read_json(), jsonlite::write_json()@Technically, technophobic.]]
+    

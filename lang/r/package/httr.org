@@ -51,8 +51,6 @@ packageVersion("httr")
 
 - ~libcurl~ をラップした ~{curl}~ のラッパー
 - 同じウェブサイトであれば、自動的に接続が使いまわされる
-\\
-
 - 対応している HTTP メソッド
 #+begin_src R :exports both
 pacman::p_funs(httr) %>% str_subset("[A-Z]{2}")
@@ -61,6 +59,7 @@ pacman::p_funs(httr) %>% str_subset("[A-Z]{2}")
 #+RESULTS:
 : [1] "BROWSE" "DELETE" "GET"    "HEAD"   "PATCH"  "POST"   "PUT"    "RETRY" 
 : [9] "VERB"
+\\
 
 ** レスポンス
 *** GET(url = NULL, config = list(), ..., handle = NULL)
@@ -102,9 +101,8 @@ Response [http://httpbin.org/get]
 
 *** http_status(x)
 
-- レスポンスのオブジェクトから情報を抽出する関数が用意されている
-
-#+begin_src R :results output
+- ステータスを抽出
+#+begin_src R :exports both
 http_status(r)
 #+end_src
 
@@ -190,6 +188,7 @@ content(r, "text")
 #+RESULTS:
 : No encoding supplied: defaulting to UTF-8.
 : [1] "{\n  \"args\": {}, \n  \"headers\": {\n    \"Accept\": \"application/json, text/xml, application/xml, */*\", \n    \"Accept-Encoding\": \"gzip, deflate\", \n    \"Host\": \"httpbin.org\", \n    \"User-Agent\": \"libcurl/7.65.1 r-curl/3.3 httr/1.4.1\"\n  }, \n  \"origin\": \"164.70.196.53, 164.70.196.53\", \n  \"url\": \"https://httpbin.org/get\"\n}\n"
+\\
 
 - 文字コードの検出
 #+begin_src R :exports both
@@ -221,6 +220,7 @@ content(r, "text", encoding = "ISO-8859-1")
 
 #+RESULTS:
 : [1] "{\n  \"args\": {}, \n  \"headers\": {\n    \"Accept\": \"application/json, text/xml, application/xml, */*\", \n    \"Accept-Encoding\": \"gzip, deflate\", \n    \"Host\": \"httpbin.org\", \n    \"User-Agent\": \"libcurl/7.65.1 r-curl/3.3 httr/1.4.1\"\n  }, \n  \"origin\": \"164.70.196.53, 164.70.196.53\", \n  \"url\": \"https://httpbin.org/get\"\n}\n"
+\\
 
 - Raw Byte で表示
 - type = "raw"
