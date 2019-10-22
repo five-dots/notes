@@ -54,7 +54,7 @@ packageVersion("drake")
 
 * 全関数リスト
 
-#+begin_src R
+#+begin_src R :exports both
 pacman::p_funs(drake)
 #+end_src
 
@@ -200,6 +200,7 @@ create_plot <- function(data) {
     geom_histogram()
 }
 #+end_src
+\\
 
 ** ★★★ ~drake_plan()~.
 
@@ -241,6 +242,18 @@ plan
 ** ★★★ ~drake_config()~.
 
 - ~make()~ に必要な全ての設定情報を ~list~ で返す
+- Deprecated とされている引数
+  - ~hook~
+  - ~fetch_cache~
+  - ~prepend~
+  - ~command~
+  - ~args~
+  - ~recipe_command~
+  - ~timeout~
+  - ~sesssion~
+  - ~makefile_path~
+  - ~ensure_workers~
+
 #+begin_src R
 config <- drake_config(plan)
 class(config)
@@ -346,6 +359,7 @@ create_plot <- function(data) {
 #+begin_src R :results silent
 vis_drake_graph(config)
 #+end_src
+\\
 
 - 再度 ~make()~ を実行
 #+begin_src R :exports both
@@ -409,6 +423,7 @@ cache$get_value(hash)
 
 #+RESULTS:
 [[file:/home/shun/Dropbox/memo/img/babel/fig-keECyF.png]]
+\\
 
 ** ★★★ ~make(plan, recover = TRUE)~.
 
@@ -478,6 +493,7 @@ which_clean()
 clean()
 vis_drake_graph(config)
 #+end_src
+\\
 
 - 全てをリカバリーする
 #+begin_src R :exports both
@@ -535,10 +551,12 @@ make(plan, recover = TRUE)
 ** ★☆☆ ~plan_to_code()~.
 
 - plan オブジェクトをスクリプトファイル (.R) に変換する
+\\
 
 ** ★☆☆ ~code_to_plan()~.
 
 - .R のスクリプトや、.Rmd から plan を生成する 
+\\
 
 ** ★☆☆ ~deps_code()~.
 
@@ -617,14 +635,14 @@ bind_cols(small_plan, cpu = c(1, 2))
 
 ~make()~ 実行時のオプションとして以下のカラムを設定できる。
 - ~format~: set a storage format to save big targets more efficiently. Most formats are faster than ordinary storage, and they consume far less memory. Available formats:
-  - ~"fst"~: save big data frames fast. Requirements:
+  - *"fst"*: save big data frames fast. Requirements:
     1. The fst package must be installed.
     2. The target’s value must be a plain data frame. If it is not a plain data frame (for example, a tibble or data.table) then drake will coerce it to a plain data frame with as.data.frame(). All non-data-frame-specific attributes are lost when drake saves the target.
-  - ~"fst_dt"~: Like "fst" format, but for data.table objects. Requirements:
+  - *"fst_dt"*: Like "fst" format, but for data.table objects. Requirements:
     1. The data.table and fst packages must be installed.
     2. The target’s value must be a data.table object. If it is not a data.table object (for example, a data frame or tibble) then drake will coerce it to a data.table object using data.table::as.data.table(). All non-data-table-specific attributes are lost when drake saves the target.
-  - ~"keras"~: save Keras models as HDF5 files. Requires the keras package.
-  - ~"rds"~: save any object. This is similar to the default storage except we avoid creating a serialized copy of the entire target in memory. Requires R >= 3.5.0 so drake can use ALTREP.
+  - *"keras"*: save Keras models as HDF5 files. Requires the keras package.
+  - *"rds"*: save any object. This is similar to the default storage except we avoid creating a serialized copy of the entire target in memory. Requires R >= 3.5.0 so drake can use ALTREP.
 - ~trigger~: rule to decide whether a target needs to run. See the trigger chapter to learn more.
 - ~elapsed~ and ~cpu~: number of seconds to wait for the target to build before timing out (elapsed for elapsed time and cpu for CPU time).
 - ~hpc~: logical values (TRUE/FALSE/NA) whether to send each target to parallel workers. Click here to learn more.
@@ -641,9 +659,9 @@ bind_cols(small_plan, cpu = c(1, 2))
 
 - 何らかの繰り返しによる、大量の target を自動生成できる
 - transformations の種類
-  - ~map()~     - ~purrr::pmap()~
-  - ~cross()~   - ~tidyr::crossing()~
-  - ~split()~   - ~dplyr::group_map()~
+  - ~map()~ - ~purrr::pmap()~
+  - ~cross()~ - ~tidyr::crossing()~
+  - ~split()~ - ~dplyr::group_map()~
   - ~combine()~ - ~dplyr::summaries()~
 
 #+begin_src R
