@@ -40,7 +40,7 @@ Babel の実行には適切な ~org-babel-load-language~ の設定が必要で�
 | String             | [[file:./lang/r/general/regex.org][ ~regex~ ]], [[file:./lang/r/package/stringr.org][ ~{stringr}~ ]] [[file:./lang/r/package/glue.org][ ~{glue}~ ]], [[file:./lang/r/package/crayon.org][ ~{crayon}~ ]]                                  |
 | Factor             | [[file:./lang/r/general/factor.org][ ~{base}~ ]], [[file:./lang/r/package/farcats.org][ ~{forcats*}~ ]]                                                     |
 | Date and Time      | [[file:./lang/r/general/date_time.org][ ~{base}~ ]], [[file:./lang/r/package/lubridate.org][ ~{lubridate}~ ]], {hms}, {nanotime}                                 |
-| Assertion          | [[file:./lang/r/package/assertthat.org][ ~{assertthat}~ ]], [[file:./lang/r/package/assertr.org][ ~{assertr}~ ]]                                                |
+| Assertion          | [[file:./lang/r/package/assertthat.org][ ~{assertthat}~ ]], [[file:./lang/r/package/assertr.org][ ~{assertr*}~ ]]                                               |
 |--------------------+----------------------------------------------------------------------------|
 | Preprocessing      | [[file:lang/r/package/rsample.org][ ~{rsample}~ ]], [[file:lang/r/package/recipes/][ ~{recipes*}~ ]]                                                  |
 | Modeling           | [[file:./lang/r/package/parsnip/][ ~{parsnip*}~ ]], {dials}, [[file:./lang/r/package/tune/][ ~{tune}~ ]]                                            |

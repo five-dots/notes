@@ -1,12 +1,7 @@
 #+STARTUP: folded indent
 #+PROPERTY: header-args:R :results value :colnames yes :rownames yes :session *R:assertr*
 
-* ~{assertr}~: User friendly assertions for R                        :noexport:
-
-~{assertthat}~ は、R のアサーションを行うパッケージ。 ~base::stopifnot()~ を置き換える機能を提供。
-
-- ~stopifnot()~ よりもわかりやすいエラーメッセージを出力する
-- アサーションをより簡潔に書くための Predicate 関数が追加されている
+* ~{assertr}~: Assertive programming for R analysis pipelines        :noexport:
 \\
 
 * 目次                                                            :quote:toc:
@@ -35,7 +30,7 @@
     - [[#-num_row_nasdata-allownan--false][★★☆ ~num_row_NAs(data, allow.NaN = FALSE)~.]]
     - [[#-maha_distdata-keepna--true-robust--false-stringsasfactors--false][★★☆ ~maha_dist(data, keep.NA = TRUE, robust = FALSE, stringsAsFactors = FALSE)~.]]
   - [[#chain][Chain]]
-    - [[#chain_startdata-chain_enddata-success_fun--success_continue-error_fun--error_report][~chain_start(data)~, ~chain_end(data, success_fun = success_continue, error_fun = error_report)~.]]
+    - [[#-chain_startdata-chain_enddata-success_fun--success_continue-error_fun--error_report][★★☆ ~chain_start(data)~, ~chain_end(data, success_fun = success_continue, error_fun = error_report)~.]]
   - [[#successerror][Success/Error]]
     - [[#-error_appenderrors-data--null][★☆☆ ~error_append(errors, data = NULL)~.]]
     - [[#-error_df_returnerrors-data--null][★☆☆ ~error_df_return(errors, data = NULL)~.]]
@@ -108,6 +103,7 @@ mtcars %>%
 #+begin_src R :results silent
 mtcars %>% verify(nrow(.) > 10)
 #+end_src
+\\
 
 *** ★★★ ~assert(data, predicate, ..., success_fun = success_continue, error_fun = error_stop)~.
 
@@ -171,9 +167,9 @@ mtcars %>% insist_rows(maha_dist, within_n_mads(10), everything())
 *** ★★☆ ~num_row_NAs(data, allow.NaN = FALSE)~.
 *** ★★☆ ~maha_dist(data, keep.NA = TRUE, robust = FALSE, stringsAsFactors = FALSE)~.
 ** Chain
-*** ~chain_start(data)~, ~chain_end(data, success_fun = success_continue, error_fun = error_report)~.
+*** ★★☆ ~chain_start(data)~, ~chain_end(data, success_fun = success_continue, error_fun = error_report)~.
 
-#+begin_src R :results output
+#+begin_src R :results output :exports both
 mtcars %>%
    chain_start %>%
    assert(in_set(1, 2, 3, 4), carb) %>%
@@ -186,7 +182,7 @@ mtcars %>%
 #+RESULTS:
 #+begin_example
 There are 7 errors across 4 verbs:
-- 
+ 
          verb redux_fn           predicate     column index value
 1      assert     <NA>  in_set(1, 2, 3, 4)       carb    30   6.0
 2      assert     <NA>  in_set(1, 2, 3, 4)       carb    31   8.0
@@ -211,6 +207,8 @@ Error: assertr stopped execution
 *** ★☆☆ ~success_logical(data, ...)~.
 *** ★☆☆ ~just_warn(errors, data = NULL)~.
 *** ★☆☆ ~warn_report(errors, data = NULL)~.
+\\
+
 * 実行環境
 
 #+begin_src R :results output :exports both
