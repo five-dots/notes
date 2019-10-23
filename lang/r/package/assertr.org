@@ -1,0 +1,267 @@
+#+STARTUP: folded indent
+#+PROPERTY: header-args:R :results value :colnames yes :rownames yes :session *R:assertr*
+
+* ~{assertr}~: User friendly assertions for R                        :noexport:
+
+~{assertthat}~ は、R のアサーションを行うパッケージ。 ~base::stopifnot()~ を置き換える機能を提供。
+
+- ~stopifnot()~ よりもわかりやすいエラーメッセージを出力する
+- アサーションをより簡潔に書くための Predicate 関数が追加されている
+\\
+
+* 目次                                                            :quote:toc:
+#+BEGIN_QUOTE
+- [[#ライブラリの読み込みとバージョンの確認][ライブラリの読み込みとバージョンの確認]]
+- [[#関数リスト][関数リスト]]
+  - [[#概要][概要]]
+  - [[#basics][Basics]]
+    - [[#-verifydata-expr-success_fun--success_continue-error_fun--error_stop][★★★ ~verify(data, expr, success_fun = success_continue, error_fun = error_stop)~.]]
+    - [[#-assertdata-predicate--success_fun--success_continue-error_fun--error_stop][★★★ ~assert(data, predicate, ..., success_fun = success_continue, error_fun = error_stop)~.]]
+    - [[#-assert_rowsdata-row_reduction_fn-predicate--success_fun--success_continue-error_fun--error_stop][★★★ ~assert_rows(data, row_reduction_fn, predicate, ..., success_fun = success_continue, error_fun = error_stop)~.]]
+    - [[#-insistdata-predicate_generator--success_fun--success_continue-error_fun--error_stop][★★★ ~insist(data, predicate_generator, ..., success_fun = success_continue, error_fun = error_stop)~.]]
+    - [[#-insist_rowsdata-row_reduction_fn-predicate_generator--success_fun--success_continue-error_fun--error_stop][★★★ ~insist_rows(data, row_reduction_fn, predicate_generator, ..., success_fun = success_continue, error_fun = error_stop)~.]]
+  - [[#helper-for-verify][Helper for ~verify()~.]]
+    - [[#-has_all_names][★★☆ ~has_all_names(...)~.]]
+  - [[#predicate-functions-for-assert--assert_row][Predicate Functions for ~assert()~ / ~assert_row()~.]]
+    - [[#-not_nax-allownan--false][★★☆ ~not_na(x, allow.NaN = FALSE)~.]]
+    - [[#-in_set-allowna--true][★★☆ ~in_set(..., allow.na = TRUE)~.]]
+    - [[#-is_uniq-allowna--false][★★☆ ~is_uniq(..., allow.na = FALSE)~.]]
+    - [[#-within_boundslowerbound-upperbound-includelower--true-includeupper--true-allowna--true][★★☆ ~within_bounds(lower.bound, upper.bound, include.lower = TRUE, include.upper = TRUE, allow.na = TRUE)~.]]
+  - [[#predicate-generator-for-insist--insist_rows][Predicate Generator for ~insist()~ / ~insist_rows()~.]]
+    - [[#-within_n_sdsn-][★★☆ ~within_n_sds(n, ...)~.]]
+    - [[#-within_n_madsn-][★★☆ ~within_n_mads(n, ...)~.]]
+  - [[#row-reduction-functions-for-assert_rows--insist_rows][Row Reduction Functions for ~assert_rows()~ / ~insist_rows()~.]]
+    - [[#-col_concatdata-sep--][★★☆ ~col_concat(data, sep = "")~.]]
+    - [[#-num_row_nasdata-allownan--false][★★☆ ~num_row_NAs(data, allow.NaN = FALSE)~.]]
+    - [[#-maha_distdata-keepna--true-robust--false-stringsasfactors--false][★★☆ ~maha_dist(data, keep.NA = TRUE, robust = FALSE, stringsAsFactors = FALSE)~.]]
+  - [[#chain][Chain]]
+    - [[#chain_startdata-chain_enddata-success_fun--success_continue-error_fun--error_report][~chain_start(data)~, ~chain_end(data, success_fun = success_continue, error_fun = error_report)~.]]
+  - [[#successerror][Success/Error]]
+    - [[#-error_appenderrors-data--null][★☆☆ ~error_append(errors, data = NULL)~.]]
+    - [[#-error_df_returnerrors-data--null][★☆☆ ~error_df_return(errors, data = NULL)~.]]
+    - [[#-error_logicalerrors-data--null-][★☆☆ ~error_logical(errors, data = NULL, ...)~.]]
+    - [[#-error_reporterrors-data--null-warn--false-][★☆☆ ~error_report(errors, data = NULL, warn = FALSE, ...)~.]]
+    - [[#-error_returnerrors-data--null][★☆☆ ~error_return(errors, data = NULL)~.]]
+    - [[#-error_stoperrors-data--null-warn--false-][★★★ ~error_stop(errors, data = NULL, warn = FALSE, ...)~.]]
+    - [[#-success_continuedata-][★★★ ~success_continue(data, ...)~.]]
+    - [[#-success_logicaldata-][★☆☆ ~success_logical(data, ...)~.]]
+    - [[#-just_warnerrors-data--null][★☆☆ ~just_warn(errors, data = NULL)~.]]
+    - [[#-warn_reporterrors-data--null][★☆☆ ~warn_report(errors, data = NULL)~.]]
+- [[#実行環境][実行環境]]
+- [[#参考リンク][参考リンク]]
+#+END_QUOTE
+
+* ライブラリの読み込みとバージョンの確認
+
+#+begin_src R :results silent
+library(assertr)
+library(tidyverse)
+#+end_src
+\\
+
+- バージョン
+#+begin_src R :results output :exports both
+packageVersion("assertr")
+#+end_src
+
+#+RESULTS:
+: [1] ‘2.6’
+\\
+
+* 関数リスト
+** 概要
+
+- ~data.frame~ の *assertion* 機能
+- データの読み込みのすぐ後に、データをチェックするために使う
+  - 列の有無
+  - データの行数
+  - データの範囲 (非負・範囲・外れ値など)
+- 問題がなければ、入力をそのまま返す
+
+#+begin_src R :results silent
+mtcars %>%
+  ## has the columns "mpg", "vs", and "am"
+  verify(has_all_names("mpg", "vs", "am", "wt")) %>%
+  ## contains more than 10 observations
+  verify(nrow(.) > 10) %>%
+  ## "mpg" is a positive number
+  verify(mpg > 0) %>%
+  ## "mpg" does not contain a datum that is outside 4 standard deviations from its mean
+  insist(within_n_sds(4), mpg) %>%
+  ## "am" and "vs" contain 0s and 1s only
+  assert(in_set(0, 1), am, vs) %>%
+  ## each row contains at most 2 NAs
+  assert_rows(num_row_NAs, within_bounds(0, 2), everything()) %>%
+  ## each row is unique jointly between the "mpg", "am", and "wt" columns
+  assert_rows(col_concat, is_uniq, mpg, am, wt) %>%
+  ## each row's mahalanobis distance is within 10 median absolute deviations of all the distances (for outlier detection)
+  insist_rows(maha_dist, within_n_mads(10), everything())
+#+end_src
+\\
+
+** Basics
+*** ★★★ ~verify(data, expr, success_fun = success_continue, error_fun = error_stop)~.
+
+- 列を指定しない場合に利用する
+- ~expr~ が ~TRUE~ なら成功 ~FALSE~ なら失敗
+
+#+begin_src R :results silent
+mtcars %>% verify(nrow(.) > 10)
+#+end_src
+
+*** ★★★ ~assert(data, predicate, ..., success_fun = success_continue, error_fun = error_stop)~.
+
+- 任意の列に対して ~predicate~ でチェックする
+- 列の選択は ~dplyr::select()~ を使っている
+- am, vs は 0/1 データ
+#+begin_src R :results silent
+mtcars %>% assert(in_set(0, 1), am, vs)
+#+end_src
+\\
+
+*** ★★★ ~assert_rows(data, row_reduction_fn, predicate, ..., success_fun = success_continue, error_fun = error_stop)~.
+
+- ~assert()~ との違いは ~row_reduction_fn~ の存在
+- 入力と同じ行数のベクトルを返す
+#+begin_src R :results silent
+mtcars %>% assert_rows(num_row_NAs, within_bounds(0, 2), everything())
+#+end_src
+\\
+
+*** ★★★ ~insist(data, predicate_generator, ..., success_fun = success_continue, error_fun = error_stop)~.
+
+- ~assert()~ との違いは ~predicate~ の生成に ~predicate_generator~ を利用するところ
+- bound (データの境界) をデータ毎に生成する場合 (データの SD など) は ~insit()~ を使う
+
+#+begin_src R :results silent
+mtcars %>% insist(within_n_sds(4), mpg)
+#+end_src
+\\
+
+*** ★★★ ~insist_rows(data, row_reduction_fn, predicate_generator, ..., success_fun = success_continue, error_fun = error_stop)~.
+
+#+begin_src R :results silent
+mtcars %>% insist_rows(maha_dist, within_n_mads(10), everything())
+#+end_src
+\\
+
+** Helper for ~verify()~.
+*** ★★☆ ~has_all_names(...)~.
+** Predicate Functions for ~assert()~ / ~assert_row()~.
+*** ★★☆ ~not_na(x, allow.NaN = FALSE)~.
+*** ★★☆ ~in_set(..., allow.na = TRUE)~.
+
+- 列の値が指定した集合に含まれているか
+
+*** ★★☆ ~is_uniq(..., allow.na = FALSE)~.
+*** ★★☆ ~within_bounds(lower.bound, upper.bound, include.lower = TRUE, include.upper = TRUE, allow.na = TRUE)~.
+** Predicate Generator for ~insist()~ / ~insist_rows()~.
+*** ★★☆ ~within_n_sds(n, ...)~.
+- Z-Score でデータをチェックする
+- データが Z-Score 3 以下に収まっているか、等
+\\
+
+*** ★★☆ ~within_n_mads(n, ...)~.
+- Median Absolute Deviation
+- よりロバストな Z-Score チェック
+\\
+
+** Row Reduction Functions for ~assert_rows()~ / ~insist_rows()~.
+*** ★★☆ ~col_concat(data, sep = "")~.
+*** ★★☆ ~num_row_NAs(data, allow.NaN = FALSE)~.
+*** ★★☆ ~maha_dist(data, keep.NA = TRUE, robust = FALSE, stringsAsFactors = FALSE)~.
+** Chain
+*** ~chain_start(data)~, ~chain_end(data, success_fun = success_continue, error_fun = error_report)~.
+
+#+begin_src R :results output
+mtcars %>%
+   chain_start %>%
+   assert(in_set(1, 2, 3, 4), carb) %>%
+   assert_rows(rowMeans, within_bounds(0,5), gear:carb) %>%
+   verify(nrow(.)==10) %>%
+   verify(mpg < 32) %>%
+   chain_end
+#+end_src
+
+#+RESULTS:
+#+begin_example
+There are 7 errors across 4 verbs:
+- 
+         verb redux_fn           predicate     column index value
+1      assert     <NA>  in_set(1, 2, 3, 4)       carb    30   6.0
+2      assert     <NA>  in_set(1, 2, 3, 4)       carb    31   8.0
+3 assert_rows rowMeans within_bounds(0, 5) ~gear:carb    30   5.5
+4 assert_rows rowMeans within_bounds(0, 5) ~gear:carb    31   6.5
+5      verify     <NA>       nrow(.) == 10       <NA>     1    NA
+6      verify     <NA>            mpg < 32       <NA>    18    NA
+7      verify     <NA>            mpg < 32       <NA>    20    NA
+
+Error: assertr stopped execution
+#+end_example
+\\
+
+** Success/Error
+*** ★☆☆ ~error_append(errors, data = NULL)~.
+*** ★☆☆ ~error_df_return(errors, data = NULL)~.
+*** ★☆☆ ~error_logical(errors, data = NULL, ...)~.
+*** ★☆☆ ~error_report(errors, data = NULL, warn = FALSE, ...)~.
+*** ★☆☆ ~error_return(errors, data = NULL)~.
+*** ★★★ ~error_stop(errors, data = NULL, warn = FALSE, ...)~.
+*** ★★★ ~success_continue(data, ...)~.
+*** ★☆☆ ~success_logical(data, ...)~.
+*** ★☆☆ ~just_warn(errors, data = NULL)~.
+*** ★☆☆ ~warn_report(errors, data = NULL)~.
+* 実行環境
+
+#+begin_src R :results output :exports both
+sessionInfo()
+#+end_src
+
+#+RESULTS:
+#+begin_example
+R version 3.6.1 (2019-07-05)
+Platform: x86_64-pc-linux-gnu (64-bit)
+Running under: Ubuntu 18.04.3 LTS
+
+Matrix products: default
+BLAS:   /usr/lib/x86_64-linux-gnu/blas/libblas.so.3.7.1
+LAPACK: /usr/lib/x86_64-linux-gnu/lapack/liblapack.so.3.7.1
+
+locale:
+ [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C              
+ [3] LC_TIME=en_US.UTF-8        LC_COLLATE=en_US.UTF-8    
+ [5] LC_MONETARY=en_US.UTF-8    LC_MESSAGES=en_US.UTF-8   
+ [7] LC_PAPER=en_US.UTF-8       LC_NAME=C                 
+ [9] LC_ADDRESS=C               LC_TELEPHONE=C            
+[11] LC_MEASUREMENT=en_US.UTF-8 LC_IDENTIFICATION=C       
+
+attached base packages:
+[1] stats     graphics  grDevices utils     datasets  methods   base     
+
+other attached packages:
+ [1] forcats_0.4.0   stringr_1.4.0   dplyr_0.8.3     purrr_0.3.3    
+ [5] readr_1.3.1     tidyr_1.0.0     tibble_2.1.3    ggplot2_3.2.1  
+ [9] tidyverse_1.2.1 assertr_2.6    
+
+loaded via a namespace (and not attached):
+ [1] Rcpp_1.0.2        cellranger_1.1.0  pillar_1.4.2      compiler_3.6.1   
+ [5] prettyunits_1.0.2 progress_1.2.2    rutils_0.0.0.9000 tools_3.6.1      
+ [9] zeallot_0.1.0     lubridate_1.7.4   jsonlite_1.6      lifecycle_0.1.0  
+[13] nlme_3.1-141      gtable_0.3.0      lattice_0.20-38   pkgconfig_2.0.3  
+[17] rlang_0.4.0       cli_1.9.9.9000    rstudioapi_0.10   haven_2.1.1      
+[21] withr_2.1.2       xml2_1.2.2        httr_1.4.1        hms_0.5.1        
+[25] generics_0.0.2    vctrs_0.2.0       grid_3.6.1        tidyselect_0.2.5 
+[29] glue_1.3.1        R6_2.4.0          fansi_0.4.0       readxl_1.3.1     
+[33] pacman_0.5.1      modelr_0.1.5      magrittr_1.5      MASS_7.3-51.4    
+[37] backports_1.1.5   scales_1.0.0      rvest_0.3.4       assertthat_0.2.1 
+[41] colorspace_1.4-1  stringi_1.4.3     lazyeval_0.2.2    munsell_0.5.0    
+[45] broom_0.5.2       crayon_1.3.4
+#+end_example
+\\
+
+* 参考リンク
+
+- [[https://docs.ropensci.org/assertr/][公式サイト]]
+- [[https://github.com/ropensci/assertr][Github Repo]]
+- Blog
+  - [[https://notchained.hatenablog.com/entry/2015/03/22/140656][Rでアサートする系のパッケージ：ensurer, assertthat, assertr@Technically, technophobic.]]
