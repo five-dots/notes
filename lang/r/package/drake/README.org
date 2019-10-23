@@ -26,6 +26,7 @@
 - [[#応用][応用]]
   - [[#-plan_to_code][★☆☆ ~plan_to_code()~.]]
   - [[#-code_to_plan][★☆☆ ~code_to_plan()~.]]
+  - [[#-code_to_function][★☆☆ ~code_to_function()~.]]
   - [[#-deps_code][★☆☆ ~deps_code()~.]]
   - [[#-special-columns][★☆☆ Special columns]]
   - [[#-large-plans][★★☆ Large plans]]
@@ -557,6 +558,11 @@ make(plan, recover = TRUE)
 
 - .R のスクリプトや、.Rmd から plan を生成する 
 \\
+
+** ★☆☆ ~code_to_function()~.
+
+- .R や .Rmd を関数化する
+- 関数化することで、plan に記述しやすくなる
 
 ** ★☆☆ ~deps_code()~.
 

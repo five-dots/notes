@@ -1,0 +1,8 @@
+library(drake)
+suppressMessages(library(glue))
+suppressMessages(library(fs))
+suppressMessages(library(tidyverse))
+suppressMessages(library(lubridate))
+suppressMessages(library(data.table))
+suppressMessages(library(tidyquant))
+suppressMessages(library(openssl))
