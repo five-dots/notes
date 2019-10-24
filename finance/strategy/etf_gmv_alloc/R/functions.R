@@ -25,3 +25,31 @@ download <- function(universe, from, path) {
   fwrite(data, path)
   invisible(path)
 }
+
+plot_perf_summary <- function(data) {
+  d <- suppressWarnings(
+    data %>%
+    group_by(symbol) %>%
+    mutate(cum_ret = cumprod(1 + ret) - 1,
+           drawdown = Drawdowns(ret),
+           label = if_else(date == max(date), symbol, NA_character_)) %>%
+    ungroup())
+
+  range <- c(min(data$date), max(data$date) + days(150))
+
+  perf <- ggplot(d, aes(x = date, y = cum_ret, color = symbol)) +
+    geom_line() +
+    geom_label_repel(aes(label = label), na.rm = TRUE, xlim = c(max(data$date), NA), size = 3) +
+    scale_x_date(limits = range) +
+    theme(axis.title = element_blank(), legend.position = "none") +
+    ggtitle("Cumulative Returns")
+
+  ddown <- ggplot(d, aes(x = date, y = drawdown, color = symbol)) +
+    geom_line() +
+    geom_label_repel(aes(label = label), na.rm = TRUE, xlim = c(max(data$date), NA), size = 3) +
+    scale_x_date(limits = range) +
+    theme(axis.title = element_blank(), legend.position = "none") +
+    ggtitle("Drawdowns")
+
+  perf + ddown + plot_layout(ncol = 1, heights = c(2, 1))
+}

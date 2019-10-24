@@ -1,4 +1,5 @@
 .drake/
+lang/r/package/renv/renv
 
 private/
 lang/r/package/drake/main/

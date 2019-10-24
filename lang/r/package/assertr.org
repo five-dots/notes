@@ -7,8 +7,8 @@
 * 目次                                                            :quote:toc:
 #+BEGIN_QUOTE
 - [[#ライブラリの読み込みとバージョンの確認][ライブラリの読み込みとバージョンの確認]]
+- [[#概要][概要]]
 - [[#関数リスト][関数リスト]]
-  - [[#概要][概要]]
   - [[#basics][Basics]]
     - [[#-verifydata-expr-success_fun--success_continue-error_fun--error_stop][★★★ ~verify(data, expr, success_fun = success_continue, error_fun = error_stop)~.]]
     - [[#-assertdata-predicate--success_fun--success_continue-error_fun--error_stop][★★★ ~assert(data, predicate, ..., success_fun = success_continue, error_fun = error_stop)~.]]
@@ -63,8 +63,7 @@ packageVersion("assertr")
 : [1] ‘2.6’
 \\
 
-* 関数リスト
-** 概要
+* 概要
 
 - ~data.frame~ の *assertion* 機能
 - データの読み込みのすぐ後に、データをチェックするために使う
@@ -94,6 +93,7 @@ mtcars %>%
 #+end_src
 \\
 
+* 関数リスト
 ** Basics
 *** ★★★ ~verify(data, expr, success_fun = success_continue, error_fun = error_stop)~.
 

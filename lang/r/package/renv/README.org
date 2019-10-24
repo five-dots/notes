@@ -1,0 +1,172 @@
+#+STARTUP: folded indent
+#+PROPERTY: header-args:R :results output :colnames yes :session *R:renv*
+
+* ~{renv}~: Project environments for R                               :noexport:
+
+\\
+
+* 目次                                                            :quote:toc:
+#+BEGIN_QUOTE
+- [[#ライブラリの読み込みとバージョンの確認][ライブラリの読み込みとバージョンの確認]]
+- [[#全関数リスト][全関数リスト]]
+- [[#ワークフロー][ワークフロー]]
+  - [[#init][init()]]
+  - [[#shims][shims]]
+  - [[#install-remove-update][install(), remove(), update()]]
+- [[#実行環境][実行環境]]
+- [[#参考リンク][参考リンク]]
+#+END_QUOTE
+
+* ライブラリの読み込みとバージョンの確認
+
+#+begin_src R :results silent
+library(renv)
+#+end_src
+\\
+
+- バージョン
+#+begin_src R :exports both
+packageVersion("renv")
+#+end_src
+
+#+RESULTS:
+: [1] ‘0.7.1.20’
+\\
+
+* 全関数リスト
+
+#+begin_src R :exports both
+pacman::p_funs(renv)
+#+end_src
+
+#+RESULTS:
+:  [1] "activate"     "clean"        "consent"      "deactivate"   "dependencies"
+:  [6] "equip"        "history"      "hydrate"      "init"         "install"     
+: [11] "isolate"      "load"         "migrate"      "modify"       "paths"       
+: [16] "project"      "purge"        "rebuild"      "refresh"      "remove"      
+: [21] "restore"      "revert"       "settings"     "snapshot"     "status"      
+: [26] "update"       "upgrade"      "use_python"
+\\
+
+* ワークフロー
+** init()
+
+- Startup message
+#+begin_quote
+Welcome to renv! It looks like this is your first time using renv.
+This is a one-time message, briefly describing some of renv's functionality.
+
+This package maintains a local cache of data on the filesystem at:
+
+  - '~/.local/share/renv'
+
+This path can be customized -- see the documentation in `?paths`.
+
+renv will also write to files within the active project folder, including:
+
+  - A folder 'renv' in the project directory, and
+  - A lockfile called 'renv.lock' in the project directory.
+
+In particular, projects using renv will normally use a private, per-project
+R library, in which new packages will be installed. This project library is
+isolated from other R libraries on your system.
+
+In addition, renv will attempt to update files within your project, including:
+
+  - .gitignore
+  - .Rbuildignore
+  - .Rprofile
+
+Please read the introduction vignette with `vignette("renv")` for more information.
+You can also browse the package documentation online at http://rstudio.github.io/renv.
+
+By providing consent, you will allow renv to write and update these files.
+
+Do you want to proceed? [y/N]: 
+#+end_quote
+
+- [y] で進むと初期化される
+#+begin_quote
+`* '~/.local/share/renv' has been created.
+` Discovering package dependencies ... Done!
+` Copying packages into the cache ... Done!
+` Lockfile written to '~/Dropbox/repos/github/five-dots/notes/lang/r/package/renv/renv.lock'.
+` Project '~/Dropbox/repos/github/five-dots/notes/lang/r/package/renv' loaded. [renv 0.7.1-20]
+` renv activated -- please restart the R session.
+#+end_quote
+\\
+
+- R セッションを再起動すると renv が読み込まれていることがわかる
+#+begin_quote
+`* Project '~/Dropbox/repos/github/five-dots/notes/lang/r/package/renv' loaded. [renv 0.7.1-20]
+#+end_quote
+\\
+
+- .libPaths がローカルに変更されている
+#+begin_src R
+.libPaths()
+#+end_src
+
+#+RESULTS:
+: [1] "/home/shun/Dropbox/repos/github/five-dots/notes/lang/r/package/renv/renv/library/R-3.6/x86_64-pc-linux-gnu"
+: [2] "/tmp/RtmpVtVQrb/renv-system-library"
+
+** shims
+** install(), remove(), update()
+
+- ~{base}~ の機能に対して Shims が設定されている
+- CRAN 以外からのインストール・バージョン指定などが可能
+  - install the latest version of 'digest'
+    ~renv::install("digest")~
+  - install an old version of 'digest' (using archives)
+    ~renv::install("digest@0.6.18")~
+  - install 'digest' from GitHub (latest dev. version)
+    ~renv::install("eddelbuettel/digest")~
+  - install a package from local sources
+    ~renv::install("~/path/to/package")~
+
+* 実行環境
+
+#+begin_src R :results output :exports both
+sessionInfo()
+#+end_src
+
+#+RESULTS:
+#+begin_example
+R version 3.6.1 (2019-07-05)
+Platform: x86_64-pc-linux-gnu (64-bit)
+Running under: Ubuntu 18.04.3 LTS
+
+Matrix products: default
+BLAS:   /usr/lib/x86_64-linux-gnu/blas/libblas.so.3.7.1
+LAPACK: /usr/lib/x86_64-linux-gnu/lapack/liblapack.so.3.7.1
+
+locale:
+ [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C              
+ [3] LC_TIME=en_US.UTF-8        LC_COLLATE=en_US.UTF-8    
+ [5] LC_MONETARY=en_US.UTF-8    LC_MESSAGES=en_US.UTF-8   
+ [7] LC_PAPER=en_US.UTF-8       LC_NAME=C                 
+ [9] LC_ADDRESS=C               LC_TELEPHONE=C            
+[11] LC_MEASUREMENT=en_US.UTF-8 LC_IDENTIFICATION=C       
+
+attached base packages:
+[1] stats     graphics  grDevices utils     datasets  methods   base     
+
+other attached packages:
+[1] stringr_1.4.0
+
+loaded via a namespace (and not attached):
+[1] compiler_3.6.1 magrittr_1.5   tools_3.6.1    stringi_1.4.3
+#+end_example
+\\
+
+* 参考リンク
+
+- [[https://rstudio.github.io/renv/][公式サイト]]
+- [[https://github.com/rstudio/renv][Github Repo]]
+- Vignette
+  - [[https://rstudio.github.io/renv/articles/renv.html][Introduction to renv]]
+- Blog
+  - [[https://qiita.com/okiyuki99/items/688a00ca9a58e42e3bfa][Rのパッケージ管理のためのrenvを使ってみた@Qiita]]
+  - [[https://speakerdeck.com/black_tank_top/renv-version-control][renvによるパッケージ管理@speakerdeck]]
+    

@@ -31,32 +31,32 @@ Babel の実行には適切な ~org-babel-load-language~ の設定が必要で�
 * プログラミング言語
 ** R
 
-|--------------------+----------------------------------------------------------------------------|
-| Category           | Notes                                                                      |
-|--------------------+----------------------------------------------------------------------------|
-| Language           | types, [[file:./lang/r/general/environment.org][ ~environment~ ]], nse, [[file:./lang/r/general/equality.org][ ~equality~ ]], [[file:./lang/r/general/performance.org][ ~performance~ ]], {pryr}, {rlang}      |
-| Import             | [[file:./lang/r/package/readr.org][ ~{readr*}~ ]]                                                                 |
-| Tabular Data       | [[file:lang/r/package/dplyr/][ ~{dplyr*}~ ]], [[file:./lang/r/package/tidyr.org][ ~{tidyr}~ ]], {purrrlyr}, {tibble}, {data.table}, {dtplyr}, {fst} |
-| String             | [[file:./lang/r/general/regex.org][ ~regex~ ]], [[file:./lang/r/package/stringr.org][ ~{stringr}~ ]] [[file:./lang/r/package/glue.org][ ~{glue}~ ]], [[file:./lang/r/package/crayon.org][ ~{crayon}~ ]]                                  |
-| Factor             | [[file:./lang/r/general/factor.org][ ~{base}~ ]], [[file:./lang/r/package/farcats.org][ ~{forcats*}~ ]]                                                     |
-| Date and Time      | [[file:./lang/r/general/date_time.org][ ~{base}~ ]], [[file:./lang/r/package/lubridate.org][ ~{lubridate}~ ]], {hms}, {nanotime}                                 |
-| Assertion          | [[file:./lang/r/package/assertthat.org][ ~{assertthat}~ ]], [[file:./lang/r/package/assertr.org][ ~{assertr*}~ ]]                                               |
-|--------------------+----------------------------------------------------------------------------|
-| Preprocessing      | [[file:lang/r/package/rsample.org][ ~{rsample}~ ]], [[file:lang/r/package/recipes/][ ~{recipes*}~ ]]                                                  |
-| Modeling           | [[file:./lang/r/package/parsnip/][ ~{parsnip*}~ ]], {dials}, [[file:./lang/r/package/tune/][ ~{tune}~ ]]                                            |
-| Testing            | [[file:./lang/r/package/infer.org][ ~{infer*}~ ]]                                                                 |
-| Performance Metric | [[file:./lang/r/package/yardstick/][ ~{yardstick*}~ ]], {PerformanceAnalytics}                                     |
-| Workflow           | [[file:./lang/r/package/drake/][ ~{drake}~ ]], {drakepkg}, {mlr/mlr3}, {ProjectTemplate}                       |
-| Package Management | {packrat}, {renv}                                                          |
-|--------------------+----------------------------------------------------------------------------|
-| Data Format        | [[file:./lang/r/package/jsonlite.org][ ~{jsonlite*}~ ]], {xml2}                                                      |
-| Application        | [[file:./lang/r/package/fs.org][ ~{fs*}~ ]], {database}, [[file:./lang/r/package/tidyquant/][ ~{tidyquant*}~ ]]                                        |
-| HTTP               | [[file:./lang/r/package/curl.org][ ~{curl*}~ ]], [[file:./lang/r/package/httr.org][ ~{httr*}~ ]], [[file:./lang/r/package/rvest.org][ ~{rvest*}~ ]]                                           |
-| Utility            | {magrittr}, {zeallot}, {here}                                              |
-| Dataset            | [[file:./lang/r/general/dataset.org][ ~general~ ]], [[file:lang/r/finance/dataset.org][ ~finance~ ]]                                                       |
-|--------------------+----------------------------------------------------------------------------|
-| Other              | [[file:./lang/r/general/five_problems.org][ ~five problems~ ]]                                                            |
-|--------------------+----------------------------------------------------------------------------|
+|------------------------+----------------------------------------------------------------------------|
+| Category               | Notes                                                                      |
+|------------------------+----------------------------------------------------------------------------|
+| Language               | types, [[file:./lang/r/general/environment.org][ ~environment~ ]], nse, [[file:./lang/r/general/equality.org][ ~equality~ ]], [[file:./lang/r/general/performance.org][ ~performance~ ]], {pryr}, {rlang}      |
+| Import                 | [[file:./lang/r/package/readr.org][ ~{readr*}~ ]]                                                                 |
+| Tabular Data           | [[file:lang/r/package/dplyr/][ ~{dplyr*}~ ]], [[file:./lang/r/package/tidyr.org][ ~{tidyr}~ ]], {purrrlyr}, {tibble}, {data.table}, {dtplyr}, {fst} |
+| String                 | [[file:./lang/r/general/regex.org][ ~regex~ ]], [[file:./lang/r/package/stringr.org][ ~{stringr}~ ]] [[file:./lang/r/package/glue.org][ ~{glue}~ ]], [[file:./lang/r/package/crayon.org][ ~{crayon}~ ]]                                  |
+| Factor                 | [[file:./lang/r/general/factor.org][ ~{base}~ ]], [[file:./lang/r/package/farcats.org][ ~{forcats*}~ ]]                                                     |
+| Date and Time          | [[file:./lang/r/general/date_time.org][ ~{base}~ ]], [[file:./lang/r/package/lubridate.org][ ~{lubridate}~ ]], {hms}, {nanotime}                                 |
+| Assertion              | [[file:./lang/r/package/assertthat.org][ ~{assertthat}~ ]], [[file:./lang/r/package/assertr.org][ ~{assertr*}~ ]]                                               |
+|------------------------+----------------------------------------------------------------------------|
+| Preprocessing          | [[file:lang/r/package/rsample.org][ ~{rsample}~ ]], [[file:lang/r/package/recipes/][ ~{recipes*}~ ]]                                                  |
+| Modeling               | [[file:./lang/r/package/parsnip/][ ~{parsnip*}~ ]], {dials}, [[file:./lang/r/package/tune/][ ~{tune}~ ]]                                            |
+| Testing                | [[file:./lang/r/package/infer.org][ ~{infer*}~ ]]                                                                 |
+| Performance Metric     | [[file:./lang/r/package/yardstick/][ ~{yardstick*}~ ]], {PerformanceAnalytics}                                     |
+| Workflow               | [[file:./lang/r/package/drake/][ ~{drake}~ ]], {drakepkg}, {mlr/mlr3}, {ProjectTemplate}                       |
+| Environment Management | {packrat}, {renv}, {Renv}                                                  |
+|------------------------+----------------------------------------------------------------------------|
+| Data Format            | [[file:./lang/r/package/jsonlite.org][ ~{jsonlite*}~ ]], {xml2}                                                      |
+| Application            | [[file:./lang/r/package/fs.org][ ~{fs*}~ ]], {database}, [[file:./lang/r/package/tidyquant/][ ~{tidyquant*}~ ]]                                        |
+| HTTP                   | [[file:./lang/r/package/curl.org][ ~{curl*}~ ]], [[file:./lang/r/package/httr.org][ ~{httr*}~ ]], [[file:./lang/r/package/rvest.org][ ~{rvest*}~ ]]                                           |
+| Utility                | {magrittr}, {zeallot}, {here}                                              |
+| Dataset                | [[file:./lang/r/general/dataset.org][ ~general~ ]], [[file:lang/r/finance/dataset.org][ ~finance~ ]]                                                       |
+|------------------------+----------------------------------------------------------------------------|
+| Other                  | [[file:./lang/r/general/five_problems.org][ ~five problems~ ]]                                                            |
+|------------------------+----------------------------------------------------------------------------|
 
 ** Python
 ** Emacs Lisp
