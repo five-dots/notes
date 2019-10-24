@@ -1,0 +1,426 @@
+#+STARTUP: folded indent
+#+PROPERTY: header-args:R :results output :colnames yes :rownames yes :session *R:xts*
+
+* ~{xts}~: eXtensible Time Series                                    :noexport:
+\\
+
+* 目次                                                            :quote:toc:
+#+BEGIN_QUOTE
+- [[#ライブラリの読み込みとバージョンの確認][ライブラリの読み込みとバージョンの確認]]
+- [[#全関数][全関数]]
+- [[#関数リスト][関数リスト]]
+  - [[#-asxts][★★☆ ~as.xts(...)~.]]
+  - [[#-xtsx--null-orderby--indexx-frequency--null-unique--true-tzone--sysgetenvtz-][★★☆ ~xts(x = NULL, order.by = index(x), frequency = NULL, unique = TRUE, tzone = Sys.getenv("TZ"), ...)~.]]
+  - [[#-zoocoredata-zooindex][★★☆ ~zoo::coredata()~, ~zoo::index()~.]]
+  - [[#-first-last][★★☆ ~first()~, ~last()~.]]
+  - [[#-tzone][★★☆ ~tzone()~.]]
+  - [[#-subsetting][★★★ Subsetting]]
+  - [[#-endpointsx-onmonths-k1][★☆☆ ~endpoints(x, on="months", k=1)~.]]
+  - [[#-to_periodx-period--months-k--1-indexat--null-name--null-ohlc--true-][★★☆ ~to_period(x, period = "months", k = 1, indexAt = NULL, name = NULL, OHLC = TRUE, ...)~.]]
+  - [[#-periodapplyx-index-fun-][★★★ ~period.apply(x, INDEX, FUN, ...)~.]]
+  - [[#-zoorollapplydata-width-fun--by--1-bycolumn--true-fill--if-napad-na-napad--false-partial--false-align--ccenter-left-right-coredata--true][★★★ ~zoo::rollapply(data, width, FUN, ..., by = 1, by.column = TRUE, fill = if (na.pad) NA, na.pad = FALSE, partial = FALSE, align = c("center", "left", "right"), coredata = TRUE)~.]]
+- [[#注意点][注意点]]
+  - [[#timezone][Timezone]]
+- [[#参考リンク][参考リンク]]
+#+END_QUOTE
+
+* ライブラリの読み込みとバージョンの確認
+
+#+begin_src R :results silent
+library(xts)
+#+end_src
+\\
+
+- バージョン
+#+begin_src R :results output :exports both
+packageVersion("xts")
+#+end_src
+
+#+RESULTS:
+: [1] ‘0.11.2’
+\\
+
+* 全関数
+
+#+begin_src R :results output :exports both
+pacman::p_funs(xts)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+  [1] ".index"             ".index<-"           ".indexDate"        
+  [4] ".indexday"          ".indexhour"         ".indexisdst"       
+  [7] ".indexmday"         ".indexmin"          ".indexmon"         
+ [10] ".indexsec"          ".indexwday"         ".indexweek"        
+ [13] ".indexyday"         ".indexyear"         ".parseISO8601"     
+ [16] ".subset_xts"        ".subset.xts"        ".xts"              
+ [19] "addEventLines"      "addLegend"          "addPanel"          
+ [22] "addPolygon"         "addSeries"          "adj.time"          
+ [25] "align.time"         "apply.daily"        "apply.monthly"     
+ [28] "apply.quarterly"    "apply.weekly"       "apply.yearly"      
+ [31] "as.environment.xts" "as.xts"             "axTicksByTime"     
+ [34] "c.xts"              "cbind.xts"          "CLASS"             
+ [37] "CLASS<-"            "convertIndex"       "diff.xts"          
+ [40] "dimnames.xts"       "dimnames<-.xts"     "endpoints"         
+ [43] "first"              "firstof"            "indexClass"        
+ [46] "indexClass<-"       "indexFormat"        "indexFormat<-"     
+ [49] "indexTZ"            "indexTZ<-"          "is.index.unique"   
+ [52] "is.time.unique"     "is.timeBased"       "is.xts"            
+ [55] "isOrdered"          "lag.xts"            "last"              
+ [58] "lastof"             "make.index.unique"  "make.time.unique"  
+ [61] "merge.xts"          "ndays"              "nhours"            
+ [64] "nminutes"           "nmonths"            "nquarters"         
+ [67] "nseconds"           "nweeks"             "nyears"            
+ [70] "period.apply"       "period.max"         "period.min"        
+ [73] "period.prod"        "period.sum"         "periodicity"       
+ [76] "plot.xts"           "rbind.xts"          "reclass"           
+ [79] "Reclass"            "shift.time"         "split.xts"         
+ [82] "tclass"             "tclass<-"           "timeBased"         
+ [85] "timeBasedRange"     "timeBasedSeq"       "to_period"         
+ [88] "to.daily"           "to.hourly"          "to.minutes"        
+ [91] "to.minutes10"       "to.minutes15"       "to.minutes3"       
+ [94] "to.minutes30"       "to.minutes5"        "to.monthly"        
+ [97] "to.period"          "to.quarterly"       "to.weekly"         
+[100] "to.yearly"          "try.xts"            "tzone"             
+[103] "tzone<-"            "use.reclass"        "use.xts"           
+[106] "xcoredata"          "xcoredata<-"        "xts"               
+[109] "xtsAttributes"      "xtsAttributes<-"    "xtsible"
+#+end_example
+
+* 関数リスト
+** ★★☆ ~as.xts(...)~.
+
+#+begin_src R :exports both
+data(sample_matrix)
+class(sample_matrix)
+#+end_src
+
+#+RESULTS:
+: 
+: [1] "matrix"
+\\
+
+- ~matrix~ から作成
+- rownames が日付に変換可能な matrix
+#+begin_src R :exports both
+matrix_xts <- as.xts(sample_matrix)
+str(matrix_xts)
+#+end_src
+
+#+RESULTS:
+: 
+: An ‘xts’ object on 2007-01-02/2007-06-30 containing:
+:   Data: num [1:180, 1:4] 50 50.2 50.4 50.4 50.2 ...
+:  - attr(*, "dimnames")=List of 2
+:   ..$ : NULL
+:   ..$ : chr [1:4] "Open" "High" "Low" "Close"
+:   Indexed by objects of class: [POSIXct,POSIXt] TZ: 
+:   xts Attributes:  
+:  NULL
+\\
+
+- ~data.frame~ から作成
+#+begin_src R :exports both
+sample_df <- as.data.frame(sample_matrix)
+df_xts <- as.xts(sample_df)
+str(df_xts)
+#+end_src
+
+#+RESULTS:
+: 
+: An ‘xts’ object on 2007-01-02/2007-06-30 containing:
+:   Data: num [1:180, 1:4] 50 50.2 50.4 50.4 50.2 ...
+:  - attr(*, "dimnames")=List of 2
+:   ..$ : NULL
+:   ..$ : chr [1:4] "Open" "High" "Low" "Close"
+:   Indexed by objects of class: [POSIXct,POSIXt] TZ: 
+:   xts Attributes:  
+:  NULL
+\\
+
+** ★★☆ ~xts(x = NULL, order.by = index(x), frequency = NULL, unique = TRUE, tzone = Sys.getenv("TZ"), ...)~.
+
+- ベクトル
+#+begin_src R :exports both
+sample <- xts(x = 1:10, order.by = Sys.Date()+1:10)
+sample
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+           [,1]
+2019-10-25    1
+2019-10-26    2
+2019-10-27    3
+2019-10-28    4
+2019-10-29    5
+2019-10-30    6
+2019-10-31    7
+2019-11-01    8
+2019-11-02    9
+2019-11-03   10
+#+end_example
+\\
+
+** ★★☆ ~zoo::coredata()~, ~zoo::index()~.
+
+- ~coredata()~: matrix でデータ部分を取り出す
+- ~index()~: POSIXct で日付部分を取り出す
+#+begin_src R :exports both
+head(coredata(df_xts))
+class(coredata(df_xts))
+class(index(df_xts))
+#+end_src
+
+#+RESULTS:
+#+begin_example
+         Open     High      Low    Close
+[1,] 50.03978 50.11778 49.95041 50.11778
+[2,] 50.23050 50.42188 50.23050 50.39767
+[3,] 50.42096 50.42096 50.26414 50.33236
+[4,] 50.37347 50.37347 50.22103 50.33459
+[5,] 50.24433 50.24433 50.11121 50.18112
+[6,] 50.13211 50.21561 49.99185 49.99185
+
+[1] "matrix"
+
+[1] "POSIXct" "POSIXt"
+#+end_example
+\\
+
+** ★★☆ ~first()~, ~last()~.
+
+#+begin_src R :exports both
+first(df_xts)
+last(df_xts)
+#+end_src
+
+#+RESULTS:
+:                Open     High      Low    Close
+: 2007-01-02 50.03978 50.11778 49.95041 50.11778
+: Warning message:
+: timezone of object (Asia/Tokyo) is different than current timezone ().
+:                Open     High      Low    Close
+: 2007-06-30 47.67468 47.94127 47.67468 47.76719
+: Warning message:
+: timezone of object (Asia/Tokyo) is different than current timezone ().
+\\
+
+** ★★☆ ~tzone()~.
+
+#+begin_src R :exports both
+tzone(df_xts) <- "Asia/Tokyo"
+str(df_xts)
+#+end_src
+
+#+RESULTS:
+: 
+: An ‘xts’ object on 2007-01-02/2007-06-30 containing:
+:   Data: num [1:180, 1:4] 50 50.2 50.4 50.4 50.2 ...
+:  - attr(*, "dimnames")=List of 2
+:   ..$ : NULL
+:   ..$ : chr [1:4] "Open" "High" "Low" "Close"
+:   Indexed by objects of class: [POSIXct,POSIXt] TZ: Asia/Tokyo
+:   xts Attributes:  
+:  NULL
+
+** ★★★ Subsetting
+
+ISO-8601 準拠の文字列で Subset が可能
+- data["2007"]
+- data["2007-06"]
+- data["2007-06-01"]
+- data["2007-06-01 12:03:14.48"]
+- data["2007-06:01::2007-06-05"]
+- data["/2007-05"] データの先頭から 2007/05 末まで
+- data["2007-05/"] 2007/05 頭からデータの末まで
+
+#+begin_src R :exports both
+matrix_xts["2007-06-01::2007-06-05"]
+#+end_src
+
+#+RESULTS:
+:                Open     High      Low    Close
+: 2007-06-01 47.74432 47.74432 47.54820 47.65123
+: 2007-06-02 47.60223 47.74542 47.56796 47.72569
+: 2007-06-03 47.71215 47.71215 47.50198 47.50198
+: 2007-06-04 47.51516 47.53545 47.32342 47.37642
+: 2007-06-05 47.41090 47.48217 47.21116 47.22930
+\\
+
+** ★☆☆ ~endpoints(x, on="months", k=1)~.
+
+- 期間・周期からインデックスを取得
+- ~on~ include:
+  - "us" / "microseconds"
+  - "ms" / "milliseconds"
+  - "secs" / "seconds"
+  - "mins" / "minutes",
+  - "hours"
+  - "days"
+  - "weeks",
+  - "months" 
+  - "quarters"
+  - "years"
+
+#+begin_src R :exports both
+sample <- xts(x = 1:10, order.by = Sys.Date()+1:10)
+
+
+endpoints(sample, on = "days", k = 2)
+#+end_src
+
+#+RESULTS:
+: [1]  0  1  3  5  7  9 10
+
+** ★★☆ ~to_period(x, period = "months", k = 1, indexAt = NULL, name = NULL, OHLC = TRUE, ...)~.
+
+- Syntax sugar
+  - ~to.daily(x, drop.time = TRUE, name, ...)~
+  - ~to.hourly(x, name, ...)~
+  - ~to.minutes(x, k, name, ...)~
+  - ~to.minutes10(x, name, ...)~
+  - ~to.minutes15(x, name, ...)~
+  - ~to.minutes3(x, name, ...)~
+  - ~to.minutes30(x, name, ...)~
+  - ~to.minutes5(x, name, ...)~
+  - ~to.monthly(x, indexAt = "yearmon", drop.time = TRUE, name, ...)~
+  - ~to.period(x, period = "months", k = 1, indexAt = NULL, name = NULL, OHLC = TRUE, ...)~
+  - ~to.quarterly(x, indexAt = "yearqtr", drop.time = TRUE, name, ...)~
+  - ~to.weekly(x, drop.time = TRUE, name, ...)~
+  - ~to.yearly(x, drop.time = TRUE, name, ...)~
+
+#+begin_src R :exports both
+to_period(sample, period = "week")
+to.weekly(sample)
+#+end_src
+
+#+RESULTS:
+:            sample.Open sample.High sample.Low sample.Close
+: 2019-10-27           1           3          1            3
+: 2019-11-03           4          10          4           10
+:            sample.Open sample.High sample.Low sample.Close
+: 2019-10-27           1           3          1            3
+: 2019-11-03           4          10          4           10
+\\
+
+** ★★★ ~period.apply(x, INDEX, FUN, ...)~.
+
+- ~INDEX~: ~endpoints()~ から生成したインデックス
+- 亜種
+  - ~period.max(x, INDEX)~
+  - ~period.min(x, INDEX)~
+  - ~period.prod(x, INDEX)~
+  - ~period.sum(x, INDEX)~
+  - ~apply.daily(x, FUN, ...)~
+  - ~apply.monthly(x, FUN, ...)~
+  - ~apply.quarterly(x, FUN, ...)~
+  - ~apply.weekly(x, FUN, ...)~
+  - ~apply.yearly(x, FUN, ...)~
+
+- 月間の平均値を算出
+#+begin_src R
+apply.monthly(df_xts, mean)
+#+end_src
+
+#+RESULTS:
+:                Open     High      Low    Close
+: 2007-01-31 50.21140 50.31528 50.12072 50.22791
+: 2007-02-28 50.78427 50.88091 50.69639 50.79533
+: 2007-03-31 49.53185 49.61232 49.40435 49.48246
+: 2007-04-30 49.62687 49.71287 49.53189 49.62978
+: 2007-05-31 48.31942 48.41694 48.18960 48.26699
+: 2007-06-30 47.47717 47.57592 47.38255 47.46899
+: Warning message:
+: timezone of object (Asia/Tokyo) is different than current timezone ().
+\\
+
+** ★★★ ~zoo::rollapply(data, width, FUN, ..., by = 1, by.column = TRUE, fill = if (na.pad) NA, na.pad = FALSE, partial = FALSE, align = c("center", "left", "right"), coredata = TRUE)~.
+
+- ~width~: Rolling の単位
+- ~by~: いくつ置きに計算するか (only used if ~width~ is length 1 and either a plain scalar or a list.)
+- ~by.column~: 列ごとに関数を適応するか. ~FALSE~ の場合は、関数内で列にアクセスできる ([[https://stackoverflow.com/questions/32951459/rollapply-what-does-by-column-do][参考]])
+- ~na.pad~: Deprecated
+- ~coredata~: 関数に渡すデータに index を含めるか
+
+#+begin_src R
+rollapply(sample, 5, sd, by = 1)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+               [,1]
+2019-10-25       NA
+2019-10-26       NA
+2019-10-27       NA
+2019-10-28       NA
+2019-10-29 1.581139
+2019-10-30 1.581139
+2019-10-31 1.581139
+2019-11-01 1.581139
+2019-11-02 1.581139
+2019-11-03 1.581139
+#+end_example
+\\
+
+#+begin_src R
+rollapply(sample, 5, sd, by = 2)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+               [,1]
+2019-10-25       NA
+2019-10-26       NA
+2019-10-27       NA
+2019-10-28       NA
+2019-10-29 1.581139
+2019-10-30       NA
+2019-10-31 1.581139
+2019-11-01       NA
+2019-11-02 1.581139
+2019-11-03       NA
+#+end_example
+\\
+
+- by.column = FALSE
+- Low + High を足したものの移動平均
+#+begin_src R
+rollapply(df_xts, 5, function(x) mean(x[, "Low"] + x[, "High"]), by.column = FALSE) %>%
+  head(10)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+               [,1]
+2007-01-02       NA
+2007-01-03       NA
+2007-01-04       NA
+2007-01-05       NA
+2007-01-06 100.4711
+2007-01-07 100.4990
+2007-01-08 100.3832
+2007-01-09 100.2061
+2007-01-10 100.0957
+2007-01-11 100.0495
+Warning message:
+timezone of object (Asia/Tokyo) is different than current timezone ().
+#+end_example
+\\
+
+* 注意点
+** Timezone
+
+* 参考リンク
+
+- [[http://joshuaulrich.github.io/xts/][公式サイト]]
+- [[https://cran.r-project.org/web/packages/xts/index.html][CRAN]]
+- [[https://cran.r-project.org/web/packages/xts/xts.pdf][Reference Manual]]
+- [[https://github.com/joshuaulrich/xts][Github Repo]]
+- [[https://s3.amazonaws.com/assets.datacamp.com/blog_assets/xts_Cheat_Sheet_R.pdf][Cheatsheet(PDF)]]
+- Vignette
+  - [[https://cran.r-project.org/web/packages/xts/vignettes/xts.pdf][xts: Extensible Time Series(PDF)]]
+  - [[https://cran.r-project.org/web/packages/xts/vignettes/xts-faq.pdf][xts FAQ(PDF)]]
+- Blog
+  - [[https://stackoverflow.com/questions/32951459/rollapply-what-does-by-column-do][Rollapply: what does by.column do?]]

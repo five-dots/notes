@@ -42,7 +42,6 @@ packageVersion("rsample")
 ** ★★★ ~initial_split(data, prop = 3/4, strata = NULL, breaks = 4, ...)~.
 
 - ~rsplit~, ~mc_split~ class
-
 #+begin_src R :results output :exports both
 splits <- initial_split(iris, prop = 0.8)
 splits
@@ -75,7 +74,7 @@ class(splits2)
 
 ** ★★☆ ~training(x)~.
 
-- rsplit class から訓練データを抽出する
+- ~rsplit~ class から訓練データを抽出する
 #+begin_src R
 train <- training(splits)
 head(train )
@@ -108,7 +107,7 @@ str(train)
 
 ** ★★☆ ~testing(x)~.
 
-- rsplit class から訓練データを抽出する
+- ~rsplit~ class からテストデータを抽出する
 #+begin_src R
 test <- testing(splits)
 head(test)
@@ -125,7 +124,7 @@ head(test)
 |          5.1 |         3.8 |          1.9 |         0.4 | setosa  |
 \\
 
-- 20% のデータを訓練データとして抽出できた
+- 20% のデータをテストデータとして抽出できた
 #+begin_src R :results output :exports both
 str(test)
 #+end_src
@@ -185,7 +184,7 @@ class(train_fold)
 
 ** ★★☆ ~analysis(x, ...)~.
 
-- ~vfold_cv~ class から分析用データを抽出する
+- ~rsplit~ class から分析用データを抽出する
 #+begin_src R
 analysis(train_fold$splits[[1]]) %>% head()
 #+end_src
@@ -203,7 +202,7 @@ analysis(train_fold$splits[[1]]) %>% head()
  
 ** ★★☆ ~assessment(x, ...)~.
 
-- ~vfold_cv~ class から検証用データを抽出する
+- ~rsplit~ class から検証用データを抽出する
 #+begin_src R
 assessment(train_fold$splits[[1]]) %>% head()
 #+end_src
@@ -223,6 +222,7 @@ assessment(train_fold$splits[[1]]) %>% head()
 
 - 時系列データの分割に便利な関数
 - 指定期間をずらしながらローリングで分割
+- データを取り出す際は ~analysis()~, ~assessment()~
 
 #+begin_src R
 dates <- seq.Date(lubridate::ymd("2019-01-01"), lubridate::ymd("2019-12-31"), by = 1)
@@ -233,12 +233,12 @@ head(df)
 #+RESULTS:
 |       date |                  x |
 |------------+--------------------|
-| 2019-01-01 | -0.352493283521862 |
-| 2019-01-02 |  -1.17410736610973 |
-| 2019-01-03 |  0.121510283661771 |
-| 2019-01-04 |  0.208857761180221 |
-| 2019-01-05 |  -1.93897499802168 |
-| 2019-01-06 | -0.506773490491447 |
+| 2019-01-01 |   1.04848768119105 |
+| 2019-01-02 |  -1.04183356813381 |
+| 2019-01-03 | -0.380536255327849 |
+| 2019-01-04 | -0.202288417334334 |
+| 2019-01-05 |  0.158633472181737 |
+| 2019-01-06 |  0.129119199498163 |
 \\
 
 - 訓練データ 90 日、テストデータ 30 日、30 日スライドで分割
@@ -250,6 +250,7 @@ df_rolled
 
 #+RESULTS:
 #+begin_example
+
 # Rolling origin forecast resampling 
 # A tibble: 8 x 2
   splits          id    
