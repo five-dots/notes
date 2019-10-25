@@ -86,6 +86,7 @@ pacman::p_funs(xts)
 [106] "xcoredata"          "xcoredata<-"        "xts"               
 [109] "xtsAttributes"      "xtsAttributes<-"    "xtsible"
 #+end_example
+\\
 
 * 関数リスト
 ** ★★☆ ~as.xts(...)~.
@@ -140,7 +141,7 @@ str(df_xts)
 
 ** ★★☆ ~xts(x = NULL, order.by = index(x), frequency = NULL, unique = TRUE, tzone = Sys.getenv("TZ"), ...)~.
 
-- ベクトル
+- ~order.by~ にインデックス(日付) を指定して作成
 #+begin_src R :exports both
 sample <- xts(x = 1:10, order.by = Sys.Date()+1:10)
 sample
@@ -224,17 +225,18 @@ str(df_xts)
 :   Indexed by objects of class: [POSIXct,POSIXt] TZ: Asia/Tokyo
 :   xts Attributes:  
 :  NULL
+\\
 
 ** ★★★ Subsetting
 
 ISO-8601 準拠の文字列で Subset が可能
-- data["2007"]
-- data["2007-06"]
-- data["2007-06-01"]
-- data["2007-06-01 12:03:14.48"]
-- data["2007-06:01::2007-06-05"]
-- data["/2007-05"] データの先頭から 2007/05 末まで
-- data["2007-05/"] 2007/05 頭からデータの末まで
+- ~data["2007"]~
+- ~data["2007-06"]~
+- ~data["2007-06-01"]~
+- ~data["2007-06-01 12:03:14.48"]~
+- ~data["2007-06:01::2007-06-05"]~
+- ~data["/2007-05"]~ データの先頭から 2007/05 末まで
+- ~data["2007-05/"]~ 2007/05 頭からデータの末まで
 
 #+begin_src R :exports both
 matrix_xts["2007-06-01::2007-06-05"]
@@ -273,6 +275,7 @@ endpoints(sample, on = "days", k = 2)
 
 #+RESULTS:
 : [1]  0  1  3  5  7  9 10
+\\
 
 ** ★★☆ ~to_period(x, period = "months", k = 1, indexAt = NULL, name = NULL, OHLC = TRUE, ...)~.
 
@@ -320,7 +323,7 @@ to.weekly(sample)
   - ~apply.yearly(x, FUN, ...)~
 
 - 月間の平均値を算出
-#+begin_src R
+#+begin_src R :exports both
 apply.monthly(df_xts, mean)
 #+end_src
 
@@ -344,7 +347,7 @@ apply.monthly(df_xts, mean)
 - ~na.pad~: Deprecated
 - ~coredata~: 関数に渡すデータに index を含めるか
 
-#+begin_src R
+#+begin_src R :exports both
 rollapply(sample, 5, sd, by = 1)
 #+end_src
 
@@ -364,7 +367,7 @@ rollapply(sample, 5, sd, by = 1)
 #+end_example
 \\
 
-#+begin_src R
+#+begin_src R :exports both
 rollapply(sample, 5, sd, by = 2)
 #+end_src
 
@@ -386,7 +389,7 @@ rollapply(sample, 5, sd, by = 2)
 
 - by.column = FALSE
 - Low + High を足したものの移動平均
-#+begin_src R
+#+begin_src R :exports both
 rollapply(df_xts, 5, function(x) mean(x[, "Low"] + x[, "High"]), by.column = FALSE) %>%
   head(10)
 #+end_src
