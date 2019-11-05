@@ -1,0 +1,1028 @@
+#+STARTUP: folded indent inlineimages latexpreview
+#+PROPERTY: header-args:R :results output :colnames yes :session *R:rugarch*
+
+* ~{rugarch}~: Univariate GARCH Models                               :noexport:
+
+\\
+
+* 目次                                                                :quote:
+#+BEGIN_QUOTE
+- [[#ライブラリの読み込みとバージョンの確認][ライブラリの読み込みとバージョンの確認]]
+- [[#関数リスト-dateposixct-class][関数リスト: Date/POSIXct class]]
+  - [[#新規作成][新規作成]]
+  - [[#要素の抽出--アクセサ関数][要素の抽出 + アクセサ関数]]
+  - [[#タイムゾーン][タイムゾーン]]
+  - [[#丸め][丸め]]
+- [[#関数リスト-timespan-class][関数リスト: Timespan class]]
+  - [[#3-つの-s4-クラスが用意されている][3 つの S4 クラスが用意されている]]
+  - [[#intervals][Intervals]]
+  - [[#durations][Durations]]
+  - [[#periods][Periods]]
+- [[#実行環境][実行環境]]
+- [[#参考リンク][参考リンク]]
+#+END_QUOTE
+
+* ライブラリの読み込みとバージョンの確認
+
+#+begin_src R :results silent
+library(rugarch)
+#+end_src
+\\
+
+- バージョン
+#+begin_src R :exports both
+packageVersion("rugarch")
+#+end_src
+
+#+RESULTS:
+: [1] ‘1.4.1’
+\\
+
+* 全関数
+
+#+begin_src R
+pacman::p_funs(rugarch)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+Registered S3 method overwritten by 'xts':
+  method     from
+  as.zoo.xts zoo
+  [1] ".__C__ARFIMA"                     ".__C__ARFIMAdistribution"
+  [3] ".__C__ARFIMAfilter"               ".__C__ARFIMAfit"
+  [5] ".__C__ARFIMAforecast"             ".__C__ARFIMAmultifilter"
+  [7] ".__C__ARFIMAmultifit"             ".__C__ARFIMAmultiforecast"
+  [9] ".__C__ARFIMAmultispec"            ".__C__ARFIMApath"
+ [11] ".__C__ARFIMAroll"                 ".__C__ARFIMAsim"
+ [13] ".__C__ARFIMAspec"                 ".__C__GARCHboot"
+ [15] ".__C__GARCHdistribution"          ".__C__GARCHfilter"
+ [17] ".__C__GARCHfit"                   ".__C__GARCHforecast"
+ [19] ".__C__GARCHpath"                  ".__C__GARCHroll"
+ [21] ".__C__GARCHsim"                   ".__C__GARCHspec"
+ [23] ".__C__rGARCH"                     ".__C__uGARCHboot"
+ [25] ".__C__uGARCHdistribution"         ".__C__uGARCHfilter"
+ [27] ".__C__uGARCHfit"                  ".__C__uGARCHforecast"
+ [29] ".__C__uGARCHmultifilter"          ".__C__uGARCHmultifit"
+ [31] ".__C__uGARCHmultiforecast"        ".__C__uGARCHmultispec"
+ [33] ".__C__uGARCHpath"                 ".__C__uGARCHroll"
+ [35] ".__C__uGARCHsim"                  ".__C__uGARCHspec"
+ [37] ".__T__[:base"                     ".__T__[[<-:base"
+ [39] ".__T__[<-:base"                   ".__T__$:base"
+ [41] ".__T__$<-:base"                   ".__T__arfimadistribution:rugarch"
+ [43] ".__T__arfimafilter:rugarch"       ".__T__arfimafit:rugarch"
+ [45] ".__T__arfimaforecast:rugarch"     ".__T__arfimapath:rugarch"
+ [47] ".__T__arfimaroll:rugarch"         ".__T__arfimasim:rugarch"
+ [49] ".__T__arfimaspec:rugarch"         ".__T__as.data.frame:base"
+ [51] ".__T__coef:stats"                 ".__T__confint:stats"
+ [53] ".__T__convergence:rugarch"        ".__T__fitted:stats"
+ [55] ".__T__fpm:rugarch"                ".__T__getspec:rugarch"
+ [57] ".__T__gof:rugarch"                ".__T__halflife:rugarch"
+ [59] ".__T__infocriteria:rugarch"       ".__T__likelihood:rugarch"
+ [61] ".__T__multifilter:rugarch"        ".__T__multifit:rugarch"
+ [63] ".__T__multiforecast:rugarch"      ".__T__multispec:rugarch"
+ [65] ".__T__newsimpact:rugarch"         ".__T__nyblom:rugarch"
+ [67] ".__T__persistence:rugarch"        ".__T__pit:rugarch"
+ [69] ".__T__plot:graphics"              ".__T__quantile:stats"
+ [71] ".__T__reduce:rugarch"             ".__T__report:rugarch"
+ [73] ".__T__residuals:stats"            ".__T__resume:rugarch"
+ [75] ".__T__setbounds<-:rugarch"        ".__T__setfixed<-:rugarch"
+ [77] ".__T__setstart<-:rugarch"         ".__T__show:methods"
+ [79] ".__T__sigma:rugarch"              ".__T__signbias:rugarch"
+ [81] ".__T__ugarchboot:rugarch"         ".__T__ugarchdistribution:rugarch"
+ [83] ".__T__ugarchfilter:rugarch"       ".__T__ugarchfit:rugarch"
+ [85] ".__T__ugarchforecast:rugarch"     ".__T__ugarchpath:rugarch"
+ [87] ".__T__ugarchroll:rugarch"         ".__T__ugarchsim:rugarch"
+ [89] ".__T__ugarchspec:rugarch"         ".__T__uncmean:rugarch"
+ [91] ".__T__uncvariance:rugarch"        ".__T__vcov:stats"
+ [93] "arfimacv"                         "arfimadistribution"
+ [95] "arfimafilter"                     "arfimafit"
+ [97] "arfimaforecast"                   "arfimapath"
+ [99] "arfimaroll"                       "arfimasim"
+[101] "arfimaspec"                       "as.data.frame"
+[103] "autoarfima"                       "BerkowitzTest"
+[105] "coef"                             "confint"
+[107] "convergence"                      "DACTest"
+[109] "ddist"                            "distplot"
+[111] "dkurtosis"                        "dskewness"
+[113] "ESTest"                           "fitdist"
+[115] "fitted"                           "fpm"
+[117] "ftseq"                            "generatefwd"
+[119] "getspec"                          "ghyptransform"
+[121] "GMMTest"                          "gof"
+[123] "halflife"                         "HLTest"
+[125] "infocriteria"                     "likelihood"
+[127] "mcsTest"                          "move"
+[129] "multifilter"                      "multifit"
+[131] "multiforecast"                    "multispec"
+[133] "newsimpact"                       "nyblom"
+[135] "pdist"                            "persistence"
+[137] "pit"                              "plot"
+[139] "qdist"                            "quantile"
+[141] "rdist"                            "reduce"
+[143] "report"                           "residuals"
+[145] "resume"                           "setbounds<-"
+[147] "setfixed<-"                       "setstart<-"
+[149] "show"                             "sigma"
+[151] "signbias"                         "skdomain"
+[153] "ugarchbench"                      "ugarchboot"
+[155] "ugarchdistribution"               "ugarchfilter"
+[157] "ugarchfit"                        "ugarchforecast"
+[159] "ugarchpath"                       "ugarchroll"
+[161] "ugarchsim"                        "ugarchspec"
+[163] "uncmean"                          "uncvariance"
+[165] "VaRDurTest"                       "VaRloss"
+[167] "VaRplot"                          "VaRTest"
+[169] "vcov"
+#+end_example
+
+* 関数リスト
+** Spec
+*** variance.model (x14)
+- sGARCH
+- eGARCH
+- gjrGARCH
+- apARCH
+- iGARCH
+- csGARCH
+- fGARCH (+submodel)
+  - GARCH
+  - TGARCH
+  - AVGARCH
+  - NGARCH
+  - NAGARCH
+  - APARCH
+  - GJRGARCH
+  - ALLGARCH
+
+*** mean.model
+- armaOrder(p, d, q)
+- include.mean
+- arfima
+
+*** distribution.model (x10)
+
+_収録されている分布のリスト_
+|-------------------------+------------+----+-------+------+-------+--------|
+| name                    | short name | mu | sigma | skew | shape | lambda |
+|-------------------------+------------+----+-------+------+-------+--------|
+| normal                  | norm       | x  | x     |      |       |        |
+| skew normal             | snorm      | x  | x     | x    |       |        |
+| student-t               | std        | x  | x     |      | x     |        |
+| skew student            | sstd       | x  | x     | x    | x     |        |
+| generalized error       | ged        | x  | x     |      | x     |        |
+| skew ged                | sged       | x  | x     | x    | x     |        |
+| normal inverse gaussian | nig        | x  | x     | x    | x     |        |
+| generalized hyperbolic  | ghyp       | x  | x     | x    | x     | x      |
+| GH skew student         | ghst       | x  | x     | x    | x     | x      |
+| johnson's SU            | jsu        | x  | x     | x    | x     |        |
+|-------------------------+------------+----+-------+------+-------+--------|
+
+- fBasics package の関数が使われている
+- JSU については、gamlss package が使われている
+
+*** ugarchspec()
+
+#+begin_src R :results silent
+ugarchspec(
+  variance.model = list(
+    model = "sGARCH",
+    garchOrder = c(1, 1),
+    submodel = NULL,
+    external.regressors = NULL, # data と同じ行数の matrix
+    variance.targeting = FALSE
+  ),
+  mean.model = list(
+    armaOrder = c(1, 1),
+    include.mean = TRUE,
+    archm = FALSE,  # arch in mean (条件付き期待値のモデルに条件付き分散を含めるか？)
+    archpow = 1,    # 1 = sd, 2 = var in arch in mean
+    arfima = FALSE, # fractional differencing
+    external.regressors = NULL,
+    archex = FALSE
+  ),
+  distribution.model = "norm",
+  start.pars = list(),
+  fixed.pars = list(),
+  ...)
+#+end_src
+
+- GARCH(1, 1) + ARMA(1, 1) + norm-dist
+#+begin_src R :results output
+garch_spec <- ugarchspec(
+  variance.model = list(model = "sGARCH", garchOrder = c(1, 1)),
+  mean.model = list(armaOrder = c(1, 1)),
+  distribution.model = "norm"
+)
+garch_spec
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+,*---------------------------------*
+,*       GARCH Model Spec          *
+,*---------------------------------*
+
+Conditional Variance Dynamics
+------------------------------------
+GARCH Model		: sGARCH(1,1)
+Variance Targeting	: FALSE
+
+Conditional Mean Dynamics
+------------------------------------
+Mean Model		: ARFIMA(1,0,1)
+Include Mean		: TRUE
+GARCH-in-Mean		: FALSE
+
+Conditional Distribution
+------------------------------------
+Distribution	:  norm
+Includes Skew	:  FALSE
+Includes Shape	:  FALSE
+Includes Lambda	:  FALSE
+#+end_example
+
+** Fit
+*** ugarchfit()
+
+- パラメタの探索 by Spec
+  solver = solnp, nlminb, lbfgs, gosolnp, noloptr
+
+#+begin_src R
+ugarchfit(
+  spec,
+  data, # numeric vector, matrix, data.frame, zoo, xts, timeSeries, ts or irts object
+  out.sample = 0,
+  solver = "solnp",         # hybrid: solnp からスタートし、収束するまで他の手法を試していく
+  solver.control = list(),  # 収束しないときここをいじる
+  fit.control = list(
+    stationarity = 1,
+    fixed.se = 0,
+    scale = 0,
+    rec.init = "all",
+    trunclag = 1000
+  ),
+  numderiv.control = list(
+    grad.eps = 1e-4,
+    grad.d = 0.0001,
+    grad.zero.tol = sqrt(.Machine$double.eps / 7e-7),
+    hess.eps = 1e-4,
+    hess.d = 0.1,
+    hess.zero.tol = sqrt(.Machine$double.eps / 7e-7),
+    r = 4,
+    v = 2
+  ),
+  ...)
+#+end_src
+
+*** Fit SP500
+
+#+begin_src R :results output
+fit <- ugarchfit(garch_spec, sp500ret, solver = "hybrid")
+fit
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+,*---------------------------------*
+,*          GARCH Model Fit        *
+,*---------------------------------*
+
+Conditional Variance Dynamics
+-----------------------------------
+GARCH Model	: sGARCH(1,1)
+Mean Model	: ARFIMA(1,0,1)
+Distribution	: norm
+
+Optimal Parameters
+------------------------------------
+        Estimate  Std. Error  t value Pr(>|t|)
+mu      0.000522    0.000087   5.9870  0.00000
+ar1     0.870740    0.071788  12.1294  0.00000
+ma1    -0.897946    0.064193 -13.9882  0.00000
+omega   0.000001    0.000001   1.3891  0.16482
+alpha1  0.087715    0.013718   6.3942  0.00000
+beta1   0.904945    0.013768  65.7284  0.00000
+
+Robust Standard Errors:
+        Estimate  Std. Error    t value Pr(>|t|)
+mu      0.000522    0.000130   4.013445 0.000060
+ar1     0.870740    0.087733   9.924895 0.000000
+ma1    -0.897946    0.079822 -11.249305 0.000000
+omega   0.000001    0.000014   0.093139 0.925793
+alpha1  0.087715    0.186968   0.469146 0.638965
+beta1   0.904945    0.192530   4.700269 0.000003
+
+LogLikelihood : 17902.41
+
+Information Criteria
+------------------------------------
+
+Akaike       -6.4807
+Bayes        -6.4735
+Shibata      -6.4807
+Hannan-Quinn -6.4782
+
+Weighted Ljung-Box Test on Standardized Residuals
+------------------------------------
+                        statistic   p-value
+Lag[1]                      5.552 1.846e-02
+Lag[2*(p+q)+(p+q)-1][5]     6.441 1.242e-05
+Lag[4*(p+q)+(p+q)-1][9]     7.193 1.106e-01
+d.o.f=2
+H0 : No serial correlation
+
+Weighted Ljung-Box Test on Standardized Squared Residuals
+------------------------------------
+                        statistic p-value
+Lag[1]                      1.102  0.2939
+Lag[2*(p+q)+(p+q)-1][5]     1.495  0.7412
+Lag[4*(p+q)+(p+q)-1][9]     1.954  0.9105
+d.o.f=2
+
+Weighted ARCH LM Tests
+------------------------------------
+            Statistic Shape Scale P-Value
+ARCH Lag[3]   0.01955 0.500 2.000  0.8888
+ARCH Lag[5]   0.17515 1.440 1.667  0.9713
+ARCH Lag[7]   0.53754 2.315 1.543  0.9749
+
+Nyblom stability test
+------------------------------------
+Joint Statistic:  174.712
+Individual Statistics:
+mu      0.2099
+ar1     0.1497
+ma1     0.1064
+omega  21.3579
+alpha1  0.1345
+beta1   0.1126
+
+Asymptotic Critical Values (10% 5% 1%)
+Joint Statistic:     	 1.49 1.68 2.12
+Individual Statistic:	 0.35 0.47 0.75
+
+Sign Bias Test
+------------------------------------
+                   t-value      prob sig
+Sign Bias           0.4298 6.673e-01
+Negative Sign Bias  2.9469 3.223e-03 ***
+Positive Sign Bias  2.3934 1.672e-02  **
+Joint Effect       28.9766 2.265e-06 ***
+
+
+Adjusted Pearson Goodness-of-Fit Test:
+------------------------------------
+  group statistic p-value(g-1)
+1    20     179.0    4.870e-28
+2    30     187.8    3.641e-25
+3    40     218.2    8.888e-27
+4    50     227.9    7.064e-25
+
+
+Elapsed time : 0.5271969
+#+end_example
+
+*** Test Stats from ugarchfit()
+
+garchfit model の検定結果
+- Weighted Ljung-Box Test on Standardized Residuals
+  => ARMA 部分 (Mean 部分) の自己相関を検定
+
+- Weighted Ljung-Box Test on Standardized Squared Residuals
+  => GARCH 部分 (Variance 部分) の自己相関を検定
+
+- Weighted ARCH LM Tests
+  => Lagrange multiplier (LM) test
+  => H0: q 次までの ARCH effect がない
+
+- Nyblom stability test
+- Sign Bias Test
+- Adjusted Pearson Goodness-of-Fit Test:
+
+*** Helper Functions
+
+#+begin_src R :results output
+coef(fit)         # モデル式に合わせた パラメターの係数
+vcov(fit)         # パラメタの共分散行列
+infocriteria(fit) # Check AIC (Smaller is better)
+infocriteria(fit)["Akaike", ]
+nyblom(fit)       # Hansen-Nyblom (1990) stability test (single and joint)
+gof(fit)          # Vlaar and Palm (1993) adjusted goodness
+newsimpact(fit)   # news impact curve x-y values for plotting
+signbias(fit)     # Engle and Ng (1993) sign bias test
+likelihood(fit)   # log likelihood
+sigma(fit)        # ★Conditional sigma (推定されたボラティリティ)
+fitted(fit)       # ★Conditional mean (推定されたリターン)
+residuals(fit)    # ★残差(自己相関がないか？正規か？を確認する)
+residuals(fit, standardize = TRUE)
+getspec(fit)      # uGARCHspec object
+persistence(fit)  # conditional variance persistence
+uncvariance(fit)  # long run unconditional model variance
+uncmean(fit)      # long run unconditional model mean
+halflife(fit)     # conditional variance half life (same time scale as data)
+convergence(fit)  # Solver convergence flag
+quantile(fit)     # conditional quantile
+quantile(fit, probs = c(0.25, 0.975))
+pit(fit)          # conditional probability integral transformation
+#+end_src
+
+*** Helper Functions (Plots)
+
+
+- plot (ret vs. conditional sd)
+  1)  Series with 2 Conditional SD Superimposed
+  2)  Series with 1% VaR Limits
+  3)  Conditional SD(vs |returns|)
+  4)  ACF of Observations
+  5)  ACF of Squared Observations
+  6)  ACF of Absolute Observations
+  7)  Cross Correlation
+  8)  Empirical Density of Standardized Residuals
+  9)  QQ - Plot of Standardized Residuals
+  11) ACF of Standardized Residuals
+  12) ACF of Squared Standardized Residuals 12:News - Impact Curve
+
+#+begin_src R :results graphics :file (get-babel-file)
+plot(fit, which = 11)
+#+end_src
+
+#+RESULTS:
+[[file:~/Dropbox/memo/img/babel/fig-uPbO24.png]]
+
+spy$garch <- sigma(fit)
+spy %>%
+  ggplot(aes(x = date)) +
+  geom_line(aes(y = abs(ret))) +
+  geom_line(aes(y = garch), color = "red")
+
+** Filter
+*** ugarchfilter()
+
+- 既に fit されたモデルをデータに当てはめる
+  - 既に計算されたパラメタを利用するので、予測が早い
+  - 新しいデータでパラメタを推定し直すわけではない
+  - 新しいデータを入手し、古いパラメタをそのまま利用したいときに使う
+#+begin_src R :results silent
+ugarchfilter(
+  spec, # fixed.pairs にパラメタの係数がセットされた uGARCHspec object
+  data,
+  out.sample = 0,
+  n.old = NULL,
+  rec.init = "all",
+  trunclag = 1000,
+  ...)
+#+end_src
+
+#+begin_src R
+# モデルを抽出
+spec <- getspec(fit)
+
+# モデルに既に Fit した係数を割り当て
+setfixed(spec) <- as.list(coef(fit))
+
+# Old data と New data を結合した上で、 fit の利用したデータを n.old で指定する
+# fit1, fit2 は 50データを超えたあたりから同じ結果に収束する
+#? Old data を含めて filter しないと収束に時間がかかるため、正しい予測にならない
+fit1 = ugarchfilter(spec, sp500ret[1:1200, ], n.old = 1000)
+fit2 = ugarchfilter(spec, sp500ret[1001:1200, ])
+
+# uGARCHfilter class にも uGARCHfit と同様の関数を使うことができる
+class(fit1)
+plot(fit1, which = 1)
+#+end_src
+
+** Parameter Distribution
+*** ugarchdistribution()
+
+- fit されたモデルからのシミュレーションによって、パラメタの分布を得る関数 (MCMC 的?)
+#+begin_src R
+ugarchdistribution(
+  fitORspec,                # uGARCHfit or uGARCHspec with fixed.pairs
+  n.sim = 2000,             # Simulation horizon
+  n.start = 1,              # burn-in samples
+  m.sim = 100,              # 1 window でのシミュレーション回数
+  recursive = FALSE,        # シミュレーションの Window を Expanding window で行うか
+  recursive.length = 6000,  # recursive = TRUE: 最終的な シミュレーション Window のサイズ
+  recursive.window = 1000,  # recursive = TRUE: この数量分 Windows サイズを大きくしていく
+  presigma = NA,
+  prereturns = NA,
+  preresiduals = NA,
+  rseed = NA,
+  custom.dist = list(name = NA, distfit = NA),
+  mexsimdata = NULL,
+  vexsimdata = NULL,
+  fit.control = list(),
+  solver = "solnp",
+  solver.control = list(),
+  cluster = NULL,
+  ...)
+#+end_src
+
+# recursive シミュレーション
+gd <- ugarchdistribution(
+  fit,
+  n.sim = 500,
+  recursive = TRUE,
+  recursive.length = 6000,
+  recursive.window = 500,
+  m.sim = 100,
+  solver = "hybrid",
+  cluster = cluster)
+
+class(gd) # => uGARCHdistribution class
+
+plot(gd)
+# 1: Parameter Density Plots
+# 2: Bivariate Plots
+# 3: Other Density Plots(Persistence, Likelihood, ...)
+# 4: Asymptotic Efficiency Plots (漸近効率 = RMSE ROC Plot)
+
+# 最後のシミュレーションの結果をプロット (window = 12 = 6000/500)
+plot(gd, which = 1, window = 12)
+plot(gd, which = 2, window = 12)
+plot(gd, which = 3, window = 12)
+plot(gd, which = 4, window = 12)
+
+** Forecast
+
+- モデルからの Forecast
+- ugarchfilter との違い
+- n.ahead forecast
+- rolling forecast: out.sample option
+
+- uGARCHfit object を利用するケース
+  - data は無視される
+
+- uGARCHspec object を利用するケース
+  - with fixed.pairs
+  - data required
+  - まず ugarchfilter が実行される
+
+#+begin_src R
+ugarchforecast(
+  fitORspec,
+  data = NULL,
+  n.ahead = 10,
+  n.roll = 0,
+  out.sample = 0,
+  external.forecasts = list(mregfor = NULL, vregfor = NULL),
+  trunclag = 1000,
+  ...)
+#+end_src
+
+fcst <- ugarchforecast(
+  fit,
+  sp500ret,
+  n.ahead = 2
+)
+fcst@forecast$sigmaFor
+fcst@forecast$seriesFor
+
+forc1 <- ugarchforecast(fit, n.ahead = 500)
+
+plot(forc1)
+# 1: Time Series Prediction(unconditional)
+# 2: Time Series Prediction(rolling)
+# 3: Sigma Prediction(unconditional)
+# 4: Sigma Prediction(rolling)
+
+** Roll
+*** ugarchroll()
+
+- spec + data から ローリングで 1 期先予測
+  Moving Window or Expanding Window
+#+begin_src R
+ugarchroll(
+  spec,
+  data,
+  n.ahead = 1,              # n.ahead = 1 のみがサポートされている
+  forecast.length = 500,    # データ後半の何期間を予測するか
+  n.start = NULL,           # forecast.length を指定しない場合は、開始位置を指定
+  refit.every = 25,         # 何期間毎にパラメタを推定し直すか
+  refit.window = c("recursive", "moving"), # recursive = expanding window
+  window.size = NULL,       # Moving window size
+  solver = "hybrid",
+  fit.control = list(),
+  solver.control = list(),
+  calculate.VaR = TRUE,
+  VaR.alpha = c(0.01, 0.05),
+  cluster = NULL,            # Cluster object from paralllel::makeCluster
+  keep.coef = TRUE,          # 結果の中に含めるか
+  ...)
+#+end_src
+
+spec <- ugarchspec(
+  variance.model = list(model = "gjrGARCH", garchOrder = c(2, 1)),
+  distribution = "norm")
+
+roll <- ugarchroll(spec, sp500ret,
+  n.ahead = 1,
+  forecast.length = 500,
+  refit.window = "moving",
+  window.size = 1200,
+  solver = "hybrid",
+  cluster = cluster)
+
+plot(roll, which = 5)
+# 1 :Density Forecast
+# 2 :Sigma Forecast
+# 3 :Series Forecast
+# 4 :VaR Forecast
+# 5 :Fit Coefficients(with s.e. bands)
+
+# 一部が収束しなかった場合、途中からやり直しが可能
+resume(roll)
+
+** Bootstrap
+*** ugarchboot()
+
+- Two main sources of uncertainity
+  1. predictive density
+  2. parameter estimation
+
+- ブートストラップ法による解決
+  Sampling
+  - spd    = semi-parametric (spd package)
+  - kernal = kernel fitted distribution (ks package)
+
+#+begin_src R
+ugarchboot(
+  fitORspec,
+  data = NULL,
+  method = c("Partial", "Full"),
+  sampling = c("raw", "kernel", "spd"),
+  spd.options = list(
+    upper = 0.9,
+    lower = 0.1,
+    type = "pwm",
+    kernel = "normal"),
+  n.ahead = 10,
+  n.bootfit = 100,
+  n.bootpred = 500,
+  out.sample = 0,
+  rseed = NA,
+  solver = "solnp",
+  solver.control = list(),
+  fit.control = list(),
+  external.forecasts = list(mregfor = NULL, vregfor = NULL),
+  mexsimdata = NULL,
+  vexsimdata = NULL,
+  cluster = NULL,
+  verbose = FALSE)
+#+end_src
+
+** Benchmark
+*** ugarchbench()
+
+#+begin_src R
+ugarchbench(benchmark = c("commercial", "published"))
+#+end_src
+
+** Simulation
+*** ugarchsim()
+
+#+begin_src R
+ugarchsim(
+  fit,
+  n.sim = 1000,
+  n.start = 0,
+  m.sim = 1,
+  startMethod = c("unconditional", "sample"),
+  presigma = NA,
+  prereturns = NA,
+  preresiduals = NA,
+  rseed = NA,
+  custom.dist = list(name = NA, distfit = NA),
+  mexsimdata = NULL,
+  vexsimdata = NULL,
+  ...)
+#+end_src
+
+** Path Simulation
+
+#+begin_src R
+ugarchpath(
+  spec,
+  n.sim = 1000,
+  n.start = 0,
+  m.sim = 1,
+  presigma = NA,
+  prereturns = NA,
+  preresiduals = NA,
+  rseed = NA,
+  custom.dist = list(name = NA, distfit = NA),
+  mexsimdata = NULL,
+  vexsimdata = NULL,
+  trunclag = 1000,
+  ...)
+#+end_src
+
+** Distribution
+
+- mu = location parameter
+- sigma = scale parameter
+- skew
+- shape
+- lambda = ghyp and nig only
+
+#+begin_src R
+ddist(distribution = "norm", y, mu = 0, sigma = 1, lambda = -0.5, skew = 1, shape = 5)
+pdist(distribution = "norm", q, mu = 0, sigma = 1, lambda = -0.5, skew = 1, shape = 5)
+qdist(distribution = "norm", p, mu = 0, sigma = 1, lambda = -0.5, skew = 1, shape = 5)
+rdist(distribution = "norm", n, mu = 0, sigma = 1, lambda = -0.5, skew = 1, shape = 5)
+#+end_src
+
+- rugarch パッケージでの分布の当てはめ
+  - 対数尤度の最大化ではなく、負の対数尤度(NLL)の最小化でパラメタ推定
+    => 意味は同じ (オプティマイザは最小化が通常だから)
+https://stats.stackexchange.com/questions/141087/i-am-wondering-why-we-use-negative-log-likelihood-sometimes
+
+#+begin_src R
+fitdist(distribution = "norm", x, control = list())
+dskewness(distribution = "norm", skew = 1, shape = 5, lambda = -0.5)
+dkurtosis(distribution = "norm", skew = 1, shape = 5, lambda = -0.5)
+distplot(distribution = "snorm", skewbounds = NULL, shapebounds = NULL, n.points = NULL)
+skdomain(distribution = "nig", kurt.max = 30, n.points = 25, lambda = 1, plot = TRUE, legend = NULL)
+#+end_src
+
+** Tests
+
+- Hansen’s GMM and Hong&Li Portmanteau type test
+- Misspecification test
+#+begin_src R
+GMMTest(z, lags = 1, skew = 0, kurt = 3, conf.level = 0.95)
+#+end_src
+
+- Pesaran&Timmermann, Anatolyev&Gerko
+- predictive accuracy tests
+
+- Value at Risk tests (VaR Exceedances and Expected Shortfall tests)
+#+begin_src R
+VaRTest(alpha = 0.05, actual, VaR, conf.level = 0.95)
+#+end_src
+
+** A short introduction to the rugarch package
+
+require(rugarch)
+data(sp500ret) # SP500 log return from 1987/03/10 - 2009/01/30 from Yahoo
+
+# create a cluster object to be used as part of this demonstration
+cluster = makePSOCKcluster(15)
+
+# デフォルトのモデル
+spec = ugarchspec()
+show(spec)
+
+class(spec) # uGARCHspec class (継承順: uGARCHspec <- GARCHspec <- rGARCH)
+showClass("rGARCH")
+
+# ARMA(1,1) + GARCH(1,1) だけでも 13,440 パターンの組み合わせがある
+nrow(expand.grid(
+  GARCH  = 1:14,
+  VEX    = 0:1,
+  VT     = 0:1,
+  Mean   = 0:1,
+  ARCHM  = 0:2,
+  ARFIMA = 0:1,
+  MEX    = 0:1,
+  DISTR  = 1:10))
+
+# spec
+spec = ugarchspec(
+  variance.model = list(model = "eGARCH", garchOrder = c(2, 1)), distribution = "std")
+setstart(spec) <- list(shape = 5)
+setbounds(spec)
+
+# fit
+fit <- ugarchfit(spec, sp500ret[1:1000,, drop = FALSE], solver = "hybrid")
+fit
+
+# distribution
+gd <- ugarchdistribution(
+  fit,
+  n.sim = 500,
+  recursive = TRUE,
+  recursive.length = 6000,
+  recursive.window = 500,
+  m.sim = 100,
+  solver = "hybrid",
+  cluster = cluster)
+
+show(gd)
+plot(gd, which = 1, window = 12)
+plot(gd, which = 2, window = 12)
+plot(gd, which = 3, window = 12)
+plot(gd, which = 4, window = 12)
+
+# forecast
+forc1 <- ugarchforecast(fit,  n.ahead = 500)
+forc2 <- ugarchforecast(spec, n.ahead = 500, data = sp500ret[1:1000,, drop = FALSE])
+forc3 <- ugarchforecast(spec, n.ahead = 1, n.roll = 499, data = sp500ret[1:1500,, drop = FALSE], out.sample = 500)
+
+plot(forc1, which = 1)
+
+f1 <- as.data.frame(forc1)
+f2 <- as.data.frame(forc2)
+f3 <- t(as.data.frame(forc3, which = "sigma", rollframe = "all", aligned = FALSE))
+U  <- uncvariance(fit) ^ 0.5
+
+# roll
+spec = ugarchspec(
+  variance.model = list(model = "gjrGARCH", garchOrder = c(2, 1)),
+  distribution = "jsu")
+
+roll = ugarchroll(
+  spec,
+  sp500ret,
+  forecast.length = 1000,
+  refit.every = 50,
+  refit.window = "moving",
+  window.size = 1200,
+  calculate.VaR = FALSE,
+  keep.coef = TRUE,
+  cluster = cluster)
+
+roll
+fd <- as.data.frame(roll, which = "density")
+
+# VarTest
+VAR1 = fd[, "Mu"] + qdist("jsu", 0.01, 0, 1, skew = fd[, "Skew"], shape = fd[, "Shape"]) * fd[, "Sigma"]
+VAR5 = fd[, "Mu"] + qdist("jsu", 0.05, 0, 1, skew = fd[, "Skew"], shape = fd[, "Shape"]) * fd[, "Sigma"]
+PIT = pdist("jsu", (fd[, "Realized"] - fd[, "Mu"]) / fd[, "Sigma"], mu = 0, sigma = 1, fd[, "Skew"], shape = fd[, "Shape"])
+VT1 = VaRTest(0.01, VaR = VAR1, actual = fd[, "Realized"])
+VT5 = VaRTest(0.05, VaR = VAR5, actual = fd[, "Realized"])
+
+# calculate ES
+f = function(x, skew, shape) qdist("jsu", p = x, mu = 0, sigma = 1, skew = skew, shape = shape)
+ES5 = apply(fd, 1, function(x) x["Mu"] + x["Sigma"] * integrate(f, 0, 0.05, skew = x["Skew"], shape = x["Shape"])$value)
+ES1 = apply(fd, 1, function(x) x["Mu"] + x["Sigma"] * integrate(f, 0, 0.01, skew = x["Skew"], shape = x["Shape"])$value)
+ET5 = ESTest(alpha = 0.05, actual = fd[, "Realized"], ES = ES5, VaR = VAR5, conf.level = 0.95)
+ET1 = ESTest(alpha = 0.01, actual = fd[, "Realized"], ES = ES1, VaR = VAR1, conf.level = 0.95)
+
+# sim/path
+sim = ugarchsim(fit, n.sim = 1000, m.sim = 25, rseed = 1:25)
+simSig = as.data.frame(sim, which = "sigma")
+simSer = as.data.frame(sim, which = "series")
+show(sim)
+
+# bench
+print(ugarchbench("published"))
+** ARIMA
+*** autoarfima()
+
+#+begin_src R
+autoarfima(
+  data, # vector, matrix, data.frame, zoo, xts etc
+  ar.max = 2,
+  ma.max = 2,
+  criterion = c("AIC", "BIC", "SIC", "HQIC"),
+  method = c("partial", "full"), # partial にすると p+q の組み合わせを省略する
+  arfima = FALSE,
+  include.mean = NULL, # 切片項(定数項)を入れるか？ = 確率分布の mu に相当する
+  distribution.model = "norm",
+  cluster = NULL, # parallel::makeCluster() のオブジェクトを渡すと並列計算可能
+  external.regressors = NULL, # matrix
+  solver = "solnp", #  “nlminb”, “solnp”, “gosolnp” or “nloptr”
+  solver.control = list(),
+  fit.control = list(),
+  return.all = FALSE)
+#+end_src
+
+*** arfimaspec()
+
+#+begin_src R
+arfimaspec(
+  mean.model = list(armaOrder = c(1, 1),
+                    include.mean = TRUE,
+                    arfima = FALSE,
+                    external.regressors = NULL),
+  distribution.model = "norm",
+  start.pars = list(),
+  fixed.pars = list(),
+  ...)
+#+end_src
+
+*** arfimafit()
+
+#+begin_src R
+arfimafit(
+  spec,
+  data,
+  out.sample = 0,
+  solver = "solnp",
+  solver.control = list(),
+  fit.control = list(fixed.se = 0, scale = 0),
+  numderiv.control = list(grad.eps=1e-4, grad.d=0.0001,
+                          grad.zero.tol=sqrt(.Machine$double.eps/7e-7),
+                          hess.eps=1e-4, hess.d=0.1,
+                          hess.zero.tol=sqrt(.Machine$double.eps/7e-7),
+                          r=4,
+                          v=2),
+  ...)
+#+end_src
+
+*** その他のメソッド
+
+GARCH モデルと同様のメソッド構成
+- arfimaspec()
+- arfimafit()
+- arfimafilter()
+- arfimadistribution()
+- arfimaroll()
+# etc...
+
+## ARMA(1, 1) に従うシミュレーションデータ
+x <- arima.sim(n = 500, model = list(order = c(1, 0, 1), ar = 0.7, ma = 0.2))
+
+cl <- makeCluster(8)
+arfima_fit <- autoarfima(x,
+  ar.max = 2, ma.max = 2,
+  criterion = "AIC", method = "full",
+  arfima = FALSE,
+  include.mean = FALSE,
+  distribution.model = "norm",
+  cluster = cl,
+  solver = "solnp",
+  return.all = FALSE)
+stopCluster(cl)
+
+# ARMA(2, 2) が推定された
+arfima_fit
+
+#? 結果の見方
+# ar1 * y(t-1) + ar2 * y(t-2) + ma1 * e(t-1) ma2 * e(t-2) = fitted.values
+# fitted.values + residuals = data
+
+# 対数尤度の計算
+llh <- sum(log(dnorm(arfima_fit$fit@fit$residuals, sd = sqrt(arfima_fit$fit@fit$coef[["sigma"]]))))
+llh
+
+# AIC すこし計算方法が違う
+https://stats.stackexchange.com/questions/100003/cannot-replicate-the-aic-in-a-garch-model
+infocriteria(arfima_fit$fit)
+(-2 * llh) / length(x) + 2 * (length(arfima_fit$fit@fit$coef)) / length(x)
+* 実行環境
+
+#+begin_src R :results output :exports both
+sessionInfo()
+#+end_src
+
+#+RESULTS:
+#+begin_example
+R version 3.6.1 (2019-07-05)
+Platform: x86_64-pc-linux-gnu (64-bit)
+Running under: Ubuntu 18.04.3 LTS
+
+Matrix products: default
+BLAS:   /usr/lib/x86_64-linux-gnu/blas/libblas.so.3.7.1
+LAPACK: /usr/lib/x86_64-linux-gnu/lapack/liblapack.so.3.7.1
+
+locale:
+ [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C
+ [3] LC_TIME=en_US.UTF-8        LC_COLLATE=en_US.UTF-8
+ [5] LC_MONETARY=en_US.UTF-8    LC_MESSAGES=en_US.UTF-8
+ [7] LC_PAPER=en_US.UTF-8       LC_NAME=C
+ [9] LC_ADDRESS=C               LC_TELEPHONE=C
+[11] LC_MEASUREMENT=en_US.UTF-8 LC_IDENTIFICATION=C
+
+attached base packages:
+[1] stats     graphics  grDevices utils     datasets  methods   base
+
+loaded via a namespace (and not attached):
+ [1] Rcpp_1.0.2                  mclust_5.4.5
+ [3] lattice_0.20-38             mvtnorm_1.0-11
+ [5] zoo_1.8-6                   MASS_7.3-51.4
+ [7] GeneralizedHyperbolic_0.8-4 truncnorm_1.0-8
+ [9] grid_3.6.1                  pacman_0.5.1
+[11] KernSmooth_2.23-16          nloptr_1.2.1
+[13] SkewHyperbolic_0.4-0        Matrix_1.2-17
+[15] xts_0.11-2                  spd_2.0-1
+[17] tools_3.6.1                 rugarch_1.4-1
+[19] ks_1.11.5                   numDeriv_2016.8-1.1
+[21] parallel_3.6.1              compiler_3.6.1
+[23] DistributionUtils_0.6-0     Rsolnp_1.16
+[25] expm_0.999-4
+#+end_example
+\\
+
+* 参考リンク
+
+- [[https://cran.r-project.org/web/packages/rugarch/index.html][CRAN]]
+- [[https://cran.r-project.org/web/packages/rugarch/rugarch.pdf][Reference Manual]]
+- [[https://bitbucket.org/alexiosg/rugarch/src/master/][Bitbucket Repo]]
+- Vignette
+  - [[https://cran.r-project.org/web/packages/rugarch/vignettes/Introduction_to_the_rugarch_package.pdf][Introduction to the rugarch package.]]
+
+- [[http://www.unstarched.net/][unstarched (パッケージ作者のサイト)]]
+  - [[http://www.unstarched.net/r-examples/rugarch/a-short-introduction-to-the-rugarch-package/][A short introduction to the rugarch package]]
+  - [[http://www.unstarched.net/r-examples/rugarch/simulated-rolling-forecast-density/][Simulated Rolling Forecast Density]]
+  - [[http://www.unstarched.net/r-examples/rugarch/a-note-on-simulation-in-the-rugarch-package/][A note on simulation in the rugarch package]]
+  - [[http://www.unstarched.net/r-examples/rugarch/the-ewma-model/][The EWMA model]]
+  - [[http://www.unstarched.net/2013/01/07/does-anything-not-beat-the-garch11/][Does anything NOT beat the GARCH(1,1)?]]
+
+- Blog
+  - [[http://stockedge.hatenablog.com/entry/2015/05/01/110007][stockedge.jpの技術メモ]]
+

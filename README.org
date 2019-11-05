@@ -38,15 +38,15 @@ Babel の実行には適切な ~org-babel-load-language~ の設定が必要で�
 | Language               | types, [[file:./lang/r/general/environment.org][ ~environment~ ]], nse, [[file:./lang/r/general/equality.org][ ~equality~ ]], [[file:./lang/r/general/performance.org][ ~performance~ ]], {pryr}, {rlang}      |
 | Import                 | [[file:./lang/r/package/readr.org][ ~{readr*}~ ]]                                                                 |
 | Tabular Data           | [[file:lang/r/package/dplyr/][ ~{dplyr*}~ ]], [[file:./lang/r/package/tidyr.org][ ~{tidyr}~ ]], {purrrlyr}, {tibble}, {data.table}, {dtplyr}, {fst} |
-| Time Series Data       | [[file:/lang/r/package/xts.org][ ~{xts}~ ]]                                                                    |
+| Time Series Data       | [[file:/lang/r/package/xts.org][ ~{xts}~ ]], {tsibble}, {tidyverts}, {slide}                                   |
 | String                 | [[file:./lang/r/general/regex.org][ ~regex~ ]], [[file:./lang/r/package/stringr.org][ ~{stringr}~ ]] [[file:./lang/r/package/glue.org][ ~{glue}~ ]], [[file:./lang/r/package/crayon.org][ ~{crayon}~ ]]                                  |
 | Factor                 | [[file:./lang/r/general/factor.org][ ~{base}~ ]], [[file:./lang/r/package/farcats.org][ ~{forcats*}~ ]]                                                     |
 | Date and Time          | [[file:./lang/r/general/date_time.org][ ~{base}~ ]], [[file:./lang/r/package/lubridate.org][ ~{lubridate}~ ]], {hms}, {nanotime}                                 |
 | Assertion              | [[file:./lang/r/package/assertthat.org][ ~{assertthat}~ ]], [[file:./lang/r/package/assertr.org][ ~{assertr*}~ ]]                                               |
 |------------------------+----------------------------------------------------------------------------|
-| Preprocessing          | [[file:lang/r/package/rsample.org][ ~{rsample}~ ]], {resamplr}, [[file:lang/r/package/recipes/][ ~{recipes*}~ ]], {janitor}                           |
+| Preprocessing          | [[file:lang/r/package/rsample.org][ ~{rsample}~ ]], {resamplr}, [[file:lang/r/package/recipes/][ ~{recipes*}~ ]], {janitor}, {feasts}                 |
 | Graphics               | {ggplot2}, ggplot samples, {DataExplorer}                                  |
-| Modeling               | [[file:./lang/r/package/parsnip/][ ~{parsnip*}~ ]], {dials}, [[file:./lang/r/package/tune/][ ~{tune}~ ]], {DALEX}                                   |
+| Modeling               | [[file:./lang/r/package/parsnip/][ ~{parsnip*}~ ]], {dials}, [[file:./lang/r/package/tune/][ ~{tune}~ ]], {DALEX}, {fable}                          |
 | Testing                | [[file:./lang/r/package/infer.org][ ~{infer*}~ ]]                                                                 |
 | Performance Metric     | [[file:./lang/r/package/yardstick/][ ~{yardstick*}~ ]], {PerformanceAnalytics}                                     |
 | Workflow               | [[file:./lang/r/package/drake/][ ~{drake}~ ]], {drakepkg}, {mlr/mlr3}, {ProjectTemplate}                       |
@@ -60,6 +60,12 @@ Babel の実行には適切な ~org-babel-load-language~ の設定が必要で�
 |------------------------+----------------------------------------------------------------------------|
 | Other                  | [[file:./lang/r/general/five_problems.org][ ~five problems~ ]]                                                            |
 |------------------------+----------------------------------------------------------------------------|
+
+- NA 処理まとめ
+- 時系列 Window 関数まとめ
+- 直積集合 expand.grid() まとめ
+- 関数型まとめ vector, list, data.frame それぞれに対して
+- データ構造変換まとめ (list <-> data.frame など)
 
 ** Python
 ** Emacs Lisp

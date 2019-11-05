@@ -1,0 +1,639 @@
+#+STARTUP: folded indent inlineimages latexpreview
+#+PROPERTY: header-args:R :results output :colnames yes :session *R:rmgarch*
+
+* ~{rmgarch}~: Multivariate GARCH Models                             :noexport:
+
+\\
+
+* 目次                                                            :quote:toc:
+#+BEGIN_QUOTE
+- [[#ライブラリの読み込みとバージョンの確認][ライブラリの読み込みとバージョンの確認]]
+- [[#全関数][全関数]]
+- [[#関数リスト][関数リスト]]
+  - [[#overview][Overview]]
+  - [[#the-garch-dcc-model-and-2-stage-dccmvt-estimation][The GARCH-DCC Model and 2-stage DCC(MVT) estimation.]]
+- [[#実行環境][実行環境]]
+- [[#参考リンク][参考リンク]]
+#+END_QUOTE
+
+* ライブラリの読み込みとバージョンの確認
+
+#+begin_src R :results silent
+library(rmgarch)
+#+end_src
+\\
+
+- バージョン
+#+begin_src R :exports both
+packageVersion("rmgarch")
+#+end_src
+
+#+RESULTS:
+: [1] ‘1.3.7’
+\\
+
+* 全関数
+
+#+begin_src R
+pacman::p_funs(rmgarch)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+Registered S3 method overwritten by 'xts':
+  method     from
+  as.zoo.xts zoo
+  [1] ".__C__cGARCHfilter"            ".__C__cGARCHfit"
+  [3] ".__C__cGARCHsim"               ".__C__cGARCHspec"
+  [5] ".__C__DCCfilter"               ".__C__DCCfit"
+  [7] ".__C__DCCforecast"             ".__C__DCCroll"
+  [9] ".__C__DCCsim"                  ".__C__DCCspec"
+ [11] ".__C__fMoments"                ".__C__fScenario"
+ [13] ".__C__goGARCHfft"              ".__C__goGARCHfilter"
+ [15] ".__C__goGARCHfit"              ".__C__goGARCHforecast"
+ [17] ".__C__goGARCHroll"             ".__C__goGARCHsim"
+ [19] ".__C__goGARCHspec"             ".__C__mGARCHfilter"
+ [21] ".__C__mGARCHfit"               ".__C__mGARCHforecast"
+ [23] ".__C__mGARCHroll"              ".__C__mGARCHsim"
+ [25] ".__C__mGARCHspec"              ".__T__[:base"
+ [27] ".__T__[[<-:base"               ".__T__[<-:base"
+ [29] ".__T__$:base"                  ".__T__$<-:base"
+ [31] ".__T__as.matrix:base"          ".__T__betacokurt:rmgarch"
+ [33] ".__T__betacoskew:rmgarch"      ".__T__betacovar:rmgarch"
+ [35] ".__T__cgarchfilter:rmgarch"    ".__T__cgarchfit:rmgarch"
+ [37] ".__T__cgarchsim:rmgarch"       ".__T__cgarchspec:rmgarch"
+ [39] ".__T__convolution:rmgarch"     ".__T__dccfilter:rmgarch"
+ [41] ".__T__dccfit:rmgarch"          ".__T__dccforecast:rmgarch"
+ [43] ".__T__dccroll:rmgarch"         ".__T__dccsim:rmgarch"
+ [45] ".__T__dccspec:rmgarch"         ".__T__dfft:rmgarch"
+ [47] ".__T__first:rmgarch"           ".__T__fmoments:rmgarch"
+ [49] ".__T__fscenario:rmgarch"       ".__T__gogarchfilter:rmgarch"
+ [51] ".__T__gogarchfit:rmgarch"      ".__T__gogarchforecast:rmgarch"
+ [53] ".__T__gogarchroll:rmgarch"     ".__T__gogarchsim:rmgarch"
+ [55] ".__T__gogarchspec:rmgarch"     ".__T__goget:rmgarch"
+ [57] ".__T__goload:rmgarch"          ".__T__gportmoments:rmgarch"
+ [59] ".__T__last:rmgarch"            ".__T__nisurface:rmgarch"
+ [61] ".__T__nportmoments:rmgarch"    ".__T__pfft:rmgarch"
+ [63] ".__T__qfft:rmgarch"            ".__T__rcokurt:rmgarch"
+ [65] ".__T__rcor:rmgarch"            ".__T__rcoskew:rmgarch"
+ [67] ".__T__rcov:rmgarch"            ".__T__rshape:rmgarch"
+ [69] ".__T__rskew:rmgarch"           "as.matrix"
+ [71] "betacokurt"                    "betacoskew"
+ [73] "betacovar"                     "cgarchfilter"
+ [75] "cgarchfit"                     "cgarchsim"
+ [77] "cgarchspec"                    "convolution"
+ [79] "cordist"                       "dccfilter"
+ [81] "dccfit"                        "dccforecast"
+ [83] "dccroll"                       "dccsim"
+ [85] "dccspec"                       "DCCtest"
+ [87] "dfft"                          "fastica"
+ [89] "first"                         "fmoments"
+ [91] "fscenario"                     "gogarchfilter"
+ [93] "gogarchfit"                    "gogarchforecast"
+ [95] "gogarchroll"                   "gogarchsim"
+ [97] "gogarchspec"                   "goget"
+ [99] "goload"                        "gportmoments"
+[101] "last"                          "nisurface"
+[103] "nportmoments"                  "pfft"
+[105] "qfft"                          "radical"
+[107] "rcokurt"                       "rcor"
+[109] "rcoskew"                       "rcov"
+[111] "rshape"                        "rskew"
+[113] "varxfilter"                    "varxfit"
+[115] "varxforecast"                  "varxsim"
+[117] "wmargin"
+#+end_example
+
+* 関数リスト
+** Overview
+*** Overview
+
+_rugarch の関数を流用_
+- 単変量の ARMA-GARCH モデルを指定 ~rugarch::ugarchspec()~
+- 複数銘柄用に複製 ~rugarch::multispec()~
+- 1 stage 目で ~rugarch::multifit()~ で推定 (stage-1 では正規分布をつかう？)
+
+
+_rmgarch は 3 つのモデルに対応_
+1. DCC (*Dynamic Conditional Correlation*)
+   with mv-norm, mv-laplas, mv-t
+   with DCC, aDCC(asymmetric), FDCC(Flexible)
+
+2. GO-GARCH (*Generalized Orthogonal* GARCH using Independent Component Analysis(ICA))
+   with mv-norm, affine-NIG, affine-GH
+
+3. Copula-GARCH
+   DCD (Dynamic Conditional Dependence) モデルとも呼ばれる
+   相関係数ではなく、コピュラによって依存構造をモデル化するもの
+   with mv-norm, mv-t
+
+_rugarch と同様の命名規則で、モデル毎に必要な関数が整備されている_
+- ...spec(), ...fit(), ...filter(), ...forecast(), ...roll(), ...sim()
+
+
+_rmgarch には、VARX (VAR + Exogenous Regressors) の関数も用意されている_
+- varxfit(), varxfilter(), varxsim(), varsforecast()
+
+*** spec()
+**** dccspec()
+
+#+begin_src R
+dccspec(
+  uspec, # uGARCHmultispec object
+  ## VAR 関連 ##
+  VAR = FALSE,    # 条件付き期待値に VAR 当てはめを行うか
+  robust = FALSE, # robust version of VAR
+  lag = 1,        # VAR のラグ
+  lag.max = NULL, # VAR の最大ラグ
+  lag.criterion = c("AIC", "HQ", "SC", "FPE"),
+  external.regressors = NULL,
+  robust.control = list("gamma" = 0.25, "delta" = 0.01, "nc" = 10, "ns" = 500),
+  ## DCC 関連 ##
+  dccOrder = c(1,1),
+  model = c("DCC", "aDCC", "FDCC"),
+  groups = rep(1, length(uspec@spec)),
+  distribution = c("mvnorm", "mvt", "mvlaplace"),
+  start.pars = list(),
+  fixed.pars = list()
+)
+#+end_src
+
+**** gogarchspec()
+
+#+begin_src R
+gogarchspec(
+  mean.model = list(model = c("constant", "AR", "VAR"),
+                    robust = FALSE,
+                    lag = 1,
+                    lag.max = NULL,
+                    lag.criterion = c("AIC", "HQ", "SC", "FPE"),
+                    external.regressors = NULL,
+                    robust.control = list("gamma" = 0.25, "delta" = 0.01, "nc" = 10, "ns" = 500)),
+  variance.model = list(model = "sGARCH",
+                        garchOrder = c(1,1),
+                        submodel = NULL,
+                        variance.targeting = FALSE),
+  distribution.model = c("mvnorm", "manig", "magh"),
+  ica = c("fastica", "radical"),
+  ica.fix = list(A = NULL, K = NULL),
+  ...
+)
+#+end_src
+
+**** cgarchspec()
+
+#+begin_src R
+cgarchspec(
+  uspec,
+  VAR = FALSE,
+  robust = FALSE,
+  lag = 1,
+  lag.max = NULL,
+  lag.criterion = c("AIC", "HQ", "SC", "FPE"),
+  external.regressors = NULL,
+  robust.control = list(gamma = 0.25, delta = 0.01, nc = 10, ns = 500),
+  dccOrder = c(1, 1),
+  asymmetric = FALSE,
+  distribution.model = list(copula = c("mvnorm", "mvt"),
+                            method = c("Kendall", "ML"),
+                            time.varying = FALSE,
+                            transformation = c("parametric", "empirical", "spd")),
+  start.pars = list(),
+  fixed.pars = list()
+)
+#+end_src
+
+*** fit()
+
+#+begin_src R
+dccfit(
+  spec,
+  data, # A multivariate data object of class xts or one which can be coerced to such.
+  out.sample = 0,
+  solver = "solnp",
+  solver.control = list(),
+  fit.control = list(eval.se = TRUE, stationarity = TRUE, scale = FALSE),
+  cluster = NULL,
+  fit = NULL, # uGARCHmultifit object 以前に fit したものを流用できる
+  VAR.fit = NULL,
+  realizedVol = NULL,
+  ...
+)
+
+gogarchfit(
+  spec,
+  data,
+  out.sample = 0,
+  solver = "solnp",
+  fit.control = list(stationarity = 1),
+  solver.control = list(),
+  cluster = NULL,
+  VAR.fit = NULL,
+  ARcoef = NULL,
+  ...
+)
+
+cgarchfit(
+  spec,
+  data,
+  spd.control = list(lower = 0.1,
+                     upper = 0.9,
+                     type = "pwm",
+                     kernel = "epanech"),
+  fit.control = list(eval.se = TRUE,
+                     stationarity = TRUE,
+                     scale = FALSE),
+  solver = "solnp",
+  solver.control = list(),
+  out.sample = 0,
+  cluster = NULL,
+  fit = NULL,
+  VAR.fit = NULL,
+  realizedVol = NULL,
+  ...
+)
+#+end_src
+
+*** forecast()
+
+#+begin_src R
+dccforecast(
+  fit,
+  n.ahead = 1,
+  n.roll = 0,
+  external.forecasts = list(mregfor = NULL, vregfor = NULL),
+  cluster = NULL,
+ ...)
+
+gogarchforecast(
+  fit,
+  n.ahead = 10,
+  n.roll = 0,
+  external.forecasts = list(mregfor = NULL),
+  cluster = NULL,
+  ...)
+#+end_src
+
+*** varx
+
+#+begin_src R
+varxfit(
+  X, # Mumtivariate data matrix
+  p, # lags
+  constant = TRUE,
+  exogen = NULL, # matrix of exogenous regressors with as many rows as X
+  robust = FALSE,
+  gamma = 0.25,
+  delta = 0.01,
+  nc = 10,
+  ns = 500,
+  postpad = c("none", "constant", "zero", "NA"),
+  cluster = NULL)
+
+varxfilter(
+  X,
+  p,
+  Bcoef,
+  exogen = NULL,
+  postpad = c("none", "constant", "zero", "NA"))
+
+varxforecast(
+  X,
+  Bcoef,
+  p,
+  out.sample,
+  n.ahead,
+  n.roll,
+  mregfor)
+
+varxsim(
+  X,
+  Bcoef,
+  p,
+  n.sim,
+  n.start,
+  prereturns,
+  resids,
+  mexsimdata)
+#+end_src
+
+** The GARCH-DCC Model and 2-stage DCC(MVT) estimation.
+*** 1-Stage
+
+- 1-stage は、norm を使う
+- multispec() をつかって、同じモデルを複数銘柄に適応
+- multifit object として一度推定しておけば、流用しやすい
+
+#+begin_src R :results output
+data(dji30retw)
+Dat <- dji30retw[, 1:10, drop = FALSE]
+xspec <- ugarchspec(
+  mean.model = list(armaOrder = c(1, 1)),
+  variance.model = list(garchOrder = c(1,1), model = 'eGARCH'),
+  distribution.model = 'norm')
+
+uspec  <- multispec(replicate(10, xspec))
+cl <- makePSOCKcluster(4)
+multf <- multifit(uspec, Dat, cluster = cl)
+multf
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+,*----------------------------*
+,*     GARCH Multi-Fit        *
+,*----------------------------*
+No. Assets :10
+GARCH Multi-Spec Type : Equal
+GARCH Model Spec
+--------------------------
+Model : eGARCH
+Exogenous Regressors in variance equation: none
+
+Mean Equation :
+Include Mean :  1
+AR(FI)MA Model : (1,d,1)
+GARCH-in-Mean :  FALSE
+Exogenous Regressors in mean equation: none
+Conditional Distribution:  norm
+
+GARCH Model Fit
+--------------------------
+Optimal Parameters:
+                AA        AXP         BA        BAC          C        CAT
+mu         0.00067    0.00112    0.00219    0.00220    0.00165    0.00184
+ar1       -0.72822   -0.07473   -0.69349    0.66982   -0.59928    0.22066
+ma1        0.71841    0.00177    0.63520   -0.70825    0.52022   -0.25755
+omega     -0.25415   -0.09942   -0.06627   -0.00903   -0.07666   -0.19816
+alpha1    -0.10656   -0.08832   -0.05753   -0.05736   -0.05963   -0.07072
+beta1      0.95702    0.98363    0.98906    0.99703    0.98481    0.96757
+gamma1     0.19943    0.11942    0.10391    0.12989    0.16810    0.07474
+Log-Lik 1913.11278 2049.53202 2085.70199 2046.87470 1862.42834 1949.78926
+               CVX         DD        DIS         GE
+mu         0.00217    0.00116    0.00209    0.00186
+ar1        0.79703   -0.17050   -0.44971    0.17429
+ma1       -0.87143    0.06985    0.41350   -0.24055
+omega     -0.94974   -0.11270   -0.25515   -0.09288
+alpha1    -0.08741   -0.03435   -0.06592   -0.06838
+beta1      0.86214    0.98238    0.96020    0.98585
+gamma1     0.27158    0.09905    0.18480    0.16072
+Log-Lik 2339.54733 2184.82078 2118.98926 2327.38770
+#+end_example
+
+*** 2-Stage
+
+- 2-Stage で mvt を指定
+- この時点では、eval.se = FALSE
+#+begin_src R
+mvt_spec <- dccspec(uspec = uspec, dccOrder = c(1, 1), distribution = 'mvt')
+mvt_fit1 <- dccfit(mvt_spec, data = Dat, fit.control = list(eval.se = FALSE), fit = multf)
+
+## obtain the multivariate shape parameter:
+shape <- rshape(mvt_fit1)
+shape
+#+end_src
+
+#+RESULTS:
+: 9.22761015566808
+
+- mvt の shape パラメタを収束させるために、5回当てはめを繰り返す
+- 前回の shape の値を ugarchspec の fixed.pars に渡す
+#+begin_src R
+## Plug that into a fixed first stage model and iterate :
+mvt.loglik <- rep(0, 6)
+mvt.shape <- rep(0, 6)
+mvt.loglik[1] <- likelihood(mvt_fit1)
+mvt.shape[1] <- shape
+
+for (i in 1:5) {
+  xspec <- ugarchspec(mean.model = list(armaOrder = c(1, 1)),
+                      variance.model = list(garchOrder = c(1,1), model = 'eGARCH'),
+                      distribution.model = 'std',
+                      fixed.pars = list(shape = shape))
+  mvt_spec2 <- dccspec(uspec = multispec(replicate(10, xspec)),
+                       dccOrder = c(1,1),
+                       distribution = 'mvt')
+  mvt_fit2 <- dccfit(mvt_spec2, data = Dat,
+                     solver = 'solnp',
+                     fit.control = list(eval.se = FALSE))
+  shape <- rshape(mvt_fit2)
+  mvt.loglik[i + 1] <- likelihood(mvt_fit2)
+  mvt.shape[i + 1] <- shape
+}
+#+end_src
+
+
+- 2 回ほどで収束している
+#+begin_src R :results graphics :file (get-babel-file)
+data.frame(iter = 1:6, loglik = mvt.loglik) %>%
+  ggplot(aes(x = iter)) +
+  geom_line(aes(y = loglik))
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-x9p7id.png]]
+
+## Finally, once more, fixing the second stage shape parameter,
+## and evaluating the standard errors
+#+begin_src R :results output
+xspec2 <- ugarchspec(
+  mean.model = list(armaOrder = c(1, 1)),
+  variance.model = list(garchOrder = c(1,1), model = 'eGARCH'),
+  distribution.model = 'std', fixed.pars = list(shape = shape))
+
+mvt_spec3 <- dccspec(uspec = multispec(replicate(10, xspec)),
+                     dccOrder = c(1, 1),
+                     distribution = 'mvt',
+                     fixed.pars = list(shape = shape))
+
+mvt_fit3 <- dccfit(
+  mvt_spec3,
+  data = Dat,
+  solver = 'solnp',
+  fit.control = list(eval.se = TRUE),
+  cluster = cl)
+mvt_fit3
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+,*---------------------------------*
+,*          DCC GARCH Fit          *
+,*---------------------------------*
+
+Distribution         :  mvt
+Model                :  DCC(1,1)
+No. Parameters       :  118
+[VAR GARCH DCC UncQ] : [0+70+3+45]
+No. Series           :  10
+No. Obs.             :  1141
+Log-Likelihood       :  23187.34
+Av.Log-Likelihood    :  20.32
+
+Optimal Parameters
+-----------------------------------
+               Estimate  Std. Error     t value Pr(>|t|)
+[AA].mu        0.001661    0.001285    1.292179 0.196295
+[AA].ar1      -0.713314    0.022691  -31.436327 0.000000
+[AA].ma1       0.692139    0.023131   29.923135 0.000000
+[AA].omega    -0.109732    0.016405   -6.689163 0.000000
+[AA].alpha1   -0.055089    0.019342   -2.848125 0.004398
+[AA].beta1     0.982339    0.002580  380.775461 0.000000
+[AA].gamma1    0.119199    0.026822    4.444118 0.000009
+[AXP].mu       0.001890    0.000905    2.088679 0.036737
+[AXP].ar1     -0.109502    0.012096   -9.053113 0.000000
+[AXP].ma1      0.032681    0.012489    2.616796 0.008876
+[AXP].omega   -0.141566    0.058490   -2.420330 0.015506
+[AXP].alpha1  -0.082227    0.022152   -3.711975 0.000206
+[AXP].beta1    0.978213    0.009309  105.079264 0.000000
+[AXP].gamma1   0.142040    0.097644    1.454677 0.145759
+[BA].mu        0.002391    0.000964    2.479529 0.013156
+[BA].ar1      -0.689712    0.014390  -47.931572 0.000000
+[BA].ma1       0.633808    0.014735   43.014857 0.000000
+[BA].omega    -0.111710    0.004016  -27.815029 0.000000
+[BA].alpha1   -0.044452    0.015185   -2.927426 0.003418
+[BA].beta1     0.982884    0.000435 2259.544902 0.000000
+[BA].gamma1    0.092776    0.004617   20.094164 0.000000
+[BAC].mu       0.002667    0.000589    4.527129 0.000006
+[BAC].ar1      0.684140    0.015322   44.650800 0.000000
+[BAC].ma1     -0.722485    0.016887  -42.783513 0.000000
+[BAC].omega   -0.050246    0.006317   -7.954239 0.000000
+[BAC].alpha1  -0.056291    0.016354   -3.441930 0.000578
+[BAC].beta1    0.991981    0.000941 1053.692609 0.000000
+[BAC].gamma1   0.140607    0.025006    5.622872 0.000000
+[C].mu         0.002044    0.001177    1.736231 0.082523
+[C].ar1       -0.435397    0.022639  -19.231753 0.000000
+[C].ma1        0.341591    0.024687   13.837094 0.000000
+[C].omega     -0.077470    0.015363   -5.042791 0.000000
+[C].alpha1    -0.064179    0.017288   -3.712379 0.000205
+[C].beta1      0.987622    0.002529  390.513107 0.000000
+[C].gamma1     0.139133    0.036852    3.775477 0.000160
+[CAT].mu       0.002360    0.000810    2.914341 0.003564
+[CAT].ar1      0.327464    0.020919   15.654175 0.000000
+[CAT].ma1     -0.395751    0.020906  -18.929840 0.000000
+[CAT].omega   -0.159900    0.003654  -43.756041 0.000000
+[CAT].alpha1  -0.055334    0.014430   -3.834667 0.000126
+[CAT].beta1    0.974733    0.000311 3134.781167 0.000000
+[CAT].gamma1   0.069514    0.002443   28.450947 0.000000
+[CVX].mu       0.002827    0.000465    6.084357 0.000000
+[CVX].ar1      0.677510    0.014617   46.350825 0.000000
+[CVX].ma1     -0.781576    0.014847  -52.642433 0.000000
+[CVX].omega   -0.295357    0.092328   -3.199007 0.001379
+[CVX].alpha1  -0.022034    0.026000   -0.847468 0.396734
+[CVX].beta1    0.957490    0.013142   72.858091 0.000000
+[CVX].gamma1   0.131596    0.055937    2.352591 0.018643
+[DD].mu        0.001909    0.000852    2.241364 0.025002
+[DD].ar1      -0.087866    0.349179   -0.251637 0.801322
+[DD].ma1      -0.021294    0.355297   -0.059934 0.952208
+[DD].omega    -0.091965    0.005529  -16.633788 0.000000
+[DD].alpha1   -0.029044    0.017461   -1.663325 0.096247
+[DD].beta1     0.986141    0.000677 1456.927231 0.000000
+[DD].gamma1    0.100851    0.008912   11.316427 0.000000
+[DIS].mu       0.002159    0.000827    2.611082 0.009026
+[DIS].ar1     -0.481145    0.015771  -30.508285 0.000000
+[DIS].ma1      0.435322    0.014652   29.710511 0.000000
+[DIS].omega   -0.196354    0.048553   -4.044136 0.000053
+[DIS].alpha1  -0.050179    0.020545   -2.442429 0.014589
+[DIS].beta1    0.970246    0.007296  132.982324 0.000000
+[DIS].gamma1   0.152808    0.061452    2.486617 0.012896
+[GE].mu        0.001968    0.000698    2.817431 0.004841
+[GE].ar1      -0.569641    0.015826  -35.994000 0.000000
+[GE].ma1       0.510633    0.014035   36.383361 0.000000
+[GE].omega    -0.090276    0.011612   -7.774570 0.000000
+[GE].alpha1   -0.055447    0.016823   -3.295884 0.000981
+[GE].beta1     0.986852    0.001690  584.074359 0.000000
+[GE].gamma1    0.156982    0.036695    4.278056 0.000019
+[Joint]dcca1   0.006649    0.001490    4.462599 0.000008
+[Joint]dccb1   0.978437    0.007383  132.528658 0.000000
+[Joint]mshape  9.625766    0.643034   14.969297 0.000000
+
+Information Criteria
+---------------------
+
+Akaike       -40.437
+Bayes        -39.916
+Shibata      -40.456
+Hannan-Quinn -40.240
+
+
+Elapsed time : 12.88843
+#+end_example
+
+* 実行環境
+
+#+begin_src R :results output :exports both
+sessionInfo()
+#+end_src
+
+#+RESULTS:
+#+begin_example
+R version 3.6.1 (2019-07-05)
+Platform: x86_64-pc-linux-gnu (64-bit)
+Running under: Ubuntu 18.04.3 LTS
+
+Matrix products: default
+BLAS:   /usr/lib/x86_64-linux-gnu/blas/libblas.so.3.7.1
+LAPACK: /usr/lib/x86_64-linux-gnu/lapack/liblapack.so.3.7.1
+
+locale:
+ [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C
+ [3] LC_TIME=en_US.UTF-8        LC_COLLATE=en_US.UTF-8
+ [5] LC_MONETARY=en_US.UTF-8    LC_MESSAGES=en_US.UTF-8
+ [7] LC_PAPER=en_US.UTF-8       LC_NAME=C
+ [9] LC_ADDRESS=C               LC_TELEPHONE=C
+[11] LC_MEASUREMENT=en_US.UTF-8 LC_IDENTIFICATION=C
+
+attached base packages:
+[1] parallel  stats     graphics  grDevices utils     datasets  methods
+[8] base
+
+other attached packages:
+[1] rmgarch_1.3-7 rugarch_1.4-1
+
+loaded via a namespace (and not attached):
+ [1] Rcpp_1.0.2                  MASS_7.3-51.4
+ [3] bit_1.1-14                  mclust_5.4.5
+ [5] lattice_0.20-38             Rsolnp_1.16
+ [7] pcaPP_1.9-73                tools_3.6.1
+ [9] GeneralizedHyperbolic_0.8-4 SkewHyperbolic_0.4-0
+[11] xts_0.11-2                  spd_2.0-1
+[13] grid_3.6.1                  pacman_0.5.1
+[15] ff_2.2-14                   KernSmooth_2.23-16
+[17] corpcor_1.6.9               numDeriv_2016.8-1.1
+[19] Matrix_1.2-17               gmp_0.5-13.5
+[21] nloptr_1.2.1                DistributionUtils_0.6-0
+[23] ks_1.11.5                   compiler_3.6.1
+[25] Rmpfr_0.7-2                 Bessel_0.6-0
+[27] expm_0.999-4                truncnorm_1.0-8
+[29] mvtnorm_1.0-11              zoo_1.8-6
+#+end_example
+\\
+
+* 参考リンク
+
+- [[https://cran.r-project.org/web/packages/rmgarch/index.html][CRAN]]
+- [[https://cran.r-project.org/web/packages/rmgarch/rmgarch.pdf][Reference Manual]]
+- [[https://bitbucket.org/alexiosg/rmgarch/src/master/][Bitbucket Repo]]
+- Vignette
+  - [[https://cran.r-project.org/web/packages/rmgarch/vignettes/The_rmgarch_models.pdf][The rmgarch models: Background and properties.]]
+
+- [[http://www.unstarched.net/][unstarched (パッケージ作者のサイト)]]
+  - [[http://www.unstarched.net/2013/01/03/the-garch-dcc-model-and-2-stage-dccmvt-estimation/][The GARCH-DCC Model and 2-stage DCC(MVT) estimation.]]
+  - [[http://www.unstarched.net/r-examples/rmgarch/mgarch-comparison-using-the-hong-li-misspecification-test/][MGARCH Comparison using the Hong & Li Misspecification Test]]
+  - [[http://www.unstarched.net/r-examples/rmgarch/higher-moment-capm-with-the-go-garch-nig-model/][Higher Moment CAPM with the GO-GARCH (NIG) model.]]
+  - [[http://www.unstarched.net/r-examples/rmgarch/var-and-approximate-var-in-the-go-garch-nig-model/][VaR and Approximate VaR in the GO-GARCH (NIG) model.]]
+  - [[http://www.unstarched.net/r-examples/rmgarch/fast-ewma-filtering-of-time-vayring-correlations/][Fast EWMA Filtering of Time Varying Correlations]]
+
+- Blog
+  - [[http://osashimix.hatenablog.com/entry/2019/02/17/201742][【仕事関連】Asset Allocation Model を R で組んでみた。@東京の投資顧問会社で働く社会人が研究に没頭するブログ]]
+  - [[http://grg.hatenablog.com/entry/2017/03/12/233826][S&P500と日経225の時系列分析（DCCモデル・多変量GARCH）@GRGと金融工学・統計解析]]
+  - [[http://grg.hatenablog.com/entry/2017/03/13/101234][コピュラとは（時系列分析・DCDモデルの前準備として）@GRGと金融工学・統計解析]]
+  - [[http://grg.hatenablog.com/entry/2017/03/19/001059][S&P500と日経225の時系列分析（コピュラ ＆ DCDモデル）@GRGと金融工学・統計解析]]
+  - [[https://stackoverflow.com/questions/34636402/using-covariance-matrix-for-portfolio-optimization-in-r][Using Covariance matrix for Portfolio Optimization in R@stackoverflow]]
+
+- Convergence しない問題
+  - [[https://stackoverflow.com/questions/50928796/system-is-computationally-singular-reciprocal-condition-number-in-r][System is computationally singular: reciprocal condition number in R@stackoverflow]]
+  - [[https://stackoverflow.com/questions/57609790/dcc-model-estimation-with-t-student-distribution][DCC model estimation with t-Student distribution@stackoverflow]]
+  - [[https://quant.stackexchange.com/questions/7260/r-arma-garch-rugarch-package-doesnt-always-converge][R ARMA-GARCH rugarch package doesn't always converge@stackoverflow]]

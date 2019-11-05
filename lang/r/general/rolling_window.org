@@ -1,0 +1,27 @@
+#+STARTUP: folded indent
+#+PROPERTY: header-args:R :results output :colnames yes :session *R:rolling_window*
+
+* 概要
+
+- Rolling Window を行うパッケージ・関数についてまとめる
+
+- ~zoo::rollaply()~
+  - Pros
+    - 時系列データを自然に扱うことができる
+  - Cons
+    - 返り値に list を使えない
+
+- ~rsample::rolling_origin()~
+  - Pros
+    - データのサンプリング手法としては今後のデファクトになりそうな関数
+    - nested ~data.frame~ で扱える
+  - Cons
+    - データの重複が多いので重い
+
+- ~tsibble::slide()~
+  - Pros
+    - nested ~data.frame~ で扱える
+  - Cons
+    - Deprecated になる予定 (後継は ~{slide}~)
+
+-
