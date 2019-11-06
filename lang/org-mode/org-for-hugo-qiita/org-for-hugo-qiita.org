@@ -10,29 +10,25 @@
 #+HUGO_TAGS: org-mode markdown hugo
 #+HUGO_CUSTOM_FRONT_MATTER: :toc true
 
-普段、技術的なメモは Emacs の [[https://orgmode.org/ja/][org-mode]] で書いたものを [[https://github.com/five-dots/notes][自身の github リポジトリ]] に公開している。ただ、これはあくまで個人的なメモなので、それほど他人が見ることを意識したものではない。より見やすい記事として公開するために、個人のブログを、[[https://gohugo.io/][Hugo]] + [[https://www.netlify.com/][Netlify]] で開始したが、同時に力を入れて書いた技術記事は Qiita にも公開して、広く読んでもらえるようにしたい。
+普段、技術的なメモは Emacs の [[https://orgmode.org/ja/][org-mode]] で書いたものを [[https://github.com/five-dots/notes][自身の Github リポジトリ]] に公開している。ただ、これはあくまで個人的なメモなので、それほど他人が見ることを意識したものではない。より見やすい記事として公開するために、[[https://objective-boyd-9b8f29.netlify.com/][個人のブログ]]を、[[https://gohugo.io/][Hugo]] + [[https://www.netlify.com/][Netlify]] で開始したが、力を入れて書いた技術記事は Qiita にも公開して、広く読んでもらえるようにしたい。
 
-そこで、これまで通り、org ファイルは 1 つのリポジトリで管理しつつ、個人ブログ向けと Qiita 向けの Markdown をエクスポートできないか試してみた。
+そこで、これまで通り、org ファイルは同じリポジトリで管理しつつ、1 つの org ファイルから個人ブログ向けと Qiita 向けの Markdown をエクスポートできないか試してみた。
 
-なお、Hugo テーマは [[https://github.com/olOwOlo/hugo-theme-even][even]] を利用している。その他のテーマでは、この記事と異なる結果になる可能性もあるので、その点は注意が必要だ。
+* Qiita 向けの Markdown Exporter の選択
+
+Hugo 向けの Exporter は[[https://github.com/kaushalmodi/ox-hugo][ =ox-hugo= ]]一択でよいだろう。Qiita 向けの Markdown の生成には、いつくかの候補を検討した後に[[https://github.com/larstvei/ox-gfm][ =ox-gfm= ]]を選択した。他の選択肢としては、標準の =ox-md= や、[[https://qiita.com/0x60df/items/3cde67967e3db30d9afe][こちらの記事]]で紹介されている[[https://github.com/0x60df/ox-qmd][ =ox-qmd= ]]などがある。特に =ox-qmd= はそのものズバリで、最も org-mode から Qiita への再現性が高いと思われた。しかし、自分の設定が悪いのか、org の table が HTML として出力されてしまい、その結果、文字修飾が有効にならないという問題があったため断念した。他にも[[https://github.com/kawabata/ox-pandoc][ =ox-pandoc= ]]からも Markdown を出力できるが、今回は試していない。
 
 * 生成されるファイル
 
-1 つの [[https://orgmode.org/ja/][org-mode]] ファイルから、個人ブログ向けには [[https://ox-hugo.scripter.co/][ox-hugo]] で、Qiita 向けには [[https://github.com/larstvei/ox-gfm][ox-gfm]] で Markdown ファイルを出力できないか試してみた。
+個人ブログ向け・ Qiita 向け、それぞれの出力結果がこちらである。尚 =.org= や =.md= を Github 上で閲覧すると [[https://github.com/github/markup][github/markup]] によって自動的にレンダリングされるので、ソースは「Raw」から見てほしい。
 
 1. [[https://github.com/five-dots/notes/blob/master/lang/org-mode/org-for-hugo-qiita/org-for-hugo-qiita.org][元となる org ファイル@github]]
-2. [[https://objective-boyd-9b8f29.netlify.com/2019/11/org-for-hugo-qiita/][個人ブログの記事]] (Markdown ファイル@github)
-3. [[a][Qiitaの記事]] (Markdown ファイル@github)
+2. [[https://objective-boyd-9b8f29.netlify.com/2019/11/org-for-hugo-qiita/][個人ブログの記事]] ([[https://github.com/five-dots/blog/blob/master/content/post/2019/11/org-for-hugo-qiita.md][Markdown ファイル@github]])
+3. [[https://qiita.com/five-dots/items/a0183c9f4b46f786a666][Qiita の記事]] ([[https://github.com/five-dots/notes/blob/master/lang/org-mode/org-for-hugo-qiita/org-for-hugo-qiita.md][Markdown ファイル@github]])
 
-4. ox-md
-   - table が HTML で出力されるので、文字修飾が有効にならない
-   - Footnotes が有効にならない
-   - code block が =```lang```= の形式で出力されない
-5. ox-gfm
-   - Footnotes が有効にならない
-6. ox-qmd
-   - 
-7. ox-pandoc
+以降の章で、org-mode の記法毎に出力結果を確認していく。両者に共通して利用できるものに絞って記事を作成することで、二重管理を避けていくことが主目的だ。
+
+なお、Hugo テーマは [[https://github.com/olOwOlo/hugo-theme-even][Even]] を利用している。その他のテーマでは、この記事と異なる結果になる可能性もあるので、その点は注意が必要だ。
 
 * 動作確認バージョン
 
@@ -49,11 +45,11 @@
 *** Hugo=h4 / Qiita=h3
 **** Hugo=h5 / Qiita=h4
 ***** Hugo=h6 / Qiita=h5
-** Memo
-
-- Hugo では =*= がタイトルとして扱われるため、 =**= (h2) から見出しとして機能する
-- org-mode のデフォルトでは、h4 までしか出力されないため、 =#+OPTIONS: H:6= のように追加で設定が必要
-- [[https://github.com/olOwOlo/hugo-theme-even][Even]] theme では h6 が最小
+** メモ
+- Hugo
+  - Hugo では =*= がタイトルとして扱われるため、 =**= (h2) から見出しとして機能する。そのため Qiita とは 1 階層ずれるが、大きな問題にはならない
+  - org-mode のデフォルトでは、h4 までしか出力されないため、それ以上の深さが必要な場合は =#+OPTIONS: H:6= のように追加で設定が必要
+  - [[https://github.com/olOwOlo/hugo-theme-even][Even]] theme では h6 が最小
 
 * 表・文字修飾
 
@@ -69,10 +65,13 @@
 | 下付き       | =hoge_{sub}=      | hoge_{sub}    |
 | ギリシャ文字 | =\alpha=          | \alpha        |
 
-** Memo
+** メモ
 
-- 下線は Hugo で =span.underline {text-decoration: underline;}= を =static/css/custom.css= に追加した場合の表示結果
-- コードは Hugo で =(setq org-hugo-use-code-for-kbd t)= にした場合の表示結果
+- Hugo
+  - 下線は =span.underline {text-decoration: underline;}= を =static/css/custom.css= に追加した場合の表示結果
+  - コードは =(setq org-hugo-use-code-for-kbd t)= に設定した場合の表示結果
+- Qiita
+  - 下線・コードは有効でない
 
 * リスト
 ** 順序なしリスト
@@ -104,8 +103,11 @@
 - リンゴ :: 赤いフルーツ
 - オレンジ :: 橙色フルーツ
 
-*Memo* 
-- チェックボックスは、チェックをつけてしまうと表示されなくなってしまう
+** メモ
+- Hugo
+  - チェックボックスは、チェックをつけてしまうとなぜか表示されなくなってしまう
+- Qiita
+  - チェックボックス自体が有効にならない
 
 * 引用
 
@@ -114,52 +116,64 @@ Everything should be made as simple as possible,
 but not any simpler ---Albert Einstein
 #+end_quote
 
-*Memo*
-- 問題なく表示されている
+** メモ
+- Hugo/Qiita ともに問題なく表示されている
 
 * 数式
+** インライン
 
-- インライン =$y=f(x)$=
-
-\(y=f(x)\)
+=$y=f(x)$=
 
 $y=f(x)$
 
-- ブロック =$$y=f(x)$$=
+** ブロック
 
-$$ y=f(x) $$
+=$$y=f(x)$$=
+
 \[y=f(x)\]
 
-- ブロック
-#+begin_example
-\begin{equation}
-y=f(x)
-\end{equation}
-#+end_example
+** メモ
 
-\begin{equation}
-y=f(x)
-\end{equation}
+- Qiita
+  - ox-gfm のエクスポート時に Latex Fragment の =$ ... $= が =\( ... \)= に =$$ ... $$= が =\[ ... \]= に変換されてしまう
+  - [[https://qiita.com/PlanetMeron/items/63ac58898541cbe81ada][Qiita の数式記法]] では、この記法に対応していないので、[[https://orgmode.org/manual/Advanced-Export-Configuration.html][公式]]や[[https://emacs.stackexchange.com/questions/47733/org-latex-exports-math-as-can-this-be-avoided][ここ]]や[[http://fjyuu.info/blog/remove-japanese-spaces/][ここ]]を参考にフィルタを作成して再変換する
 
-*Memo*
-- =\begin{equation} ... \end{equation}= ブロックは Qiita では有効でない
+#+begin_src emacs-lisp
+(defun my/org-replace-latex-wrap (text backend _info)
+  (when (org-export-derived-backend-p backend 'gfm)
+    (cond
+     ((s-starts-with? "\\(" text)
+      (message (format "start with (, content = %s" text))
+      (--> text
+           (s-chop-prefix "\\(" it)
+           (s-chop-suffix "\\)" it)
+           (s-wrap it "$")))
+     ((s-starts-with? "\\[" text)
+      (message (format "start with [, content = %s" text))
+      (--> text
+           (s-chop-prefix "\\[" it)
+           (s-chop-suffix "\\]" it)
+           (s-wrap it "$$"))))))
+(add-to-list 'org-export-filter-latex-fragment-functions 'my/org-replace-latex-wrap)
+#+end_src
 
 * 脚注
 
 - org-mode[fn:org] =[fn:name]=
 [fn:org] https://orgmode.org/ja/
 
-
-*Memo*
-- Qiita では有効でない
+** メモ
+- Qiita
+  - Qiita では有効でない
 
 * 水平線
 
 =-----=
 -----
 
-*Memo*
-- 5 つの =-= で Markdown 側では =---= に変換される
+** メモ
+- Hugo
+  - 5 つの =-= で Markdown 側では =---= に変換される
 
 * コードブロック
 ** Emacs Lisp
@@ -173,7 +187,7 @@ y=f(x)
 :  of 2019-09-17
 
 ** R
-*** Code output
+*** コード出力
 
 #+begin_src R :exports both
 R.version
@@ -198,7 +212,7 @@ version.string R version 3.6.1 (2019-07-05)
 nickname       Action of the Toes
 #+end_example
 
-*** Table
+*** 表
 
 #+begin_src R :results value :colnames yes :exports both
 library(tidyverse)
@@ -215,7 +229,7 @@ head(iris)
 |            5 |         3.6 |          1.4 |         0.2 | setosa  |
 |          5.4 |         3.9 |          1.7 |         0.4 | setosa  |
 
-*** Plot
+*** プロット
 
 #+begin_src R :results graphics :exports code :file ./img/iris.png
 library(ggplot2)
@@ -228,17 +242,14 @@ ggplot(iris, aes(x = Sepal.Length, y = Sepal.Width)) + geom_point()
 #+attr_html:
 [[https://dl.dropboxusercontent.com/s/4j5jstkg1fsvdiw/iris.png]]
 
-*Memo*
-- org-babel からプロット画像を出力する先を Dropbox フォルダに設定し共有リンク機能を利用して画像を公開する
-- Hugo 向けには ox-hugo が自動で画像ファイルを =static/ox-hugo/= へ移動してくれるので、本来は Dropbox を利用する必要はないが、Qiita と記事を共用するためには必要
-- =:exports code= に設定することで、babel からのリンク出力を停止しつつ、ローカルではプロットをインライン画像で確認できる
-- [[http://ijmp320.hatenablog.jp/entry/2015/01/18/171807][ここ]]の記事を参考に、Dropbox の直リンクに変換し、以下のように HTML として出力する
-- 将来的には Dropbox API + Emacs Lisp で自動化したい
+*** メモ
 
-#+begin_example
-#+attr_html:
-[[https://dl.dropboxusercontent.com/s/4j5jstkg1fsvdiw/iris.png]]
-#+end_example
+- Qiita
+  - Hugo 向けには =ox-hugo= が自動で画像ファイルを =static/ox-hugo/= へ移動してくれるが、Qiita へは手動で画像をアップロードする必要がある
+  - そのため org-babel からプロット画像を出力する先を Dropbox フォルダに設定し、共有リンク機能を利用して画像を公開する
+  - org-babel は =:exports code= に設定することで、ファイルリンク出力を抑制しつつ、手元ではプロットをインライン画像で確認できる
+  - [[http://ijmp320.hatenablog.jp/entry/2015/01/18/171807][ここ]]の記事を参考に、Dropbox の直リンクに変換し、以下のように HTML として出力する
+  - 将来的には Dropbox API + Emacs Lisp で自動化したい
 
 #+begin_src org
 #+attr_html:
@@ -256,23 +267,26 @@ sys.version
 : 3.6.8 (default, Oct  7 2019, 12:59:55) 
 : [GCC 8.3.0]
 
+* まとめ
+
+一部、Qiita 側で有効にならない記法が見られたが、無いと致命的、という項目はなかった。また、不足している項目も =(org-export-filter-TYPE-funstions)= を利用すれば、それほど苦労もなく今後カスタマイズできそうなこともわかった。これから快適なブログライフをおくっていきたい。
+
 * 参考
+- Qiita 関連
+  - [[https://qiita.com/Qiita/items/c686397e4a0f4f11683d][Markdown記法 チートシート]]
+  - [[https://qiita.com/PlanetMeron/items/63ac58898541cbe81ada][Qiitaの数式チートシート]]
+  - [[https://qiita.com/0x60df/items/3cde67967e3db30d9afe][Org-modeからQiita準拠のMarkdownをexportするパッケージを作ってみました]]
+  - [[https://qiita.com/dwarfJP/items/594a8d4b0ac6d248d1e4][emacs の org-mode で書いた記事を qiita に投稿する org-qiita.el]]
+- ox-hugo
+  - [[https://sfus.net/blog/2018/12/org-mode-with-ox-hugo/][Org-mode で記事を書いて Hugo 向け markdown を ox-hugo で自動生成する話]]
+  - [[https://ladicle.com/post/ox-hugo-cheat/][ox-Hugo Cheat Sheet]]
+- org-mode filters
+  - [[https://orgmode.org/manual/Advanced-Export-Configuration.html][12.17 Advanced Export Configuration]]
+  - [[https://emacs.stackexchange.com/questions/47733/org-latex-exports-math-as-can-this-be-avoided][Org latex exports $ … $ math as \( … \) : can this be avoided?]]
+  - [[http://fjyuu.info/blog/remove-japanese-spaces/][org-modeが出力するHTMLから余分な改行を削除する]]
+- Dropbox
+  - [[http://ijmp320.hatenablog.jp/entry/2015/01/18/171807][【備忘録】Dropboxの画像のURL（直リンク）の取得]]
 
-- [[https://sfus.net/blog/2018/12/org-mode-with-ox-hugo/][Org-mode で記事を書いて Hugo 向け markdown を ox-hugo で自動生成する話]]
-- [[https://ladicle.com/post/ox-hugo-cheat/][ox-Hugo Cheat Sheet]]
-- [[http://ijmp320.hatenablog.jp/entry/2015/01/18/171807][【備忘録】Dropboxの画像のURL（直リンク）の取得]]
-- [[https://qiita.com/dwarfJP/items/594a8d4b0ac6d248d1e4][emacs の org-mode で書いた記事を qiita に投稿する org-qiita.el]]
-- [[https://qiita.com/PlanetMeron/items/63ac58898541cbe81ada][Qiitaの数式チートシート]]
-- [[https://emacs.stackexchange.com/questions/47733/org-latex-exports-math-as-can-this-be-avoided][Org latex exports $ … $ math as \( … \) : can this be avoided?]]
-- [[https://orgmode.org/manual/Advanced-Export-Configuration.html][12.17 Advanced Export Configuration]]
-
-* Footnotes                                                        :noexport:
-* TODOs
-** org-qiita.el for upload
-** Definition list
-** github/markup, wallyqs/org-ruby
-** 他のリンク精査
-** Qiita + table
 * COMMENT Local Variables                                           :ARCHIVE:
 # Local Variables:
 # eval: (org-hugo-auto-export-mode)
