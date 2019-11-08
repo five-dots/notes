@@ -820,6 +820,8 @@ loaded via a namespace (and not attached):
 - [[https://cloud.r-project.org/web/packages/drake/drake.pdf][Reference Manual]]
 - [[https://github.com/ropensci/drake][Github Repo]]
 - [[https://ropenscilabs.github.io/drake-manual/][The drake R Package User Manual]]
+- [[https://stackoverflow.com/questions/56161508/how-to-generate-arguments-to-a-target-transformation-dynamically-in-r-drake][How to generate arguments to a target transformation dynamically in R drake?@stackoverflow]]
+- [[https://github.com/ropensci/drake/issues/685][Dynamic branching #685@Github]]
 - Blog
   - [[https://blog.hoxo-m.com/entry/2018/09/05/184425][データ分析のワークフローをdrakeで管理して効率的に作業を進めよう@株式会社ホクソエムのブログ]]
   - [[https://niszet.hatenablog.com/entry/2018/04/30/073000][(R) 再現性を確保するためにdrakeパッケージを使おう、らしいですね…？@niszetの日記]]
