@@ -1,0 +1,730 @@
+#+STARTUP: folded indent inlineimages latexpreview
+#+PROPERTY: header-args:R :session *R:asset_pricing* :width 640 :height 480 :results output
+
+* CAPM (Capital Asset Pricing Model)
+** 基本
+
+: 市場リスク（マーケットリスク）と個別リスク
+- 十分に分散化されたポートフォリオは市場リスクのみが残る（消えない）
+- 市場リスクの尺度 = $\beta$
+  - インデックスに対する感応度
+  - ret ~ index で算出した偏回帰係数(傾き)が beta
+  - 国債は、beta = 0
+  - インデックスは、beta = 1
+  - ポートフォリオを beta = 0 にするのが、Market Neutral Strategy
+  - Quantopian のルールでは、SPY との Beta が *-0.3 ~ 0.3* であること (6m rolling regression)
+  
+: CAPM
+- by ウィリアム・シャープ (1964)
+- マーケット・リスクプレミアム = $E(r_m) - r_f$ (リスクフリーレートを引いたもの)
+- _すべての資産のリスクプレミアムは、その資産の beta に比例する_
+
+$E(r_i) - r_f = \beta_i[E(r_m) - r_f]$
+
+= 資産 i の期待リスクプレミアムは、マーケットリスクプレミアム * beta で求められる
+= _すべての資産のリスクプレミアムを beta で求めることができる_
+
+- 国債 1%, インデックス 5% のとき、 Beta 1.5 の資産の期待リスクプレミアムは？
+- A: 7%
+#+begin_src R
+r_f <- 0.01
+r_m <- 0.05
+beta <- 1.5
+r_f + beta * (r_m - r_f)
+#+end_src
+
+#+RESULTS:
+: 
+: [1] 0.07
+
+実際の回帰分析では、以下の式が用いられる
+- シングルファクターモデル とも呼ばれる
+- alpha が CAPM では表せない個別銘柄の効果を表している
+- alpha = 回帰モデルの切片
+
+$E(r_i) - r_f = \alpha + \beta_i[E(r_m) - r_f] + \epsilon$
+
+** 前提条件
+
+[[https://plaza.rakuten.co.jp/isyamazaki/diary/200708030000/][投資に役立つ？　１０大理論（３）－１ ■その５．「ＣＡＰＭ（資本資産価格モデル）」]]
+
+- 市場参加者が平均分散アプローチの意味で合理的 (リスクに見合うリターンを求める)
+  - 平均分散ポートフォリオはリスク回避の近似
+  - 平均分散ポートフォリオはファットテールを前提としていない
+- 全てのリスク資産の *期待リターンと相関関係について同じ情報を持っていて* 効率的なポートフォリオを作る
+  - なので、CAPM を使って期待リターンを求めようとするのは、本末転倒
+- 全てのリスク資産の需給が均衡するように取引が行われる
+
+とすると、以下の条件で全体の辻褄が合う
+- 分散投資で低下させることの可能なリスクに対しては超過リターンが与えられず
+- 効率的なポートフォリオでも分散不可能なリスクに対して、
+  個々のリスク資産が限界的に与えている影響に比例した超過リターンが与えられている場合
+
+また、この際に、
+- 資金の借り入れと運用は同金利で行うことができて、
+- レバレッジを自由に使うことができて、
+- 且つ、取引コストと税金は無視できるとする、
+といった、簡単化のための仮定もある。
+
+** 計算例
+*** [[https://rviews.rstudio.com/2018/02/08/capm-beta/][Calculating Beta in the Capital Asset Pricing Model@R Views]]
+**** Libraries
+
+#+begin_src R :results silent
+library(tidyquant)
+library(tidyverse)
+library(timetk)
+library(tibbletime)
+library(broom)
+library(glue)
+#+end_src
+
+**** Data
+
+#+begin_src R :results silent
+symbols <- c("SPY","EFA", "IJS", "EEM","AGG")
+
+## 5年間のデータ
+## xts の adjusted prices
+prices <- getSymbols(symbols, src = 'yahoo',
+                     from = "2013-01-01",
+                     to = "2017-12-31",
+                     auto.assign = TRUE, warnings = FALSE) %>%
+  map(~ Ad(get(.))) %>%
+  reduce(merge) %>%
+  `colnames<-`(symbols)
+
+## 月末の価格のみ抽出
+prices_monthly <- to.monthly(prices, indexAt = "last", OHLC = FALSE)
+
+## Monthly log return に変換
+asset_returns_xts <- na.omit(Return.calculate(prices_monthly, method = "log"))
+
+w <- c(0.25, 0.25, 0.20, 0.20, 0.10)
+
+## Monthly portfolio return に変換
+portfolio_returns_xts_rebalanced_monthly <-
+  Return.portfolio(asset_returns_xts, weights = w, rebalance_on = "months") %>%
+  `colnames<-`("returns")
+
+## tibble の縦長データ
+asset_returns_long <- prices %>%
+  to.monthly(indexAt = "last", OHLC = FALSE) %>%
+  tk_tbl(preserve_index = TRUE, rename_index = "date") %>%
+  gather(asset, returns, -date) %>%
+  group_by(asset) %>%
+  mutate(returns = (log(returns) - log(lag(returns)))) %>%
+  na.omit()
+
+## tibble の monthly return
+portfolio_returns_tq_rebalanced_monthly <- asset_returns_long %>%
+  tq_portfolio(assets_col  = asset,
+               returns_col = returns,
+               weights     = w,
+               col_rename  = "returns",
+               rebalance_on = "months")
+#+end_src
+
+**** Benchmark as Market Return
+
+- SPY を使う
+#+begin_src R :results value :colnames yes
+spy_monthly_xts <- getSymbols("SPY",
+             src = 'yahoo',
+             from = "2013-01-01",
+             to = "2017-12-31",
+             auto.assign = TRUE,
+             warnings = FALSE) %>%
+  map(~Ad(get(.))) %>%
+  reduce(merge) %>%
+  `colnames<-`("SPY") %>%
+  to.monthly(indexAt = "last", OHLC = FALSE)
+
+market_returns_xts <- Return.calculate(spy_monthly_xts, method = "log") %>% na.omit()
+
+market_returns_tidy <- market_returns_xts %>%
+  tk_tbl(preserve_index = TRUE, rename_index = "date") %>%
+  na.omit() %>%
+  select(date, returns = SPY)
+
+head(market_returns_tidy)
+#+end_src
+
+#+RESULTS:
+|       date |             returns |
+|------------+---------------------|
+| 2013-02-28 |  0.0126781779992617 |
+| 2013-03-28 |   0.037267865348225 |
+| 2013-04-30 |  0.0190298674290617 |
+| 2013-05-31 |  0.0233352731408694 |
+| 2013-06-28 | -0.0134343689995884 |
+| 2013-07-31 |  0.0503864296546848 |
+
+
+#+begin_src R :results value :colnames yes
+portfolio_returns_tq_rebalanced_monthly %>%
+  mutate(market_returns = market_returns_tidy$returns) %>%
+  head()
+#+end_src
+
+#+RESULTS:
+|       date |               returns |      market_returns |
+|------------+-----------------------+---------------------|
+| 2013-02-28 | -0.000869608943885214 |  0.0126781779992617 |
+| 2013-03-28 |    0.0186624141635428 |   0.037267865348225 |
+| 2013-04-30 |    0.0206247679743221 |  0.0190298674290617 |
+| 2013-05-31 |  -0.00535285978170008 |  0.0233352731408694 |
+| 2013-06-28 |   -0.0229488219316513 | -0.0134343689995884 |
+| 2013-07-31 |    0.0411706862234908 |  0.0503864296546848 |
+
+**** Portfolio Beta
+
+: ポートフォリオのベータ 1
+  ポートフォリオリターンとマーケットリターンの共分散をマーケットリターンの分散で割ったもの
+
+$${\beta}_{portfolio} = cov(R_p, R_m)/\sigma_m $$
+
+#+begin_src R
+cov(portfolio_returns_xts_rebalanced_monthly,market_returns_tidy$returns)/var(market_returns_tidy$returns)
+#+end_src
+
+#+RESULTS:
+:              [,1]
+: returns 0.9009464
+
+
+: ポートフォリのベータ 2
+  個別資産のベータの加重平均
+  
+$${\beta}_{portfolio} ={\sum_{i=1}^n}W _i~{\beta}_i $$
+
+- 個別資産の beta を計算
+#+begin_src R :results value :colnames yes
+beta_assets <- asset_returns_long %>%
+  na.omit() %>%
+  nest(data = c(date, returns)) %>%
+  mutate(model = map(data, ~ lm(returns ~ market_returns_tidy$returns, data = .))) %>%
+  mutate(tidy = map(model, broom::tidy)) %>%
+  unnest(tidy) %>%
+  select(-data, -model) %>%
+  filter(term == "market_returns_tidy$returns") %>%
+  select(-term)
+beta_assets
+#+end_src
+
+#+RESULTS:
+| asset |            estimate |            std.error |          statistic |              p.value |
+|-------+---------------------+----------------------+--------------------+----------------------|
+| SPY   |                   1 | 4.99507692877062e-17 |  20019711693331576 |                    0 |
+| EFA   |   0.946052133907661 |    0.099849744594069 |   9.47475767468168 | 2.61501864825261e-13 |
+| IJS   |    1.12088644580478 |    0.124977431575672 |   8.96871084381425 | 1.73682782147046e-12 |
+| EEM   |   0.953981557665325 |    0.164321216583971 |   5.80558967063043 | 2.98772556084254e-07 |
+| AGG   | -0.0054025730734009 |   0.0422516051761021 | -0.127866694079037 |    0.898704529250303 |
+
+- 1 の方法と同じ結果
+#+begin_src R
+beta_assets$estimate %*% w
+#+end_src
+
+#+RESULTS:
+:           [,1]
+: [1,] 0.9009464
+
+**** Portfolio Beta by {PerformanceAnalytics}
+
+#+begin_src R
+beta_builtin_xts <- CAPM.beta(portfolio_returns_xts_rebalanced_monthly, market_returns_xts)
+beta_builtin_xts
+#+end_src
+
+#+RESULTS:
+: 
+: [1] 0.9009464
+
+- 全ての CAPM 関数 (SFM.* での同じ機能が用意されている)
+#+begin_src R
+a <- CAPM.alpha(portfolio_returns_xts_rebalanced_monthly, market_returns_xts)
+glue("Alpha = {a}")
+
+b <- CAPM.beta(portfolio_returns_xts_rebalanced_monthly, market_returns_xts)
+glue("Beta = {b}")
+
+b_bear <- CAPM.beta.bear(portfolio_returns_xts_rebalanced_monthly, market_returns_xts)
+glue("Beta = {b_bear} (Negative returns only)")
+
+b_bull <- CAPM.beta.bull(portfolio_returns_xts_rebalanced_monthly, market_returns_xts)
+glue("Beta = {b_bull} (Positive returns only)")
+
+cml <- CAPM.CML(portfolio_returns_xts_rebalanced_monthly, market_returns_xts)
+glue("CML = {cml}")
+
+cml_s <- CAPM.CML.slope(market_returns_xts)
+glue("CML slope = {cml_s}")
+
+## CAPM.dynamic(portfolio_returns_xts_rebalanced_monthly, market_returns_xts)
+
+e <- CAPM.epsilon(portfolio_returns_xts_rebalanced_monthly, market_returns_xts)
+glue("e = {e} (Error term)")
+
+jensen_a <- CAPM.jensenAlpha(portfolio_returns_xts_rebalanced_monthly, market_returns_xts)
+glue("Jensen Alpha = {jensen_a}")
+
+rp <- CAPM.RiskPremium(portfolio_returns_xts_rebalanced_monthly)
+glue("Risk Premium = {rp}")
+
+sml_s <- CAPM.SML.slope(market_returns_xts)
+glue("SML slope = {sml_s}")
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+Alpha = -0.00312780359288513
+
+Beta = 0.900946376863597
+
+Beta = 0.792106257898528 (Negative returns only)
+
+Beta = 0.779400819497517 (Positive returns only)
+
+CML = 0.00308013028866325
+
+CML slope = 0.425963966896925
+
+e = -0.0391974974062691
+
+Jensen Alpha = -0.0423253009991543
+
+Risk Premium = 0.00723096441959979
+
+SML slope = 86.9742787730868
+#+end_example
+
+**** Portfolio Beta by Hand
+
+#+begin_src R :results value :colnames yes
+beta_dplyr_byhand <- portfolio_returns_tq_rebalanced_monthly %>%
+  do(model = lm(returns ~ market_returns_tidy$returns, data = .)) %>%
+  tidy(model) %>%
+  mutate(term = c("alpha", "beta"))
+beta_dplyr_byhand
+#+end_src
+
+#+RESULTS:
+| term  |             estimate |           std.error |         statistic |              p.value |
+|-------+----------------------+---------------------+-------------------+----------------------|
+| alpha | -0.00312780359288513 | 0.00155760392821325 | -2.00808661061421 |    0.049381548678937 |
+| beta  |    0.900946376863597 |  0.0534751122018862 |   16.847956736626 | 8.40650375208037e-24 |
+
+**** Portfolio Beta by {tidyquant}
+
+#+begin_src R :results value :colnames yes
+beta_builtin_tq <- portfolio_returns_tq_rebalanced_monthly %>%
+  mutate(market_return = market_returns_tidy$returns) %>%
+  na.omit() %>%
+  tq_performance(Ra = returns,
+                 Rb = market_return,
+                 performance_fun = CAPM.beta) %>%
+  `colnames<-`("beta_tq")
+beta_builtin_tq
+#+end_src
+
+#+RESULTS:
+|           beta_tq |
+|-------------------|
+| 0.900946376863597 |
+
+*** [[https://rviews.rstudio.com/2018/03/02/capm-and-visualization/][Visualizing the Capital Asset Pricing Model@R Views]]
+**** Libraries
+
+#+begin_src R :results silent
+library(tidyquant)
+library(tidyverse)
+library(timetk)
+library(tibbletime)
+library(scales)
+library(broom)
+library(highcharter)
+#+end_src
+
+**** Expected Returns vs. Risk
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+## This theme_update will center your ggplot titles
+theme_update(plot.title = element_text(hjust = 0.5))
+
+asset_returns_long %>%
+  group_by(asset) %>%
+  summarise(expected_return = mean(returns),
+            stand_dev = sd(returns)) %>%
+  ggplot(aes(x = stand_dev, y = expected_return, color = asset)) +
+  geom_point(size = 2) +
+  ylab("expected return") +
+  xlab("standard deviation") +
+  ggtitle("Expected Monthly Returns v. Risk") +
+  scale_y_continuous(label = function(x){ paste0(x, "%")})
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-tYrIEb.png]]
+
+**** Expected Returns vs. Risk + Portfolio
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+asset_returns_long %>%
+  group_by(asset) %>%
+  summarise(expected_return = mean(returns),
+            stand_dev = sd(returns)) %>%
+  ggplot(aes(x = stand_dev, y = expected_return, color = asset)) +
+  geom_point(size = 2) +
+  geom_point(aes(x = sd(portfolio_returns_tq_rebalanced_monthly$returns),
+                 y = mean(portfolio_returns_tq_rebalanced_monthly$returns)),
+             color = "cornflowerblue",
+             size = 3) +
+  geom_text(
+    aes(x = sd(portfolio_returns_tq_rebalanced_monthly$returns) * 1.09,
+        y = mean(portfolio_returns_tq_rebalanced_monthly$returns),
+        label = "portfolio")) +
+  ylab("expected return") +
+  xlab("standard deviation") +
+  ggtitle("Expected Monthly Returns v. Risk") +
+  scale_y_continuous(labels = function(x){ paste0(x, "%")})
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-9OnQAC.png]]
+
+**** Portfolio Returns vs. Market Returns
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+portfolio_returns_tq_rebalanced_monthly %>% 
+  mutate(market_returns = market_returns_tidy$returns) %>% 
+  ggplot(aes(x = market_returns, y = returns)) + 
+  geom_point(color = "cornflowerblue") +
+  geom_abline(aes(
+    intercept = beta_dplyr_byhand$estimate[1], 
+    slope = beta_dplyr_byhand$estimate[2]), 
+    color = "purple",
+    size = .5) +
+  ylab("portfolio returns") +
+  xlab("market returns") +
+  ggtitle("Scatterplot with hand calculated slope")
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-1RHEKf.png]]
+
+**** Fitted vs. Actual Returns
+
+#+begin_src R :results value :colnames yes
+portfolio_model_augmented <- portfolio_returns_tq_rebalanced_monthly %>% 
+  do(model = lm(returns ~ market_returns_tidy$returns, data = .))%>% 
+  augment(model) %>% 
+  mutate(date = portfolio_returns_tq_rebalanced_monthly$date) %>%
+  mutate_at(vars(-date), round, digits = 4)
+
+head(portfolio_model_augmented)
+#+end_src
+
+#+RESULTS:
+| returns | market_returns_tidy.returns | .fitted | .se.fit |  .resid |   .hat | .sigma | .cooksd | .std.resid |       date |
+|---------+-----------------------------+---------+---------+---------+--------+--------+---------+------------+------------|
+|  -9e-04 |                      0.0127 |  0.0083 |  0.0014 | -0.0092 |  0.017 |  0.011 |  0.0061 |    -0.8408 | 2013-02-28 |
+|  0.0187 |                      0.0373 |  0.0304 |   0.002 | -0.0118 | 0.0327 |  0.011 |  0.0201 |    -1.0901 | 2013-03-28 |
+|  0.0206 |                       0.019 |   0.014 |  0.0015 |  0.0066 | 0.0183 | 0.0111 |  0.0034 |     0.6067 | 2013-04-30 |
+| -0.0054 |                      0.0233 |  0.0179 |  0.0016 | -0.0232 | 0.0203 | 0.0106 |  0.0472 |    -2.1367 | 2013-05-31 |
+| -0.0229 |                     -0.0134 | -0.0152 |   0.002 | -0.0077 | 0.0317 |  0.011 |  0.0083 |    -0.7134 | 2013-06-28 |
+|  0.0412 |                      0.0504 |  0.0423 |  0.0025 | -0.0011 | 0.0527 | 0.0111 |   3e-04 |    -0.1025 | 2013-07-31 |
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+portfolio_model_augmented %>% 
+  ggplot(aes(x = date)) + 
+  geom_line(aes(y = returns, color = "actual returns")) + 
+  geom_line(aes(y = .fitted, color = "fitted returns")) +
+  scale_colour_manual("", 
+                      values = c("fitted returns" = "green", 
+                                 "actual returns" = "cornflowerblue")) +
+  xlab("date") + 
+  ggtitle("Fitted versus actual returns")
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-VF3ZsI.png]]
+
+**** Highcharts
+
+#+begin_src R
+highchart() %>% 
+  hc_title(text = "Portfolio v. Market Returns") %>%
+  hc_add_series_scatter(round(portfolio_model_augmented$returns, 4), 
+                        round(portfolio_model_augmented$market_returns_tidy.returns, 4), 
+                        date = portfolio_model_augmented$date) %>%
+  hc_xAxis(title = list(text = "Market Returns")) %>% 
+  hc_yAxis(title = list(text = "Portfolio Returns")) %>% 
+  hc_tooltip(formatter = JS("function(){
+                            return ('port return: ' + this.y + ' <br> mkt return: ' + this.x +  
+                            ' <br> date: ' + this.point.date)}"))
+
+#+end_src
+
+#+RESULTS:
+: 
+: Warning message:
+: 'hc_add_series_scatter' is deprecated.
+: Use 'hc_add_series' instead.
+: See help("Deprecated")
+
+* APT (Arbitrage Pricing Theory)
+
+- *APT* (Aribitrage Pricing Theory) = *裁定価格理論*
+- Stephen Ross により 1976 年に発表
+- CAPM の成立条件を緩和することに成功
+  - CAPM の "市場ポートフォリオ観測問題" から出発
+- マルチファクターモデルの理論的基礎
+
+
+$$ R_i = \alpha_{i} + \beta_{i1} F_1 + \dots + \beta_{iK} F_K + \epsilon_i $$
+
+- $\beta_{i1}, \dots, \beta_{iK}$ を因子負荷量 (Factor Loading) と呼ぶ
+- $F_1, \dots, F_K$ は期待値 0 のあらゆる資産に共通のファクター
+- ファクター・誤差ともに期待値 0 なので、$E[R_i] = \alpha_i$
+- 普通の多変量回帰式 = マルチファクターモデル
+
+
+金融資産の数が十分に多いならば、任意の金融資産 i について、次の等式が近似的に成立する
+
+$$ E[R_i] = \alpha_i = R_f + \beta_{i1} RP_1 + \dots + \beta_{iK} RP_K $$
+
+- $RP_1, \dots, RP_K$ は各ファクターに対するリスクプレミアム
+- 期待リターンは、全てのファクターに対するリスクプレミアムの合計
+
+- CAPM の条件の中で APT で不要になる条件
+  - 投資家はリスク回避型で期待効用を最大化
+  - 投資家はリターンの平均、分散をベースにポートフォリオを選択
+  - 投資家はすべて単一期間の投資を行なう
+  - リスクフリーレートで貸し借りが制約なく行なえる
+  
+  -> 
+  - *個別資産のリターンを説明する要因として市場ポートフォリオを導入する必要が無い*
+  - ファクターがベータ 1 つと考えれば CAPM になる
+
+* ICAPM
+
+- ICAPM (intertemporal CAPM) = *異時点間 CAPM*
+- *収益率の平均と分散が時間とともに変動する* と考える (CAPM は静的)
+- ロバート・マートンにより 1973 年に発表
+- APT とともにマルチファクター投資の理論的な基礎
+
+$$ \alpha_i - r = \beta_{iM} (\alpha_M - r) + Hedge_i $$
+
+- $\alpha_i$        資産 i の瞬間的な期待収益率
+- $\alpha_M$      市場ポートフォリオの瞬間的な期待収益率
+- $r$         リスクフリーレート
+- $\beta_{iM}$      資産毎の係数
+- $Hedge_i$  資産毎の定数
+
+* Zero-Beta CAPM
+
+- ゼロベータポートフォリオ = 市場ポートフォリオとの相関がゼロ
+  - CAPM の世界では最適ではない
+
+- CAPM の制約を緩和した状態では、ゼロベータポートフォリオに有効性がある
+  - 無リスク資産が存在しない
+  - もしくは借り入れが制約される
+
+* マルチファクターモデル
+** ファクターの種類
+
+- バリュー
+  - 本来の価値に対して、株価が低くなっている場合のリターン
+  - 純資産倍率(PBR)、株価収益率(PER)、簿価、売上高、利益など
+
+- サイズ
+  - 成長株など小型株のリターン (Small Firm Effect: 小型株効果)
+  - 時価総額規模
+
+- モメンタム
+  - 流行りの、より好調な株式のリターン
+  - 株価のリターン
+
+- ボラティリティ
+  - ベータなどの値動きのリターン
+  - 標準偏差やベータ値
+
+- クオリティ
+  - 安定的な利益成長を持つ株式のリターン
+  - ROE,収益安定性、配当成長、財務基盤、など
+
+- イールド
+  - 高配当利回りのリターン
+  - 配当利回り
+
+- 短期のリバーサル
+
+** Fama-French 3-Factor Model
+*** 基本
+
+- ユージン・ファーマ、ケネス・フレンチにより 1993 年に発表
+- 3 つのファクターを利用
+  - マーケットポートフォリオ
+  - 時価総額
+  - 簿価時価比 (PBR の逆)
+
+$$ R_i - R_f = \beta_i^{MKT} MKT + \beta_i^{SMB} SMB + \beta_i^{HML} HML + \epsilon $$
+ 
+- SMB = Small Minus Big
+- HML = High Minus Low
+
+*** R での計算例
+**** Price Data
+
+#+begin_src R :results silent
+library(tidyquant)
+library(tidyverse)
+library(timetk)
+library(broom)
+library(glue)
+
+symbols <- c("SPY","EFA", "IJS", "EEM","AGG")
+
+prices <- getSymbols(symbols, src = 'yahoo',
+             from = "2012-12-31",
+             to = "2017-12-31",
+             auto.assign = TRUE, warnings = FALSE) %>%
+  map(~Ad(get(.))) %>%
+  reduce(merge) %>%
+  `colnames<-`(symbols)
+
+w <- c(0.25, 0.25, 0.20, 0.20, 0.10)
+
+asset_returns_long <-
+  prices %>%
+  to.monthly(indexAt = "lastof", OHLC = FALSE) %>%
+  tk_tbl(preserve_index = TRUE, rename_index = "date") %>%
+  gather(asset, returns, -date) %>%
+  group_by(asset) %>%
+  mutate(returns = (log(returns) - log(lag(returns)))) %>%
+  na.omit()
+
+portfolio_returns_tq_rebalanced_monthly <-
+  asset_returns_long %>%
+  tq_portfolio(assets_col  = asset,
+               returns_col = returns,
+               weights     = w,
+               col_rename  = "returns",
+               rebalance_on = "months")
+#+end_src
+
+**** Fama-French Factor Data
+
+#+begin_src R :results silent
+temp <- tempfile()
+base <- "http://mba.tuck.dartmouth.edu/pages/faculty/ken.french/ftp/"
+factor <- "Global_3_Factors"
+format <- "_CSV.zip"
+full_url <- glue(base, factor, format, sep ="")
+
+download.file(full_url, temp, quiet = TRUE)
+
+## ウェブサイトのデータを価格データと同じ形式にする
+Global_3_Factors <- read_csv(unz(temp, "Global_3_Factors.csv"), skip = 6) %>%
+  rename(date = X1) %>%
+  mutate_at(vars(-date), as.numeric) %>%
+  mutate(date = rollback(ymd(parse_date_time(date, "%Y%m") + months(1)))) %>%
+  filter(date >= first(portfolio_returns_tq_rebalanced_monthly$date) &
+         date <= last(portfolio_returns_tq_rebalanced_monthly$date))
+
+ff_portfolio_returns <- portfolio_returns_tq_rebalanced_monthly %>%
+  left_join(Global_3_Factors, by = "date") %>%
+  mutate(MKT_RF = Global_3_Factors$`Mkt-RF`/100,
+         SMB = Global_3_Factors$SMB/100,
+         HML = Global_3_Factors$HML/100,
+         RF = Global_3_Factors$RF/100,
+         R_excess = round(returns - RF, 4))
+#+end_src
+
+**** Modeling
+
+#+begin_src R :results value :colnames yes
+ff_dplyr_byhand <- ff_portfolio_returns %>%
+  do(model = lm(R_excess ~ MKT_RF + SMB + HML, data = .)) %>%
+  tidy(model, conf.int = T, conf.level = .95)
+
+ff_dplyr_byhand %>%
+  mutate_if(is.numeric, funs(round(., 3))) %>%
+  select(-statistic)
+#+end_src
+
+#+RESULTS:
+| term        | estimate | std.error | p.value | conf.low | conf.high |
+|-------------+----------+-----------+---------+----------+-----------|
+| (Intercept) |   -0.001 |     0.001 |   0.196 |   -0.004 |     0.001 |
+| MKT_RF      |    0.893 |     0.036 |       0 |    0.822 |     0.964 |
+| SMB         |    0.051 |     0.075 |   0.498 |   -0.099 |     0.201 |
+| HML         |    0.036 |     0.061 |   0.555 |   -0.086 |     0.159 |
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+ff_dplyr_byhand %>%
+  mutate_if(is.numeric, funs(round(., 3))) %>%
+  filter(term != "(Intercept)") %>%
+  ggplot(aes(x = term, y = estimate, shape = term, color = term)) +
+  geom_point() +
+  geom_errorbar(aes(ymin = conf.low, ymax = conf.high)) +
+  labs(title = "FF 3-Factor Coefficients for Our Portfolio",
+       subtitle = "nothing in this post is investment advice",
+       x = "",
+       y = "coefficient",
+       caption = "data source: Fama French website and yahoo! Finance") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5),
+        plot.subtitle = element_text(hjust = 0.5),
+        plot.caption  = element_text(hjust = 0))
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-AYTQ02.png]]
+
+** Fama-French 5-Factor Model
+
+- ユージン・ファーマ、ケネス・フレンチにより 2014 年に発表
+- 3 つのファクターを利用
+  - マーケットポートフォリオ
+  - 時価総額
+  - 簿価時価比 (PBR の逆)
+  - 収益性
+  - リスク
+
+$$ R_i - R_f = \beta_i^{MKT} MKT + \beta_i^{SMB} SMB + \beta_i^{HML} HML + \beta_i^{RMV} RMV + \beta_i^{CMA} CMA + \epsilon $$
+ 
+- SMB = Small Minus Big
+- HML = High Minus Low
+- RMV = Robust Minus Weak
+- CMA = Conservative Minus Aggregation
+
+** Charhar 4-Factor Model
+
+$$ R_i - R_f = \beta_i^{MKT} MKT + \beta_i^{SMB} SMB + \beta_i^{HML} HML + \beta_i^{MOM} MOM $$
+
+* 条件付きモデル
+* Quantopian Rules
+
+- [[https://www.quantopian.com/contest/rules][Contest Rules]]
+
+$score = \Sigma_{i=max(0, N-63)}^N\frac{daily_return_i}{max(trailing_63_day_volatility_i, 0.02)}$
+
+* 参考
+
+- [[http://mba.tuck.dartmouth.edu/pages/faculty/ken.french/data_library.html][Kenneth R. French のサイト]]
+- [[http://www.fs.hub.hit-u.ac.jp/inc/files/performance/masters-thesis/2015/saito2015.pdf][Carhart 4 ファクターモデルの 条件付きモデルへの拡張と 投資戦略への応用 (PDF)]]
+
+- Blog
+  - [[https://www.americakabu.com/entry/%E3%82%B9%E3%83%9E%E3%83%BC%E3%83%88%E3%83%99%E3%83%BC%E3%82%BFETF][スマートベータETFとは@たぱぞうの米国株投資]]
+  - [[https://www.keito.luxe/2019/06/Fama-French-Three-Factor-Datal.html][ファーマ-フレンチの3ファクターモデルのデータを入手する方法]] 
+
+- R View Series
+  - [[https://rviews.rstudio.com/2018/02/08/capm-beta/][Calculating Beta in the Capital Asset Pricing Model@R Views]]
+  - [[https://rviews.rstudio.com/2018/03/02/capm-and-visualization/][Visualizing the Capital Asset Pricing Model@R Views]]
+  - [[https://rviews.rstudio.com/2018/04/11/introduction-to-fama-french/][Introduction to Fama French@R View]]
+  - [[https://rviews.rstudio.com/2018/05/10/rolling-fama-french/][Rolling Fama French@R View]]
+  - [[https://rviews.rstudio.com/2018/11/19/many-factor-models/][Many Factor Models]]
+  - [[https://rviews.rstudio.com/2018/12/13/rsampling-fama-french/][Rsampling Fama French@R View]]

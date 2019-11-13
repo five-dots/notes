@@ -1,0 +1,276 @@
+#+STARTUP: folded indent inlineimages latexpreview
+#+PROPERTY: header-args:R :session *R:asset_return* :width 640 :height 480 :results output
+
+* Libraries
+  
+#+begin_src R :results silent
+library(DEoptim)
+library(PerformanceAnalytics)
+library(PortfolioAnalytics)
+library(ROI.plugin.glpk)
+library(ROI.plugin.quadprog)
+library(RiskPortfolios)
+library(backtester)
+library(data.table)
+library(fPortfolio)
+library(formattable)
+library(glue)
+library(lubridate)
+library(market.data)
+library(rmgarch)
+library(rugarch)
+library(tidyquant)
+library(tidyverse)
+library(timetk)
+#+end_src
+
+* 金利
+** 単利 (Simple Interest)
+  
+- 初期資産 = 1,000,000、利息 r = 2%, 期間 n = 10 年とする
+- _元本のみに利息がつく_
+- 利付債 （日本国債など）
+#+begin_src R
+1000000 + 1000000 * 0.02 * 10
+#+end_src
+
+#+RESULTS:
+: [1] 1200000
+
+** 単純複利 (Discrete Compound)
+
+- 初期資産 = 1,000,000、利息 r = 2%, 期間 n = 10 年とする
+- いわゆる複利
+- 利息にも利息がつく
+- 利息がつくタイミングが決まっている（毎月・半年ごと・毎年など）
+- 預金など
+
+- 年利の場合
+#+begin_src R
+1000000 * (1 + 0.02)^10
+#+end_src
+
+#+RESULTS:
+: [1] 1218994
+
+- 単純複利は「幾何平均」を取ると平均利回り(CAGR)が算出できる
+#+begin_src R
+(1218994 / 1000000) ^ (1 / (10 - 1)) - 1
+#+end_src
+
+#+RESULTS:
+: [1] 0.02224673
+
+** 連続複利 (Continuous Compound)
+
+- 初期資産 = 1,000,000、利息 r = 2%, 期間 n = 10 年とする
+- 限りなく複利回数を増やした計算方法
+- その場合、増加分は、 _ネイピア数 e^r_ になる
+
+#+begin_src R
+1000000 * exp(1) ^ (0.02 * 10)
+1000000 * exp(0.02 * 10)
+#+end_src
+
+#+RESULTS:
+: [1] 1221403
+: 
+: [1] 1221403
+
+- 連続複利は「算術平均」を取ると平均利回り(CAGR)が算出できる
+#+begin_src R
+((1221403 - 1000000) / 1000000) / 10
+#+end_src
+
+#+RESULTS:
+: [1] 0.0221403
+
+- _連続複利での増加率は、対数収益率と等しい_
+#+begin_src R
+r <- 0.05
+p1 <- 100000
+p2 <- exp(r) * p1
+p2
+log(p2) - log(p1)
+#+end_src
+
+#+RESULTS:
+: [1] 105127.1
+: [1] 0.05
+
+** 割引現在価値 (Discounted Present Value)
+
+- 10 年後に年利 2％分を受け取ることができる証券の現在価値
+- 複利計算と同じ (掛けるか割るかの違い)
+
+#+begin_src R
+pv <- 1000000 / (1 + 0.02) ^ 10
+pv
+#+end_src
+
+#+RESULTS:
+: [1] 820348.3
+
+- pv を複利計算すれば、100 万円に戻る
+#+begin_src R
+pv * (1 + 0.02) ^ 10
+#+end_src
+
+#+RESULTS:
+: [1] 1e+06
+
+** 永久債 (Perpetuity)
+
+- 元本の償還はないが、永久に一定額の利子を受けとることができる債権
+- PV = C/r (C = Cashflow, r = Discount rate)
+
+* 収益率 (Discrete Return)
+
+- (当日の株価 - 前営業日の株価) / 前営業日の株価
+- _ある基準点から基準点までの収益率を計算する場合は、この方法で問題ない_
+- 決められた期間 (Discrete) での単純複利、という考え方
+
+#+begin_src R
+(110 - 100) / 100 # +10%
+(100 - 110) / 110 # -9.1%
+#+end_src
+
+#+RESULTS:
+: [1] 0.1
+: [1] -0.09090909
+
+- 時系列で各期の収益率を合計すると、 _プラスの収益率が大きく出てしまう_
+  http://capitalmarket.jp/post-431/
+
+#+begin_src R :results value :colnames yes
+data <- data.frame(price = c(1000, 900, 1200, 50, 500, 1000)) %>%
+  mutate(ret = (price - lag(price)) / lag(price),
+         log_ret = log(price) - log(lag(price))) %>%
+  mutate(ret = percent(ret), log_ret = percent(log_ret))
+#+end_src
+
+#+RESULTS:
+| price |     ret |  log_ret |
+|-------+---------+----------|
+|  1000 |      NA |       NA |
+|   900 | -10.00% |  -10.54% |
+|  1200 |  33.33% |   28.77% |
+|    50 | -95.83% | -317.81% |
+|   500 | 900.00% |  230.26% |
+|  1000 | 100.00% |   69.31% |
+
+- 上記の例では、1000 で買って、1000 で売るので、期間の収益率は、ゼロのはず
+- 通常の収益率では、マイナスは、-100% が最大だがプラスは上限がないため正確な計算ができない
+- 対数収益率であれば、上昇・下落を同等の変化率で扱うことができる
+- 対数収益率では、マイナスが -100% 以上になることもある
+
+#+begin_src R
+sum(data$ret, na.rm = T)
+cumsum(data$ret[2:6])
+
+sum(data$log_ret, na.rm = T)
+cumsum(data$log_ret[2:6])
+#+end_src
+
+#+RESULTS:
+: [1] 927.50%
+: 
+: [1] -10.00% 23.33%  -72.50% 827.50% 927.50%
+: 
+: [1] 0.00%
+: 
+: [1] -10.54%  18.23%   -299.57% -69.31%  0.00%
+
+- _収益率を合計したい場合、掛けて計算する_ (一方、対数収益率は足し算で OK)
+- 収益率に 1 を加えて、利率に変換し、cumprod()
+- 最後に 1 を引けば、収益率に変換可能
+#+begin_src R
+cumprod(1 + data$ret[2:6])
+#+end_src
+
+#+RESULTS:
+: [1] 0.90 1.20 0.05 0.50 1.00
+
+* 対数収益率 (Log Return / Continous Return)
+
+- 対数収益率 = 連続複利で計算した利率
+- したがって、Continous Return と呼ばれる
+- 下落も上昇も同等の変化率で扱ってくれる
+- 合計する場合は、そのまま足せば良い
+  
+#+begin_src R
+log(110) - log(100) # +9.5%
+log(100) - log(110) # -9.5%
+#+end_src
+
+#+RESULTS:
+: [1] 0.09531018
+: [1] -0.09531018
+
+- この方法でも良い
+#+begin_src R
+log(110 / 100)
+#+end_src
+
+#+RESULTS:
+: [1] 0.09531018
+
+- 大きく値下がりすると違和感のある数字になる
+- -207% !? (-100% 以上はありえないのに)
+#+begin_src R
+log(50) - log(400) 
+#+end_src
+
+#+RESULTS:
+: [1] -2.079442
+
+- [[http://studysummary.hatenablog.com/entry/2016/02/26/110704][収益率の代わりに対数差分を用いられる理由]]
+  - 差を取るだけなので、計算が楽
+  - GARCH モデルの誤差をへらすため
+  - 非定常過程も対数差分を取ると定常過程として扱える
+- [[https://quantivity.wordpress.com/2011/02/21/why-log-returns/][Why Log Returns@quantivity
+]]
+* リターンの統計的有意性
+** リターンが正規分布の場合 (t 検定)
+
+- 母集団が正規分布に従う場合の検定方法
+- t 統計量が正規分布に従うという性質を持つ
+- _1 群の t 検定 = 平均が 0 と異なると言えるか？_
+
+$t = \frac{\mu - 0}{\sigma \sqrt{n}}$
+
+- 平均 +0.05%, SD 0.5% の疑似リターン
+- t 統計量が 5% 棄却域 (1.645) よりも大きいか？
+#+begin_src R :results output
+set.seed(123)
+ret <- rnorm(1000, mean = 0.0005, sd = 0.005)
+
+tstats <- mean(ret) / sd(ret) * sqrt(length(ret))
+tstats
+#+end_src
+
+#+RESULTS:
+: 
+: [1] 3.703039
+
+- stats::t.test を使う
+- pvalue <= 0.05 なので、有意にゼロより大きい
+#+begin_src R
+t.test(ret)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+	One Sample t-test
+
+data:  ret
+t = 3.703, df = 999, p-value = 0.0002247
+alternative hypothesis: true mean is not equal to 0
+95 percent confidence interval:
+ 0.0002729427 0.0008883359
+sample estimates:
+   mean of x 
+0.0005806393
+#+end_example
+
