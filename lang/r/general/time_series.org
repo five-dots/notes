@@ -1,0 +1,3684 @@
+#+STARTUP: folded indent inlineimages latexpreview
+#+PROPERTY: header-args:R :session *R:time_series* :width 560 :height 420
+
+* Load Libraries
+
+#+begin_src R :results silent
+library(DescTools)
+library(MSwM)
+library(QuantTools)
+library(depmixS4)
+library(forecast)
+library(fpp)
+library(glue)
+library(parallel)
+library(rmgarch)
+library(rugarch)
+library(tidyquant)
+library(tidyverse)
+library(timetk)
+library(tseries)
+library(urca)
+library(vars)
+#+end_src
+
+* Prepare Data
+
+#+begin_src R :results silent
+path <- glue("{.mkt_data}/Quandl/Sharadar/Data/SPY.csv")
+data <- read_csv(path) %>%
+  mutate(date = ymd(date),
+         c2c_ret = log(adj_close) - lag(log(adj_close)),
+         c2o_ret = log(adj_open) - lag(log(adj_close)),
+         o2c_ret = log(adj_close) - log(adj_open)) %>%
+  filter(between(date, ymd("2010-01-01"), ymd("2018-12-31")))
+  
+data(sp500ret)
+#+end_src
+
+- AR(1) のシミュレーションデータ
+#+begin_src R :results silent
+ar1 <- arima.sim(n = 100, model = list(order = c(1, 0, 0), ar = 0.5))
+#+end_src
+
+* Descriptive Rule
+
+- 1 ~ T 時点までの時系列データの集合
+
+ $\{y_1, y_2, \dots, y_{t-1}, y_t\} = \{y_t\}^T_{t=1} = Y_T$
+
+- 小文字で以下のように表記する場合もある
+
+$y_{t}$, $y_{1:t}$
+
+* Basic Statistics
+** 期待値
+
+$\mu_t = E(y_t)$
+
+※ E 期待値演算子
+
+- 標本平均
+  - 定常過程であれば、そのまま標本平均をとることができる
+  - 定常過程は、平均が時点によらず一定という性質を持つため
+
+$\bar{y} = \frac{1}{T}\sum_{t=1}^{T}y_t$
+
+** 分散
+
+- 定常過程は、分散が一定
+
+$Var(y_t) = E(y_t - \mu_t)^2$
+
+** 自己共分散 (autocovariance)
+
+- 0 次の自己共分散は、分散に等しい
+- 自己共分散がプラスであれば同じ方向、マイナスであれば、逆の方向に動く
+
+_1 次の自己共分散関数_
+
+$\gamma_{1t} = Cov(y_t,y_{t-1}) = E[(y_t - \mu_t)(y_{t-1} - \mu_{t-1})]$
+
+- R での計算例
+#+begin_src R :results output
+# 自作関数
+my_cov <- function(x, lag) {
+  m <- mean(x)
+  deviation <- x - m
+  sum(deviation * stats::lag(deviation, k = lag)) / length(x)
+}
+my_cov(ar1, lag = 1)
+
+# stats::acf()
+acf(ar1, type = "covariance", plot = FALSE, lag.max = 1)
+#+end_src
+
+#+RESULTS:
+: 
+: [1] 0.8570128
+: 
+: Autocovariances of series ‘ar1’, by lag
+: 
+:     0     1 
+: 1.435 0.857
+
+_k 次の自己共分散_
+
+$\gamma_{kt} = Cov(y_t, y_{t-k}) = E[(y_t - \mu_t)(y_{t-k} - \mu_{t-k})]$
+
+
+_標本自己共分散_
+
+$\hat{\gamma_k} = \frac{1}{T}\sum_{t=k+1}^{T}(y_t - \bar{y})(y_{t-k} - \bar{y})$
+
+** 自己相関 (autocorrelation)
+*** 定義
+
+_k 次の自己相関_
+- 通常の相関係数の求め方と同じ考え方
+- 自己共分散を標準偏差で割って標準化したもの
+
+$\rho_{kt} = Corr(y_t, y_{t-k}) = \frac{Cov(y_t, y_{t-k})}{\sqrt{Var(y_t)Var(y_{t-k})}} = \frac{\gamma_{kt}}{\sqrt{\gamma_{0t}\gamma_{0, t-k}}}$
+
+#+begin_src R :results output
+# 自作関数
+my_acf <- function(x, lag) {
+  m <- mean(x)
+  deviation <- x - m
+  cov <- sum(deviation * stats::lag(deviation, k = lag)) / length(x)
+  cov / sqrt(mean(deviation ^ 2) * mean(stats::lag(deviation, k = lag) ^ 2))
+}
+my_acf(ar1, 1)
+
+acf(ar1, 1, plot = F)
+#+end_src
+
+#+RESULTS:
+: [1] 0.5970568
+: 
+: Autocorrelations of series ‘ar1’, by lag
+: 
+:     0     1 
+: 1.000 0.597
+
+_標本自己相関_
+
+$\hat{\rho_k} = \frac{\hat{\gamma_k}}{\hat{\gamma_0}}$ 
+
+*** コレログラム {stats}
+
+#+begin_src R :results graphics :file (get-babel-file)
+acf(ar1)
+#+end_src
+
+#+RESULTS:
+[[file:~/Dropbox/memo/img/babel/fig-RP70HI.png]]
+
+*** コレログラム {forecast}
+
+lag = 0 が 表示されないので、見やすい
+#+begin_src R :results graphics :file (get-babel-file)
+forecast::Acf(ar1)
+#+end_src
+
+#+RESULTS:
+[[file:~/Dropbox/memo/img/babel/fig-g65Rd9.png]]
+
+** TODO PACF (partial autocorrelation)
+- 偏自己相関
+
+** TODO CCF (cross-correlation)
+- 相互相関
+
+* Box-Jenkins
+
+1. 可視化
+   - 系列   ~forecast::ggtsdisplay()~
+   - 季節性 ~forecast::ggsubseriesplot()~
+
+2. 自己相関
+   - ACF            ~stats::acf()~
+   - PCF            ~stats::pcf()~
+   - Ljung-Box 検定 ~stats::Box.test()~
+
+3. データ変換
+   - 階差(差分)を取る ~stats::lag(), forecast::ndiffs()~
+   - 対数変換         ~log()~
+   - 対数差分を取る   
+   - 季節階差を取る   ~stats::frequency()~
+
+4. 単位根検定
+   - ADF 検定  ~urca::ur.df()~
+   - KPSS 検定 ~urca::ur.kpss()~
+   - PP 検定   ~urca::ur.pp()~
+
+5. ARIMA モデル
+   - モデル       ~stats::arima()~, ~forecast::Arima()~
+   - モデルの同定 ~forecast::auto.arima()~
+   - モデルの定常性・反転可能性
+
+6. 残差の確認
+   - 自己相関 ~forecast::checkresiduals()~
+   - 正規性   ~tseries::jarque.bera.test()~
+
+7. 予測
+   - 訓練データとテストデータに分離
+   - 予測     ~forecast::forecast()~
+   - 予測精度 ~DescTools::RMSE()~
+   - ナイーブ予測との比較
+
+* Spurious Regression
+** 見せかけの回帰とは
+
+- 単位根をもつ時系列同士の最小二乗法による回帰
+- 無関係なデータでも有意な係数が推定される場合がある
+- 隼本 p.118 の例
+
+** ただの乱数で回帰 => 当然、有意な結果はでない
+
+#+begin_src R :results output
+n_samples <- 400
+set.seed(1)
+data1 <- tibble(x = rnorm(n_samples), y = rnorm(n_samples))
+summary(lm(y ~ x, data = data1))
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+Call:
+lm(formula = y ~ x, data = data1)
+
+Residuals:
+    Min      1Q  Median      3Q     Max 
+-2.9132 -0.7443 -0.0463  0.7516  3.8310 
+
+Coefficients:
+            Estimate Std. Error t value Pr(>|t|)
+(Intercept) -0.07197    0.05407  -1.331    0.184
+x            0.03230    0.05579   0.579    0.563
+
+Residual standard error: 1.08 on 398 degrees of freedom
+Multiple R-squared:  0.0008414,	Adjusted R-squared:  -0.001669 
+F-statistic: 0.3352 on 1 and 398 DF,  p-value: 0.563
+#+end_example
+
+#+begin_src R :results graphics :file (get-babel-file)
+ggplot(data1, aes(x = x, y = y)) + geom_point() + geom_smooth(method = lm)
+#+end_src
+
+#+RESULTS:
+[[file:~/Dropbox/memo/img/babel/fig-4ldwIS.png]]
+
+** ランダムウォーク系列で回帰
+
+- 有意かつ、説明力が大きい (R2=0.4) モデル => 見せかけの回帰
+#+begin_src R :results output
+set.seed(1)
+data2 <- tibble(x = cumsum(rnorm(n_samples)), y = cumsum(rnorm(n_samples)))
+summary(lm(y ~ x, data = data2))
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+Call:
+lm(formula = y ~ x, data = data2)
+
+Residuals:
+     Min       1Q   Median       3Q      Max 
+-18.5071  -6.8249   0.0537   6.7927  18.7124 
+
+Coefficients:
+            Estimate Std. Error t value Pr(>|t|)    
+(Intercept) -0.59700    0.90224  -0.662    0.509    
+x           -1.41194    0.08704 -16.222   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 8.107 on 398 degrees of freedom
+Multiple R-squared:  0.398,	Adjusted R-squared:  0.3965 
+F-statistic: 263.1 on 1 and 398 DF,  p-value: < 2.2e-16
+#+end_example
+
+#+begin_src R :results graphics :file (get-babel-file)
+ggplot(data2, aes(x = x, y = y)) + geom_point() + geom_smooth(method = lm)
+#+end_src
+
+#+RESULTS:
+[[file:~/Dropbox/memo/img/babel/fig-4uWBMw.png]]
+
+** 定常 AR(1) 過程への回帰
+
+- ~stats::arima.sim()~ で AR(1) の乱数
+#+begin_src R :results output
+set.seed(2)
+data3 <- tibble(
+ x = arima.sim(n = n_samples, model = list(order = c(1, 0, 0), ar = c(0.8))),
+ y = arima.sim(n = n_samples, model = list(order = c(1, 0, 0), ar = c(0.8))))
+summary(lm(y ~ x, data = data3))
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+Call:
+lm(formula = y ~ x, data = data3)
+
+Residuals:
+    Min      1Q  Median      3Q     Max 
+-3.9270 -1.2768 -0.0195  1.3653  4.2566 
+
+Coefficients:
+            Estimate Std. Error t value Pr(>|t|)    
+(Intercept)  0.37536    0.09080   4.134 4.35e-05 ***
+x           -0.13639    0.04995  -2.731   0.0066 ** 
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 1.764 on 398 degrees of freedom
+Multiple R-squared:  0.01839,	Adjusted R-squared:  0.01592 
+F-statistic: 7.456 on 1 and 398 DF,  p-value: 0.006604
+#+end_example
+
+#+begin_src R :results graphics :file (get-babel-file)
+ggplot(data3, aes(x = x, y = y)) + geom_point() + geom_smooth(method = lm)
+#+end_src
+
+#+RESULTS:
+[[file:~/Dropbox/memo/img/babel/fig-i2IK7u.png]]
+
+* Test
+** 自己相関の検定
+*** Ljung-Box Test
+
+帰無仮説:自己相関はない、を棄却できるかを検定
+- $H_0: \rho_m = 0$
+- $H_1:\rho_m \neq 0$ 
+
+*Ljung-Box 検定*
+- H0: m 次までの自己相関すべてについて自己相関がない
+- *かばん検定* といわれる
+- m 次の自己相関の Q 統計量が、自由度 m のカイ二乗分布に従う
+- 次数 m の選択が難しい 
+  - _log(T)_ が基準にされることもある
+  - m 次数が小さすぎると、高次の自己相関を見逃してしまう
+  - m 次数が大きすぎると、検定力 (power) が小さくなってしまう
+- p-value が 5% よりも小さければ、帰無仮説を棄却する
+- モデル残差への検定の場合は、自由度を(m - p - q)にする (次数分引く)
+
+$Q(m) = T(T+2)\sum_{k=1}^m\frac{\hat{\rho_k^2}}{T-k} \sim \chi^2(m)$
+
+- ~stats::Box.test()~
+- モデル残差の場合
+  - fitdf = p+q に指定
+  - lag 数は、p+q < lag にする
+#+begin_src R :results output
+ar1_box <- Box.test(ar1, lag = 1, type = "Ljung-Box")
+ar1_box
+#+end_src
+
+#+RESULTS:
+: 
+: 	Box-Ljung test
+: 
+: data:  ar1
+: X-squared = 36.728, df = 1, p-value = 1.358e-09
+
+- 自由度 1 のカイ二乗分布に Q 統計量をマッピング
+#+begin_src R :results graphics :file (get-babel-file)
+ggplot(data = tibble(x = 0:40), aes(x = x)) +
+  stat_function(fun = dchisq, args = list(df = 1)) +
+  geom_vline(aes(xintercept = ar1_box$statistic), linetype = "dotted")
+#+end_src
+
+#+RESULTS:
+[[file:~/Dropbox/memo/img/babel/fig-QUbn3i.png]]
+
+*** Durbin-Watson Test
+
+- 時系列の "回帰分析の残差に自己相関がない" を検定
+- 見せかけの回帰がないかを確認するために利用される
+- 残差の 1 次の自己相関が 0 のとき DW 統計量がおよそ 2 になる
+- H0: 自己相関はゼロである
+
+$DW = \frac{\sum_{t=2}^T(\hat\mu_t-\hat\mu_{t-1})^2}{\sum_{t=1}^T\hat\mu_t^2}$
+
+** 単位根検定
+*** Overview
+
+#? いくつかのパッケージで実装されているが、
+#? 3 手法にすべて対応している urca に統一して利用するのが良さそう
+# オリジナルの論文の記号に沿っているため、ドキュメントが整備されていないのが難点
+library(urca)
+
+set.seed(1)
+x <- cumsum(rnorm(500))
+
+#? 株価をテストする場合の パラメーター (by epchan 手法)
+#  - 定数項 => あり(回帰する平均はゼロでないことがほとんどのため)
+#  - トレンド有無 => なし(値動きに対して、Constant Trend は非常に小さくなるため)
+#  - 次数決定方法 => 1 or "short" (もしくは、AIC で選択)
+
+#? Chapter2 Example 2.1: Using ADF Test for Mean Reversion
+# The adf function has three inputs.
+# The first is the price series in ascending order of time (chronological order is important).
+# The second is a parameter indicating whether we should assume the offset mu and
+# whether the drift beta in Equation 2.1 should be zero.
+# We should assume the offset is nonzero, since the mean price toward which the prices revert is seldom zero.
+# We should, however, assume the drift is zero, because the constant drift in price
+# tends to be of a much smaller magnitude than the daily fluctuations in price.
+# These considerations mean that the second parameter should be 0 (by the package designer's convention).
+# The third input is the lag k. You can start by trying k = 0, but often only by setting k = 1 can we reject the null hypothesis,
+# meaning that the change in prices often does have serial correlations.
+
+*** ADF Test
+
+- H0 単位根あり
+- Interpreting R's ur.df (Dickey-Fuller unit root test) results
+https://stats.stackexchange.com/questions/24072/interpreting-rs-ur-df-dickey-fuller-unit-root-test-results
+
+#+begin_src R
+ur.df(
+  y,
+  # "none"  = ドリフト項(切片・定数項)、時間的トレンド項 どちらも無し
+  # "drift" = ドリフト項のみ
+  # "trend" = 両方あり
+  type = c("none", "drift", "trend"),
+  # AIC, BIC を選んだ場合には、探索する最大ラグ数
+  lags = 1,
+  selectlags = c("Fixed", "AIC", "BIC"))
+#+end_src
+
+_"none"_
+- tau1 H0: gamma = 0 (= 単位根あり)
+#+begin_src R
+adf_test1 <- ur.df(x, type = "none", lag = 1, selectlags = "Fixed")
+summary(adf_test1)
+#+end_src
+
+_"drift"_
+- tau2 H0: gamma = 0
+- phi1 H0: gamma = 0 AND drift = 0 (= 単位根あり かつ ドリフト項がゼロ)
+#+begin_src R
+adf_test2 <- ur.df(x, type = "drift", lag = 1, selectlags = "Fixed")
+summary(adf_test2)
+#+end_src
+
+_"trend"_
+- tau3 H0: gamma = 0
+- phi2 H0: gamma = 0 AND drift = 0
+- phi3 H0: gamma = 0 AND drift = 0 AND trend = 0 (= 単位根あり かつ ドリフト・トレンドがゼロ)
+#+begin_src R
+adf_test3 <- ur.df(x, type = "trend", lag = 1, selectlags = "Fixed")
+summary(adf_test3)
+#+end_src
+
+*** ADF Test by AAPL
+**** 原系列
+
+- AAPL 株価 (現系列)
+#+begin_src R :results output
+aapl <- tidyquant::tq_get("AAPL", from = "2018-01-01", to = "2018-12-31")
+aapl_trend <- ur.df(aapl$adjusted, type = "trend", lag = 10, selectlags = "AIC")
+summary(aapl_trend)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+############################################### 
+# Augmented Dickey-Fuller Test Unit Root Test # 
+############################################### 
+
+Test regression trend 
+
+
+Call:
+lm(formula = z.diff ~ z.lag.1
+1
+tt
+z.diff.lag)
+
+Residuals:
+     Min       1Q   Median       3Q      Max 
+-14.1879  -1.7283  -0.0084   1.7394  11.1740 
+
+Coefficients:
+             Estimate Std. Error t value Pr(>|t|)
+(Intercept)  0.998796   2.153700   0.464    0.643
+z.lag.1     -0.002986   0.012606  -0.237    0.813
+tt          -0.004008   0.003785  -1.059    0.291
+z.diff.lag   0.037568   0.066266   0.567    0.571
+
+Residual standard error: 3.413 on 235 degrees of freedom
+Multiple R-squared:  0.01034,	Adjusted R-squared:  -0.002297 
+F-statistic: 0.8182 on 3 and 235 DF,  p-value: 0.4849
+
+
+Value of test-statistic is: -0.2369 0.7103 0.9986 
+
+Critical values for test statistics: 
+      1pct  5pct 10pct
+tau3 -3.99 -3.43 -3.13
+phi2  6.22  4.75  4.07
+phi3  8.43  6.49  5.47
+#+end_example
+
+**** 対数差分系列
+
+- AAPL 対数差分系列
+#+begin_src R :results output
+aapl <- mutate(aapl, log_ret = log(adjusted) - lag(log(adjusted))) %>% slice(-1)
+aapl_ret_trend <- ur.df(aapl$log_ret, type = "trend", lag = 10, selectlags = "AIC")
+summary(aapl_ret_trend)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+############################################### 
+# Augmented Dickey-Fuller Test Unit Root Test # 
+############################################### 
+
+Test regression trend 
+
+
+Call:
+lm(formula = z.diff ~ z.lag.1
+1
+tt
+z.diff.lag)
+
+Residuals:
+      Min        1Q    Median        3Q       Max 
+-0.064795 -0.008857  0.000411  0.009722  0.070274 
+
+Coefficients:
+              Estimate Std. Error t value Pr(>|t|)    
+(Intercept)  3.169e-03  2.601e-03   1.218    0.224    
+z.lag.1     -1.023e+00  9.076e-02 -11.273   <2e-16 ***
+tt          -2.851e-05  1.803e-05  -1.581    0.115    
+z.diff.lag   6.911e-02  6.560e-02   1.054    0.293    
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Residual standard error: 0.01857 on 231 degrees of freedom
+Multiple R-squared:  0.481,	Adjusted R-squared:  0.4742 
+F-statistic: 71.35 on 3 and 231 DF,  p-value: < 2.2e-16
+
+
+Value of test-statistic is: -11.2725 42.3568 63.5352 
+
+Critical values for test statistics: 
+      1pct  5pct 10pct
+tau3 -3.99 -3.43 -3.13
+phi2  6.22  4.75  4.07
+phi3  8.43  6.49  5.47
+#+end_example
+
+
+#? tau3 H0: 単位根あり？
+aapl_ret_trend@cval[1, "5pct"] < aapl_ret_trend@teststat[, 1]
+
+#? phi2 H0: ドリフト項はゼロ？
+aapl_ret_trend@cval[2, "5pct"] < aapl_ret_trend@teststat[, 2]
+
+# 他の選択肢
+# adf.test {tseries} => 定数項・トレンド項有のみしか対応していない
+# CADFtest {CADFtest} => 共変量を入れなければ、通常の ADF 検定と同じ
+
+*** KPSS Test
+- H0: 単位根なし
+
+#+begin_src R 
+ur.kpss(
+  y,
+  type = c("mu", "tau"),
+  # データ数によって動的にラグ数を決めるパラメタ
+  lags = c("short", "long", "nil"),
+  # lags = nil にして、個別にラグ数を指定したい場合
+  use.lag = NULL)
+#+end_src
+
+- "mu"
+#+begin_src R
+kpss_mu <- ur.kpss(x, type = "mu", lags = "short")
+summary(kpss_mu)
+#+end_src
+
+- 単位根がないか？
+#+begin_src R 
+kpss_mu@cval[, "5pct"] > kpss_mu@teststat
+#+end_src
+
+- "tau"
+#+begin_src R
+kpss_tau <- ur.kpss(x, type = "tau", lags = "short")
+summary(kpss_tau)
+kpss_tau@cval[, "5pct"] > kpss_tau@teststat
+#+end_src
+
+*** PP Test
+
+#+begin_src R
+ur.pp(
+  x,
+  type = c("Z-alpha", "Z-tau"),
+  model = c("constant", "trend"),
+  lags = c("short", "long"),
+  use.lag = NULL)
+#+end_src
+
+- 他の選択肢: tseries::pp.test(), stats::PP.test()
+
+** 共和分検定
+*** シミュレーションデータと単位根検定
+
+#+begin_src R :results output
+set.seed(1)
+n_samples <- 400
+
+# Random walk
+rw <- cumsum(rnorm(n_samples))
+x  <- 0.6 * rw + rnorm(n_samples)
+y  <- 0.4 * rw + rnorm(n_samples)
+
+## 単位根の確認
+summary(ur.df(x, type = "none", lags = 10, selectlags = "AIC"))
+summary(ur.df(y, type = "none", lags = 10, selectlags = "AIC"))
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+############################################### 
+# Augmented Dickey-Fuller Test Unit Root Test # 
+############################################### 
+
+Test regression none 
+
+
+Call:
+lm(formula = z.diff ~ z.lag.1 - 1
+z.diff.lag)
+
+Residuals:
+    Min      1Q  Median      3Q     Max 
+-3.7925 -0.8321  0.0218  1.0957  5.1334 
+
+Coefficients:
+            Estimate Std. Error t value Pr(>|t|)    
+z.lag.1     -0.00603    0.01169  -0.516 0.606168    
+z.diff.lag1 -0.57589    0.05181 -11.114  < 2e-16 ***
+z.diff.lag2 -0.38171    0.05856  -6.518 2.24e-10 ***
+z.diff.lag3 -0.19487    0.05833  -3.341 0.000918 ***
+z.diff.lag4 -0.12098    0.05108  -2.369 0.018352 *  
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Residual standard error: 1.432 on 384 degrees of freedom
+Multiple R-squared:  0.2575,	Adjusted R-squared:  0.2478 
+F-statistic: 26.63 on 5 and 384 DF,  p-value: < 2.2e-16
+
+
+Value of test-statistic is: -0.516 
+
+Critical values for test statistics: 
+      1pct  5pct 10pct
+tau1 -2.58 -1.95 -1.62
+
+############################################### 
+# Augmented Dickey-Fuller Test Unit Root Test # 
+############################################### 
+
+Test regression none 
+
+
+Call:
+lm(formula = z.diff ~ z.lag.1 - 1
+z.diff.lag)
+
+Residuals:
+    Min      1Q  Median      3Q     Max 
+-3.4923 -0.7321  0.0525  0.8073  4.3668 
+
+Coefficients:
+             Estimate Std. Error t value Pr(>|t|)    
+z.lag.1     -0.009899   0.015407  -0.643    0.521    
+z.diff.lag1 -0.693472   0.050904 -13.623  < 2e-16 ***
+z.diff.lag2 -0.551245   0.058519  -9.420  < 2e-16 ***
+z.diff.lag3 -0.384631   0.058033  -6.628 1.16e-10 ***
+z.diff.lag4 -0.249299   0.049299  -5.057 6.62e-07 ***
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Residual standard error: 1.254 on 384 degrees of freedom
+Multiple R-squared:  0.3532,	Adjusted R-squared:  0.3448 
+F-statistic: 41.94 on 5 and 384 DF,  p-value: < 2.2e-16
+
+
+Value of test-statistic is: -0.6425 
+
+Critical values for test statistics: 
+      1pct  5pct 10pct
+tau1 -2.58 -1.95 -1.62
+#+end_example
+
+#+begin_src R :results graphics :file (get-babel-file)
+# z = x, y の線形結合
+data <- data.frame(
+  row = 1:length(x),
+  x = x, y = y,
+  z = x - (0.6 / 0.4) * y) # x,y の線形結合
+
+# z が定常過程になったように見える
+data %>% gather("key", "value", - row) %>%
+  ggplot(aes(x = row, y = value)) +
+  geom_line() +
+  facet_grid(key ~ .)
+#+end_src
+
+#+RESULTS:
+[[file:~/Dropbox/memo/img/babel/fig-S8eEP4.png]]
+
+*** PO 検定
+
+- 2 変数のみの共和分検定
+- HO: 共和分関係がない
+
+- ペアトレーディングの場合
+- ペアの残差 (Spread) はゼロでない => 定数項入れる・トレンド入れない
+
+#+begin_src R :results output
+ca.po(
+  # matrix でなければいけない
+  z,
+  # 回帰式のオプション: 定数項・トレンド項を入れるか？
+  demean = c("none", "constant", "trend"),
+  # 分散・共分散の訂正につかうラグ数??
+  lag = c("short", "long"),
+  type = c("Pu", "Pz"),
+  # solve() への引数
+  tol = NULL)
+#+end_src
+
+- H0: 共和分なしを棄却
+#+begin_src R :results output
+d <- as.matrix(select(data, x, y))
+
+# "none"
+po_none <- ca.po(d, demean = "none", lag = "short", type = "Pu")
+summary(po_none)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+######################################## 
+# Phillips and Ouliaris Unit Root Test # 
+######################################## 
+
+Test of type Pu 
+detrending of series none 
+
+
+Call:
+lm(formula = z[, 1] ~ z[, -1] - 1)
+
+Residuals:
+    Min      1Q  Median      3Q     Max 
+-4.6551 -0.8823  0.2876  1.4825  5.2740 
+
+Coefficients:
+        Estimate Std. Error t value Pr(>|t|)    
+z[, -1]  1.42000    0.02204   64.44   <2e-16 ***
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Residual standard error: 1.859 on 399 degrees of freedom
+Multiple R-squared:  0.9123,	Adjusted R-squared:  0.9121 
+F-statistic:  4153 on 1 and 399 DF,  p-value: < 2.2e-16
+
+
+Value of test-statistic is: 128.187 
+
+Critical values of Pu are:
+                  10pct    5pct    1pct
+critical values 20.3933 25.9711 38.3413
+#+end_example
+
+*** Johansen 検定
+#? 2 変数以上の共和分検定に使える
+
+ca.jo(
+  # matrix でなければならない
+  x,
+  # 固有値検定
+  # トレース検定
+  type = c("eigen", "trace"),
+  # 定数項・トレンド項の有無
+  ecdet = c("none", "const", "trend"),
+  # VAR モデルのラグ数
+  K = 2,
+  # VECM の決定項？
+  spec = c("longrun", "transitory"),
+  season = NULL,
+  dumvar = NULL)
+
+*** 実際の株価で共和分検定
+
+symbols <- c("JPM", "BAC")
+from <- "2016-01-01"
+to <- "2016-12-31"
+
+data <- tq_get(c("JPM", "BAC"), from = from, to = to) %>%
+  group_by(symbol) %>%
+  mutate(log_adj = log(adjusted), log_ret = log(adjusted) - lag(log(adjusted))) %>%
+  slice(-1)
+
+spread_data <- data %>%
+  select(date, symbol, log_adj) %>%
+  spread(symbol, log_adj)
+
+# line plot
+ggplot(data, aes(x = date, y = log_adj)) + geom_line() +
+  facet_grid(symbol ~ ., scales = "free_y")
+
+# Scatter plot
+ggplot(spread_data, aes(x = BAC, y = JPM)) + geom_point()
+
+# Unit root test
+ur_bac <- ur.df(spread_data$BAC, type = "drift", lag = 10, selectlags = "AIC")
+summary(ur_bac) # 単位根あり
+
+ur_jpm <- ur.df(spread_data$JPM, type = "drift", lag = 10, selectlags = "AIC")
+summary(ur_jpm) # 単位根あり
+
+# Cointegration test
+d <- as.matrix(select(spread_data, BAC, JPM))
+
+po_test <- ca.po(d, demean = "constant", lag = "short", type = "Pu")
+summary(po_test) # 共和分関係がない、は棄却できない (共和分でないと考える)
+
+* Time-Series Models
+** 考え方
+
+時系列モデルでは、時系列データ
+
+$\{y_t\}^T_{t=1}}$
+
+を以下のような _確率変数からの実現値_ とみなす
+
+$\{y_t\}^\infty_{-\infty}$
+
+そして、この確率変数列の生成過程に何らかの性質・構造を仮定する
+このような確率変数のことを以下のように呼ぶ
+
+- *確率過程 (Stochastic Process)*
+- *データ生成過程 (DGP)*
+
+時系列分析では、確率過程の性質を記述したものを *時系列モデル* と呼ぶ
+
+** 定常過程  (Stationary Process)
+*** 概要
+
+_基本統計量が時間に依存しないという構造_ (時間不変性)
+マルコフ連鎖 P に対して、πP = π を満たす分布 π
+https://www.slideshare.net/teramonagi/ss-5190440
+
+どんなデータか？
+- 常に平均の周りを動いている
+  -> 一度その状態に入ったら、ずっとその状態であり続けるような分布
+  -> 不変分布ともいう
+- 自己相関は指数的に減衰し、ショックは一時的な影響
+- トレンドはもたない
+
+ARMA や GARCH などは、定常過程のモデルであるが、
+_条件付き期待値や条件付き分散は時変的であってもよい_
+
+*** 弱定常性 (Weak Stationary)
+
+任意の t と k に対して、以下の 2 つが成り立つ
+
+$E(y_t) = \mu$
+
+$Cov(y_t, y_{t-k}) = E[(y_t - \mu)(y_{t-k} - \mu_{t-k})] = \gamma_k$
+
+つまり
+- _平均は時点によらず一定_ (0 とは言っていない。White Noise は 0)
+- _自己共分散は、時点 k にのみ依存。_ つまり $\gamma_k = \gamma_{-k}$ も成り立つ。
+  => どの時点で自己共分散をとっても、ラグ数が同じであれば、同じ自己共分散が期待される
+  => White Noise では、自己共分散は 0
+  => 分散 ($\gamma_0$) は、一定 
+
+*** TODO 強定常性 (Strict Stationary) 
+
+- 任意の t と k に対して、以下の同時分布が同一となる場合、過程は強定常性と呼ばれる
+
+$(y_t, y_{t+1},\ldots, y_{t+k})'$
+
+- 弱定常性では、自己共分散のみが時点差 k に依存していたが、
+  強定常性では、 _全ての構造が時点差 k に依存する_ という性質を持っている
+
+- 過程が *正規過程* の場合は、弱定常性 = 強定常性となる
+
+*** TODO iid 系列 (Independently and Identically Distributed)
+
+- 最も基礎的な *強定常性* の例
+- 期待値 0 の iid 系列は、撹乱項として用いられる (ホワイトノイズほどは使われない)
+- 期待値 $\mu$ 分散 $\sigma^2$ の iid 系列に従う場合、以下のように書く
+
+$y_t \sim iid(\mu, \sigma^2)$
+
+*** ホワイトノイズ (White Noise)
+
+$E(y_t) = 0$
+\begin{equation*}
+\gamma_k = E(\epsilon_t, \epsilon_{t-k}) = \left \{
+\begin{array}{l}
+\sigma^2, k = 0 \\
+0, k \neq 0
+\end{array}
+\right.
+\end{equation*}
+
+- 期待値は 0
+- 分散は一定 (k=0 のとき)
+- 自己共分散は 0 (つまり時系列モデルのモデル化の対象にならない)
+
+- 分散 $\sigma^2$ のホワイトノイズに従う場合の表記
+
+$\epsilon \sim W.N.(\sigma^2)$
+
+- _弱定常過程_ の撹乱項として用いられる (iid ほどの強い仮定は必要ない場合が多いので)
+- ただし、ホワイトノイズが正規過程の場合、iid 系列になる
+- その場合、以下のように表記する
+
+$\epsilon_t \sim iid \ N(0, \sigma^2)$
+
+*** 定常過程の具体例
+
+- もっとも基本的な弱定常過程は、ホワイトノイズを使って以下のように表記
+- 定数 + ホワイトノイズ
+
+$y_t = \mu + \epsilon_t, \ \epsilon_t \sim W.N.(\sigma^2)$
+
+
+- GARCH モデルでは、以下のように表記する場合がある
+
+$y_t = \mu + \sqrt{\sigma^2} \epsilon_t, \ \epsilon_t \sim W.N.(1)$
+
+
+- 平均 0、標準偏差 1 の正規ホワイトノイズ
+#+begin_src R :results graphics :file (get-babel-file)
+wn1 <- data.frame(x = 1:100, y = rnorm(500))
+ggplot(wn1, aes(x = x, y = y)) + geom_line()
+#+end_src
+
+#+RESULTS:
+[[file:~/Dropbox/memo/img/babel/fig-90rjB9.png]]
+
+** MA(q) 過程 (Moving average Process)
+*** モデル式
+
+_MA(1)_
+
+$y_t = \mu + \epsilon_t + \theta_1 \epsilon_{t-1}, \ \epsilon_t \sim W.N(\sigma^2)$
+
+_MA(q)_
+
+$y_t = \mu + \epsilon_t + \sum_{j=1}^q \theta_j \epsilon_{t-j}, \ \epsilon_t \sim W.N(\sigma^2)$
+
+- _共通のノイズを持つ_ ことで、自己相関を表現するモデル
+- _過程の確率的変動は、全て e によって決定されている_
+- e が決定された後に、y が順次決まっていく
+
+*** プロット
+
+グラフの特徴
+  - 係数が正の場合、滑らかになる   ( 1 に近づくほどより滑らかになる)
+  - 係数が負の場合、ギザギザになる (-1 に近づくほどよりギザギザになる)
+
+**** 係数 =  0.9, sd = 1 (なめらかなグラフ)
+
+- WN の SD=1 よりもばらつきが大きいことにも注意
+#+begin_src R :results graphics :file (get-babel-file)
+ma1_1 <- arima.sim(n = 100, model = list(order = c(0, 0, 1), ma = 0.9), sd = 1)
+plot(ma1_1, type = "l")
+#+end_src
+
+#+RESULTS:
+[[file:~/Dropbox/memo/img/babel/fig-B6z4s1.png]]
+
+**** 係数 = -0.9, sd = 1 (ギザギザなグラフ)
+
+#+begin_src R :results graphics :file (get-babel-file)
+ma1_2 <- arima.sim(n = 100, model = list(order = c(0, 0, 1), ma = -0.9), sd = 1)
+plot(ma1_2, type = "l")
+#+end_src
+
+#+RESULTS:
+[[file:~/Dropbox/memo/img/babel/fig-3T4fRt.png]]
+
+*** 期待値
+
+- MA 過程の期待値は、$\mu$ になる (_ホワイトノイズの期待値は、ゼロのため_)
+- 常に平均の周りを変動するデータになる
+
+$E(y_t) = E(\mu + \epsilon_t + \epsilon_{t-1}) = \mu$
+
+*** 分散
+
+- MA 過程の分散は撹乱項の分散よりも大きくなる
+- _ホワイトノイズの自己共分散はゼロ_ から導くことができる
+
+\begin{equation*}
+\begin{split}
+  \ \gamma_t
+  &=
+  \ Var(y_t)
+  \\&=
+  \ Var(\mu + \epsilon_t + \theta_1\epsilon_{t-1})
+  \\&=
+  \ Var(\mu) + \theta_1^2Var(\epsilon_{t-1}) + 2\theta_1 Cov(\epsilon_t, \epsilon_{t-1})
+  \\&=
+  \ (1 + \theta_1^2)\sigma^2
+\end{split}
+\end{equation*}
+
+つまり
+- 撹乱項の分散よりも、$\theta_1^2\sigma^2$ 分だけ大きくなる
+
+*** 自己共分散・自己相関
+
+_MA(1) の 1 次の自己共分散_
+
+\begin{equation*}
+\begin{split}
+  \ \gamma_1
+  &=
+  \ Cov(y_t, y_{t-1})
+  \\&=
+  \ Cov(\mu + \epsilon_t + \theta_1\epsilon_{t-1}, \mu + \epsilon_{t-1} + \theta_1\epsilon_{t-2})
+  \\&=
+  \ Cov(\epsilon_t, \epsilon_{t-1}) + Cov(\epsilon_t, \theta_1 \epsilon_{t-2}) + Cov(\theta_1 \epsilon_{t-1}, \epsilon_{t-1}) + Cov(\theta_1 \epsilon_{t-1}, \theta_1 \epsilon_{t-2}) 
+  \\&=
+  \ \theta_1 Cov(\epsilon_{t-1}, \epsilon_{t-1})
+  \\&=
+  \ \theta_1 \sigma^2
+\end{split}
+\end{equation*}
+
+- ホワイトノイズの自己共分散はゼロであることを利用
+
+_MA(1) の 1 次の自己相関_
+
+$\rho_1 = \frac{\gamma_1}{\gamma_0} = \frac{\theta_1}{1 + \theta_1^2}$
+
+重要な性質
+- 自己相関は、$\theta_1 = \pm 1$ のとき最大値 1/2 になる
+- _つまり、MA(1) では自己相関 0.5 以上はモデル化できない_
+- _MA(1) の 2 次以降の自己相関はゼロになる_
+- 自己共分散が時点によらず、ラグのみに依存する = 弱定常性の性質
+
+*** 性質まとめ
+
+_1. 平均: 一定_
+
+$E(y_t) = \mu_t$
+
+_2. 分散: 係数の分だけノイズの分散よりも大きくなる_
+
+$\gamma_0 = Var(y_t) = (1 + \theta_1^2 + \theta_2^2 + \dots + \theta_q^2)\sigma^2$
+
+_3. 自己共分散: ラグが p + 1 より大きい場合ゼロになる_
+
+\begin{equation*}
+\gamma_k = \left \{
+\begin{array}{l}
+(\theta_k + \theta_1 \theta_{k+1} + \dots + \theta_{q-k} \theta_q)\sigma^2 , \ 1 \leq k \leq q \\
+0, k \geq q + 1 
+\end{array}
+\right.
+\end{equation*}	
+
+_4. MA 過程は常に定常である_
+
+_3. 自己相関: 自己共分散と同様、ラグが p + 1 より大きい場合ゼロになる_
+
+** AR(p) 過程 (Autoregressive Process)
+*** モデル式
+
+_AR(1)_
+
+$y_t = c + \phi_1 y_{t-1} + \epsilon_t, \ \epsilon_t \sim W.N(\sigma^2)$
+
+_AR(q)_
+
+$y_t = c + \sum_{i=1}^q \phi_i y_{t-i} + \epsilon_t, \ \epsilon_t \sim W.N(\sigma^2)$
+
+- 自身の過去のデータによって、自己相関を表現する
+- _MA 過程と同じく、過程の確率的変動は、全て e によって決定されている_
+- $|\phi_1| < 1$ のときのみ過程は、定常になる
+- $\phi_1 = 1$ のとき、過程は、単位根過程と呼ばれる
+
+*** プロット
+
+グラフの特徴
+- 平均は、定数 c と一致しない
+- 係数が  1 に近づくほど、滑らかになる
+- 係数が -1 に近づくほど、ギザギザになる
+
+**** 係数 =  0.8, sd = 1
+
+#+begin_src R :results graphics :file (get-babel-file)
+ar1_1 <- arima.sim(n = 100, model = list(order = c(1, 0, 0), ar = 0.8), sd = 1)
+plot(ar1_1, type = "l")
+#+end_src
+
+#+RESULTS:
+[[file:~/Dropbox/memo/img/babel/fig-dmTaKu.png]]
+
+**** 係数 = -0.8, sd = 1
+
+#+begin_src R :results graphics :file (get-babel-file)
+ar1_2 <- arima.sim(n = 100, model = list(order = c(1, 0, 0), ar = -0.8), sd = 1)
+plot(ar1_2, type = "l")
+#+end_src
+
+#+RESULTS:
+[[file:~/Dropbox/memo/img/babel/fig-bOeJB8.png]]
+
+*** 期待値
+
+- 期待値は _定数 c とは一致しない_
+
+_両辺の期待値をとると、_
+
+$E(y_t) = E(c + \phi_1 y_{t-1} + \epsilon_t) = c + \phi_1 E(y_{t-1})$
+
+
+_y が定常であるので、以下が成り立つ (平均は時点によらず、一定)_
+
+$\mu = E(y_t) = E(y_{t-1})$
+
+
+_したがって、期待値は_
+
+$\mu = c + \phi_1 \mu$
+
+
+_つまり、以下のように書き直せる_
+
+$\mu = \frac{c}{1 - \phi_1}$
+
+*** 分散
+
+- 分散がノイズよりも大きくなる
+
+_両辺の分散を考える_
+
+\begin{equation*}
+\begin{split}
+  \ Var(y_t)
+  &=
+  \ Var(c + \phi_1 y_{t-1} + \epsilon_t)
+  \\&=
+  \ \phi_1^2 Var(y_{t-1}) + Var(\epsilon_t) + 2Cov(y_{t-1}, \epsilon_t)
+  \\&=
+  \ \phi_1^2 Var(y_{t-1}) + \sigma^2
+\end{split}
+\end{equation*}
+
+- これは、 $Cov(y_{t-1}, \epsilon_t) = 0$ であることで成立
+
+_y が定常のとき、以下が成り立つ (分散は時点によらず一定のため)_
+
+$\gamma_0 = Var(y_t) = Var(y_{t-1})$
+
+$\gamma_0 = \frac{\sigma^2}{1 - \phi_1^2}$
+
+*** 自己共分散・自己相関
+
+- 同じ係数の場合、MA(1) よりも AR(1) のほうが自己相関が強くなる (より滑らかになる)
+- AR(1) では、$\phi_1 > 0$ のとき、2次以降のすべての自己相関も全て正になる 
+
+_k 次の自己共分散_
+
+\begin{equation*}
+\begin{split}
+  \ \gamma_k
+  &=
+  \ Cov(y_t, y_{t-k})
+  \\&=
+  \ Cov(\phi_1 y_{t-1} + \epsilon_t, y_{t-k})
+  \\&=
+  \ Cov(\phi_1 y_{t-1}, y_{t-k}) + Cov(\epsilon_t, y_{t-k})
+  \\&=
+  \ \phi_1 \gamma_{k-1}
+\end{split}
+\end{equation*}
+
+両辺を $\gamma_0$ で割ると、以下の _ユール・ウォーカー方程式_ を求めることができる
+
+$\rho_k = \phi_1 \rho_{k-1}$
+
+: ユール・ウォーカー方程式
+- AR 過程の自己相関が同一の係数をもつ、差分方程式に従うことを示している
+- 自己相関を順次計算していくことができる ($\rho_0 = 1$ から順次計算)
+- AR 過程の自己相関は、指数的に減衰していく
+
+- AR(1) のコレログラム
+#+begin_src R :results graphics :file (get-babel-file)
+ar2 <- arima.sim(n = 100, model = list(order = c(1, 0, 0), ar = 0.8))
+acf(ar2)
+#+end_src
+
+#+RESULTS:
+[[file:~/Dropbox/memo/img/babel/fig-lpvLBn.png]]
+
+*** 性質まとめ (定常の場合)
+
+_1. 平均: 定数 c とは一致せず、係数によって変動_
+
+$\mu = E(y_t) = \frac{c}{1 - \phi_1 - \phi_2 - \dots - \phi_p}$
+
+_2. 分散: σには一致せず、係数によって変動_
+
+$\gamma_0 = Var(y_t) = \frac{\sigma^2}{1 - \phi_1 \rho_1 - \phi_2 \rho_2 - \dots - \phi_p \rho_p}$ 
+
+_3. 自己共分散・自己相関: AR 過程と同一の係数をもつ p 次差分方程式に従う_
+
+$\gamma_k = \phi_1 \gamma_{k-1} + \phi_2 \gamma_{k-2} + \dots + \phi_p \gamma_{k-p}, \ k \geq 1$
+$\rho_k = \phi_1 \rho_{k-1} + \phi_2 \rho_{k-2} + \dots + \phi_p \rho_{k-p}, \ k \geq 1$
+
+_4. 自己相関は指数的に減数する_ 
+
+** ARMA(p, q) 過程
+*** 性質まとめ
+
+- AR(p), MA(q) のうち、どちらかの強い方の性質を併せ持っている
+- q 次までの自己相関は MA(q) の影響があるため、一般化が難しい
+
+_ARMA(p, q)_
+
+$y_t = c + \sum_{i=1}^p \phi_i y_{t-i} \sum_{j=1}^q \theta_j \epsilon_{t-j} + \epsilon_t, \ \epsilon_t \sim W.N(\sigma^2)$
+
+_1. 平均_
+
+$\mu = E(y_t) = \frac{c}{1 - \phi_1 - \phi_2 - \dots - \phi_p}$
+
+_2. 自己共分散・自己相関_ (q + 1 となっている点が、AR(p) と異なる)
+
+$\gamma_k = \phi_1 \gamma_{k-1} + \phi_2 \gamma_{k-2} + \dots + \phi_p \gamma_{k-p}, \ k \geq q + 1$
+$\rho_k = \phi_1 \rho_{k-1} + \phi_2 \rho_{k-2} + \dots + \phi_p \rho_{k-p}, \ k \geq q + 1$
+
+_3. 自己相関は指数的に減数する_ 
+
+*** AR 過程の定常性
+
+- ARMA 過程は、常に定常とは限らない
+- 定常過程に定常過程を加えたものは、定常過程になるため、MA 過程の定常性は無視して良い
+ 
+: AR 過程の定常性条件
+- AR 特性方程式の解の絶対値が 1 よりも大きいこと
+- AR 過程が定常であるとき、MA(∞) で書き直すことができること
+
+_AR(p) 過程の特性方程式_
+
+$1-\phi_1z \dots - \phi_pz^p = 0$
+
+
+_AR(1) 過程の特性方程式_
+
+$1-\phi_1z = 0$
+
+AR 特性方程式の解は、以下で与えられる
+
+$z = \phi_1^{-1}$
+
+したがって、
+
+$|\phi_1| < 1$ のとき $|z| > 1$ となるので、定常条件は、$|\phi_1| < 1$ となる
+
+
+- AR 係数が、0.5, 0.3 の場合
+- 全ての結果が 1 以上かを確認
+- 隼本 p.108
+#+begin_src R
+abs(polyroot(c(1, -c(0.5, 0.3))))
+#+end_src
+
+#+RESULTS:
+| 1.17359909646538 |
+| 2.84026576313205 |
+
+*** MA 過程の反転可能性
+
+- 同一の期待値と自己相関構造を持つ MA 過程が複数存在する
+- そのため、複数あるうちのどれを選ぶかの基準が必要になる
+- その基準として用いられるのが、反転可能性
+- MA(q) の場合、$2^q$ 個存在するが、反転可能なものは、1つしか存在しない
+
+: MA 過程の反転可能性条件
+- MA 過程を AR(∞) に書き直せること
+- MA 特性方程式の解の絶対値が 1 よりも大きいこと
+
+_MA 特性方程式_
+
+$1 + \theta_1 z + \theta_2 z^2 + \dots + \theta_p z^p = 0$
+
+
+_MA(1) の特性方程式_
+
+$1 + \theta z = 0$ 
+
+$|z| = |\theta^{-1}| > 1$, つまり $|\theta| < 1$ となる
+
+- MA 係数が、0.5, 0.3, -0.1 の場合
+- 全ての結果が 1 以上かを確認
+- 隼本 p.109
+#+begin_src R
+abs(polyroot(c(1, c(0.5, 0.3, -0.1))))
+#+end_src
+
+#+RESULTS:
+| 1.47892647536527 |
+| 1.47892647536527 |
+| 4.57200643220947 |
+
+*** モデル次数のしぼり方
+
+コレログラムを見て、モデル次数を絞り込む
+
+| モデル | 自己相関 (ACF)   | 偏自己相関 (PACF) |
+|--------+------------------+-------------------|
+| AR(p)  | 減衰していく     | _p + 1 以降はゼロ_  |
+| MA(q)  | _q + 1 以降はゼロ_ | 減衰していく      |
+| ARMA   | 減衰していく     | 減衰していく      |
+
+** VAR モデル
+
+- VAR
+- SVAR 構造化 VAR
+  同時点のデータもモデル化
+  
+** BVAR モデル
+- [[http://www.centreformacroeconomics.ac.uk/Discussion-Papers/2016/CFMDP2016-09-Paper.pdf][Bayesian VAR]]
+- [[https://ayatoashihara.github.io/my_blog/post/post5/][【日次 GDP】BVAR について]]
+
+** MARSS
+
+- https://nwfsc-timeseries.github.io/atsa-labs/
+- Multivariate State Space Model
+- DLM + VAR
+
+** GARCH モデル
+*** モデルの診断
+
+- 残差と残差の 2 乗ではテストの目的が異なる
+https://stats.stackexchange.com/questions/202526/garch-diagnostics-autocorrelation-in-standardized-residuals-but-not-in-their-sq
+
+- 以下の 4 つのテストを実施する
+https://www.researchgate.net/post/how_to_test_the_validity_of_the_results_of_GARCH_model
+
+1. 標準化残差が自己相関なし、かつ正規分布にしたがっているか？
+  => Mean Model の残差は、ホワイトノイズを仮定しているので、自己相関はないはず
+  => 正規分布を仮定した場合のみ (Shapiro-Wilk or Jarque-Bera)
+
+2. 標準化残差 2 乗系列は自己相関なし、かつ正規分布にしたがっているか (Ljung-Box)
+  => Variance Model の残差は N(0, 1) を仮定している
+  
+4. ARCH-LM Test で ARCH effect が残っていないかを確認
+
+** マルコフ過程
+*** 超基礎
+
+- [[https://www.bananarian.net/entry/2018/08/25/124807][【初心者向け】雰囲気で理解するマルコフ連鎖@バナナでもわかる話]]
+- 状態 t が 状態 t-1 *だけ* に基づいて決定されるような確率過程
+  => 晴れの翌日が晴れる確率は、80%, 雨の確率は 20% など
+- マルコフ連鎖: マルコフ過程の中でも、状態が離散的なもの
+- t の状態を t-1 の状態の条件付き確率で表現する
+
+- カエルが「石 1」と「石 2」を行ったり来たりする例
+- 2 状態の場合は、2 x 2 = 4 の遷移確率 (推移確率) が存在する
+$P(X_n = 1|X_n-1 = 1) = 0.5$
+$P(X_n = 2|X_n-1 = 1) = 0.5$
+$P(X_n = 1|X_n-1 = 2) = 0.8$
+$P(X_n = 2|X_n-1 = 2) = 0.2$
+
+以下のように書く
+$P=\begin{pmatrix} 0.5 & 0.5 \\ 0.8 & 0.2 \end{pmatrix}$
+
+遷移確率をグラフで表現することを「マルコフグラフ」と呼ぶ
+[[file:./graph/malkov_graph.png]]
+
+*** 基礎
+
+- [[https://www.bananarian.net/entry/2018/08/26/151255][Rで試すマルコフ連鎖@バナナでもわかる話]]
+- $(E, \epsilon)$ を可測空間という
+- カエルの例であれば、$E=(1, 2)$
+- 起こり得る状態を全て書き出したもの
+
+さらに $(\Omega, F, P)$ を確率空間とし、
+
+その確率空間上の確率変数列 ${X_n}$ について任意の n、
+
+$i_0, i_1, \dots, i_{n+1} \in E$ に対して、
+
+$P(X_{n+1} = i_{n+1} | X_0 = i_0, \dots, X_n = i_n) = P(X_{n+1} = i_{n+1} | X_n = i_n)$
+
+となるときマルコフ連鎖であるという
+
+- つまり 1 つ前以外は関係ない、ということを言っているだけ
+
+*** ランダムウォークの例
+
+- 50% の確率で +1 or -1
+- この場合、E = 整数全体
+#+begin_src R :results graphics :file (my/get-babel-file)
+init <- 0
+time <- 1:30
+walk <- c()
+walk[1] <- init
+
+for(i in time){
+	if (rbinom(1, 1, 0.5) == 1) {
+		init <- init+1
+	} else {
+		init <- init-1
+	}
+  walk[i+1] <- init
+}
+
+time <- c(time, length(time) + 1)
+plot(time, walk, type = "s")
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-8w04Cx.png]]
+
+*** AR 過程
+
+- AR(1) 過程も 1 つ前の状態で決まる
+- 1 つ前の状態 + 誤差
+- 以下の式の場合
+
+$y_t = 0.3 y_{t-1} + \epsilon, \epsilon \sim N(0, 5)$
+
+#+begin_src R :results graphics :file (my/get-babel-file)
+init <- rnorm(1,0,10)
+jiko_kaiki_seq <- c()
+time <- 1:300
+jiko_kaiki_seq[1] <- init
+
+for(i in time) {
+	X <- jiko_kaiki_seq[i]
+	y <- 0.3 * X + rnorm(1, 0, 5)
+	jiko_kaiki_seq[i+1] <- y
+}
+
+time <- c(time, length(time) + 1)
+plot(time, jiko_kaiki_seq, type = "l")
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-zKwct1.png]]
+
+*** ARCH 過程
+
+$X_{n+1} = (\sqrt{0.2 + 0.3{X_n}^2})v_{n+1}$
+
+#+begin_src R :results graphics :file (my/get-babel-file)
+init <- rnorm(1,0,10)
+ARCH_seq <- c()
+time <- 1:300
+ARCH_seq[1] <- init
+for(i in time) {
+	X <- ARCH_seq[i]
+	y <- sqrt((0.2 + 0.3 * X^2)) * rnorm(1, 0, 1)
+	ARCH_seq[i+1] <- y
+}
+
+time <- c(time, length(time) + 1)
+plot(time, ARCH_seq, type = "l")
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-KPLkak.png]]
+
+*** 推移確率行列の使い方
+
+$P=\begin{pmatrix} 0.5 & 0.5 \\ 0.8 & 0.2 \end{pmatrix}$
+
+- 推移確率行列の見方
+| 1->1 | 1->2 |
+| 2->1 | 2->2 |
+- 行の和が必ず 1 になる
+
+#+begin_src R
+P <- matrix(c(0.5, 0.8, 0.5, 0.2), nrow = 2)
+P
+#+end_src
+
+#+RESULTS:
+| 0.5 | 0.5 |
+| 0.8 | 0.2 |
+
+- 現在 1 で 2 秒後にも 1 である確率
+- 推移確率行列の積をとることで求められる = *チャップマンコルモゴロフ方程式*
+- 65% だとわかる
+#+begin_src R
+P %*% P
+#+end_src
+
+#+RESULTS:
+| 0.65 | 0.35 |
+| 0.56 | 0.44 |
+
+- 現在 2 で 3 秒後に 1 にいる確率
+- 2 行目 2 列を見る
+#+begin_src R
+P %*% P %*% P
+#+end_src
+
+#+RESULTS:
+| 0.605 | 0.395 |
+| 0.632 | 0.368 |
+
+*** エルゴード性
+
+- n を大きくしていくと初期値に依存しなくなる性質をエルゴード性と呼ぶ
+
+- 最初にどこにいたかは関係なく、1 or 2 にいる確率が収束していく
+#+begin_src R :results graphics :file (my/get-babel-file)
+time <- 1:30
+P <- matrix(c(0.5,0.8,0.5,0.2),2,2)
+Pn <- matrix(c(0.5,0.8,0.5,0.2),2,2)
+prob11 <- c()
+prob12 <- c()
+prob21 <- c()
+prob22 <- c()
+prob11[1] <- Pn[1,1]
+prob12[1] <- Pn[1,2]
+prob21[1] <- Pn[2,1]
+prob22[1] <- Pn[2,2]
+
+for(i in time) {
+	Pn <- Pn %*% P
+	prob11[i+1] <- Pn[1,1]
+	prob12[i+1] <- Pn[1,2]
+	prob21[i+1] <- Pn[2,1]
+	prob22[i+1] <- Pn[2,2]
+}
+
+time <- c(time, 31)
+par(mfcol = c(2, 2))
+plot(time, prob11, type="l")
+plot(time, prob12, type="l", col="red")
+plot(time, prob21, type="l", col="blue")
+plot(time, prob22, type="l", col="green")
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-0iAExK.png]]
+
+*** 隠れマルコフモデル
+
+- Blog: 機械学習・自然言語処理の勉強メモ
+  - [[http://kento1109.hatenablog.com/entry/2017/12/15/160315][隠れマルコフモデル（HMM）について]]
+  - [[http://kento1109.hatenablog.com/entry/2018/06/21/121441][Stan：隠れマルコフモデル1]]
+  - [[http://kento1109.hatenablog.com/entry/2018/06/23/124927][Stan：隠れマルコフモデル2]]
+
+- HMM と表記
+- HMM の例
+#+begin_quote
+ある友達が遠くに住んでいて、毎日何をしたかをあなたに電話で話します。友達は「散歩」「買物」「掃除」の 3 つのことにしか関心がありません。友達が何をするかはもっぱらその日の天気で決めます。あなたは友達が住んでいるところの天気の明確な情報は持っていません。
+友人が初日に「散歩」二日目に「買い物」三日目に「掃除」という順で行動したら、その観測結果が得られる確率はいくらでしょうか、そして、このような観測結果が得られたとき三日間の天気はどのようであったでしょうか。
+#+end_quote
+
+** LSTM (Long Short Term Memory)
+
+- [[https://clean-copy-of-onenote.hatenablog.com/entry/R/keras_lstm][【R】LSTM で時系列を予測してみる]]
+- Package {keras}
+
+* Time-Series Libraries
+** {stats} 
+*** arima()
+
+#+begin_src R 
+arima(x,
+      order = c(0L, 0L, 0L),
+      seasonal = list(order = c(0L, 0L, 0L), period = NA),
+      xreg = NULL,
+      include.mean = TRUE,
+      transform.pars = TRUE,
+      fixed = NULL,
+      init = NULL,
+      method = c("CSS-ML", "ML", "CSS"),
+      n.cond,
+      SSinit = c("Gardner1980", "Rossignol2011"),
+      optim.method = "BFGS",
+      optim.control = list(),
+      kappa = 1e6)
+#+end_src
+
+*** arima.sim()
+
+- 乱数発生器
+#+begin_src R
+arima.sim(model,
+          n,
+          rand.gen = rnorm,
+          innov = rand.gen(n, ...),
+          n.start = NA,
+          start.innov = rand.gen(n.start, ...),
+          ...)
+#+end_src
+
+set.seed(123)
+n_samples <- 100
+
+#? AR(1) 係数が正の値 => ACF が長く残る
+x <- arima.sim(n = n_samples, model = list(order = c(1, 0, 0), ar = 0.7))
+forecast::ggtsdisplay(x)
+
+#? AR(1) 係数が負の値 => 前期の影響が逆に働くため、ギザギザのデータになる
+x <- arima.sim(n = n_samples, model = list(order = c(1, 0, 0), ar = c(-0.7)))
+forecast::ggtsdisplay(x)
+
+#? 限りなくランダムウォークな AR(1)
+x <- arima.sim(n = n_samples, model = list(order = c(1, 0, 0), ar = 0.99))
+forecast::ggtsdisplay(x)
+
+#? AR(2) => 当然 PACF が 2 期前まで大きい
+x <- arima.sim(n = n_samples, model = list(order = c(2, 0, 0), ar = c(0.4, 0.3)))
+forecast::ggtsdisplay(x)
+
+#? MA(1) => PACF が長く残りやすい
+x <- arima.sim(n = n_samples, model = list(order = c(0, 0, 1), ma = c(0.7)))
+forecast::ggtsdisplay(x)
+
+** {forecast}
+*** Arima()
+
+- ~stats::arima()~ のラッパーになっている
+- ドリフト項を含めることができる点が異なる
+#+begin_src R :results silent
+Arima(
+  y,
+  order = c(0, 0, 0),
+  seasonal = c(0, 0, 0),
+  xreg = NULL,
+  include.mean = TRUE,
+  include.drift = FALSE,
+  include.constant,
+  lambda = model$lambda,
+  biasadj = FALSE, method = c("CSS-ML", "ML", "CSS"),
+  model = NULL,
+  x = y,
+  ...)
+#+end_src
+
+*** auto.arima()
+
+- モデルの同定を自動で行う
+- 全引数の解説
+#+begin_src R
+auto.arima(
+  y = spy_ret,
+
+  # ARIMA(p, d, q)
+  start.p = 2, max.p = 5,
+  start.q = 2, max.q = 5,
+  d = NA, max.d = 2, # NA の場合は、KPSS test の結果
+  test = c("kpss", "adf", "pp"), # Unit root test
+  test.args = list(),
+
+  # SARIMA(P, D, Q)
+  seasonal = TRUE,
+  start.P = 1, max.P = 2,
+  start.Q = 1, max.Q = 2,
+  D = NA, # NA の場合は、season.test の結果
+  max.D = 1, 
+  seasonal.test = c("seas", "ocsb", "hegy", "ch"),
+  seasonal.test.args = list(),
+
+  # モデル選択
+  ic = c("aicc", "aic", "bic"),
+  max.order = 5,      # sum(p, q, P, Q)
+  allowmean = TRUE,   # 切片項・定数項を含めるか？
+  allowdrift = TRUE,  # 時間的トレンド項を含めるか？
+  stationary = FALSE, # TRUE なら定常なものに限定
+
+  method = NULL, # パラメタ探索の手法(デフォルトで初期値=CSS、パラメタ=MLE)
+  trace = FALSE, # Verbose output
+
+  # 並列計算
+  num.cores = 2,
+  parallel = FALSE, # TRUE にする場合は、Stepwise = FALSE である必要あり
+  stepwise = TRUE,  #? 省いて高速化、FALSE なら全件試す FALSEにすべき
+  nmodels = 94,     # Stepwise 時の最大モデル数
+
+  # External regressors
+  xreg = NULL,
+
+  # Approximation?
+  approximation = FALSE, #? FALSE にすべき
+  truncate = NULL,
+
+  # Box-Cox transformation (データを正規分布に近づけるための変換手法)
+  lambda = NULL,
+  biasadj = FALSE,
+
+  # Deprecated
+  x = y
+)
+#+end_src
+
+#+RESULTS:
+
+model <- auto.arima(
+  spy_ret,
+  start.p = 0,
+  start.q = 0,
+  ic = "aic",
+  seasonal = FALSE,
+
+  stepwise = FALSE,
+  approximation = FALSE,
+  parallel = TRUE,
+  num.cores = 8
+)
+model
+
+## ARMA(1, 1) に従うシミュレーションデータ
+x <- arima.sim(n = 500, model = list(order = c(1, 0, 1), ar = 0.7, ma = 0.2))
+forecast::ggtsdisplay(x)
+
+arma_fit <- auto.arima(x,
+  max.order = 5,
+  allowmean = FALSE, allowdrift = FALSE,
+  num.cores = 8,
+  parallel = TRUE,
+  stepwise = FALSE
+)
+
+# ar = 0.66, ma = 0.27 と近い値を推定できた
+arma_fit
+
+#? 結果の見方
+# ar1 * y(t-1) + ma1 * e(t-1) = fitted (最初の 5 期間程は一致しない)
+# fitted + residuals = data
+
+# 対数尤度の計算
+llh <- sum(log(dnorm(arma_fit$residuals, sd = sqrt(arma_fit$sigma2))))
+llh
+
+# AIC
+-2 * (llh - 4)
+
+** {fGarch}
+** {vars}
+*** 関数解説
+**** All Functions
+
+#+begin_src R :results output
+ls("package:vars")
+#+end_src
+
+#+RESULTS:
+:  [1] "A"              "Acoef"          "B"              "BQ"            
+:  [5] "Bcoef"          "Phi"            "Psi"            "SVAR"          
+:  [9] "SVEC"           "VAR"            "VARselect"      "arch"          
+: [13] "arch.test"      "causality"      "fanchart"       "fevd"          
+: [17] "irf"            "normality"      "normality.test" "restrict"      
+: [21] "roots"          "serial"         "serial.test"    "stability"     
+: [25] "vec2var"
+
+**** VARSelect()
+
+- VAR モデルの次数選択
+#+begin_src R
+VARselect(
+  y,
+  lag.max = 10,
+  # VAR Model の回帰式の形を決める
+  type = c("const", "trend", "both", "none"),
+  # 季節性 dummy 変数
+  season = NULL,
+  # 外生変数
+  exogen = NULL)
+#+end_src
+
+**** VAR()
+
+- VAR モデルのパラメタ推定
+#+begin_src R
+VAR(
+  y,
+  # 次数, VARSelect で計算した次数を入れる
+  p = 1,
+  type = c("const", "trend", "both", "none"),
+  season = NULL,
+  exogen = NULL,
+  lag.max = NULL,
+  ic = c("AIC", "HQ", "SC", "FPE"))
+#+end_src
+
+**** SVAR()
+
+#+begin_src R
+SVAR(
+  x, # varest object from VAR()
+  estmethod = c("scoring", "direct"),
+  Amat = NULL,
+  Bmat = NULL,
+  start = NULL,
+  max.iter = 100,
+  conv.crit = 0.1e-6,
+  maxls = 1.0,
+  lrtest = TRUE,
+  ...
+)
+#+end_src
+
+**** causality()
+
+- Granger 因果性検定
+#+begin_src R
+causality(
+  x,            # varest オブジェクト
+  cause = NULL, # 文字列で
+  vcov. = NULL,
+  boot = FALSE,
+  boot.runs = 100)
+#+end_src
+
+**** irf()
+
+- インパルス応答関数 (Implus Response Function)
+#+begin_src R
+irf(
+  # varest, svarest, vec2var or svecest object
+  x,
+  impulse = NULL,
+  response = NULL,
+  n.ahead = 10,
+  # "orthogonalised" 直交化インパルス応答関数を計算する
+  ortho = TRUE,
+  cumulative = FALSE,
+  # ブートストラップで、信頼区間を求める
+  boot = TRUE,
+  # ブートストラップの試行回数
+  runs = 100,
+  ci = 0.95,
+  seed = NULL,
+  ...)
+#+end_src
+
+**** fevd()
+
+- 分散分解 (Forecast Error Variance Decomposition)
+#+begin_src R
+fevd(x, n.ahead = 10, ...)
+#+end_src
+
+**** VAR.sim()
+
+- シミュレーションデータ
+#+begin_src R
+library(tsDyn)
+VAR.sim(B, n = 200, lag = 1, include = c("const", "trend", "none",
+  "both"), starting = NULL, innov = rmnorm(n, varcov = varcov),
+  varcov = diag(1, nrow(B)), show.parMat = FALSE, returnStarting = FALSE,
+  ...)
+#+end_src
+
+**** その他のモデル
+SVAR()
+vec2var()
+SVEC()
+
+*** 隼本 p.147〜の例
+**** Data の読み込み
+
+#+begin_src R :colnames yes
+data(usconsumption)
+head(usconsumption)
+#+end_src
+
+#+RESULTS:
+|  consumption |       income |
+|--------------+--------------|
+|   0.61227692 |  0.496540045 |
+|  0.454929794 |  1.736459591 |
+|  0.874673021 |  1.344880981 |
+| -0.272514385 | -0.328145953 |
+|  1.892186993 |  1.965432327 |
+|  0.913378185 |  1.490757133 |
+
+#+begin_src R :results graphics :file (get-babel-file)
+autoplot(usconsumption, facet = TRUE)
+#+end_src
+
+#+RESULTS:
+[[file:~/Dropbox/memo/img/babel/fig-IU3s7P.png]]
+
+**** 単位根検定
+
+- 単位根検定 => 単位根を持つ、を棄却
+#+begin_src R :results output
+summary(ur.df(usconsumption[, "consumption"], type = "drift"))
+summary(ur.df(usconsumption[, "income"], type = "drift"))
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+############################################### 
+# Augmented Dickey-Fuller Test Unit Root Test # 
+############################################### 
+
+Test regression drift 
+
+
+Call:
+lm(formula = z.diff ~ z.lag.1
+1
+z.diff.lag)
+
+Residuals:
+     Min       1Q   Median       3Q      Max 
+-2.68900 -0.32273 -0.01116  0.38675  1.39560 
+
+Coefficients:
+            Estimate Std. Error t value Pr(>|t|)    
+(Intercept)  0.38342    0.08318   4.609 8.24e-06 ***
+z.lag.1     -0.50402    0.08773  -5.745 4.55e-08 ***
+z.diff.lag  -0.21646    0.07740  -2.797   0.0058 ** 
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Residual standard error: 0.6399 on 159 degrees of freedom
+Multiple R-squared:  0.3536,	Adjusted R-squared:  0.3454 
+F-statistic: 43.49 on 2 and 159 DF,  p-value: 8.628e-16
+
+
+Value of test-statistic is: -5.7451 16.5046 
+
+Critical values for test statistics: 
+      1pct  5pct 10pct
+tau2 -3.46 -2.88 -2.57
+phi1  6.52  4.63  3.81
+
+############################################### 
+# Augmented Dickey-Fuller Test Unit Root Test # 
+############################################### 
+
+Test regression drift 
+
+
+Call:
+lm(formula = z.diff ~ z.lag.1
+1
+z.diff.lag)
+
+Residuals:
+    Min      1Q  Median      3Q     Max 
+-3.0503 -0.3942  0.0221  0.5326  3.8944 
+
+Coefficients:
+            Estimate Std. Error t value Pr(>|t|)    
+(Intercept)  0.69507    0.11240   6.184 5.06e-09 ***
+z.lag.1     -0.95024    0.11419  -8.322 3.72e-14 ***
+z.diff.lag  -0.09490    0.07871  -1.206     0.23    
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Residual standard error: 0.9432 on 159 degrees of freedom
+Multiple R-squared:  0.5309,	Adjusted R-squared:  0.5249 
+F-statistic: 89.96 on 2 and 159 DF,  p-value: < 2.2e-16
+
+
+Value of test-statistic is: -8.322 34.6336 
+
+Critical values for test statistics: 
+      1pct  5pct 10pct
+tau2 -3.46 -2.88 -2.57
+phi1  6.52  4.63  3.81
+#+end_example
+
+**** 相互相関 CCF
+
+- 前後 3-4 期間で強い相関がありそう
+#+begin_src R :results graphics :file (get-babel-file)
+Ccf <- ccf(usconsumption[, "consumption"], usconsumption[, "income"])
+#+end_src
+
+#+RESULTS:
+[[file:~/Dropbox/memo/img/babel/fig-V1Mp0M.png]]
+
+**** 次数選択
+
+AIC により、次数 5 が選ばれた
+#+begin_src R :results output
+VARselect(usconsumption, type = "const")
+#+end_src
+
+#+RESULTS:
+#+begin_example
+$selection
+AIC(n)  HQ(n)  SC(n) FPE(n) 
+     5      1      1      5 
+
+$criteria
+                1         2          3          4          5          6
+AIC(n) -1.2669809 -1.254039 -1.2991953 -1.3141205 -1.3295668 -1.2939806
+HQ(n)  -1.2189185 -1.173935 -1.1870496 -1.1699332 -1.1533379 -1.0857100
+SC(n)  -1.1486581 -1.056834 -1.0231087 -0.9591520 -0.8957165 -0.7812483
+FPE(n)  0.2816835  0.285363  0.2727854  0.2687822  0.2647208  0.2743982
+                7          8          9         10
+AIC(n) -1.2634257 -1.2409677 -1.2158338 -1.1808584
+HQ(n)  -1.0231135 -0.9686139 -0.9114384 -0.8444214
+SC(n)  -0.6718115 -0.5704717 -0.4664559 -0.3525986
+FPE(n)  0.2830345  0.2896272  0.2972129  0.3080666
+#+end_example
+
+**** パラメタ推定
+
+#+begin_src R :results output
+var_best <- VAR(usconsumption, p = 5, type = "const") # 定数のみありモデル
+summary(var_best)
+## plot(var_best)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+VAR Estimation Results:
+========================= 
+Endogenous variables: consumption, income 
+Deterministic variables: const 
+Sample size: 159 
+Log Likelihood: -321.616 
+Roots of the characteristic polynomial:
+0.7403 0.7403 0.7208 0.6745 0.6745  0.58  0.58 0.5484 0.5484 0.01889
+Call:
+VAR(y = usconsumption, p = 5, type = "const")
+
+
+Estimation results for equation consumption: 
+============================================ 
+consumption = consumption.l1
+income.l1
+consumption.l2
+income.l2
+consumption.l3
+income.l3
+consumption.l4
+income.l4
+consumption.l5
+income.l5
+const 
+
+                Estimate Std. Error t value Pr(>|t|)    
+consumption.l1  0.248764   0.085965   2.894 0.004382 ** 
+income.l1       0.059566   0.063446   0.939 0.349337    
+consumption.l2  0.197200   0.089569   2.202 0.029238 *  
+income.l2      -0.102497   0.065299  -1.570 0.118631    
+consumption.l3  0.298879   0.090395   3.306 0.001186 ** 
+income.l3      -0.054073   0.063907  -0.846 0.398851    
+consumption.l4 -0.030031   0.094230  -0.319 0.750404    
+income.l4      -0.099790   0.064216  -1.554 0.122325    
+consumption.l5 -0.002482   0.091586  -0.027 0.978417    
+income.l5      -0.041258   0.061356  -0.672 0.502347    
+const           0.389927   0.099396   3.923 0.000133 ***
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+
+Residual standard error: 0.6158 on 148 degrees of freedom
+Multiple R-Squared: 0.2611,	Adjusted R-squared: 0.2111 
+F-statistic: 5.229 on 10 and 148 DF,  p-value: 1.466e-06 
+
+
+Estimation results for equation income: 
+======================================= 
+income = consumption.l1
+income.l1
+consumption.l2
+income.l2
+consumption.l3
+income.l3
+consumption.l4
+income.l4
+consumption.l5
+income.l5
+const 
+
+               Estimate Std. Error t value Pr(>|t|)    
+consumption.l1  0.45311    0.11414   3.970 0.000112 ***
+income.l1      -0.27869    0.08424  -3.308 0.001178 ** 
+consumption.l2  0.03256    0.11892   0.274 0.784642    
+income.l2      -0.11671    0.08670  -1.346 0.180295    
+consumption.l3  0.46720    0.12002   3.893 0.000149 ***
+income.l3      -0.18623    0.08485  -2.195 0.029739 *  
+consumption.l4  0.32807    0.12511   2.622 0.009648 ** 
+income.l4      -0.21988    0.08526  -2.579 0.010886 *  
+consumption.l5 -0.02095    0.12160  -0.172 0.863463    
+income.l5      -0.20980    0.08146  -2.575 0.010991 *  
+const           0.51335    0.13197   3.890 0.000151 ***
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+
+Residual standard error: 0.8176 on 148 degrees of freedom
+Multiple R-Squared: 0.2938,	Adjusted R-squared: 0.246 
+F-statistic: 6.156 on 10 and 148 DF,  p-value: 8.055e-08 
+
+
+
+Covariance matrix of residuals:
+            consumption income
+consumption      0.3792 0.1654
+income           0.1654 0.6684
+
+Correlation matrix of residuals:
+            consumption income
+consumption      1.0000 0.3286
+income           0.3286 1.0000
+#+end_example
+
+#+begin_src R :results graphics :file (get-babel-file)
+plot(var_best, 1)
+#+end_src
+
+#+RESULTS:
+[[file:~/Dropbox/memo/img/babel/fig-yStwOD.png]]
+
+**** Granger 因果性検定
+
+- 収入は、「精度が向上していない」を棄却できない
+#+begin_src R :results output
+causality(var_best, "income")
+#+end_src
+
+#+RESULTS:
+#+begin_example
+$Granger
+
+	Granger causality H0: income do not Granger-cause consumption
+
+data:  VAR object var_best
+F-Test = 1.4337, df1 = 5, df2 = 296, p-value = 0.212
+
+
+$Instant
+
+	H0: No instantaneous causality between: income and consumption
+
+data:  VAR object var_best
+Chi-squared = 15.492, df = 1, p-value = 8.285e-05
+#+end_example
+
+- 消費は、どちらも有意（消費が増えると収入が増える)
+#+begin_src R :results output
+causality(var_best, "consumption")
+#+end_src
+
+#+RESULTS:
+#+begin_example
+$Granger
+
+	Granger causality H0: consumption do not Granger-cause income
+
+data:  VAR object var_best
+F-Test = 10.575, df1 = 5, df2 = 296, p-value = 2.334e-09
+
+
+$Instant
+
+	H0: No instantaneous causality between: consumption and income
+
+data:  VAR object var_best
+Chi-squared = 15.492, df = 1, p-value = 8.285e-05
+#+end_example
+
+**** インパルス応答関数
+
+#+begin_src R :results graphics :file (get-babel-file)
+irf_result <- irf(var_best, impulse = "consumption",
+                  response = c("consumption", "income"),
+                  n.ahead = 12,
+                  boot = TRUE)
+plot(irf_result)
+#+end_src
+
+#+RESULTS:
+[[file:~/Dropbox/memo/img/babel/fig-KUIfnL.png]]
+
+**** 分散分解
+
+- 各変数が将来予測に対して、どのくらいの重みを持っているか
+#+begin_src R :results graphics :file (get-babel-file)
+plot(fevd(var_best))
+#+end_src
+
+#+RESULTS:
+[[file:~/Dropbox/memo/img/babel/fig-amG7wN.png]]
+
+*** 2 つの株価で実施
+**** データ準備
+
+#+begin_src R :colnames yes
+library(tidyquant)
+
+from <- "2018-01-01"
+to <- "2018-12-31"
+symbols <- c("USO", "XOM")
+
+data <- tq_get(symbols, from = from, to = to) %>%
+  group_by(symbol) %>%
+  mutate(log_adj = log(adjusted), log_ret = log(adjusted) - lag(log(adjusted))) %>%
+  slice(-1) %>%
+  ungroup()
+  
+head(data)
+#+end_src
+
+#+RESULTS:
+| symbol |       date |  open |  high |   low | close |   volume | adjusted |          log_adj |              log_ret |
+|--------+------------+-------+-------+-------+-------+----------+----------+------------------+----------------------|
+| USO    | 2018-01-03 | 12.17 | 12.36 | 12.17 | 12.34 | 17249200 |    12.34 | 2.51284601847724 |   0.0221229833678014 |
+| USO    | 2018-01-04 | 12.33 | 12.42 | 12.31 | 12.37 | 11847900 |    12.37 |  2.5152741864044 |  0.00242816792715495 |
+| USO    | 2018-01-05 | 12.28 | 12.33 | 12.21 | 12.31 | 12879100 |    12.31 | 2.51041194019636 | -0.00486224620803455 |
+| USO    | 2018-01-08 | 12.31 | 12.38 | 12.27 | 12.38 |  9833800 |    12.38 | 2.51608226725645 |  0.00567032706008819 |
+| USO    | 2018-01-09 | 12.41 | 12.64 | 12.37 | 12.57 | 21329200 |    12.57 | 2.53131302260216 |   0.0152307553457058 |
+| USO    | 2018-01-10 | 12.67 | 12.71 |  12.6 | 12.68 | 14572400 |    12.68 | 2.54002594900908 |  0.00871292640692367 |
+
+**** plot
+
+#+begin_src R :results graphics :file (get-babel-file)
+ggplot(data, aes(x = date, y = log_adj)) + geom_line() +
+  facet_grid(symbol ~ ., scales = "free_y")
+#+end_src
+
+#+RESULTS:
+[[file:~/Dropbox/memo/img/babel/fig-hKeSpV.png]]
+
+**** 単位根検定
+
+#+begin_src R :results output
+uso <- filter(data, symbol == symbols[1]) %>% dplyr::select(date, log_adj, log_ret)
+summary(ur.df(uso$log_adj, type = "trend", lag = 10, selectlags = "AIC")) # adj = 単位根あり
+summary(ur.df(uso$log_ret, type = "trend", lag = 10, selectlags = "AIC")) # ret = 単位根なし
+
+xom <- filter(data, symbol == symbols[2]) %>% dplyr::select(date, log_adj, log_ret)
+summary(ur.df(xom$log_adj, type = "trend", lag = 10, selectlags = "AIC")) # adj = 単位根あり
+summary(ur.df(xom$log_ret, type = "trend", lag = 10, selectlags = "AIC")) # ret = 単位根なし
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+############################################### 
+# Augmented Dickey-Fuller Test Unit Root Test # 
+############################################### 
+
+Test regression trend 
+
+
+Call:
+lm(formula = z.diff ~ z.lag.1
+1
+tt
+z.diff.lag)
+
+Residuals:
+      Min        1Q    Median        3Q       Max 
+-0.067521 -0.010941  0.000724  0.011778  0.068622 
+
+Coefficients:
+              Estimate Std. Error t value Pr(>|t|)  
+(Intercept) -1.165e-02  3.140e-02  -0.371   0.7111  
+z.lag.1      6.179e-03  1.200e-02   0.515   0.6072  
+tt          -4.435e-05  1.819e-05  -2.438   0.0155 *
+z.diff.lag  -1.265e-01  6.606e-02  -1.915   0.0567 .
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Residual standard error: 0.01904 on 234 degrees of freedom
+Multiple R-squared:  0.03595,	Adjusted R-squared:  0.02359 
+F-statistic: 2.908 on 3 and 234 DF,  p-value: 0.03536
+
+
+Value of test-statistic is: 0.5148 2.5347 3.2124 
+
+Critical values for test statistics: 
+      1pct  5pct 10pct
+tau3 -3.99 -3.43 -3.13
+phi2  6.22  4.75  4.07
+phi3  8.43  6.49  5.47
+
+############################################### 
+# Augmented Dickey-Fuller Test Unit Root Test # 
+############################################### 
+
+Test regression trend 
+
+
+Call:
+lm(formula = z.diff ~ z.lag.1
+1
+tt
+z.diff.lag)
+
+Residuals:
+      Min        1Q    Median        3Q       Max 
+-0.068764 -0.010902  0.000837  0.012290  0.067313 
+
+Coefficients:
+              Estimate Std. Error t value Pr(>|t|)    
+(Intercept)  4.249e-03  2.657e-03   1.599   0.1112    
+z.lag.1     -1.063e+00  9.792e-02 -10.855   <2e-16 ***
+tt          -4.291e-05  1.833e-05  -2.341   0.0201 *  
+z.diff.lag  -5.096e-02  6.549e-02  -0.778   0.4373    
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Residual standard error: 0.01902 on 234 degrees of freedom
+Multiple R-squared:  0.5612,	Adjusted R-squared:  0.5556 
+F-statistic: 99.76 on 3 and 234 DF,  p-value: < 2.2e-16
+
+
+Value of test-statistic is: -10.8547 39.2836 58.9217 
+
+Critical values for test statistics: 
+      1pct  5pct 10pct
+tau3 -3.99 -3.43 -3.13
+phi2  6.22  4.75  4.07
+phi3  8.43  6.49  5.47
+
+############################################### 
+# Augmented Dickey-Fuller Test Unit Root Test # 
+############################################### 
+
+Test regression trend 
+
+
+Call:
+lm(formula = z.diff ~ z.lag.1
+1
+tt
+z.diff.lag)
+
+Residuals:
+      Min        1Q    Median        3Q       Max 
+-0.052380 -0.008175  0.001181  0.009143  0.045716 
+
+Coefficients:
+              Estimate Std. Error t value Pr(>|t|)
+(Intercept)  1.285e-01  7.917e-02   1.623    0.106
+z.lag.1     -2.978e-02  1.834e-02  -1.623    0.106
+tt          -1.529e-06  1.356e-05  -0.113    0.910
+z.diff.lag   8.484e-02  6.591e-02   1.287    0.199
+
+Residual standard error: 0.01401 on 234 degrees of freedom
+Multiple R-squared:  0.01656,	Adjusted R-squared:  0.003952 
+F-statistic: 1.313 on 3 and 234 DF,  p-value: 0.2707
+
+
+Value of test-statistic is: -1.6234 1.2271 1.4367 
+
+Critical values for test statistics: 
+      1pct  5pct 10pct
+tau3 -3.99 -3.43 -3.13
+phi2  6.22  4.75  4.07
+phi3  8.43  6.49  5.47
+
+############################################### 
+# Augmented Dickey-Fuller Test Unit Root Test # 
+############################################### 
+
+Test regression trend 
+
+
+Call:
+lm(formula = z.diff ~ z.lag.1
+1
+tt
+z.diff.lag)
+
+Residuals:
+      Min        1Q    Median        3Q       Max 
+-0.055928 -0.008103  0.000743  0.008571  0.050962 
+
+Coefficients:
+              Estimate Std. Error t value Pr(>|t|)    
+(Intercept)  1.308e-05  1.947e-03   0.007    0.995    
+z.lag.1     -8.968e-01  8.929e-02 -10.044   <2e-16 ***
+tt          -6.185e-06  1.329e-05  -0.465    0.642    
+z.diff.lag  -3.954e-02  6.528e-02  -0.606    0.545    
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Residual standard error: 0.01407 on 234 degrees of freedom
+Multiple R-squared:  0.4675,	Adjusted R-squared:  0.4606 
+F-statistic: 68.47 on 3 and 234 DF,  p-value: < 2.2e-16
+
+
+Value of test-statistic is: -10.0445 33.6321 50.4475 
+
+Critical values for test statistics: 
+      1pct  5pct 10pct
+tau3 -3.99 -3.43 -3.13
+phi2  6.22  4.75  4.07
+phi3  8.43  6.49  5.47
+#+end_example
+
+**** CCF
+
+#+begin_src R :results graphics :file (get-babel-file)
+Ccf(xom$log_ret, uso$log_ret)
+#+end_src
+
+#+RESULTS:
+[[file:~/Dropbox/memo/img/babel/fig-OU4DC0.png]]
+
+**** 次数選択
+
+#+begin_src R :results output
+d <- tibble(XOM = xom$log_ret, USO = uso$log_ret)
+VARselect(d, type = "const")
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+$selection
+AIC(n)  HQ(n)  SC(n) FPE(n) 
+     1      1      1      1 
+
+$criteria
+                   1             2             3             4             5
+AIC(n) -1.688136e+01 -1.686501e+01 -1.685018e+01 -1.685001e+01 -1.683211e+01
+HQ(n)  -1.684620e+01 -1.680639e+01 -1.676812e+01 -1.674450e+01 -1.670316e+01
+SC(n)  -1.679409e+01 -1.671955e+01 -1.664654e+01 -1.658818e+01 -1.651210e+01
+FPE(n)  4.661413e-08  4.738331e-08  4.809212e-08  4.810221e-08  4.897364e-08
+                   6             7             8             9            10
+AIC(n) -1.681315e+01 -1.680045e+01 -1.677458e+01 -1.675285e+01 -1.672026e+01
+HQ(n)  -1.666075e+01 -1.662460e+01 -1.657528e+01 -1.653011e+01 -1.647408e+01
+SC(n)  -1.643495e+01 -1.636408e+01 -1.628002e+01 -1.620010e+01 -1.610934e+01
+FPE(n)  4.991559e-08  5.055919e-08  5.189238e-08  5.304245e-08  5.481206e-08
+#+end_example
+
+**** パラメタ推定
+
+#+begin_src R :results output
+var_fit <- VAR(d, p = 1, type = "const")
+summary(var_fit)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+VAR Estimation Results:
+========================= 
+Endogenous variables: XOM, USO 
+Deterministic variables: const 
+Sample size: 248 
+Log Likelihood: 1401.573 
+Roots of the characteristic polynomial:
+0.1215 0.07711
+Call:
+VAR(y = d, p = 1, type = "const")
+
+
+Estimation results for equation XOM: 
+==================================== 
+XOM = XOM.l1
+USO.l1
+const 
+
+         Estimate Std. Error t value Pr(>|t|)
+XOM.l1  0.0996347  0.0792666   1.257    0.210
+USO.l1 -0.0444771  0.0578438  -0.769    0.443
+const  -0.0007785  0.0008796  -0.885    0.377
+
+
+Residual standard error: 0.01383 on 245 degrees of freedom
+Multiple R-Squared: 0.006409,	Adjusted R-squared: -0.001702 
+F-statistic: 0.7902 on 2 and 245 DF,  p-value: 0.4549 
+
+
+Estimation results for equation USO: 
+==================================== 
+USO = XOM.l1
+USO.l1
+const 
+
+        Estimate Std. Error t value Pr(>|t|)
+XOM.l1 -0.086900   0.108413  -0.802    0.424
+USO.l1 -0.055246   0.079113  -0.698    0.486
+const  -0.001152   0.001203  -0.957    0.339
+
+
+Residual standard error: 0.01892 on 245 degrees of freedom
+Multiple R-Squared: 0.01133,	Adjusted R-squared: 0.003257 
+F-statistic: 1.404 on 2 and 245 DF,  p-value: 0.2477 
+
+
+
+Covariance matrix of residuals:
+          XOM       USO
+XOM 0.0001913 0.0001585
+USO 0.0001585 0.0003578
+
+Correlation matrix of residuals:
+       XOM    USO
+XOM 1.0000 0.6058
+USO 0.6058 1.0000
+#+end_example
+
+**** どちらも因果性なし
+
+#+begin_src R :results output
+causality(var_fit, cause = "USO")
+causality(var_fit, cause = "XOM")
+#+end_src
+
+#+RESULTS:
+#+begin_example
+$Granger
+
+	Granger causality H0: USO do not Granger-cause XOM
+
+data:  VAR object var_fit
+F-Test = 0.59123, df1 = 1, df2 = 490, p-value = 0.4423
+
+
+$Instant
+
+	H0: No instantaneous causality between: USO and XOM
+
+data:  VAR object var_fit
+Chi-squared = 66.575, df = 1, p-value = 3.331e-16
+
+$Granger
+
+	Granger causality H0: XOM do not Granger-cause USO
+
+data:  VAR object var_fit
+F-Test = 0.64251, df1 = 1, df2 = 490, p-value = 0.4232
+
+
+$Instant
+
+	H0: No instantaneous causality between: XOM and USO
+
+data:  VAR object var_fit
+Chi-squared = 66.575, df = 1, p-value = 3.331e-16
+#+end_example
+
+** {MSwM}
+*** TODO
+- 次期のレジーム予測
+- CAPM + レジーム
+- レジーム判定のタイムラグ
+- Stan での実装
+
+*** Reference
+
+- [[https://cran.r-project.org/web/packages/MSwM/index.html][CRAN]]
+- [[https://cran.r-project.org/web/packages/MSwM/MSwM.pdf][Reference Manual]]
+- Vignette
+  - [[https://cran.r-project.org/web/packages/MSwM/vignettes/examples.pdf][example (PDF)]] 
+- Blog
+  - [[https://tjo.hatenablog.com/entry/2013/06/20/191317][マルコフ状態転換モデルのRパッケージ{MSwM}の使い方（異常値検出・ステータス変化検出などに有用）]]
+  - [[http://sinhrks.hatenablog.com/entry/2014/10/26/225850][R の {MSwM} パッケージでマルコフ転換モデルをためす]]
+  - [[http://user.keio.ac.jp/~nagakura/R/R_markov_regime.pdf][マルコフレジームスイッチングモデルの推定]]
+  
+*** 概要
+
+- n 個の状態があり、それに対応する n 個の AR 過程を仮定する
+- n x n の遷移確率行列で表されるマルコフ過程に従って状態変化すると仮定する
+- EM アルゴリズムを用いて、n 通りある状態のいずれかであったかの事後確率列を求める
+
+: EM アルゴリズム
+  - Expectation-Maximization Algorithm 期待値最大化法
+  - パラメタを最尤推定する手法のひとつ
+   
+- ~{MSwM}~ はマルコフ状態転換モデルを推定するに当たって、何かしらの説明変数を仮定
+- それとの回帰モデルに基づいて、EM アルゴリズムで事後確率を求める
+- いかなる時系列であれ、（どんなに恣意的でも良いので）説明変数を持ってくる必要がある
+
+*** 全関数 
+
+#+begin_src R :results output
+ls("package:MSwM")
+#+end_src
+
+#+RESULTS:
+: [1] "AIC"       "intervals" "msmFit"    "msmResid"  "plot"      "plotDiag" 
+: [7] "plotProb"  "plotReg"   "summary"
+
+*** Vignette の例
+**** 例 1 (2 regimes)
+***** データ
+
+- シミュレーションデータ
+- 2 レジームの例
+  - レジーム 1: 強い自己相関
+  - レジーム 2: 外生変数 x のみに反応
+
+$y1_t = 8 + 2x_t + \epsilen, \epsilon \sim N(0,1)$
+$y2_t = 1 + 0.9y_{t-1} + \epsilen, \epsilon \sim N(0,0.5)$
+
+#+begin_src R :results value :colnames yes
+data(examle)
+head(example)
+#+end_src
+
+#+RESULTS:
+|    x |     y |
+|------+-------|
+| 0.71 |  9.13 |
+| 0.97 |   9.5 |
+| 0.07 |  9.98 |
+|    1 | 11.14 |
+| 0.55 | 11.21 |
+| 0.19 | 10.61 |
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+example %>%
+  pivot_longer(c(x, y), names_to = "key", values_to = "val") %>%
+  rowid_to_column() %>%
+  ggplot(aes(x = rowid, y = val)) +
+  geom_line() +
+  facet_grid(key ~ ., scales = "free_y")
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-tUcF7k.png]]
+
+***** モデル
+
+#+begin_src R :results output
+mod <- lm(y ~ x, data = example)
+summary(mod)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+Call:
+lm(formula = y ~ x, data = example)
+
+Residuals:
+    Min      1Q  Median      3Q     Max 
+-2.8998 -0.8429 -0.0427  0.7420  4.0337 
+
+Coefficients:
+            Estimate Std. Error t value Pr(>|t|)    
+(Intercept)   9.0486     0.1398  64.709  < 2e-16 ***
+x             0.8235     0.2423   3.398  0.00077 ***
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Residual standard error: 1.208 on 298 degrees of freedom
+Multiple R-squared:  0.03731,	Adjusted R-squared:  0.03408 
+F-statistic: 11.55 on 1 and 298 DF,  p-value: 0.0007701
+#+end_example
+
+***** 残差チェック
+
+- ホワイトノイズには見えない
+#+begin_src R :results graphics :file (my/get-babel-file)
+qqnorm(resid(mod))
+qqline(resid(mod))
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-0PHb2f.png]]
+
+- 残差に強い自己相関が残っている
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+acf(resid(mod))
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-BRdXly.png]]
+
+***** マルコフ転換モデル
+
+- sw: 説明変数の数 + 1 の TRUE/FALSE
+- このケースでは、切片 + X + AR1 の 3 つ + 1
+
+#+begin_src R :results output
+mod_mswm <- msmFit(mod,
+                   k = 2, # レジーム数
+                   p = 1, # AR次数
+                   sw = c(TRUE, TRUE, TRUE, TRUE),
+                   control = list(parallel = FALSE))
+summary(mod_mswm)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+Error in validMSM.lm(ans) : 
+  The length of sw has to be equal of the number of coefficients in the model plus 1
+
+Markov Switching Model
+
+Call: msmFit(object = mod, k = 2, sw = c(TRUE, TRUE, TRUE, TRUE), p = 1, 
+    control = list(parallel = FALSE))
+
+       AIC     BIC    logLik
+  637.0736 693.479 -312.5368
+
+Coefficients:
+
+Regime 1 
+---------
+               Estimate Std. Error t value  Pr(>|t|)    
+(Intercept)(S)   0.8417     0.3024  2.7834  0.005379 ** 
+x(S)            -0.0533     0.1340 -0.3978  0.690778    
+y_1(S)           0.9208     0.0305 30.1902 < 2.2e-16 ***
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Residual standard error: 0.5034675
+Multiple R-squared: 0.8375
+
+Standardized Residuals:
+          Min            Q1           Med            Q3           Max 
+-1.5153667307 -0.0906543205  0.0001873641  0.1656717257  1.2020898978 
+
+Regime 2 
+---------
+               Estimate Std. Error t value  Pr(>|t|)    
+(Intercept)(S)   8.6393     0.7254 11.9097 < 2.2e-16 ***
+x(S)             1.8771     0.3107  6.0415 1.527e-09 ***
+y_1(S)          -0.0569     0.0798 -0.7130    0.4758    
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Residual standard error: 0.9339683
+Multiple R-squared: 0.2408
+
+Standardized Residuals:
+        Min          Q1         Med          Q3         Max 
+-2.31102193 -0.03317755  0.01034138  0.04509105  2.85245597 
+
+Transition probabilities:
+           Regime 1   Regime 2
+Regime 1 0.98499729 0.02290884
+Regime 2 0.01500271 0.97709116
+#+end_example
+
+- 遷移確率行列をみると、レジーム間の変動が起こりにくいことがわかる
+
+***** プロット
+****** 線グラフ
+
+#+begin_src R :results graphics :file (my/get-babel-file)
+plot(mod_mswm)
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-ozK0Ah.png]]
+
+****** QQ-Plot
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+qqnorm(msmResid(mod_mswm))
+qqline(msmResid(mod_mswm))
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-0lKdeN.png]]
+
+****** ACF
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+acf(msmResid(mod_mswm))
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-fmEi1F.png]]
+
+****** plotProb
+
+- ~plotProb(x, which)~
+  - 1: represents the plots that contains, for each regime, its smoothed and filtered probabilities..
+  - 2:(number of regimes +1): represents plot of the regime minus one with the response variable against the smoothed probabilities.
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+plotProb(mod_mswm)
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-N5w9N7.png]]
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+plotProb(mod_mswm, which = 1)
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-GYyGk2.png]]
+
+****** plotReg
+
+- Comparative plots of response and explanatory variables with regime specifications
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+plotReg(mod_mswm, regime = 2)
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-81nddn.png]]
+
+****** plotDiag
+
+- ~plotDiag(x, regime, which)~
+  - 1: represents the plot of residuals against fitted values.
+  - 2: represents the Normal Q-Q plot.
+  - 3: represents the ACF/PACF of residuals and ACF/PACF of square residuals.
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+plotDiag(mod_mswm, regime = 1, which = 1)
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-7vZTuM.png]]
+
+**** 例 2 (traffic data)
+***** データ
+
+- 天気と交通事故死者数の関係
+- Prec = Precipitaion (降水量)
+#+begin_src R :colnames yes
+data(traffic)
+head(traffic)
+#+end_src
+
+#+RESULTS:
+| Date       | NDead |             Temp |  Prec |
+|------------+-------+------------------+-------|
+| 01/01/2010 |     3 | 9.27333333333333 | 109.1 |
+| 02/01/2010 |     2 | 8.76179775280899 | 150.3 |
+| 03/01/2010 |     3 |  9.4043956043956 | 442.1 |
+| 04/01/2010 |     4 |            10.34 | 700.9 |
+| 05/01/2010 |     4 | 9.35384615384615 | 132.9 |
+| 06/01/2010 |     4 | 7.40888888888889 | 429.2 |
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+traffic %>%
+  pivot_longer(c(NDead, Temp, Prec)) %>%
+  mutate(Date = dmy(Date)) %>%
+  ggplot(aes(x = Date, y = value)) +
+  geom_line() +
+  facet_grid(name ~ ., scales = "free_y")
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-jadcup.png]]
+
+***** glm モデル
+
+- 死者数 = カウントデータ なので、ポアソン回帰で分析する
+#+begin_src R :results output
+model <- glm(NDead ~ Temp + Prec, data = traffic, family = "poisson")
+summary(model)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+Call:
+glm(formula = NDead ~ Temp
+Prec, family = "poisson", data = traffic)
+
+Deviance Residuals: 
+    Min       1Q   Median       3Q      Max  
+-3.1571  -1.0676  -0.2119   0.8080   3.0629  
+
+Coefficients:
+             Estimate Std. Error z value Pr(>|z|)    
+(Intercept) 1.1638122  0.0808726  14.391  < 2e-16 ***
+Temp        0.0225513  0.0041964   5.374  7.7e-08 ***
+Prec        0.0002187  0.0001113   1.964   0.0495 *  
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+(Dispersion parameter for poisson family taken to be 1)
+
+    Null deviance: 597.03  on 364  degrees of freedom
+Residual deviance: 567.94  on 362  degrees of freedom
+AIC: 1755.9
+
+Number of Fisher Scoring iterations: 5
+#+end_example
+
+***** マルコフ転換モデル
+
+#+begin_src R :results output
+m1 <- msmFit(object = model, k = 2, sw = c(TRUE, TRUE, TRUE), family = "poisson",
+             control = list(parallel = FALSE))
+summary(m1)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+Markov Switching Model
+
+Call: msmFit(object = model, k = 2, sw = c(TRUE, TRUE, TRUE), family = "poisson", 
+    control = list(parallel = FALSE))
+
+       AIC      BIC    logLik
+  1713.877 1772.676 -850.9387
+
+Coefficients:
+
+Regime 1 
+---------
+               Estimate Std. Error t value Pr(>|t|)    
+(Intercept)(S)   1.5658     0.1631  9.6002  < 2e-16 ***
+Temp(S)          0.0194     0.0080  2.4250  0.01531 *  
+Prec(S)          0.0004     0.0002  2.0000  0.04550 *  
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Regime 2 
+---------
+               Estimate Std. Error t value  Pr(>|t|)    
+(Intercept)(S)   0.7649     0.1983  3.8573 0.0001146 ***
+Temp(S)          0.0288     0.0084  3.4286 0.0006067 ***
+Prec(S)          0.0002     0.0002  1.0000 0.3173105    
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Transition probabilities:
+          Regime 1  Regime 2
+Regime 1 0.5086244 0.2712396
+Regime 2 0.4913756 0.7287604
+#+end_example
+
+*** StatsFragments(Blog) の例
+**** データ
+
+#+begin_src R :results silent
+x <- rpois(500, lambda = 10)   # x はポアソン分布に従う
+y1 <- x * 4 + 20    # 状態 1のときの x, yの関係
+y2 <- x * 2 + 60    # 状態 2のときの x, yの関係
+
+# ノイズ付与
+noise <- rnorm(1:500, mean = 10, sd = 5)
+y1 <- y1 + noise
+y2 <- y2 + noise
+
+# 適当なタイミングで状態転換 (1:200までは状態 1, 201:400までは状態 2, 以降は状態 1)
+y <- c(y1[1:200], y2[201:400], y1[401:500])
+
+# 実際に観測されたデータ
+observed <- data.frame(x = x, y = y)
+#+end_src
+
+**** プロット (線グラフ)
+
+- 1:200 までは状態 1, 201:400 までは状態 2, 以降は状態 1
+#+begin_src R :results graphics :file (get-babel-file)
+observed %>%
+  rowid_to_column() %>%
+  gather("key", "value", -rowid) %>%
+  ggplot(aes(x = rowid, y = value)) +
+  geom_line() +
+  facet_grid(key ~ ., scales = "free_y")
+#+end_src
+
+#+RESULTS:
+[[file:~/Dropbox/memo/img/babel/fig-REmCcY.png]]
+
+**** プロット (散布図)
+
+- 2 つの状態を合わせたプロット
+#+begin_src R :results graphics :file (get-babel-file)
+ggplot(observed, aes(x, y)) + geom_point() + geom_smooth()
+#+end_src
+
+#+RESULTS:
+[[file:~/Dropbox/memo/img/babel/fig-EZRaOt.png]]
+
+**** プロット (散布図:状態毎) 
+
+#+begin_src R :results graphics :file (get-babel-file)
+bind_rows(data.frame(key = "y1", y = y1, x = x, stringsAsFactors = FALSE),
+          data.frame(key = "y2", y = y2, x = x, stringsAsFactors = FALSE)) %>%
+  ggplot(aes(x, y)) +
+  geom_point() +
+  geom_smooth() +
+  facet_grid(~ key)
+#+end_src
+
+#+RESULTS:
+[[file:~/Dropbox/memo/img/babel/fig-Knd75E.png]]
+
+**** 回帰モデル
+
+- まずは、ベースとなる線形モデルを作成する (by ~lm()~ or ~glm()~)
+#+begin_src R :results output
+lm_fit <- lm(y ~ x, data = observed)
+summary(lm_fit)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+Call:
+lm(formula = y ~ x, data = observed)
+
+Residuals:
+    Min      1Q  Median      3Q     Max 
+-25.663  -9.600  -2.472  10.632  28.672 
+
+Coefficients:
+            Estimate Std. Error t value Pr(>|t|)    
+(Intercept)  47.7603     1.6823   28.39   <2e-16 ***
+x             3.0617     0.1644   18.63   <2e-16 ***
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Residual standard error: 11.68 on 498 degrees of freedom
+Multiple R-squared:  0.4107,	Adjusted R-squared:  0.4095 
+F-statistic:   347 on 1 and 498 DF,  p-value: < 2.2e-16
+#+end_example
+
+**** MS モデル
+
+#+begin_src R :results silent
+msmFit(
+  object, # lm, glm or formula
+  k,      # レジーム数
+  sw,     # どの係数が Swiching するかを TRUE/FALSE で指定
+  p,      # AR モデルの次数
+  data,   # data.frame, list or environment
+  family, # GLM の場合は、分布を指定
+  control)
+#+end_src
+
+- 真のモデル
+  y1 = x * 4 + 20
+  y2 = x * 2 + 60
+
+#+begin_src R :results output
+msm_fit <- msmFit(lm_fit, k = 2, sw = c(TRUE, TRUE, TRUE, TRUE), p = 1)
+summary(msm_fit)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+Markov Switching Model
+
+Call: msmFit(object = lm_fit, k = 2, sw = c(TRUE, TRUE, TRUE, TRUE), 
+    p = 1)
+
+       AIC     BIC    logLik
+  3042.169 3104.72 -1515.085
+
+Coefficients:
+
+Regime 1 
+---------
+               Estimate Std. Error t value Pr(>|t|)    
+(Intercept)(S)  72.2196     3.7366 19.3276   <2e-16 ***
+x(S)             1.9981     0.1018 19.6277   <2e-16 ***
+y_1(S)          -0.0273     0.0408 -0.6691   0.5034    
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Residual standard error: 4.836735
+Multiple R-squared: 0.6587
+
+Standardized Residuals:
+          Min            Q1           Med            Q3           Max 
+-1.153885e+01 -2.085459e-02 -1.090413e-03 -4.973351e-06  1.337314e+01 
+
+Regime 2 
+---------
+               Estimate Std. Error t value Pr(>|t|)    
+(Intercept)(S)  30.3534     1.0788 28.1363   <2e-16 ***
+x(S)             3.9634     0.0928 42.7091   <2e-16 ***
+y_1(S)          -0.0006     0.0078 -0.0769   0.9387    
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Residual standard error: 4.966906
+Multiple R-squared: 0.8597
+
+Standardized Residuals:
+          Min            Q1           Med            Q3           Max 
+-13.036728178  -1.047307601   0.002016357   1.107764334  12.019154954 
+
+Transition probabilities:
+            Regime 1    Regime 2
+Regime 1 0.994982083 0.003349156
+Regime 2 0.005017917 0.996650844
+#+end_example
+
+**** プロット (plotReg)
+
+#+begin_src R :results graphics :file (get-babel-file)
+plotReg(msm_fit, regime = 1)
+#+end_src
+
+#+RESULTS:
+[[file:~/Dropbox/memo/img/babel/fig-XvPRO4.png]]
+
+
+#+begin_src R :results graphics :file (get-babel-file)
+plotReg(msm_fit, regime = 2)
+#+end_src
+
+#+RESULTS:
+[[file:~/Dropbox/memo/img/babel/fig-vNjHK3.png]]
+
+**** プロット (plotProb)
+
+- 各時点がどちらの状態であるかの確率
+#+begin_src R :results graphics :file (get-babel-file)
+plotProb(msm_fit, which = 1)
+#+end_src
+
+#+RESULTS:
+[[file:~/Dropbox/memo/img/babel/fig-IsWQw8.png]]
+
+**** プロット (残差)
+
+#+begin_src R :results graphics :file (get-babel-file)
+plot(msm_fit)
+#+end_src
+
+#+RESULTS:
+[[file:~/Dropbox/memo/img/babel/fig-t8LTAG.png]]
+
+*** SPY の例
+**** lm
+
+- リターンのモデルを作成する場合は切片のみモデルが最小
+#+begin_src R :results output
+lm_mod <- lm(c2c_ret ~ 1, data)
+summary(lm_mod)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+Call:
+lm(formula = c2c_ret ~ 1, data = data)
+
+Residuals:
+      Min        1Q    Median        3Q       Max 
+-0.067776 -0.003799  0.000167  0.004658  0.048853 
+
+Coefficients:
+             Estimate Std. Error t value Pr(>|t|)  
+(Intercept) 0.0004368  0.0001979   2.207   0.0274 *
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Residual standard error: 0.009416 on 2263 degrees of freedom
+#+end_example
+
+**** msmFit (regime = 2)
+
+#+begin_src R :results output
+ms_mod_r2 <- msmFit(lm_mod, k = 2, p = 1, sw = c(TRUE, TRUE, TRUE))
+summary(ms_mod_r2)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+Markov Switching Model
+
+Call: msmFit(object = lm_mod, k = 2, sw = c(TRUE, TRUE, TRUE), p = 1)
+
+        AIC       BIC   logLik
+  -15452.56 -15398.77 7730.282
+
+Coefficients:
+
+Regime 1 
+---------
+               Estimate Std. Error t value  Pr(>|t|)    
+(Intercept)(S)   0.0012     0.0002  6.0000 1.973e-09 ***
+c2c_ret_1(S)    -0.0831     0.0284 -2.9261  0.003432 ** 
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Residual standard error: 0.005121971
+Multiple R-squared: 0.00792
+
+Standardized Residuals:
+          Min            Q1           Med            Q3           Max 
+-1.420372e-02 -1.886603e-03 -6.752405e-05  1.928871e-03  1.469824e-02 
+
+Regime 2 
+---------
+               Estimate Std. Error t value Pr(>|t|)
+(Intercept)(S)  -0.0008     0.0005  -1.600   0.1096
+c2c_ret_1(S)    -0.0387     0.0357  -1.084   0.2784
+
+Residual standard error: 0.0138362
+Multiple R-squared: 0.001444
+
+Standardized Residuals:
+          Min            Q1           Med            Q3           Max 
+-0.0666155672 -0.0004594262  0.0001298733  0.0012586298  0.0490338429 
+
+Transition probabilities:
+           Regime 1   Regime 2
+Regime 1 0.97152342 0.04924836
+Regime 2 0.02847658 0.95075164
+#+end_example
+
+**** msmFit (regime = 3)
+
+#+begin_src R :results output
+ms_mod_r3 <- msmFit(lm_mod, k = 3, p = 1, sw = c(TRUE, TRUE, TRUE))
+summary(ms_mod_r3)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+Error in solve.default(res$Hessian) : 
+  Lapack routine dgesv: system is exactly singular: U[5,5] = 0
+Markov Switching Model
+
+Call: msmFit(object = lm_mod, k = 3, sw = c(TRUE, TRUE))
+
+        AIC       BIC   logLik
+  -15558.07 -15517.72 7782.036
+
+Coefficients:
+
+Regime 1 
+---------
+               Estimate Std. Error t value Pr(>|t|)
+(Intercept)(S)    4e-04      3e-04  1.3333   0.1824
+
+Residual standard error: 0.008982086
+Multiple R-squared:     0
+
+Standardized Residuals:
+          Min            Q1           Med            Q3           Max 
+-0.0243765268 -0.0015801436  0.0000593498  0.0019527184  0.0246553928 
+
+Regime 2 
+---------
+               Estimate Std. Error t value  Pr(>|t|)    
+(Intercept)(S)   0.0012     0.0002       6 1.973e-09 ***
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Residual standard error: 0.003951994
+Multiple R-squared:     0
+
+Standardized Residuals:
+          Min            Q1           Med            Q3           Max 
+-8.693672e-03 -1.214980e-03 -6.347924e-06  1.063441e-03  9.081232e-03 
+
+Regime 3 
+---------
+               Estimate Std. Error t value Pr(>|t|)
+(Intercept)(S)  -0.0016     0.0010    -1.6   0.1096
+
+Residual standard error: 0.01746388
+Multiple R-squared: 1.538e-34
+
+Standardized Residuals:
+          Min            Q1           Med            Q3           Max 
+-6.573562e-02 -3.835755e-05  2.114661e-05  2.592375e-04  5.089311e-02 
+
+Transition probabilities:
+           Regime 1     Regime 2     Regime 3
+Regime 1 0.91409108 7.944336e-02 3.375709e-02
+Regime 2 0.07500013 9.205566e-01 5.603476e-09
+Regime 3 0.01090879 1.269306e-09 9.662429e-01
+#+end_example
+
+**** 比較
+
+- AIC では 3 レジームの方が良い結果
+#+begin_src R :results output
+AIC(ms_mod_r2)
+AIC(ms_mod_r3)
+#+end_src
+
+#+RESULTS:
+: [1] -15448.56
+: [1] -15552.07
+
+- 主に以下に分類される
+  - 低ボラティリティ + プラスリターン
+  - 高ボラティリティ + マイナスプラスリターン
+#+begin_src R :results output
+ms_mod_r2@Coef
+ms_mod_r2@std
+ms_mod_r3@Coef
+ms_mod_r3@std
+#+end_src
+
+#+RESULTS:
+:     (Intercept)   c2c_ret_1
+: 1  0.0012249052 -0.08306379
+: 2 -0.0007814783 -0.03874025
+: [1] 0.005121971 0.013836203
+:    (Intercept)
+: 1  0.000397773
+: 2  0.001225405
+: 3 -0.001603441
+: [1] 0.008982086 0.003951994 0.017463882
+
+**** plotProb
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+plotProb(ms_mod_r2, which = 2)
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-FRQyRm.png]]
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+plotProb(ms_mod_r2, which = 3)
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-2oT4xo.png]]
+
+**** plotDiag (Regime = 1)
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+plotDiag(ms_mod_r2, regime = 1, which = 1)
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-tLdYGt.png]]
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+plotDiag(ms_mod_r2, regime = 1, which = 2)
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-hz7pFD.png]]
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+plotDiag(ms_mod_r2, regime = 1, which = 3)
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-MWTdH7.png]]
+
+**** plotDiag (Regime = 2)
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+plotDiag(ms_mod_r2, regime = 2, which = 1)
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-HJaOXi.png]]
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+plotDiag(ms_mod_r2, regime = 2, which = 2)
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-VfGwqc.png]]
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+plotDiag(ms_mod_r2, regime = 2, which = 3)
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-8lFXdt.png]]
+
+** {depmixS4} (Dependent Mixture Model)
+*** Reference
+
+- [[http://r-forge.r-project.org/projects/depmix/][Project site@R-Forge]]
+- [[https://cran.r-project.org/web/packages/depmixS4/index.html][CRAN
+]]- [[https://cran.r-project.org/web/packages/depmixS4/depmixS4.pdf][Reference Manual]]
+- Vignette
+  [[https://cran.r-project.org/web/packages/depmixS4/vignettes/depmixS4.pdf][An R Package for Hidden Markov Models]]
+
+- Blog
+  - [[http://systematicinvestor.github.io/Regime-Detection-Update][Regime Detection Update@Systematic Investor]]
+  - [[https://www.quantstart.com/articles/hidden-markov-models-for-regime-detection-using-r#ref-systematicinvestor-regimedetectupdate2015][Hidden Markov Models for Regime Detection using R@QuantStart]]
+  - [[https://ipintelligence.blog.so-net.ne.jp/2015-04-23][Rによる隠れマルコフモデル@知財ファイナンス・モデリング]]
+  - [[https://blog.revolutionanalytics.com/2014/03/r-and-hidden-markov-models.html][Getting Started with Hidden Markov Models in R@Revolutions]]
+  - [[https://stats.stackexchange.com/questions/229638/how-to-predict-state-probabilities-or-states-for-new-data-with-depmixs4-package][How to predict state probabilities or states for new data with DepmixS4 package, for Hidden Markov Models@CrossValidated]]
+
+*** 概要
+
+対応モデル
+- Standard Markov Models
+- Latent/Hidden Markov Models
+
+最適化手法
+- EM アルゴリズム
+- Rsolnp, Rsolnp2 による数値最適化 (General Newton-Raphson optimizer)
+
+*** 全関数リスト
+
+#+begin_src R :results output
+ls("package:depmixS4")
+#+end_src
+
+#+RESULTS:
+#+begin_example
+ [1] "GLMresponse"     "MVNresponse"     "confint"         "dens"           
+ [5] "depmix"          "em"              "em.control"      "fb"             
+ [9] "fit"             "forwardbackward" "freepars"        "getConstraints" 
+[13] "getdf"           "getmodel"        "getpars"         "hessian"        
+[17] "llratio"         "logLik"          "lystig"          "makeDepmix"     
+[21] "makeMix"         "mix"             "mlogit"          "multinomial"    
+[25] "nlin"            "nobs"            "npar"            "nresp"          
+[29] "nstates"         "ntimes"          "posterior"       "predict"        
+[33] "setpars"         "show"            "simulate"        "standardError"  
+[37] "stationary"      "summary"         "transInit"       "vcov"           
+[41] "viterbi"
+#+end_example
+
+*** Vignette の例
+**** データ
+
+- rt = Response Time
+- corr = accuracy
+- Pacc = pay-off values (
+- prev
+
+#+begin_src R :colnames yes
+data(speed)
+head(speed)
+#+end_src
+
+#+RESULTS:
+|               rt | corr | Pacc | prev |
+|------------------+------+------+------|
+| 6.45676965557216 | cor  |    0 | inc  |
+|  5.6021188208797 | cor  |    0 | cor  |
+| 6.25382881157547 | inc  |    0 | cor  |
+|  5.4510384535657 | inc  |    0 | inc  |
+| 5.87211778947542 | inc  |    0 | inc  |
+| 6.00388706710654 | cor  |    0 | inc  |
+
+#+begin_src R :results output
+str(speed)
+#+end_src
+
+#+RESULTS:
+: 'data.frame':	439 obs. of  4 variables:
+:  $ rt  : num  6.46 5.6 6.25 5.45 5.87 ...
+:  $ corr: Factor w/ 2 levels "inc","cor": 2 2 1 1 1 2 2 2 1 2 ...
+:  $ Pacc: num  0 0 0 0 0 ...
+:  $ prev: Factor w/ 2 levels "inc","cor": 1 2 2 1 1 1 2 2 2 1 ...
+
+**** モデル
+
+- デフォルトの初期値
+  - instart   多項分布
+  - trstart   多項分布
+  - respstart 正規分布
+
+#+begin_src R
+depmix(
+  response,          # 応答モデル: formula or list of formula
+  data=NULL,         # data.frame
+  nstates,           # 状態の数
+  transition=~1,     # 遷移モデル: one-sided formula
+  family=gaussian(), # 分布 (多変量の場合は、リストで指定)
+  prior=~1,          # one-sided formula
+  initdata=NULL,     # data.frame
+  respstart=NULL,    # response model のパラメターの初期値
+  trstart=NULL,      # transition model の初期値
+  instart=NULL,      # 事前分布の初期値
+  ntimes=NULL,
+  ...)
+#+end_src
+
+#+begin_src R :results output
+set.seed(1)
+ms_mod <- depmix(response = rt ~ 1, data = speed, nstates = 2, trstart = runif(4))
+summary(ms_mod)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+Initial state probabilties model 
+pr1 pr2 
+0.5 0.5 
+
+Transition matrix 
+        toS1  toS2
+fromS1 0.416 0.584
+fromS2 0.387 0.613
+
+Response parameters 
+Resp 1 : gaussian 
+    Re1.(Intercept) Re1.sd
+St1               0      1
+St2               0      1
+#+end_example
+
+**** パラメタ推定
+
+#+begin_src R :results silent
+fit(
+  object,                     # depmix class object
+  fixed=NULL,                 # 固定するパラメタを指定する logical vector
+  equal=NULL,                 # 制約条件 (equality constraints)
+  conrows=NULL,               # 制約条件 (general linear constraint matrix)
+  conrows.upper=NULL,         # 上限
+  conrows.lower=NULL,         # 下限
+	method=NULL,                # 最適化手法
+  verbose=FALSE,              # 
+  emcontrol=em.control(),     # EM アルゴリズムのパラメタ em.control()
+  solnpcntrl=list(            # rsolnp のパラメタ
+    rho = 1,
+    outer.iter = 400,
+    inner.iter = 800, 
+		delta = 1e-7,
+    tol = 1e-8),
+  donlpcntrl=donlp2Control(), # donlp のパラメタ
+  ...
+)
+#+end_src
+
+#+begin_src R :results output
+ms_fit <- fit(ms_mod, emcontrol = em.control(rand = FALSE)) #EMアルゴリズムによるパラメータ推定
+summary(ms_fit)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+converged at iteration 68 with logLik: -88.73058
+Initial state probabilties model 
+pr1 pr2 
+  1   0 
+
+Transition matrix 
+        toS1  toS2
+fromS1 0.916 0.084
+fromS2 0.116 0.884
+
+Response parameters 
+Resp 1 : gaussian 
+    Re1.(Intercept) Re1.sd
+St1           6.385  0.244
+St2           5.510  0.192
+#+end_example
+
+- 遷移確率が 0.9 なので、安定していると言える
+
+#+begin_src R :results output
+ms_fit
+#+end_src
+
+#+RESULTS:
+: Convergence info: Log likelihood converged to within tol. (relative change) 
+: 'log Lik.' -88.73058 (df=7)
+: AIC:  191.4612 
+: BIC:  220.0527
+
+**** モデル 2 (遷移確率のパラメタの初期値)
+
+#+begin_src R :results output
+set.seed(1)
+ms_mod2 <- depmix(rt ~ 1,
+                  data = speed, 
+                  nstates = 2,
+                  family = gaussian(),
+                  transition = ~ scale(Pacc),
+                  instart = runif(2))
+
+ms_fit2 <- fit(ms_mod2, verbose = FALSE, emc=em.control(rand=FALSE))
+summary(ms_fit2)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+converged at iteration 42 with logLik: -44.19948
+Initial state probabilties model 
+pr1 pr2 
+  0   1 
+
+Transition model for state (component) 1 
+Model of type multinomial (mlogit), formula: ~scale(Pacc)
+Coefficients: 
+            St1        St2
+(Intercept)   0 -0.9518186
+scale(Pacc)   0  1.3923616
+Probalities at zero values of the covariates.
+0.7214808 0.2785192 
+
+Transition model for state (component) 2 
+Model of type multinomial (mlogit), formula: ~scale(Pacc)
+Coefficients: 
+            St1      St2
+(Intercept)   0 2.471526
+scale(Pacc)   0 3.581160
+Probalities at zero values of the covariates.
+0.07787861 0.9221214 
+
+
+Response parameters 
+Resp 1 : gaussian 
+    Re1.(Intercept) Re1.sd
+St1           5.507  0.187
+St2           6.386  0.242
+#+end_example
+
+#+begin_src R :results output
+ms_fit2
+#+end_src
+
+#+RESULTS:
+: Convergence info: Log likelihood converged to within tol. (relative change) 
+: 'log Lik.' -44.19948 (df=9)
+: AIC:  106.399 
+: BIC:  143.1595
+
+**** モデル 3 (多変量モデル)
+
+#+begin_src R :results output
+set.seed(1)
+ms_mod3 <- depmix(
+  list(rt ~ 1, corr ~ 1),
+  data = speed,
+  nstates = 2,
+  family = list(gaussian(), multinomial(link = "identity")), # 
+  transition = ~ scale(Pacc),
+  instart = runif(2))
+ms_fit3 <- fit(ms_mod3, verbose = FALSE, emc=em.control(rand=FALSE))
+summary(ms_fit3)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+converged at iteration 31 with logLik: -255.5337
+
+Initial state probabilties model 
+pr1 pr2 
+  0   1 
+
+Transition model for state (component) 1 
+Model of type multinomial (mlogit), formula: ~scale(Pacc)
+Coefficients: 
+            St1        St2
+(Intercept)   0 -0.9265094
+scale(Pacc)   0  1.5984349
+Probalities at zero values of the covariates.
+0.7163666 0.2836334 
+
+Transition model for state (component) 2 
+Model of type multinomial (mlogit), formula: ~scale(Pacc)
+Coefficients: 
+            St1      St2
+(Intercept)   0 2.402143
+scale(Pacc)   0 3.722362
+Probalities at zero values of the covariates.
+0.08300945 0.9169905 
+
+
+Response parameters 
+Resp 1 : gaussian 
+Resp 2 : multinomial 
+    Re1.(Intercept) Re1.sd Re2.inc Re2.cor
+St1           5.517  0.197   0.475   0.525
+St2           6.391  0.239   0.098   0.902
+#+end_example
+
+** {MARSS}

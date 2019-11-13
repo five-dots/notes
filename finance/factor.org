@@ -1,0 +1,60 @@
+#+STARTUP: folded indent inlineimages latexpreview
+
+* 参考
+- [[https://www.americakabu.com/entry/%E3%82%B9%E3%83%9E%E3%83%BC%E3%83%88%E3%83%99%E3%83%BC%E3%82%BFETF][スマートベータETFとは@たぱぞうの米国株投資]]
+- [[http://mba.tuck.dartmouth.edu/pages/faculty/ken.french/data_library.html][Kenneth R. French のサイト]]
+- [[https://www.keito.luxe/2019/06/Fama-French-Three-Factor-Datal.html][ファーマ-フレンチの3ファクターモデルのデータを入手する方法]]
+
+* ファクター by MSCI
+
+- バリュー
+  - 本来の価値に対して、株価が低くなっている場合のリターン
+  - 純資産倍率(PBR)、株価収益率(PER)、簿価、売上高、利益など
+
+- サイズ
+  - 成長株など小型株のリターン
+  - 時価総額規模
+
+- モメンタム
+  - 流行りの、より好調な株式のリターン
+  - 株価のリターン
+
+- ボラティリティ
+  - ベータなどの値動きのリターン
+  - 標準偏差やベータ値
+
+- クオリティ
+  - 安定的な利益成長を持つ株式のリターン
+  - ROE,収益安定性、配当成長、財務基盤、など
+
+- イールド
+  - 高配当利回りのリターン
+  - 配当利回り
+
+* ファクター by Quantopian 
+
+- Momentum
+  - The momentum factor captures return differences between stocks on an upswing (winner stocks) and the stocks on a downswing (loser stocks) over 11 months.
+
+- Company Size
+  - The size factor captures return differences between big-cap stocks and small-cap stocks.
+
+- Value 
+  - The value factor captures return differences between expensive stocks and in-expensive stocks (measured by the ratio of book value of company to the price of the stock).
+
+- Short-term Reversal 
+  - The short-term reversal factor captures return differences between stocks with strong losses to reverse (recent loser stocks) and the stocks with strong gains (recent winner stocks) to reverse in a short time period.
+
+- Volatility 
+  - The volatility factor captures return differences between high volatility stocks and low volatility stocks in the market. The volatility can be measured in historical long term or near-term.
+* ファクター by Fama-French
+
+- マーケットポートフォリオ
+  - マーケット全体が上昇することがリターンの源泉
+- 時価総額
+- 簿価時価比 (PBR の逆)
+
+$$ R_i - R_f = \beta_i^{MKT}(R_m - R_f) + \beta_i^{SMB} SMB + \beta_i^{HML} HML $$
+ 
+- SMB = Small Minus Big
+- HML = High Minus Low
