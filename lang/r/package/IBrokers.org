@@ -1,0 +1,51 @@
+#+STARTUP: folded indent
+#+PROPERTY: header-args:R :results output :session *R:ibrokers*
+
+* ={IBrokers}= R API to Interactive Brokers Trader Workstation
+* Code
+
+#+begin_src R
+suppressWarnings(library(IBrokers))
+
+# Reference card
+IBrokersRef()
+
+# Connect
+con <- twsConnect(clientId = 9999, port = 7496)
+
+is.twsConnection(con)
+isConnected(con)
+
+# Contract
+aapl <- twsSTK(symbol = "AAPL")
+ibm <- twsSTK(symbol = "IBM")
+
+# Contract details
+detail <- reqContractDetails(con, aapl)
+detail
+detail[[1]]$version
+detail[[1]]$conId
+detail[[1]]$contract
+detail[[1]]$validExchange
+detail[[1]]$orderTypes
+
+# Account
+reqAccountUpdates(con)
+cancelAccountUpdates(con)
+
+# Execution
+execs <- reqExecutions(con, 1010, NULL)
+
+# Disconnect
+twsDisconnect(con)
+#+end_src
+
+* 参考リンク
+
+- [[https://cran.r-project.org/web/packages/IBrokers/index.html][CRAN]]
+- [[https://cran.r-project.org/web/packages/IBrokers/IBrokers.pdf][Reference Manual]]
+- [[https://github.com/joshuaulrich/IBrokers][Github Repo by joshuaulrich]]
+- Vignette
+  - [[https://cran.r-project.org/web/packages/IBrokers/vignettes/IBrokers.pdf][IBrokers - Interactive Brokers and R]]
+  - [[https://cran.r-project.org/web/packages/IBrokers/vignettes/IBrokersREFCARD.pdf][IBrokers Reference Card]]
+  - [[https://cran.r-project.org/web/packages/IBrokers/vignettes/RealTime.pdf][Real Time Market Data and Trade Execution with R]]

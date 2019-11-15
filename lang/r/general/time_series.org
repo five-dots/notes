@@ -1,5 +1,6 @@
 #+STARTUP: folded indent inlineimages latexpreview
 #+PROPERTY: header-args:R :session *R:time_series* :width 560 :height 420
+#+LATEX_HEADER: \usepackage{bm}
 
 * Load Libraries
 
@@ -20,6 +21,7 @@ library(timetk)
 library(tseries)
 library(urca)
 library(vars)
+library(fGarch)
 #+end_src
 
 * Prepare Data
@@ -1354,21 +1356,175 @@ abs(polyroot(c(1, c(0.5, 0.3, -0.1))))
 - Multivariate State Space Model
 - DLM + VAR
 
-** GARCH モデル
+** ボラティリティ変動モデル
+*** ボラティリティとは
+
+- Finance におけるボラティリティの意味合い
+  1. オプションの価格決定 (*Black Scholes*)
+  2. リスク管理 (VaR, Sharpe Ratio, Leverage etc.)
+  3. トレード対象 (CBOE VIX, futures or ETFs)
+
+- 特徴
+  - ボラティリティ・クラスタリング
+    荒い期間・穏やかな期間が持続する
+
+  - ボラティリティ・スマイル 
+    Strike price と Implied Volatility をプロットするとスマイルのような形状になること
+
+- Stochastic Volatility Model
+  - Heston Model
+  - CEV Model
+  - SBAR Volatility Model (Stochastic Alpha, Beta, Rho)
+  - GARCH Model
+  - 3/2 Model
+
+- GARCH modelling package
+  - ={rugarch}=
+  - ={fGarch}=
+  - ={tseries}=
+  - ={bayesGARCH}=
+
+- Realized Volatility (RV)
+  - 日中足(1 分足等)の Volatility を 2 乗して、1日分足し合わせたもの
+  - 合計値の平方根を取るものと取らないものがある模様
+  - *リターンにノイズがなければ真のボラティリティの推定量*
+    瞬間的なボラティリティを積分した ingegrated Volatility の推定量となりうる
+  - 実際には、マイクロストラクチャノイズが発生する (夜間や昼休みなど)
+  - パラメーターがなく、単純に足し合わせるだけなので、扱いやすい
+
+*** 基本
+
+_一般的な株式収益率のモデル_
+
+$y_t = \mu + u_t$
+
+- $\mu_t$ は ARMA などの条件付き期待値のモデル
+
+このとき、$\upsilon_t$ に自己相関は検出されない場合が多いため、上記のモデルは悪くないモデルと言える
+ただし、残差の 2 乗系列では自己相関が検出される場合がある
+
+$u^2 = (y_t - \mu)^2$
+
+これはつまり *「上昇するか下落するかはわからないが、その変動幅には自己相関がある」* ことを示す
+
+*** GARCH モデル
+**** ARCH(m) モデル
+
+- Autoregressive Conditional Heteroskedasticity Model
+- Engle (1982)
+
+_ARCH(m) モデル_
+
+$y_t = \mu_t + u_t$
+
+$u_t = \sqrt{h_t \upsilon_t}, \upsilon_t \sim iid(0, 1)$
+
+$h_t = \omega + \alpha_1 u_{t-1}^2 + \alpha_2 u_{t-2}^2 + \dots + \alpha_m u_{t-m}^2$
+
+
+- $u_t^2$ の初期値としては、$yt - \mu_t$ の標本分散が一般的に用いられる
+- $h_t > 0$ である必要あり (分散なので)
+  - $\omega > 0, \alpha_j > 0$ の制約が一般的に用いられる
+- ARCH は $u_t^2$ に対しての AR(p) モデルと考えられる
+- 正のショック・負のショックが条件付き分散に同じように影響を与える
+
+_$u_t^2$ の定常条件_
+- $\alpha_j > 0$ の時、定常条件は
+
+$\alpha_1 + \alpha_2 + \dots + \alpha_m < 1$
+
+
+_尤度の計算_
+
+撹乱項を正規分布とした場合、
+
+$\upsilon \sim iidN(0,1)$
+
+以下のようになるため、正規分布だとしても条件付き分散が反映されてファットテールが表現できる
+
+$y_t|\bm{\Omega_{t-1}} \sim N(\mu_t, h_t)$
+
+**** GARCH(r, m) モデル
+
+- ARCH よりも少ないパラメタで、長期に持続するボラティリティクラスタリングをモデル化する
+- 前期のノイズ(ショック)が仮に小さくても、前期の条件付き分散の大きさを持続させることができる
+- Bollerslev (ボラスレブ) (1986)
+
+_GARCH(r, m) モデル_
+
+$y_t = \mu_t + u_t$
+
+$u_t = \sqrt{h_t \upsilon_t}, \upsilon_t \sim iid(0, 1)$
+
+$h_t = \omega + \beta_1 h_{t-1} + \dots + \beta_r h_{t-r} + \alpha_1 u_{t-1}^2 + \dots + \alpha_m u_{t-m}^2$
+
+- ノイズ $u$ だけでなく、条件付き分散 $h$ もモデル化したもの
+- $h_t$ の初期値としても標本分散が用いられることが多い
+- $h_t > 0$ を満たすために $\omega > 0, \alpha_j > 0, \beta_j > 0$ が仮定されることが多い
+
+_定常条件_
+- $\alpha + \beta < 1$
+
+( $\alpha + \beta = 1$ としたものは *IGARCH* モデルと呼ばれる )
+
+**** GJR-GARCH(r, m) モデル
+
+- 負のショックの影響を大きく捉えることができるモデル
+- Glosten, et al. (1993)
+
+_GJR-GARCH(1, 1)_
+
+$h_t = \omega + \beta_1 h_{t-1} + \alpha_1 u_{t-1}^2 + \gamma u_{t-1}^2 I_{t-1}$
+
+- $I_{t-1}$ は $u_{t-1} < 0$ で 1、$u_{t-1} > 0$ で 0 になるダミー変数
+- $h > 0$ の条件は、$\omega > 0, \alpha > 0, \beta > 0, \alpha + \gamma \geq 0$
+
+**** EGARCH モデル 
+
+- 条件付き分散の対数をモデル化することで、$h_t > 0$ を保証しパラメタ制約をなくす
+- Nelson (1991)
+
+- ショックとして、$u_{t-1}$ ではなく $\upsilon_{t-1}$ を利用する
+- $\delta > 0$ の場合は大きなショックが条件付き分散を増大させる
+- $\gamma < 0$ の時、負のショックのレバレッジ効果を表している
+
+$\log{h_t} = \omega + \beta \log{h_{t-1}} + \gamma \upsilon_{t-1} + \delta(|\upsilon_{t-1}| - E|\upsilon_{t-1}|)$
+
+**** GARCH(r, m)-M モデル
+
+- 条件付き分散が、条件付き期待値に影響を与えるモデル
+- Engle et al. (1987)
+
+_GARCH(1, 1)-M モデル_
+
+$y_t = \bm{x_t^T} \bm{\beta} + \delta h_t + u_t$
+
+$u_t = \sqrt{h_t \upsilon_t}, \upsilon_t \sim iid(0, 1)$
+
+$h_t = \omega + \beta h_{t-1} + \alpha u_{t-1}^2$
+
+
+- $\bm{x_t}$ は条件付き期待値を説明する変数ベクトル
+- $h_t$ は $\sqrt(h_t)$ であったり、$\log{h_t}$ なども使われる
+- $h_t$ のモデル化に EGARCH などの他のモデルが使われることもある
+- $\delta$ が正の場合は、ハイリスク・ハイリターンを表現できる
+
+*** TODO SV (Stochastic Volatility) モデル
 *** モデルの診断
 
 - 残差と残差の 2 乗ではテストの目的が異なる
-https://stats.stackexchange.com/questions/202526/garch-diagnostics-autocorrelation-in-standardized-residuals-but-not-in-their-sq
+  [[https://stats.stackexchange.com/questions/202526/garch-diagnostics-autocorrelation-in-standardized-residuals-but-not-in-their-sq][GARCH diagnostics: autocorrelation in standardized residuals but not in their squares]]
 
 - 以下の 4 つのテストを実施する
-https://www.researchgate.net/post/how_to_test_the_validity_of_the_results_of_GARCH_model
+  [[https://www.researchgate.net/post/how_to_test_the_validity_of_the_results_of_GARCH_model][How to test the validity of the results of GARCH model?@ResearchGate]]
 
 1. 標準化残差が自己相関なし、かつ正規分布にしたがっているか？
-  => Mean Model の残差は、ホワイトノイズを仮定しているので、自己相関はないはず
-  => 正規分布を仮定した場合のみ (Shapiro-Wilk or Jarque-Bera)
+  - Mean Model の残差は、ホワイトノイズを仮定しているので、自己相関はないはず
+  - 正規分布を仮定した場合のみ (Shapiro-Wilk or Jarque-Bera)
 
 2. 標準化残差 2 乗系列は自己相関なし、かつ正規分布にしたがっているか (Ljung-Box)
-  => Variance Model の残差は N(0, 1) を仮定している
+  - Variance Model の残差は N(0, 1) を仮定している
+  - _残差への Ljung-Box 検定はモデルの次数で調整が必要_
   
 4. ARCH-LM Test で ARCH effect が残っていないかを確認
 
@@ -1760,6 +1916,98 @@ llh
 -2 * (llh - 4)
 
 ** {fGarch}
+*** =garchSpec()=
+
+- シミュレーションデータを作成するのに使える
+#+begin_src R
+garchSpec(
+  model = list(),
+  presample = NULL, 
+  cond.dist = c("norm", "ged", "std", "snorm", "sged", "sstd"), 
+  rseed = NULL)
+#+end_src
+	
+_a list of GARCH model parameters:_
+
+$h_t = \omega + \beta_1 h_{t-1} + \dots + \beta_r h_{t-r} + \alpha_1 u_{t-1}^2 + \dots + \alpha_m u_{t-m}^2$
+
+- omega
+- alpha
+- beta
+- mu
+- ar
+- ma
+- skew
+- shape
+
+*** =garchSim()=
+
+#+begin_src R
+garchSim(
+  spec = garchSpec(),
+  n = 100,
+  n.start = 100,
+  extended = FALSE)
+#+end_src
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+armagarch_spec <- garchSpec(
+       model = list(
+         ## ARMA(1, 2)
+         mu = 0.1,
+         ar = 0.5,
+         ma = c(0.3, -0.3),
+         ## GARCH(2, 1)
+         alpha = c(0.12, 0.04),
+         beta = 0.08),
+       cond.dist = "norm")
+
+armagarch_sim <- garchSim(armagarch_spec, 1000)
+ggtsdisplay(armagarch_sim)
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-T7O3t6.png]]
+
+*** =garchFit()=
+
+#+begin_src R
+garchFit(
+  formula = ~garch(1, 1),
+  data = fGarch::dem2gbp,
+  init.rec = c("mci", "uev"),
+  delta = 2,
+  skew = 1,
+  shape = 4,
+  cond.dist = c("norm", "snorm", "ged", "sged", "std", "sstd", "snig", "QMLE"),
+  include.mean = TRUE,
+  include.delta = NULL,
+  include.skew = NULL,
+  include.shape = NULL,
+  leverage = NULL,
+  trace = TRUE,
+  algorithm = c("nlminb", "lbfgsb", "nlminb+nm", "lbfgsb+nm"),
+  hessian = c("ropt", "rcd"),
+  control = list(),
+  title = NULL,
+  description = NULL,
+  ...)
+#+end_src
+
+*** Other
+
+#+begin_src R
+garchKappa(cond.dist = c("norm", "ged", "std", "snorm", "sged", "sstd",
+    "snig"), gamma = 0, delta = 2, skew = NA, shape = NA)
+
+# Extractor
+residuals()
+fitted()
+volatility()
+coef()
+formula()
+#+end_src
+
 ** {vars}
 *** 関数解説
 **** All Functions

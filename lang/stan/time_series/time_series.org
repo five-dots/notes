@@ -1,0 +1,2529 @@
+#+STARTUP: folded indent inlineimages latexpreview
+#+PROPERTY: header-args:R :session *R:time_series* :width 640 :height 480 :results output
+
+* ライブラリの読み込みと事前準備
+
+#+begin_src R :results silent
+library(glue)
+library(lubridate)
+library(rstan)
+library(tidyverse)
+library(forecast)
+library(shinystan)
+library(fGarch)
+library(forecast)
+library(loo)
+#+end_src
+
+#+begin_src R :results silent
+options(mc.cores = parallel::detectCores() - 1)
+rstan_options(auto_write = TRUE) # stan ファイルと同名の rds として保存される
+#+end_src
+
+* Stan による時系列モデル
+** AR(1) Model
+*** データ
+
+- AR(1) のシミュレーションデータ
+#+begin_src R :results silent
+ar1 <- arima.sim(n = 1000, model = list(order = c(1, 0, 0), ar = 0.5))
+#+end_src
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+ggtsdisplay(ar1)
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-GbFrPm.png]]
+
+*** モデル
+**** Basic
+
+_AR(1) モデル_
+
+$y_t = \alpha + \beta y_{t-1} + \epsilon, \epsilon \sim N(0, \sigma)$
+
+こちらの書き方の方が、Stan では記述しやすい
+
+$y_t \sim Normal(\alpha + \beta y_{t-1}, \sigma)$
+
+#+begin_src stan :file models/ar_1.stan
+data {
+  int<lower=0> T;
+  real y[T];
+}
+
+parameters {
+  real alpha;
+  real beta;
+  // 強制的に定常過程を推定する場合の制約
+  // real<lower=-1, upper=1> beta;
+  real<lower=0> sigma;
+}
+
+model {
+  for (t in 2:T) {
+    y[t] ~ normal(alpha + beta * y[t-1], sigma);
+  }
+}
+#+end_src
+
+#+RESULTS:
+[[file:models/ar_1.stan]]
+
+**** Vectorized
+
+#+begin_src stan :file models/ar_1_vec.stan
+data {
+  int<lower=0> T;
+  vector[T] y;
+}
+
+parameters {
+  real alpha;
+  real beta;
+  real<lower=0> sigma;
+}
+
+model {
+  y[2:T] ~ normal(alpha + beta * y[1:(T-1)], sigma);
+}
+#+end_src
+
+#+RESULTS:
+[[file:models/ar_1_vec.stan]]
+
+*** サンプリング実行
+
+- このデータくらいだと、vectorize しても速度は変わらない
+#+begin_src R
+## ar1_fit <- stan(file = "models/ar_1.stan", data = list(T = length(ar1), y = ar1))
+ar1_fit <- stan(file = "models/ar_1_vec.stan", data = list(T = length(ar1), y = ar1))
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+SAMPLING FOR MODEL 'ar_1_vec' NOW (CHAIN 1).
+Chain 1: 
+Chain 1: Gradient evaluation took 0.000167 seconds
+Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 1.67 seconds.
+Chain 1: Adjust your expectations accordingly!
+Chain 1: 
+Chain 1: 
+Chain 1: Iteration:    1 / 2000 [  0%]  (Warmup)
+
+SAMPLING FOR MODEL 'ar_1_vec' NOW (CHAIN 2).
+Chain 2: 
+Chain 2: Gradient evaluation took 0.000208 seconds
+Chain 2: 1000 transitions using 10 leapfrog steps per transition would take 2.08 seconds.
+Chain 2: Adjust your expectations accordingly!
+Chain 2: 
+Chain 2: 
+Chain 2: Iteration:    1 / 2000 [  0%]  (Warmup)
+
+SAMPLING FOR MODEL 'ar_1_vec' NOW (CHAIN 3).
+Chain 3: 
+Chain 3: Gradient evaluation took 0.000163 seconds
+Chain 3: 1000 transitions using 10 leapfrog steps per transition would take 1.63 seconds.
+Chain 3: Adjust your expectations accordingly!
+Chain 3: 
+Chain 3: 
+Chain 3: Iteration:    1 / 2000 [  0%]  (Warmup)
+
+SAMPLING FOR MODEL 'ar_1_vec' NOW (CHAIN 4).
+Chain 4: 
+Chain 4: Gradient evaluation took 0.000203 seconds
+Chain 4: 1000 transitions using 10 leapfrog steps per transition would take 2.03 seconds.
+Chain 4: Adjust your expectations accordingly!
+Chain 4: 
+Chain 4: 
+Chain 4: Iteration:    1 / 2000 [  0%]  (Warmup)
+Chain 1: Iteration:  200 / 2000 [ 10%]  (Warmup)
+Chain 3: Iteration:  200 / 2000 [ 10%]  (Warmup)
+Chain 2: Iteration:  200 / 2000 [ 10%]  (Warmup)
+Chain 4: Iteration:  200 / 2000 [ 10%]  (Warmup)
+Chain 2: Iteration:  400 / 2000 [ 20%]  (Warmup)
+Chain 3: Iteration:  400 / 2000 [ 20%]  (Warmup)
+Chain 1: Iteration:  400 / 2000 [ 20%]  (Warmup)
+Chain 2: Iteration:  600 / 2000 [ 30%]  (Warmup)
+Chain 3: Iteration:  600 / 2000 [ 30%]  (Warmup)
+Chain 4: Iteration:  400 / 2000 [ 20%]  (Warmup)
+Chain 2: Iteration:  800 / 2000 [ 40%]  (Warmup)
+Chain 1: Iteration:  600 / 2000 [ 30%]  (Warmup)
+Chain 3: Iteration:  800 / 2000 [ 40%]  (Warmup)
+Chain 2: Iteration: 1000 / 2000 [ 50%]  (Warmup)
+Chain 2: Iteration: 1001 / 2000 [ 50%]  (Sampling)
+Chain 1: Iteration:  800 / 2000 [ 40%]  (Warmup)
+Chain 3: Iteration: 1000 / 2000 [ 50%]  (Warmup)
+Chain 3: Iteration: 1001 / 2000 [ 50%]  (Sampling)
+Chain 4: Iteration:  600 / 2000 [ 30%]  (Warmup)
+Chain 2: Iteration: 1200 / 2000 [ 60%]  (Sampling)
+Chain 1: Iteration: 1000 / 2000 [ 50%]  (Warmup)
+Chain 1: Iteration: 1001 / 2000 [ 50%]  (Sampling)
+Chain 4: Iteration:  800 / 2000 [ 40%]  (Warmup)
+Chain 2: Iteration: 1400 / 2000 [ 70%]  (Sampling)
+Chain 3: Iteration: 1200 / 2000 [ 60%]  (Sampling)
+Chain 4: Iteration: 1000 / 2000 [ 50%]  (Warmup)
+Chain 4: Iteration: 1001 / 2000 [ 50%]  (Sampling)
+Chain 2: Iteration: 1600 / 2000 [ 80%]  (Sampling)
+Chain 1: Iteration: 1200 / 2000 [ 60%]  (Sampling)
+Chain 3: Iteration: 1400 / 2000 [ 70%]  (Sampling)
+Chain 2: Iteration: 1800 / 2000 [ 90%]  (Sampling)
+Chain 4: Iteration: 1200 / 2000 [ 60%]  (Sampling)
+Chain 2: Iteration: 2000 / 2000 [100%]  (Sampling)
+Chain 2: 
+Chain 2:  Elapsed Time: 0.221437 seconds (Warm-up)
+Chain 2:                0.23616 seconds (Sampling)
+Chain 2:                0.457597 seconds (Total)
+Chain 2: 
+Chain 1: Iteration: 1400 / 2000 [ 70%]  (Sampling)
+Chain 3: Iteration: 1600 / 2000 [ 80%]  (Sampling)
+Chain 4: Iteration: 1400 / 2000 [ 70%]  (Sampling)
+Chain 4: Iteration: 1600 / 2000 [ 80%]  (Sampling)
+Chain 3: Iteration: 1800 / 2000 [ 90%]  (Sampling)
+Chain 1: Iteration: 1600 / 2000 [ 80%]  (Sampling)
+Chain 4: Iteration: 1800 / 2000 [ 90%]  (Sampling)
+Chain 3: Iteration: 2000 / 2000 [100%]  (Sampling)
+Chain 3: 
+Chain 3:  Elapsed Time: 0.231599 seconds (Warm-up)
+Chain 3:                0.394478 seconds (Sampling)
+Chain 3:                0.626077 seconds (Total)
+Chain 3: 
+Chain 1: Iteration: 1800 / 2000 [ 90%]  (Sampling)
+Chain 4: Iteration: 2000 / 2000 [100%]  (Sampling)
+Chain 4: 
+Chain 4:  Elapsed Time: 0.328499 seconds (Warm-up)
+Chain 4:                0.332053 seconds (Sampling)
+Chain 4:                0.660552 seconds (Total)
+Chain 4: 
+Chain 1: Iteration: 2000 / 2000 [100%]  (Sampling)
+Chain 1: 
+Chain 1:  Elapsed Time: 0.296878 seconds (Warm-up)
+Chain 1:                0.447341 seconds (Sampling)
+Chain 1:                0.744219 seconds (Total)
+Chain 1:
+#+end_example
+
+*** 結果の確認
+**** fit object
+
+- AR 係数 0.5 なので、シミュレーションデータ通り
+
+#+begin_src R
+ar1_fit
+#+end_src
+
+#+RESULTS:
+#+begin_example
+Inference for Stan model: ar_1.
+4 chains, each with iter=2000; warmup=1000; thin=1; 
+post-warmup draws per chain=1000, total post-warmup draws=4000.
+
+         mean se_mean   sd    2.5%     25%     50%     75%   97.5% n_eff Rhat
+alpha   -0.01    0.00 0.03   -0.08   -0.03   -0.01    0.01    0.05  4166    1
+beta     0.49    0.00 0.03    0.44    0.48    0.49    0.51    0.55  3934    1
+sigma    0.97    0.00 0.02    0.93    0.96    0.97    0.99    1.02  3780    1
+lp__  -469.84    0.03 1.29 -473.16 -470.44 -469.49 -468.87 -468.36  2044    1
+
+Samples were drawn using NUTS(diag_e) at Wed Nov 13 22:49:30 2019.
+For each parameter, n_eff is a crude measure of effective sample size,
+and Rhat is the potential scale reduction factor on split chains (at 
+convergence, Rhat=1).
+#+end_example
+
+#+begin_src R
+get_posterior_mean(ar1_fit)
+#+end_src
+
+#+RESULTS:
+:        mean-chain:1  mean-chain:2 mean-chain:3  mean-chain:4 mean-all chains
+: alpha   -0.01229227   -0.01228584   -0.0136302   -0.01271205     -0.01273009
+: beta     0.49548081    0.49471484    0.4948913    0.49476827      0.49496380
+: sigma    0.97170088    0.97238199    0.9706657    0.97278024      0.97188221
+: lp__  -469.88705713 -469.86119775 -469.7977479 -469.80177191   -469.83694367
+
+**** stan_plot()
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+stan_plot(ar1_fit)
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-1tx0ls.png]]
+
+**** stan_trace()
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+stan_trace(ar1_fit, nrow = 3)
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-pDPCMG.png]]
+
+**** stan_hist()
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+stan_hist(ar1_fit)
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-qaIz6o.png]]
+
+*** Shiny Stan
+
+#+begin_src R :results silent
+launch_shinystan(ar1_fit)
+#+end_src
+
+** AR(p) Model
+*** データ
+
+- AR(2) に従うモデル
+#+begin_src R :results silent
+ar2 <- arima.sim(n = 1000, model = list(order = c(2, 0, 0), ar = c(0.5, -0.2)))
+#+end_src
+
+*** モデル
+
+_AR(p) モデル_
+
+
+$y_t = \alpha + \Sigma_{i=1}^p \beta_i y_{t-i} + \epsilon, \epsilon \sim N(0, \sigma)$
+
+
+Stan 向けに書き直すと
+
+$y_t \sim Normal(\mu, \sigma)$
+
+$\mu = \alpha + \Sigma_{i=1}^p \beta_i y_{t-i}$
+
+#+begin_src stan :file models/ar_p.stan
+data {
+  int<lower=0> T;
+  int<lower=0> P;
+  real y[T];
+}
+
+parameters {
+  real alpha;
+  real beta[P];
+  real<lower=0> sigma;
+}
+
+model {
+  for (t in (P+1):T) {
+    real mu;
+    mu = alpha;
+    for (p in 1:P) {
+      mu = mu + beta[p] * y[t-p];
+    }
+    y[t] ~ normal(mu, sigma);
+  }
+}
+#+end_src
+
+#+RESULTS:
+[[file:models/ar_p.stan]]
+
+*** サンプリング
+
+- AR(2) を推定してみる
+#+begin_src R
+ar2_fit <- stan(file = "models/ar_p.stan", data = list(T = length(ar2), P = 2, y = ar2))
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+SAMPLING FOR MODEL 'ar_p' NOW (CHAIN 2).
+Chain 2: 
+Chain 2: Gradient evaluation took 0.000201 seconds
+Chain 2: 1000 transitions using 10 leapfrog steps per transition would take 2.01 seconds.
+Chain 2: Adjust your expectations accordingly!
+Chain 2: 
+Chain 2: 
+Chain 2: Iteration:    1 / 2000 [  0%]  (Warmup)
+
+SAMPLING FOR MODEL 'ar_p' NOW (CHAIN 3).
+Chain 3: 
+Chain 3: Gradient evaluation took 0.000196 seconds
+Chain 3: 1000 transitions using 10 leapfrog steps per transition would take 1.96 seconds.
+Chain 3: Adjust your expectations accordingly!
+Chain 3: 
+Chain 3: 
+Chain 3: Iteration:    1 / 2000 [  0%]  (Warmup)
+
+SAMPLING FOR MODEL 'ar_p' NOW (CHAIN 1).
+Chain 1: 
+Chain 1: Gradient evaluation took 0.000283 seconds
+Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 2.83 seconds.
+Chain 1: Adjust your expectations accordingly!
+Chain 1: 
+Chain 1: 
+Chain 1: Iteration:    1 / 2000 [  0%]  (Warmup)
+
+SAMPLING FOR MODEL 'ar_p' NOW (CHAIN 4).
+Chain 4: 
+Chain 4: Gradient evaluation took 0.00027 seconds
+Chain 4: 1000 transitions using 10 leapfrog steps per transition would take 2.7 seconds.
+Chain 4: Adjust your expectations accordingly!
+Chain 4: 
+Chain 4: 
+Chain 4: Iteration:    1 / 2000 [  0%]  (Warmup)
+Chain 3: Iteration:  200 / 2000 [ 10%]  (Warmup)
+Chain 2: Iteration:  200 / 2000 [ 10%]  (Warmup)
+Chain 2: Iteration:  400 / 2000 [ 20%]  (Warmup)
+Chain 3: Iteration:  400 / 2000 [ 20%]  (Warmup)
+Chain 1: Iteration:  200 / 2000 [ 10%]  (Warmup)
+Chain 4: Iteration:  200 / 2000 [ 10%]  (Warmup)
+Chain 2: Iteration:  600 / 2000 [ 30%]  (Warmup)
+Chain 3: Iteration:  600 / 2000 [ 30%]  (Warmup)
+Chain 2: Iteration:  800 / 2000 [ 40%]  (Warmup)
+Chain 1: Iteration:  400 / 2000 [ 20%]  (Warmup)
+Chain 3: Iteration:  800 / 2000 [ 40%]  (Warmup)
+Chain 4: Iteration:  400 / 2000 [ 20%]  (Warmup)
+Chain 2: Iteration: 1000 / 2000 [ 50%]  (Warmup)
+Chain 2: Iteration: 1001 / 2000 [ 50%]  (Sampling)
+Chain 3: Iteration: 1000 / 2000 [ 50%]  (Warmup)
+Chain 3: Iteration: 1001 / 2000 [ 50%]  (Sampling)
+Chain 1: Iteration:  600 / 2000 [ 30%]  (Warmup)
+Chain 4: Iteration:  600 / 2000 [ 30%]  (Warmup)
+Chain 2: Iteration: 1200 / 2000 [ 60%]  (Sampling)
+Chain 3: Iteration: 1200 / 2000 [ 60%]  (Sampling)
+Chain 4: Iteration:  800 / 2000 [ 40%]  (Warmup)
+Chain 1: Iteration:  800 / 2000 [ 40%]  (Warmup)
+Chain 2: Iteration: 1400 / 2000 [ 70%]  (Sampling)
+Chain 3: Iteration: 1400 / 2000 [ 70%]  (Sampling)
+Chain 3: Iteration: 1600 / 2000 [ 80%]  (Sampling)
+Chain 2: Iteration: 1600 / 2000 [ 80%]  (Sampling)
+Chain 4: Iteration: 1000 / 2000 [ 50%]  (Warmup)
+Chain 4: Iteration: 1001 / 2000 [ 50%]  (Sampling)
+Chain 1: Iteration: 1000 / 2000 [ 50%]  (Warmup)
+Chain 1: Iteration: 1001 / 2000 [ 50%]  (Sampling)
+Chain 3: Iteration: 1800 / 2000 [ 90%]  (Sampling)
+Chain 2: Iteration: 1800 / 2000 [ 90%]  (Sampling)
+Chain 4: Iteration: 1200 / 2000 [ 60%]  (Sampling)
+Chain 1: Iteration: 1200 / 2000 [ 60%]  (Sampling)
+Chain 3: Iteration: 2000 / 2000 [100%]  (Sampling)
+Chain 3: 
+Chain 3:  Elapsed Time: 0.472854 seconds (Warm-up)
+Chain 3:                0.487944 seconds (Sampling)
+Chain 3:                0.960798 seconds (Total)
+Chain 3: 
+Chain 2: Iteration: 2000 / 2000 [100%]  (Sampling)
+Chain 2: 
+Chain 2:  Elapsed Time: 0.4551 seconds (Warm-up)
+Chain 2:                0.513612 seconds (Sampling)
+Chain 2:                0.968712 seconds (Total)
+Chain 2: 
+Chain 4: Iteration: 1400 / 2000 [ 70%]  (Sampling)
+Chain 1: Iteration: 1400 / 2000 [ 70%]  (Sampling)
+Chain 4: Iteration: 1600 / 2000 [ 80%]  (Sampling)
+Chain 1: Iteration: 1600 / 2000 [ 80%]  (Sampling)
+Chain 4: Iteration: 1800 / 2000 [ 90%]  (Sampling)
+Chain 1: Iteration: 1800 / 2000 [ 90%]  (Sampling)
+Chain 4: Iteration: 2000 / 2000 [100%]  (Sampling)
+Chain 4: 
+Chain 4:  Elapsed Time: 0.709853 seconds (Warm-up)
+Chain 4:                0.597551 seconds (Sampling)
+Chain 4:                1.3074 seconds (Total)
+Chain 4: 
+Chain 1: Iteration: 2000 / 2000 [100%]  (Sampling)
+Chain 1: 
+Chain 1:  Elapsed Time: 0.758781 seconds (Warm-up)
+Chain 1:                0.623962 seconds (Sampling)
+Chain 1:                1.38274 seconds (Total)
+Chain 1: 
+Warning message:
+In readLines(file, warn = TRUE) :
+  incomplete final line found on '/home/shun/Dropbox/repos/github/five-dots/notes/lang/stan/time_series/models/ar_p.stan'
+#+end_example
+
+*** 結果の確認
+**** fit object
+
+- AR1=0.5, AR2=-0.2 なので、シミュレーションデータ通り
+
+#+begin_src R
+ar2_fit
+#+end_src
+
+#+RESULTS:
+#+begin_example
+Inference for Stan model: ar_p.
+4 chains, each with iter=2000; warmup=1000; thin=1; 
+post-warmup draws per chain=1000, total post-warmup draws=4000.
+
+           mean se_mean   sd    2.5%     25%     50%     75%   97.5% n_eff Rhat
+alpha     -0.02    0.00 0.03   -0.09   -0.04   -0.02    0.00    0.04  3661    1
+beta[1]    0.52    0.00 0.03    0.46    0.50    0.52    0.54    0.58  4138    1
+beta[2]   -0.22    0.00 0.03   -0.28   -0.24   -0.22   -0.20   -0.16  3947    1
+sigma      0.96    0.00 0.02    0.92    0.95    0.96    0.98    1.01  4049    1
+lp__    -462.33    0.03 1.42 -465.81 -463.02 -462.02 -461.29 -460.60  1821    1
+
+Samples were drawn using NUTS(diag_e) at Wed Nov 13 23:21:37 2019.
+For each parameter, n_eff is a crude measure of effective sample size,
+and Rhat is the potential scale reduction factor on split chains (at 
+convergence, Rhat=1).
+#+end_example
+
+#+begin_src R
+get_posterior_mean(ar2_fit)
+#+end_src
+
+#+RESULTS:
+:          mean-chain:1  mean-chain:2  mean-chain:3  mean-chain:4 mean-all chains
+: alpha     -0.02326868   -0.02259838   -0.02328339   -0.02540334     -0.02363845
+: beta[1]    0.52203868    0.52300815    0.52183754    0.52288914      0.52244338
+: beta[2]   -0.22044615   -0.22257311   -0.22059710   -0.22044190     -0.22101457
+: sigma      0.96460063    0.96513673    0.96415581    0.96537668      0.96481747
+: lp__    -462.34232213 -462.32031441 -462.42669593 -462.22277194   -462.32802610
+
+**** stan_plot()
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+stan_plot(ar2_fit)
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-HheyoU.png]]
+
+**** stan_trace()
+
+#+begin_src R :results output graphics file :file (my/get-babel-file) :height 640
+stan_trace(ar2_fit, nrow = 4)
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-Yr4YU4.png]]
+
+**** stan_hist()
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+stan_hist(ar2_fit)
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-QIRs6u.png]]
+
+*** Shiny Stan
+
+#+begin_src R :results silent
+launch_shinystan(ar2_fit)
+#+end_src
+
+** ARCH(1) Model
+*** データ
+
+- ARCH(1) に従うデータ
+#+begin_src R :results silent
+arch_spec <- garchSpec(model = list(alpha = c(0.4), beta = 0))
+arch1 <- garchSim(arch_spec, 1000)
+#+end_src
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+ggtsdisplay(arch1)
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-uD04a8.png]]
+
+*** モデル
+
+_ARCH(m) モデルの一般系_
+
+$y_t = \mu + u_t$
+
+$u_t = \sqrt{h_t \epsilon_t}, \epsilon_t \sim N(0, 1)$
+
+$h_t = \omega + \Sigma_{i=1}^m \alpha_i \upsilon_{t-i}$
+
+
+- $\mu$ は ARMA などの条件付き期待値のモデル
+- $u_t$ はノイズ (期待値モデルの残差)
+- $h_t$ は条件付き期待値
+- ノイズのスケールが時変のモデル
+
+
+_Stan User Guide に記載されている ARCH(1) モデル_
+
+$r_t = \mu + a_t$
+
+$a_t = \sigma_t \epsilon_t$
+
+$\epsilon \sim Normal(0, 1)$
+
+$\sigma_t^2 = \alpha_0 + \alpha_1 a_{t-1}^2$
+
+#+begin_src stan :file models/arch_1.stan
+data {
+  int<lower=0> T;
+  real r[T];
+}
+
+parameters {
+  real mu;
+  // 条件付き分散が正であることを保証する制約
+  real<lower=0> alpha0;
+  // 条件付き分散が正であることを保証する制約 + 定常性を保証するための制約
+  real<lower=0, upper=1> alpha1;
+}
+
+model {
+  for (t in 2:T) {
+    // 前期の r から mu を引くと、前期の条件付き分散になる
+    r[t] ~ normal(mu, sqrt(alpha0 + alpha1 * pow(r[t-1] - mu, 2)));
+  }
+}
+
+#+end_src
+
+#+RESULTS:
+[[file:models/arch_1.stan]]
+
+*** サンプリング
+
+- ARCH(1) を推定してみる
+#+begin_src R
+arch1_fit <- stan(file = "models/arch_1.stan", data = list(T = length(arch1), r = as.numeric(arch1)))
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+SAMPLING FOR MODEL 'arch_1' NOW (CHAIN 2).
+Chain 2: 
+Chain 2: Gradient evaluation took 0.000387 seconds
+Chain 2: 1000 transitions using 10 leapfrog steps per transition would take 3.87 seconds.
+Chain 2: Adjust your expectations accordingly!
+Chain 2: 
+Chain 2: 
+Chain 2: Iteration:    1 / 2000 [  0%]  (Warmup)
+
+SAMPLING FOR MODEL 'arch_1' NOW (CHAIN 3).
+
+SAMPLING FOR MODEL 'arch_1' NOW (CHAIN 1).
+Chain 3: 
+Chain 3: Gradient evaluation took 0.000277 seconds
+Chain 3: 1000 transitions using 10 leapfrog steps per transition would take 2.77 seconds.
+Chain 3: Adjust your expectations accordingly!
+Chain 3: 
+Chain 3: 
+Chain 1: 
+Chain 1: Gradient evaluation took 0.000365 seconds
+Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 3.65 seconds.
+Chain 1: Adjust your expectations accordingly!
+Chain 1: 
+Chain 1: 
+Chain 3: Iteration:    1 / 2000 [  0%]  (Warmup)
+Chain 1: Iteration:    1 / 2000 [  0%]  (Warmup)
+
+SAMPLING FOR MODEL 'arch_1' NOW (CHAIN 4).
+Chain 4: 
+Chain 4: Gradient evaluation took 0.000347 seconds
+Chain 4: 1000 transitions using 10 leapfrog steps per transition would take 3.47 seconds.
+Chain 4: Adjust your expectations accordingly!
+Chain 4: 
+Chain 4: 
+Chain 4: Iteration:    1 / 2000 [  0%]  (Warmup)
+Chain 1: Iteration:  200 / 2000 [ 10%]  (Warmup)
+Chain 2: Iteration:  200 / 2000 [ 10%]  (Warmup)
+Chain 4: Iteration:  200 / 2000 [ 10%]  (Warmup)
+Chain 3: Iteration:  200 / 2000 [ 10%]  (Warmup)
+Chain 1: Iteration:  400 / 2000 [ 20%]  (Warmup)
+Chain 4: Iteration:  400 / 2000 [ 20%]  (Warmup)
+Chain 3: Iteration:  400 / 2000 [ 20%]  (Warmup)
+Chain 4: Iteration:  600 / 2000 [ 30%]  (Warmup)
+Chain 1: Iteration:  600 / 2000 [ 30%]  (Warmup)
+Chain 2: Iteration:  400 / 2000 [ 20%]  (Warmup)
+Chain 4: Iteration:  800 / 2000 [ 40%]  (Warmup)
+Chain 3: Iteration:  600 / 2000 [ 30%]  (Warmup)
+Chain 4: Iteration: 1000 / 2000 [ 50%]  (Warmup)
+Chain 4: Iteration: 1001 / 2000 [ 50%]  (Sampling)
+Chain 3: Iteration:  800 / 2000 [ 40%]  (Warmup)
+Chain 1: Iteration:  800 / 2000 [ 40%]  (Warmup)
+Chain 4: Iteration: 1200 / 2000 [ 60%]  (Sampling)
+Chain 3: Iteration: 1000 / 2000 [ 50%]  (Warmup)
+Chain 3: Iteration: 1001 / 2000 [ 50%]  (Sampling)
+Chain 4: Iteration: 1400 / 2000 [ 70%]  (Sampling)
+Chain 2: Iteration:  600 / 2000 [ 30%]  (Warmup)
+Chain 3: Iteration: 1200 / 2000 [ 60%]  (Sampling)
+Chain 1: Iteration: 1000 / 2000 [ 50%]  (Warmup)
+Chain 1: Iteration: 1001 / 2000 [ 50%]  (Sampling)
+Chain 4: Iteration: 1600 / 2000 [ 80%]  (Sampling)
+Chain 3: Iteration: 1400 / 2000 [ 70%]  (Sampling)
+Chain 2: Iteration:  800 / 2000 [ 40%]  (Warmup)
+Chain 1: Iteration: 1200 / 2000 [ 60%]  (Sampling)
+Chain 4: Iteration: 1800 / 2000 [ 90%]  (Sampling)
+Chain 3: Iteration: 1600 / 2000 [ 80%]  (Sampling)
+Chain 4: Iteration: 2000 / 2000 [100%]  (Sampling)
+Chain 2: Iteration: 1000 / 2000 [ 50%]  (Warmup)
+Chain 4: 
+Chain 4:  Elapsed Time: 15.6005 seconds (Warm-up)
+Chain 4:                15.1196 seconds (Sampling)
+Chain 4:                30.7201 seconds (Total)
+Chain 4: 
+Chain 2: Iteration: 1001 / 2000 [ 50%]  (Sampling)
+Chain 1: Iteration: 1400 / 2000 [ 70%]  (Sampling)
+Chain 3: Iteration: 1800 / 2000 [ 90%]  (Sampling)
+Chain 2: Iteration: 1200 / 2000 [ 60%]  (Sampling)
+Chain 1: Iteration: 1600 / 2000 [ 80%]  (Sampling)
+Chain 3: Iteration: 2000 / 2000 [100%]  (Sampling)
+Chain 3: 
+Chain 3:  Elapsed Time: 20.5589 seconds (Warm-up)
+Chain 3:                14.3381 seconds (Sampling)
+Chain 3:                34.897 seconds (Total)
+Chain 3: 
+Chain 2: Iteration: 1400 / 2000 [ 70%]  (Sampling)
+Chain 1: Iteration: 1800 / 2000 [ 90%]  (Sampling)
+Chain 2: Iteration: 1600 / 2000 [ 80%]  (Sampling)
+Chain 1: Iteration: 2000 / 2000 [100%]  (Sampling)
+Chain 1: 
+Chain 1:  Elapsed Time: 23.4007 seconds (Warm-up)
+Chain 1:                16.6856 seconds (Sampling)
+Chain 1:                40.0863 seconds (Total)
+Chain 1: 
+Chain 2: Iteration: 1800 / 2000 [ 90%]  (Sampling)
+Chain 2: Iteration: 2000 / 2000 [100%]  (Sampling)
+Chain 2: 
+Chain 2:  Elapsed Time: 30.4354 seconds (Warm-up)
+Chain 2:                12.7901 seconds (Sampling)
+Chain 2:                43.2255 seconds (Total)
+Chain 2:
+#+end_example
+
+*** 結果の確認
+**** fit object
+
+- alpha0=0, alpha1=0.4 なので、概ねシミュレーションデータ通り
+
+#+begin_src R
+arch1_fit
+#+end_src
+
+#+RESULTS:
+#+begin_example
+Inference for Stan model: arch_1.
+4 chains, each with iter=2000; warmup=1000; thin=1; 
+post-warmup draws per chain=1000, total post-warmup draws=4000.
+
+          mean se_mean   sd    2.5%     25%     50%     75%   97.5% n_eff Rhat
+mu        0.00    0.00 0.00    0.00    0.00    0.00    0.00    0.00  3804    1
+alpha0    0.00    0.00 0.00    0.00    0.00    0.00    0.00    0.00  1093    1
+alpha1    0.48    0.00 0.06    0.36    0.44    0.48    0.52    0.61  1318    1
+lp__   6178.43    0.04 1.26 6175.07 6177.87 6178.74 6179.34 6179.86  1048    1
+
+Samples were drawn using NUTS(diag_e) at Wed Nov 13 23:55:15 2019.
+For each parameter, n_eff is a crude measure of effective sample size,
+and Rhat is the potential scale reduction factor on split chains (at 
+convergence, Rhat=1).
+#+end_example
+
+#+begin_src R
+get_posterior_mean(arch1_fit)
+#+end_src
+
+#+RESULTS:
+:        mean-chain:1 mean-chain:2 mean-chain:3 mean-chain:4 mean-all chains
+: mu     4.422492e-05 4.427369e-05 4.623516e-05 4.310227e-05    4.445901e-05
+: alpha0 9.651202e-07 9.673814e-07 9.657120e-07 9.601781e-07    9.645979e-07
+: alpha1 4.771255e-01 4.801884e-01 4.746211e-01 4.814268e-01    4.783405e-01
+: lp__   6.178534e+03 6.178386e+03 6.178461e+03 6.178340e+03    6.178430e+03
+
+**** stan_plot()
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+stan_plot(arch1_fit)
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-Y6wWFh.png]]
+
+**** stan_trace()
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+stan_trace(arch1_fit, nrow = 3)
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-4QJvdn.png]]
+
+**** stan_hist()
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+stan_hist(arch1_fit)
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-YJekPQ.png]]
+
+*** Shiny Stan
+
+#+begin_src R :results silent
+launch_shinystan(arch1_fit)
+#+end_src
+
+** GARCH(1,1) Model
+*** データ
+
+- GARCH(1, 1) に従うデータ
+#+begin_src R :results silent
+garch_spec <- garchSpec(model = list(alpha = 0.4, beta = 0.1))
+garch11 <- garchSim(garch_spec, 1000)
+#+end_src
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+ggtsdisplay(garch11)
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-1FHFfr.png]]
+
+*** モデル
+
+_GARCH(1, 1)_
+
+$\sigma_t^2 = \alpha_0 + \alpha_1^2 a_{t-1} + \beta \sigma_{t-1}^2$
+
+#+begin_src stan :file models/garch_1-1.stan
+data {
+  int<lower=0> T;
+  real r[T];
+  real<lower=0> sigma1;
+}
+
+parameters {
+  real mu;
+  real<lower=0> alpha0;
+  real<lower=0, upper=1> alpha1;
+  real<lower=0, upper=(1-alpha1)> beta1;
+}
+
+transformed parameters {
+  real<lower=0> sigma[T];
+  sigma[1] = sigma1;
+
+  for (t in 2:T) {
+    sigma[t] = sqrt(alpha0 + alpha1 * pow(r[t-1] - mu, 2) + beta1 * pow(sigma[t-1], 2));
+  }
+}
+
+model {
+  r ~ normal(mu, sigma);
+}
+#+end_src
+
+#+RESULTS:
+[[file:models/garch_1-1.stan]]
+
+*** サンプリング
+
+- GARCH(1, 1) を推定してみる
+#+begin_src R
+garch11_fit <- stan(file = "models/garch_1-1.stan",
+                    data = list(T = length(garch11), 
+                                r = as.numeric(garch11),
+                                ## 初期値として標本標準偏差を利用
+                                sigma1 = sd(garch11)),
+                    iter = 3000, warmup = 500)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+SAMPLING FOR MODEL 'garch_1-1' NOW (CHAIN 4).
+Chain 4: 
+Chain 4: Gradient evaluation took 0.000522 seconds
+Chain 4: 1000 transitions using 10 leapfrog steps per transition would take 5.22 seconds.
+Chain 4: Adjust your expectations accordingly!
+Chain 4: 
+Chain 4: 
+Chain 4: Iteration:    1 / 2000 [  0%]  (Warmup)
+
+SAMPLING FOR MODEL 'garch_1-1' NOW (CHAIN 2).
+Chain 2: 
+
+SAMPLING FOR MODEL 'garch_1-1' NOW (CHAIN 1).
+Chain 2: Gradient evaluation took 0.000581 seconds
+Chain 2: 1000 transitions using 10 leapfrog steps per transition would take 5.81 seconds.
+Chain 2: Adjust your expectations accordingly!
+Chain 2: 
+Chain 2: 
+Chain 1: 
+Chain 1: Gradient evaluation took 0.000527 seconds
+Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 5.27 seconds.
+Chain 1: Adjust your expectations accordingly!
+Chain 1: 
+Chain 1: 
+Chain 2: Iteration:    1 / 2000 [  0%]  (Warmup)
+Chain 1: Iteration:    1 / 2000 [  0%]  (Warmup)
+
+SAMPLING FOR MODEL 'garch_1-1' NOW (CHAIN 3).
+Chain 3: 
+Chain 3: Gradient evaluation took 0.000454 seconds
+Chain 3: 1000 transitions using 10 leapfrog steps per transition would take 4.54 seconds.
+Chain 3: Adjust your expectations accordingly!
+Chain 3: 
+Chain 3: 
+Chain 3: Iteration:    1 / 2000 [  0%]  (Warmup)
+Chain 4: Iteration:  200 / 2000 [ 10%]  (Warmup)
+Chain 3: Iteration:  200 / 2000 [ 10%]  (Warmup)
+Chain 1: Iteration:  200 / 2000 [ 10%]  (Warmup)
+Chain 2: Iteration:  200 / 2000 [ 10%]  (Warmup)
+Chain 1: Iteration:  400 / 2000 [ 20%]  (Warmup)
+Chain 4: Iteration:  400 / 2000 [ 20%]  (Warmup)
+Chain 3: Iteration:  400 / 2000 [ 20%]  (Warmup)
+Chain 2: Iteration:  400 / 2000 [ 20%]  (Warmup)
+Chain 1: Iteration:  600 / 2000 [ 30%]  (Warmup)
+Chain 4: Iteration:  600 / 2000 [ 30%]  (Warmup)
+Chain 2: Iteration:  600 / 2000 [ 30%]  (Warmup)
+Chain 3: Iteration:  600 / 2000 [ 30%]  (Warmup)
+Chain 1: Iteration:  800 / 2000 [ 40%]  (Warmup)
+Chain 4: Iteration:  800 / 2000 [ 40%]  (Warmup)
+Chain 2: Iteration:  800 / 2000 [ 40%]  (Warmup)
+Chain 3: Iteration:  800 / 2000 [ 40%]  (Warmup)
+Chain 1: Iteration: 1000 / 2000 [ 50%]  (Warmup)
+Chain 1: Iteration: 1001 / 2000 [ 50%]  (Sampling)
+Chain 4: Iteration: 1000 / 2000 [ 50%]  (Warmup)
+Chain 4: Iteration: 1001 / 2000 [ 50%]  (Sampling)
+Chain 2: Iteration: 1000 / 2000 [ 50%]  (Warmup)
+Chain 2: Iteration: 1001 / 2000 [ 50%]  (Sampling)
+Chain 1: Iteration: 1200 / 2000 [ 60%]  (Sampling)
+Chain 3: Iteration: 1000 / 2000 [ 50%]  (Warmup)
+Chain 3: Iteration: 1001 / 2000 [ 50%]  (Sampling)
+Chain 4: Iteration: 1200 / 2000 [ 60%]  (Sampling)
+Chain 2: Iteration: 1200 / 2000 [ 60%]  (Sampling)
+Chain 1: Iteration: 1400 / 2000 [ 70%]  (Sampling)
+Chain 4: Iteration: 1400 / 2000 [ 70%]  (Sampling)
+Chain 3: Iteration: 1200 / 2000 [ 60%]  (Sampling)
+Chain 2: Iteration: 1400 / 2000 [ 70%]  (Sampling)
+Chain 1: Iteration: 1600 / 2000 [ 80%]  (Sampling)
+Chain 4: Iteration: 1600 / 2000 [ 80%]  (Sampling)
+Chain 2: Iteration: 1600 / 2000 [ 80%]  (Sampling)
+Chain 3: Iteration: 1400 / 2000 [ 70%]  (Sampling)
+Chain 1: Iteration: 1800 / 2000 [ 90%]  (Sampling)
+Chain 2: Iteration: 1800 / 2000 [ 90%]  (Sampling)
+Chain 4: Iteration: 1800 / 2000 [ 90%]  (Sampling)
+Chain 3: Iteration: 1600 / 2000 [ 80%]  (Sampling)
+Chain 1: Iteration: 2000 / 2000 [100%]  (Sampling)
+Chain 1: 
+Chain 1:  Elapsed Time: 60.3604 seconds (Warm-up)
+Chain 1:                40.3321 seconds (Sampling)
+Chain 1:                100.692 seconds (Total)
+Chain 1: 
+Chain 2: Iteration: 2000 / 2000 [100%]  (Sampling)
+Chain 2: 
+Chain 2:  Elapsed Time: 69.13 seconds (Warm-up)
+Chain 2:                34.9943 seconds (Sampling)
+Chain 2:                104.124 seconds (Total)
+Chain 2: 
+Chain 4: Iteration: 2000 / 2000 [100%]  (Sampling)
+Chain 4: 
+Chain 4:  Elapsed Time: 61.8459 seconds (Warm-up)
+Chain 4:                41.1183 seconds (Sampling)
+Chain 4:                102.964 seconds (Total)
+Chain 4: 
+Chain 3: Iteration: 1800 / 2000 [ 90%]  (Sampling)
+Chain 3: Iteration: 2000 / 2000 [100%]  (Sampling)
+Chain 3: 
+Chain 3:  Elapsed Time: 69.2799 seconds (Warm-up)
+Chain 3:                42.403 seconds (Sampling)
+Chain 3:                111.683 seconds (Total)
+Chain 3:
+#+end_example
+
+*** 結果の確認
+**** fit object
+
+- alpha0=0, alpha1=0.4, beta=0.1 なので、概ねシミュレーションデータ通り
+#+begin_src R
+get_posterior_mean(garch11_fit) %>% head()
+#+end_src
+
+#+RESULTS:
+:          mean-chain:1 mean-chain:2 mean-chain:3 mean-chain:4 mean-all chains
+: mu       1.640800e-05 1.469060e-05 1.530533e-05 1.276106e-05    1.479125e-05
+: alpha0   1.063486e-06 1.078572e-06 1.058168e-06 1.069906e-06    1.067533e-06
+: alpha1   4.520519e-01 4.561498e-01 4.583035e-01 4.527352e-01    4.548101e-01
+: beta1    1.257995e-01 1.205674e-01 1.265363e-01 1.230166e-01    1.239799e-01
+: sigma[1] 1.583214e-03 1.583214e-03 1.583214e-03 1.583214e-03    1.583214e-03
+: sigma[2] 1.206449e-03 1.207200e-03 1.205317e-03 1.205674e-03    1.206160e-03
+
+**** stan_plot()
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+stan_plot(garch11_fit)
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-ohH2gF.png]]
+
+**** stan_trace()
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+stan_trace(garch11_fit, pars=c("alpha0", "alpha1", "beta1"), nrow = 3, inc_warmup = TRUE)
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-2tBwLA.png]]
+
+**** stan_hist()
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+stan_hist(garch11_fit, pars=c("alpha0", "alpha1", "beta1"))
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-HjAxGp.png]]
+
+** MA(2) Model
+*** データ
+
+- MA(2) のシミュレーションデータ
+#+begin_src R :results silent
+ma2 <- arima.sim(n = 1000, model = list(order = c(0, 0, 2), ma = c(0.4, -0.2)))
+#+end_src
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+ggtsdisplay(ma2)
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-RjpGDQ.png]]
+
+*** モデル
+
+_MA(q) モデル_
+
+$y_t = \mu + \theta_1 \epsilon_{t-1} + \dots + \theta_q \epsilon_{t-q} + \epsilon$
+
+$\epsilon_t \sim Normal(0, \sigma)$
+
+#+begin_src stan :file models/ma_2.stan
+data {
+  int<lower=3> T;
+  vector[T] y;
+}
+
+parameters {
+  real mu;
+  real<lower=0> sigma;
+  vector[2] theta;
+}
+
+transformed parameters {
+  vector[T] epsilon;
+  epsilon[1] = y[1] - mu;
+  epsilon[2] = y[2] - mu - (theta[1] * epsilon[1]);
+
+  // 観測値 - 平均 - MA 項を引いたものが当期の誤差項
+  for (t in 3:T)
+    epsilon[t] = (y[t] - mu
+                  - theta[1] * epsilon[t - 1]
+                  - theta[2] * epsilon[t - 2]);
+}
+
+model {
+  // 事前分布にコーシー分布を指定
+  mu    ~ cauchy(0, 2.5);
+  theta ~ cauchy(0, 2.5);
+  // σ は下限が設定されているので、半コーシー分布になる
+  sigma ~ cauchy(0, 2.5);
+
+  for (t in 3:T)
+    y[t] ~ normal(mu
+                  + theta[1] * epsilon[t - 1]
+                  + theta[2] * epsilon[t - 2],
+                  sigma);
+}
+#+end_src
+
+#+RESULTS:
+[[file:models/ma_2.stan]]
+*** サンプリング
+
+- MA(2) を推定してみる
+#+begin_src R
+ma2_fit <- stan(file = "models/ma_2.stan",
+                data = list(T = length(ma2), 
+                            y = as.numeric(ma2)))
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+SAMPLING FOR MODEL 'ma_2' NOW (CHAIN 1).
+
+SAMPLING FOR MODEL 'ma_2' NOW (CHAIN 2).
+Chain 1: Rejecting initial value:
+Chain 1:   Log probability evaluates to log(0), i.e. negative infinity.
+Chain 1:   Stan can't start sampling from this initial value.
+Chain 1: 
+Chain 1: Gradient evaluation took 0.000926 seconds
+Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 9.26 seconds.
+Chain 1: Adjust your expectations accordingly!
+Chain 1: 
+Chain 1: 
+Chain 
+SAMPLING FOR MODEL 'ma_2' NOW (CHAIN 3).
+2: 
+Chain 2: Gradient evaluation took 0.000817 seconds
+Chain 2: 1000 transitions using 10 leapfrog steps per transition would take 8.17 seconds.
+Chain 2: Adjust your expectations accordingly!
+Chain 2: 
+Chain 2: 
+Chain 1: Iteration:    1 / 2000 [  0%]  (Warmup)
+Chain 3: 
+Chain 3: Gradient evaluation took 0.000903 seconds
+Chain 3: 1000 transitions using 10 leapfrog steps per transition would take 9.03 seconds.
+Chain 3: Adjust your expectations accordingly!
+Chain 3: 
+Chain 3: 
+Chain 3: Iteration:    1 / 2000 [  0%]  (Warmup)
+
+SAMPLING FOR MODEL 'ma_2' NOW (CHAIN 4).
+Chain 4: Rejecting initial value:
+Chain 4:   Error evaluating the log probability at the initial value.
+Chain 4: Exception: normal_lpdf: Location parameter is inf, but must be finite!  (in 'model78c9126e56d9_ma_2' at line 31)
+
+Chain 4: 
+Chain 4: Gradient evaluation took 0.000888 seconds
+Chain 4: 1000 transitions using 10 leapfrog steps per transition would take 8.88 seconds.
+Chain 4: Adjust your expectations accordingly!
+Chain 4: 
+Chain 4: 
+Chain 4: Iteration:    1 / 2000 [  0%]  (Warmup)
+Chain 2: Iteration:    1 / 2000 [  0%]  (Warmup)
+Chain 2: Iteration:  200 / 2000 [ 10%]  (Warmup)
+Chain 3: Iteration:  200 / 2000 [ 10%]  (Warmup)
+Chain 4: Iteration:  200 / 2000 [ 10%]  (Warmup)
+Chain 1: Iteration:  200 / 2000 [ 10%]  (Warmup)
+Chain 3: Iteration:  400 / 2000 [ 20%]  (Warmup)
+Chain 4: Iteration:  400 / 2000 [ 20%]  (Warmup)
+Chain 1: Iteration:  400 / 2000 [ 20%]  (Warmup)
+Chain 2: Iteration:  400 / 2000 [ 20%]  (Warmup)
+Chain 4: Iteration:  600 / 2000 [ 30%]  (Warmup)
+Chain 3: Iteration:  600 / 2000 [ 30%]  (Warmup)
+Chain 1: Iteration:  600 / 2000 [ 30%]  (Warmup)
+Chain 4: Iteration:  800 / 2000 [ 40%]  (Warmup)
+Chain 3: Iteration:  800 / 2000 [ 40%]  (Warmup)
+Chain 1: Iteration:  800 / 2000 [ 40%]  (Warmup)
+Chain 4: Iteration: 1000 / 2000 [ 50%]  (Warmup)
+Chain 4: Iteration: 1001 / 2000 [ 50%]  (Sampling)
+Chain 2: Iteration:  600 / 2000 [ 30%]  (Warmup)
+Chain 1: Iteration: 1000 / 2000 [ 50%]  (Warmup)
+Chain 1: Iteration: 1001 / 2000 [ 50%]  (Sampling)
+Chain 3: Iteration: 1000 / 2000 [ 50%]  (Warmup)
+Chain 3: Iteration: 1001 / 2000 [ 50%]  (Sampling)
+Chain 4: Iteration: 1200 / 2000 [ 60%]  (Sampling)
+Chain 1: Iteration: 1200 / 2000 [ 60%]  (Sampling)
+Chain 3: Iteration: 1200 / 2000 [ 60%]  (Sampling)
+Chain 4: Iteration: 1400 / 2000 [ 70%]  (Sampling)
+Chain 1: Iteration: 1400 / 2000 [ 70%]  (Sampling)
+Chain 2: Iteration:  800 / 2000 [ 40%]  (Warmup)
+Chain 1: Iteration: 1600 / 2000 [ 80%]  (Sampling)
+Chain 3: Iteration: 1400 / 2000 [ 70%]  (Sampling)
+Chain 4: Iteration: 1600 / 2000 [ 80%]  (Sampling)
+Chain 2: Iteration: 1000 / 2000 [ 50%]  (Warmup)
+Chain 2: Iteration: 1001 / 2000 [ 50%]  (Sampling)
+Chain 1: Iteration: 1800 / 2000 [ 90%]  (Sampling)
+Chain 3: Iteration: 1600 / 2000 [ 80%]  (Sampling)
+Chain 4: Iteration: 1800 / 2000 [ 90%]  (Sampling)
+Chain 2: Iteration: 1200 / 2000 [ 60%]  (Sampling)
+Chain 1: Iteration: 2000 / 2000 [100%]  (Sampling)
+Chain 1: 
+Chain 1:  Elapsed Time: 2.4224 seconds (Warm-up)
+Chain 1:                2.79645 seconds (Sampling)
+Chain 1:                5.21885 seconds (Total)
+Chain 1: 
+Chain 3: Iteration: 1800 / 2000 [ 90%]  (Sampling)
+Chain 4: Iteration: 2000 / 2000 [100%]  (Sampling)
+Chain 4: 
+Chain 4:  Elapsed Time: 2.51093 seconds (Warm-up)
+Chain 4:                2.8292 seconds (Sampling)
+Chain 4:                5.34013 seconds (Total)
+Chain 4: 
+Chain 2: Iteration: 1400 / 2000 [ 70%]  (Sampling)
+Chain 3: Iteration: 2000 / 2000 [100%]  (Sampling)
+Chain 3: 
+Chain 3:  Elapsed Time: 2.46612 seconds (Warm-up)
+Chain 3:                2.67711 seconds (Sampling)
+Chain 3:                5.14323 seconds (Total)
+Chain 3: 
+Chain 2: Iteration: 1600 / 2000 [ 80%]  (Sampling)
+Chain 2: Iteration: 1800 / 2000 [ 90%]  (Sampling)
+Chain 2: Iteration: 2000 / 2000 [100%]  (Sampling)
+Chain 2: 
+Chain 2:  Elapsed Time: 4.74703 seconds (Warm-up)
+Chain 2:                2.14986 seconds (Sampling)
+Chain 2:                6.89688 seconds (Total)
+Chain 2:
+#+end_example
+
+*** 結果の確認
+**** fit object
+
+- theta1=0.4, theta2=-0.2 なので、概ねシミュレーションデータ通り
+#+begin_src R
+get_posterior_mean(ma2_fit) %>% head()
+#+end_src
+
+#+RESULTS:
+:            mean-chain:1 mean-chain:2 mean-chain:3 mean-chain:4 mean-all chains
+: mu           -0.9320681   0.02053506   0.02182659   -0.9709893      -0.4651739
+: sigma         0.3462466   1.02518664   1.02433258    6.3678958       2.1909154
+: theta[1]     -1.3302193   0.37852507   0.37567124   -0.4103644      -0.2465968
+: theta[2]      1.0245575  -0.21694353  -0.21805414    1.0125661       0.4005315
+: epsilon[1]    0.2227271  -0.72987609  -0.73116761    0.2616483      -0.2441671
+: epsilon[2]   -0.3226092  -1.29517523  -1.29806731   -0.4725927      -0.8471111
+
+**** stan_plot()
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+stan_plot(ma2_fit, pars = c("theta[1]", "theta[2]"))
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-cVpDIA.png]]
+
+**** stan_trace()
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+stan_trace(ma2_fit, pars=c("theta[1]", "theta[2]"), nrow = 2, inc_warmup = TRUE)
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-pSGIDV.png]]
+
+**** stan_hist()
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+stan_hist(ma2_fit, pars=c("theta[1]", "theta[2]"))
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-rsmBpv.png]]
+
+** MA(q) Model
+*** モデル
+ 
+#+begin_src stan :file models/ma_q.stan
+data {
+  int<lower=0> Q;
+  int<lower=3> T;
+  vector[T] y;
+}
+
+parameters {
+  real mu;
+  real<lower=0> sigma;
+  vector[Q] theta;
+}
+
+transformed parameters {
+  vector[T] epsilon;
+  for (t in 1:T) {
+    epsilon[t] = y[t] - mu;
+    for (q in 1:min(t - 1, Q))
+      epsilon[t] = epsilon[t] - (theta[q] * epsilon[t - q]);
+  }
+}
+
+model {
+  vector[T] eta;
+  mu ~ cauchy(0, 2.5);
+  theta ~ cauchy(0, 2.5);
+  sigma ~ cauchy(0, 2.5);
+
+  for (t in 1:T) {
+    eta[t] = mu;
+    for (q in 1:min(t - 1, Q))
+      eta[t] = eta[t] + theta[q] * epsilon[t - q];
+  }
+  y ~ normal(eta, sigma);
+}
+#+end_src
+
+#+RESULTS:
+[[file:models/ma_q.stan]]
+
+*** サンプリング
+
+- 同じ MA(2) のデータを推定してみる
+#+begin_src R
+ma_q_fit <- stan(file = "models/ma_q.stan",
+                 data = list(Q = 2,
+                             T = length(ma2), 
+                             y = ma2))
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+
+SAMPLING FOR MODEL 'ma_q' NOW (CHAIN 1).
+
+SAMPLING FOR MODEL 'ma_q' NOW (CHAIN 2).
+Chain 1: Rejecting initial value:
+Chain 1:   Log probability evaluates to log(0), i.e. negative infinity.
+Chain 1:   Stan can't start sampling from this initial value.
+Chain 1: 
+Chain 1: Gradient evaluation took 0.000827 seconds
+Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 8.27 seconds.
+Chain 1: Adjust your expectations accordingly!
+Chain 1: 
+Chain 1: 
+
+SAMPLING FOR MODEL 'ma_q' NOW (CHAIN 4).
+Chain 2: 
+Chain 2: Gradient evaluation took 0.000867 seconds
+Chain 2: 1000 transitions using 10 leapfrog steps per transition would take 8.67 seconds.
+Chain 2: Adjust your expectations accordingly!
+Chain 2: 
+Chain 2: 
+Chain 1: Iteration:    1 / 2000 [  0%]  (Warmup)
+
+SAMPLING FOR MODEL 'ma_q' NOW (CHAIN 3).
+Chain 4: Rejecting initial value:
+Chain 4:   Log probability evaluates to log(0), i.e. negative infinity.
+Chain 4:   Stan can't start sampling from this initial value.
+Chain 4: 
+Chain 4: Gradient evaluation took 0.000925 seconds
+Chain 4: 1000 transitions using 10 leapfrog steps per transition would take 9.25 seconds.
+Chain 4: Adjust your expectations accordingly!
+Chain 4: 
+Chain 4: 
+Chain 4: Iteration:    1 / 2000 [  0%]  (Warmup)
+Chain 3: 
+Chain 3: Gradient evaluation took 0.000739 seconds
+Chain 3: 1000 transitions using 10 leapfrog steps per transition would take 7.39 seconds.
+Chain 3: Adjust your expectations accordingly!
+Chain 3: 
+Chain 3: 
+Chain 3: Iteration:    1 / 2000 [  0%]  (Warmup)
+Chain 2: Iteration:    1 / 2000 [  0%]  (Warmup)
+Chain 1: Iteration:  200 / 2000 [ 10%]  (Warmup)
+Chain 2: Iteration:  200 / 2000 [ 10%]  (Warmup)
+Chain 3: Iteration:  200 / 2000 [ 10%]  (Warmup)
+Chain 4: Iteration:  200 / 2000 [ 10%]  (Warmup)
+Chain 1: Iteration:  400 / 2000 [ 20%]  (Warmup)
+Chain 3: Iteration:  400 / 2000 [ 20%]  (Warmup)
+Chain 2: Iteration:  400 / 2000 [ 20%]  (Warmup)
+Chain 4: Iteration:  400 / 2000 [ 20%]  (Warmup)
+Chain 3: Iteration:  600 / 2000 [ 30%]  (Warmup)
+Chain 1: Iteration:  600 / 2000 [ 30%]  (Warmup)
+Chain 4: Iteration:  600 / 2000 [ 30%]  (Warmup)
+Chain 2: Iteration:  600 / 2000 [ 30%]  (Warmup)
+Chain 3: Iteration:  800 / 2000 [ 40%]  (Warmup)
+Chain 1: Iteration:  800 / 2000 [ 40%]  (Warmup)
+Chain 4: Iteration:  800 / 2000 [ 40%]  (Warmup)
+Chain 3: Iteration: 1000 / 2000 [ 50%]  (Warmup)
+Chain 3: Iteration: 1001 / 2000 [ 50%]  (Sampling)
+Chain 1: Iteration: 1000 / 2000 [ 50%]  (Warmup)
+Chain 1: Iteration: 1001 / 2000 [ 50%]  (Sampling)
+Chain 4: Iteration: 1000 / 2000 [ 50%]  (Warmup)
+Chain 4: Iteration: 1001 / 2000 [ 50%]  (Sampling)
+Chain 3: Iteration: 1200 / 2000 [ 60%]  (Sampling)
+Chain 4: Iteration: 1200 / 2000 [ 60%]  (Sampling)
+Chain 1: Iteration: 1200 / 2000 [ 60%]  (Sampling)
+Chain 3: Iteration: 1400 / 2000 [ 70%]  (Sampling)
+Chain 2: Iteration:  800 / 2000 [ 40%]  (Warmup)
+Chain 4: Iteration: 1400 / 2000 [ 70%]  (Sampling)
+Chain 1: Iteration: 1400 / 2000 [ 70%]  (Sampling)
+Chain 3: Iteration: 1600 / 2000 [ 80%]  (Sampling)
+Chain 4: Iteration: 1600 / 2000 [ 80%]  (Sampling)
+Chain 1: Iteration: 1600 / 2000 [ 80%]  (Sampling)
+Chain 3: Iteration: 1800 / 2000 [ 90%]  (Sampling)
+Chain 1: Iteration: 1800 / 2000 [ 90%]  (Sampling)
+Chain 4: Iteration: 1800 / 2000 [ 90%]  (Sampling)
+Chain 2: Iteration: 1000 / 2000 [ 50%]  (Warmup)
+Chain 2: Iteration: 1001 / 2000 [ 50%]  (Sampling)
+Chain 3: Iteration: 2000 / 2000 [100%]  (Sampling)
+Chain 3: 
+Chain 3:  Elapsed Time: 1.96963 seconds (Warm-up)
+Chain 3:                1.8742 seconds (Sampling)
+Chain 3:                3.84383 seconds (Total)
+Chain 3: 
+Chain 1: Iteration: 2000 / 2000 [100%]  (Sampling)
+Chain 1: 
+Chain 1:  Elapsed Time: 2.08686 seconds (Warm-up)
+Chain 1:                1.96831 seconds (Sampling)
+Chain 1:                4.05517 seconds (Total)
+Chain 1: 
+Chain 4: Iteration: 2000 / 2000 [100%]  (Sampling)
+Chain 4: 
+Chain 4:  Elapsed Time: 1.95994 seconds (Warm-up)
+Chain 4:                1.97899 seconds (Sampling)
+Chain 4:                3.93893 seconds (Total)
+Chain 4: 
+Chain 2: Iteration: 1200 / 2000 [ 60%]  (Sampling)
+Chain 2: Iteration: 1400 / 2000 [ 70%]  (Sampling)
+Chain 2: Iteration: 1600 / 2000 [ 80%]  (Sampling)
+Chain 2: Iteration: 1800 / 2000 [ 90%]  (Sampling)
+Chain 2: Iteration: 2000 / 2000 [100%]  (Sampling)
+Chain 2: 
+Chain 2:  Elapsed Time: 3.7558 seconds (Warm-up)
+Chain 2:                1.80827 seconds (Sampling)
+Chain 2:                5.56407 seconds (Total)
+Chain 2:
+#+end_example
+
+*** 結果の確認
+**** fit object
+
+- theta1=0.4, theta2=-0.2 なので、概ねシミュレーションデータ通り
+#+begin_src R
+get_posterior_mean(ma_q_fit) %>% head()
+#+end_src
+
+#+RESULTS:
+:            mean-chain:1 mean-chain:2 mean-chain:3 mean-chain:4 mean-all chains
+: mu           0.02207814   0.01816935   0.02106709   0.02204582       0.0208401
+: sigma        1.02488148   1.02587768   1.02506716   1.02503914       1.0252164
+: theta[1]     0.37558107   0.37389999   0.37439689   0.37423963       0.3745294
+: theta[2]    -0.21794270  -0.21745970  -0.21861493  -0.21734296      -0.2178401
+: epsilon[1]  -0.73141917  -0.72751037  -0.73040811  -0.73138684      -0.7301811
+: epsilon[2]  -1.29831537  -1.29710549  -1.29852049  -1.29924917      -1.2982976
+
+**** stan_plot()
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+stan_plot(ma_q_fit, pars = c("theta[1]", "theta[2]"))
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-Urbcax.png]]
+
+**** stan_trace()
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+stan_trace(ma_q_fit, pars=c("theta[1]", "theta[2]"), nrow = 2, inc_warmup = TRUE)
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-cm1aOu.png]]
+
+**** stan_hist()
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+stan_hist(ma_q_fit, pars=c("theta[1]", "theta[2]"))
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-AXGv9A.png]]
+
+** ARMA(1,1)
+*** データ
+
+- ARMA(1, 1) のシミュレーションデータ
+#+begin_src R :results silent
+arma11 <- arima.sim(n = 1000, model = list(order = c(1, 0, 1), ar = 0.4, ma = 0.2))
+#+end_src
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+ggtsdisplay(arma11)
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-Q88ltM.png]]
+
+*** モデル
+
+$y_t = \mu + \phi y_{t-1} + \theta \epsilon_{t-1} + \epsilon_t$
+
+$\epsilon \sim Normal(0, \sigma)$
+
+#+begin_src stan :file models/arma_1-1.stan
+data {
+  int<lower=1> T;
+  real y[T];
+}
+
+parameters {
+  real mu;
+  real<lower=-1, upper=1> phi;
+  real<lower=-1, upper=1> theta;
+  real<lower=0> sigma;
+}
+
+model {
+  // 時点 t での予測値
+  vector[T] nu;
+  // 時点 t での誤差 (あとで残差チェックに使える)
+  vector[T] err;
+  
+  // err[0] == 0と仮定
+  nu[1] = mu + (phi * mu);
+  err[1] = y[1] - nu[1];
+
+  for (t in 2:T) {
+    nu[t] = mu + (phi * y[t-1]) + (theta * err[t-1]);
+    err[t] = y[t] - nu[t];
+  }
+
+  mu    ~ normal(0, 10);
+  phi   ~ normal(0, 2);
+  theta ~ normal(0, 2);
+  sigma ~ cauchy(0, 5);
+  err   ~ normal(0, sigma);    // 尤度
+}
+
+// 局所変数のベクトルを利用しない例
+// model {
+//   real err;
+  
+//   mu    ~ normal(0, 10);
+//   phi   ~ normal(0, 2);
+//   theta ~ normal(0, 2);
+//   sigma ~ cauchy(0, 5);
+
+//   err = y[1] - mu + (phi * mu);
+//   err ~ normal(0, sigma);
+
+//   for (t in 2:T) {
+//     err = y[t] - (mu + phi * y[t-1] + theta * err);
+//     err ~ normal(0, sigma);
+//   }
+// }
+#+end_src
+
+#+RESULTS:
+[[file:models/arma_1-1.stan]]
+
+*** サンプリング
+
+- 同じ MA(2) のデータを推定してみる
+#+begin_src R
+arma_11_fit <- stan(file = "models/arma_1-1.stan",
+                    data = list(T = length(arma11), 
+                                y = arma11),
+                    init = c(mu = 0, phi = 0, theta = 0, sigma = 0))
+#+end_src
+
+#+RESULTS:
+#+begin_example
+hash mismatch so recompiling; make sure Stan code ends with a blank line
+
+SAMPLING FOR MODEL 'arma_1-1' NOW (CHAIN 1).
+Chain 1: 
+Chain 1: Gradient evaluation took 0.00055 seconds
+Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 5.5 seconds.
+Chain 1: Adjust your expectations accordingly!
+Chain 1: 
+Chain 1: 
+Chain 1: Iteration:    1 / 2000 [  0%]  (Warmup)
+
+SAMPLING FOR MODEL 'arma_1-1' NOW (CHAIN 2).
+
+SAMPLING FOR MODEL 'arma_1-1' NOW (CHAIN 3).
+Chain 3: 
+Chain 3: Gradient evaluation took 0.000532 seconds
+Chain 3: 1000 transitions using 10 leapfrog steps per transition would take 5.32 seconds.
+Chain 3: Adjust your expectations accordingly!
+Chain 3: 
+Chain 3: 
+Chain 3: Iteration:    1 / 2000 [  0%]  (Warmup)
+Chain 2: 
+Chain 2: Gradient evaluation took 0.000558 seconds
+Chain 2: 1000 transitions using 10 leapfrog steps per transition would take 5.58 seconds.
+Chain 2: Adjust your expectations accordingly!
+Chain 2: 
+Chain 2: 
+Chain 2: Iteration:    1 / 2000 [  0%]  (Warmup)
+
+SAMPLING FOR MODEL 'arma_1-1' NOW (CHAIN 4).
+Chain 4: 
+Chain 4: Gradient evaluation took 0.000668 seconds
+Chain 4: 1000 transitions using 10 leapfrog steps per transition would take 6.68 seconds.
+Chain 4: Adjust your expectations accordingly!
+Chain 4: 
+Chain 4: 
+Chain 4: Iteration:    1 / 2000 [  0%]  (Warmup)
+Chain 1: Iteration:  200 / 2000 [ 10%]  (Warmup)
+Chain 3: Iteration:  200 / 2000 [ 10%]  (Warmup)
+Chain 2: Iteration:  200 / 2000 [ 10%]  (Warmup)
+Chain 4: Iteration:  200 / 2000 [ 10%]  (Warmup)
+Chain 1: Iteration:  400 / 2000 [ 20%]  (Warmup)
+Chain 3: Iteration:  400 / 2000 [ 20%]  (Warmup)
+Chain 2: Iteration:  400 / 2000 [ 20%]  (Warmup)
+Chain 4: Iteration:  400 / 2000 [ 20%]  (Warmup)
+Chain 1: Iteration:  600 / 2000 [ 30%]  (Warmup)
+Chain 3: Iteration:  600 / 2000 [ 30%]  (Warmup)
+Chain 2: Iteration:  600 / 2000 [ 30%]  (Warmup)
+Chain 4: Iteration:  600 / 2000 [ 30%]  (Warmup)
+Chain 2: Iteration:  800 / 2000 [ 40%]  (Warmup)
+Chain 1: Iteration:  800 / 2000 [ 40%]  (Warmup)
+Chain 3: Iteration:  800 / 2000 [ 40%]  (Warmup)
+Chain 4: Iteration:  800 / 2000 [ 40%]  (Warmup)
+Chain 3: Iteration: 1000 / 2000 [ 50%]  (Warmup)
+Chain 3: Iteration: 1001 / 2000 [ 50%]  (Sampling)
+Chain 1: Iteration: 1000 / 2000 [ 50%]  (Warmup)
+Chain 1: Iteration: 1001 / 2000 [ 50%]  (Sampling)
+Chain 2: Iteration: 1000 / 2000 [ 50%]  (Warmup)
+Chain 2: Iteration: 1001 / 2000 [ 50%]  (Sampling)
+Chain 4: Iteration: 1000 / 2000 [ 50%]  (Warmup)
+Chain 4: Iteration: 1001 / 2000 [ 50%]  (Sampling)
+Chain 3: Iteration: 1200 / 2000 [ 60%]  (Sampling)
+Chain 1: Iteration: 1200 / 2000 [ 60%]  (Sampling)
+Chain 2: Iteration: 1200 / 2000 [ 60%]  (Sampling)
+Chain 4: Iteration: 1200 / 2000 [ 60%]  (Sampling)
+Chain 1: Iteration: 1400 / 2000 [ 70%]  (Sampling)
+Chain 2: Iteration: 1400 / 2000 [ 70%]  (Sampling)
+Chain 3: Iteration: 1400 / 2000 [ 70%]  (Sampling)
+Chain 4: Iteration: 1400 / 2000 [ 70%]  (Sampling)
+Chain 2: Iteration: 1600 / 2000 [ 80%]  (Sampling)
+Chain 1: Iteration: 1600 / 2000 [ 80%]  (Sampling)
+Chain 3: Iteration: 1600 / 2000 [ 80%]  (Sampling)
+Chain 4: Iteration: 1600 / 2000 [ 80%]  (Sampling)
+Chain 2: Iteration: 1800 / 2000 [ 90%]  (Sampling)
+Chain 1: Iteration: 1800 / 2000 [ 90%]  (Sampling)
+Chain 4: Iteration: 1800 / 2000 [ 90%]  (Sampling)
+Chain 3: Iteration: 1800 / 2000 [ 90%]  (Sampling)
+Chain 2: Iteration: 2000 / 2000 [100%]  (Sampling)
+Chain 2: 
+Chain 2:  Elapsed Time: 1.66212 seconds (Warm-up)
+Chain 2:                1.64508 seconds (Sampling)
+Chain 2:                3.3072 seconds (Total)
+Chain 2: 
+Chain 1: Iteration: 2000 / 2000 [100%]  (Sampling)
+Chain 1: 
+Chain 1:  Elapsed Time: 1.57612 seconds (Warm-up)
+Chain 1:                1.67499 seconds (Sampling)
+Chain 1:                3.25111 seconds (Total)
+Chain 1: 
+Chain 4: Iteration: 2000 / 2000 [100%]  (Sampling)
+Chain 4: 
+Chain 4:  Elapsed Time: 1.63911 seconds (Warm-up)
+Chain 4:                1.70669 seconds (Sampling)
+Chain 4:                3.34579 seconds (Total)
+Chain 4: 
+Chain 3: Iteration: 2000 / 2000 [100%]  (Sampling)
+Chain 3: 
+Chain 3:  Elapsed Time: 1.6325 seconds (Warm-up)
+Chain 3:                1.94105 seconds (Sampling)
+Chain 3:                3.57355 seconds (Total)
+Chain 3: 
+Warning message:
+In readLines(file, warn = TRUE) :
+  incomplete final line found on '/home/shun/Dropbox/repos/github/five-dots/notes/lang/stan/time_series/models/arma_1-1.stan'
+#+end_example
+
+*** 結果の確認
+**** fit object
+
+- phi=0.4, theta=0.2 のシミュレーションデータ
+#+begin_src R
+get_posterior_mean(arma_11_fit) %>% head()
+#+end_src
+
+#+RESULTS:
+:        mean-chain:1  mean-chain:2  mean-chain:3 mean-chain:4 mean-all chains
+: mu      -0.05087493   -0.05173105   -0.04809092   -0.0497944     -0.05012282
+: phi      0.42746426    0.42511304    0.42724025    0.4275963      0.42685346
+: theta    0.15501841    0.15790889    0.15532634    0.1548704      0.15578101
+: sigma    1.00049832    1.00164468    1.00293623    1.0012285      1.00157693
+: lp__  -502.55587986 -502.60339896 -502.59011170 -502.4664546   -502.55396129
+
+**** stan_plot()
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+stan_plot(arma_11_fit, pars = c("phi", "theta"))
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-9D6iv5.png]]
+
+**** stan_trace()
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+stan_trace(arma_11_fit, pars=c("phi", "theta"), nrow = 2, inc_warmup = TRUE)
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-0bw0UQ.png]]
+
+**** stan_hist()
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+stan_hist(ma_q_fit, pars=c("theta[1]", "theta[2]"))
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-Pz15ke.png]]
+
+** ARMA(p, q)
+*** データ
+
+- ARMA(2, 2) のシミュレーションデータ
+#+begin_src R :results silent
+set.seed(1983)
+arma22 <- arima.sim(n = 1000,
+                    model = list(order = c(2, 0, 2), ar = c(0.4, 0.1), ma = c(0.3, -0.1)))
+#+end_src
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+ggtsdisplay(arma22)
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-kj9PNB.png]]
+
+*** モデル
+
+_ARMA(p, q) Model_
+
+$y_t = \mu + \phi_1 y_{t-1} + \dots + \phi_p y_{t-p} + \theta_1 \epsilon_{t-1} + \dots + \theta_q \epsilon_{t-q} + \epsilon_t$
+
+$\epsilon \sim N(0, \sigma)$
+
+#+begin_src stan :file models/arma_p-q.stan
+data {
+	int<lower=1> T;
+	int<lower=0> P;
+	int<lower=0> Q;
+	vector[T] y;
+	int<lower=0> T_forecast;
+}
+
+parameters {
+	real mu;
+	vector[P] phi;
+	vector[Q] theta;
+	real<lower=0> sigma;
+}
+
+transformed parameters {
+  // error term
+  vector[T] eps;
+  eps[1] = y[1] - mu;
+
+  for (t in 2:T) {
+    eps[t] = y[t] - mu;
+
+    for(p in 1:min(t-1, P))
+      eps[t] -= phi[p] * y[t-p];
+
+    for(q in 1:min(t-1, Q))
+      eps[t] -= theta[q] * eps[t-q];
+  }
+}
+
+model {
+  vector[T] eta;
+
+  // priors
+	mu ~ normal(0, 5);
+  phi ~ normal(0, 1);
+  theta ~ normal(0, 1);
+  sigma ~ cauchy(0, 5); // TODO half-t or half-norm
+
+	// log-likelihood
+	for (t in 1:T) {
+	  eta[t] = mu;
+
+    // AR terms
+	  for (p in 1:min(t-1, P))
+	    eta[t] += phi[p] * y[t-p];
+
+    // MA terms
+	  for (q in 1:min(t-1, Q))
+	    eta[t] += theta[q] * eps[t-q];
+
+	  y[t] ~ normal(eta[t], sigma);
+	}
+}
+
+generated quantities {
+  vector[T+T_forecast] y_pred;
+  vector[T+T_forecast] eps_pred;
+  
+  vector[T] log_lik;
+  vector[T] eta;
+
+  // prediction
+  eps_pred[1:T] = eps;
+  y_pred[1:T] = y;
+
+  for (t in (T+1):(T+T_forecast)) {
+    eps_pred[t] = normal_rng(0, sigma);
+    y_pred[t] = mu + eps_pred[t];
+
+    // AR terms
+    for (p in 1:P)
+	    y_pred[t] += phi[p] * y_pred[t-p];
+
+    // MA terms
+	  for (q in 1:Q)
+	    y_pred[t] += theta[q] * eps_pred[t-q];
+  }
+
+  // log-likelihood for WAIC calculation by {loo}
+  for (t in 1:T) {
+    eta[t] = mu;
+
+    // AR terms
+	  for (p in 1:min(t-1, P))
+	    eta[t] += phi[p] * y[t-p];
+
+    // MA terms
+	  for (q in 1:min(t-1, Q))
+	    eta[t] += theta[q] * eps[t-q];
+
+    log_lik[t] = normal_lpdf(y[t] | eta[t], sigma);
+  }
+}
+#+end_src
+
+#+RESULTS:
+[[file:models/arma_p-q.stan]]
+
+*** TODO 収束対策・パラメタ制約・事前分布
+*** サンプリング
+
+- ARMA(2, 2) のデータを推定してみる
+
+- エラー対応
+  - There were 5 divergent transitions after warmup.
+    Increasing adapt_delta above 0.8 may help. See
+    http://mc-stan.org/misc/warnings.html#divergent-transitions-after-warmup 
+    Examine the pairs() plot to diagnose sampling problems
+
+  - The largest R-hat is 1.09, indicating chains have not mixed.
+    Running the chains for more iterations may help. See
+    http://mc-stan.org/misc/warnings.html#r-hat
+
+  - Bulk Effective Samples Size (ESS) is too low, indicating posterior means and medians may be unreliable.
+    Running the chains for more iterations may help. See
+    http://mc-stan.org/misc/warnings.html#bulk-ess 
+  
+  - Tail Effective Samples Size (ESS) is too low, indicating posterior variances and tail quantiles may be unreliable.
+    Running the chains for more iterations may help. See
+    http://mc-stan.org/misc/warnings.html#tail-ess 
+
+#+begin_src R
+arma_22_fit <- stan(
+  file = "models/arma_p-q.stan",
+  data = list(P = 2, Q = 2, T = length(arma22), y = arma22, T_forecast = 10),
+  init = c(mu = 0, phi = 0, theta = 0, sigma = 0),
+  ## warmup = 500, iter = 3000
+  ## control = list(adapt_delta = 0.99),
+  seed = 1234)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+hash mismatch so recompiling; make sure Stan code ends with a blank line
+
+SAMPLING FOR MODEL 'arma_p-q' NOW (CHAIN 1).
+
+SAMPLING FOR MODEL 'arma_p-q' NOW (CHAIN 2).
+
+SAMPLING FOR MODEL 'arma_p-q' NOW (CHAIN 3).
+
+SAMPLING FOR MODEL 'arma_p-q' NOW (CHAIN 4).
+Chain 1: 
+Chain 1: Gradient evaluation took 0.001353 seconds
+Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 13.53 seconds.
+Chain 1: Adjust your expectations accordingly!
+Chain 1: 
+Chain 1: 
+Chain 1: Iteration:    1 / 2000 [  0%]  (Warmup)
+Chain 2: 
+Chain 2: Gradient evaluation took 0.001303 seconds
+Chain 2: 1000 transitions using 10 leapfrog steps per transition would take 13.03 seconds.
+Chain 2: Adjust your expectations accordingly!
+Chain 2: 
+Chain 2: 
+Chain 2: Iteration:    1 / 2000 [  0%]  (Warmup)
+Chain 3: 
+Chain 3: Gradient evaluation took 0.001387 seconds
+Chain 3: 1000 transitions using 10 leapfrog steps per transition would take 13.87 seconds.
+Chain 3: Adjust your expectations accordingly!
+Chain 3: 
+Chain 3: 
+Chain 3: Iteration:    1 / 2000 [  0%]  (Warmup)
+Chain 4: 
+Chain 4: Gradient evaluation took 0.001324 seconds
+Chain 4: 1000 transitions using 10 leapfrog steps per transition would take 13.24 seconds.
+Chain 4: Adjust your expectations accordingly!
+Chain 4: 
+Chain 4: 
+Chain 4: Iteration:    1 / 2000 [  0%]  (Warmup)
+Chain 3: Iteration:  200 / 2000 [ 10%]  (Warmup)
+Chain 2: Iteration:  200 / 2000 [ 10%]  (Warmup)
+Chain 4: Iteration:  200 / 2000 [ 10%]  (Warmup)
+Chain 1: Iteration:  200 / 2000 [ 10%]  (Warmup)
+Chain 3: Iteration:  400 / 2000 [ 20%]  (Warmup)
+Chain 2: Iteration:  400 / 2000 [ 20%]  (Warmup)
+Chain 1: Iteration:  400 / 2000 [ 20%]  (Warmup)
+Chain 4: Iteration:  400 / 2000 [ 20%]  (Warmup)
+Chain 3: Iteration:  600 / 2000 [ 30%]  (Warmup)
+Chain 1: Iteration:  600 / 2000 [ 30%]  (Warmup)
+Chain 4: Iteration:  600 / 2000 [ 30%]  (Warmup)
+Chain 2: Iteration:  600 / 2000 [ 30%]  (Warmup)
+Chain 3: Iteration:  800 / 2000 [ 40%]  (Warmup)
+Chain 1: Iteration:  800 / 2000 [ 40%]  (Warmup)
+Chain 4: Iteration:  800 / 2000 [ 40%]  (Warmup)
+Chain 2: Iteration:  800 / 2000 [ 40%]  (Warmup)
+Chain 3: Iteration: 1000 / 2000 [ 50%]  (Warmup)
+Chain 3: Iteration: 1001 / 2000 [ 50%]  (Sampling)
+Chain 1: Iteration: 1000 / 2000 [ 50%]  (Warmup)
+Chain 1: Iteration: 1001 / 2000 [ 50%]  (Sampling)
+Chain 4: Iteration: 1000 / 2000 [ 50%]  (Warmup)
+Chain 4: Iteration: 1001 / 2000 [ 50%]  (Sampling)
+Chain 2: Iteration: 1000 / 2000 [ 50%]  (Warmup)
+Chain 2: Iteration: 1001 / 2000 [ 50%]  (Sampling)
+Chain 1: Iteration: 1200 / 2000 [ 60%]  (Sampling)
+Chain 3: Iteration: 1200 / 2000 [ 60%]  (Sampling)
+Chain 1: Iteration: 1400 / 2000 [ 70%]  (Sampling)
+Chain 4: Iteration: 1200 / 2000 [ 60%]  (Sampling)
+Chain 2: Iteration: 1200 / 2000 [ 60%]  (Sampling)
+Chain 3: Iteration: 1400 / 2000 [ 70%]  (Sampling)
+Chain 1: Iteration: 1600 / 2000 [ 80%]  (Sampling)
+Chain 2: Iteration: 1400 / 2000 [ 70%]  (Sampling)
+Chain 4: Iteration: 1400 / 2000 [ 70%]  (Sampling)
+Chain 3: Iteration: 1600 / 2000 [ 80%]  (Sampling)
+Chain 1: Iteration: 1800 / 2000 [ 90%]  (Sampling)
+Chain 2: Iteration: 1600 / 2000 [ 80%]  (Sampling)
+Chain 4: Iteration: 1600 / 2000 [ 80%]  (Sampling)
+Chain 3: Iteration: 1800 / 2000 [ 90%]  (Sampling)
+Chain 1: Iteration: 2000 / 2000 [100%]  (Sampling)
+Chain 1: 
+Chain 1:  Elapsed Time: 31.2872 seconds (Warm-up)
+Chain 1:                28.7865 seconds (Sampling)
+Chain 1:                60.0737 seconds (Total)
+Chain 1: 
+Chain 2: Iteration: 1800 / 2000 [ 90%]  (Sampling)
+Chain 4: Iteration: 1800 / 2000 [ 90%]  (Sampling)
+Chain 3: Iteration: 2000 / 2000 [100%]  (Sampling)
+Chain 3: 
+Chain 3:  Elapsed Time: 32.0359 seconds (Warm-up)
+Chain 3:                33.1097 seconds (Sampling)
+Chain 3:                65.1455 seconds (Total)
+Chain 3: 
+Chain 2: Iteration: 2000 / 2000 [100%]  (Sampling)
+Chain 2: 
+Chain 2:  Elapsed Time: 35.0106 seconds (Warm-up)
+Chain 2:                34.2884 seconds (Sampling)
+Chain 2:                69.2989 seconds (Total)
+Chain 2: 
+Chain 4: Iteration: 2000 / 2000 [100%]  (Sampling)
+Chain 4: 
+Chain 4:  Elapsed Time: 33.3185 seconds (Warm-up)
+Chain 4:                36.6852 seconds (Sampling)
+Chain 4:                70.0037 seconds (Total)
+Chain 4: 
+Warning messages:
+1: In readLines(file, warn = TRUE) :
+  incomplete final line found on '/home/shun/Dropbox/repos/github/five-dots/notes/lang/stan/time_series/models/arma_p-q.stan'
+2: There were 394 divergent transitions after warmup. Increasing adapt_delta above 0.8 may help. See
+http://mc-stan.org/misc/warnings.html#divergent-transitions-after-warmup 
+3: Examine the pairs() plot to diagnose sampling problems
+ 
+4: Bulk Effective Samples Size (ESS) is too low, indicating posterior means and medians may be unreliable.
+Running the chains for more iterations may help. See
+http://mc-stan.org/misc/warnings.html#bulk-ess 
+5: Tail Effective Samples Size (ESS) is too low, indicating posterior variances and tail quantiles may be unreliable.
+Running the chains for more iterations may help. See
+http://mc-stan.org/misc/warnings.html#tail-ess
+#+end_example
+
+*** 結果の確認
+**** fit object
+
+- phi[1]=0.4, phi[2]=0.1, theta[1]=0.3, theta[2]=-0.1 のシミュレーションデータ
+#+begin_src R
+print(arma_22_fit, pars = c("mu", "phi", "theta", "sigma"))
+#+end_src
+
+#+RESULTS:
+#+begin_example
+Inference for Stan model: arma_p-q.
+4 chains, each with iter=2000; warmup=1000; thin=1; 
+post-warmup draws per chain=1000, total post-warmup draws=4000.
+
+         mean se_mean   sd  2.5%   25%  50%  75% 97.5% n_eff Rhat
+mu       0.06    0.00 0.05 -0.04  0.02 0.05 0.09  0.18   803 1.00
+phi[1]   0.25    0.03 0.42 -0.50 -0.07 0.24 0.53  1.09   142 1.03
+phi[2]   0.07    0.01 0.20 -0.32 -0.08 0.07 0.22  0.40   186 1.03
+theta[1] 0.49    0.04 0.42 -0.34  0.20 0.50 0.80  1.27   139 1.03
+theta[2] 0.08    0.01 0.12 -0.18  0.00 0.09 0.16  0.30   126 1.04
+sigma    0.99    0.00 0.02  0.94  0.97 0.99 1.00  1.03   310 1.02
+
+Samples were drawn using NUTS(diag_e) at Fri Nov 15 15:03:43 2019.
+For each parameter, n_eff is a crude measure of effective sample size,
+and Rhat is the potential scale reduction factor on split chains (at 
+convergence, Rhat=1).
+#+end_example
+
+#+begin_src R
+get_posterior_mean(arma_22_fit) %>% head()
+#+end_src
+
+#+RESULTS:
+:          mean-chain:1 mean-chain:2 mean-chain:3 mean-chain:4 mean-all chains
+: mu        -0.05823425  -0.06081557  -0.05669686  -0.05842023     -0.05854173
+: phi[1]    -0.61470149  -0.59944260  -0.59208190  -0.60978138     -0.60400184
+: phi[2]     0.04162722   0.05173815   0.05898878   0.04280198      0.04878903
+: theta[1]   0.39962978   0.38470488   0.37851441   0.39450566      0.38933868
+: theta[2]   0.09714038   0.08846080   0.08647682   0.09804781      0.09253145
+: sigma      1.03715091   1.03767539   1.03759311   1.03766159      1.03752025
+
+**** stan_plot()
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+stan_plot(arma_22_fit, pars = c("mu", "phi", "theta", "sigma"))
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-Mynbpw.png]]
+
+**** stan_trace()
+
+#+begin_src R :results output graphics file :file (my/get-babel-file) :height 640
+stan_trace(arma_22_fit, nrow = 4, inc_warmup = TRUE, pars = c("mu", "phi", "theta", "sigma"))
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-A7Pkka.png]]
+
+**** stan_hist()
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+stan_hist(arma_22_fit, pars = c("mu", "phi", "theta", "sigma"))
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-VePHuj.png]]
+
+*** WAIC
+
+#+begin_src R
+arma_22_llk <- extract_log_lik(arma_22_fit)
+waic <- waic(arma_22_llk)
+waic$estimates["waic", "Estimate"]
+#+end_src
+
+#+RESULTS:
+: [1] 2815.958
+
+*** WAIC による次数選択
+
+#+begin_src R
+arma_orders <- cross(list(P = c(1, 2, 3), Q = c(1, 2, 3)))
+arma_fits <- map(arma_orders, function(order) {
+  stan(
+    file = "models/arma_p-q.stan",
+    data = list(P = order$P, Q = order$Q, T = length(arma22), y = arma22, T_forecast = 10),
+    init = c(mu = 0, phi = 0, theta = 0, sigma = 0),
+    seed = 1234)
+})
+#+end_src
+
+** ARMA(p, q) + GARCH(r, m) Model
+*** モデル
+
+_ARMA(p, q) + GARCH(r, m) Model_
+  - 参考: [[https://stats.stackexchange.com/questions/41509/what-is-the-difference-between-garch-and-arma][What is the difference between GARCH and ARMA?@Stackoverflow]]
+
+$y_t \sim Normal(\mu_t, \sigma_t^2)$
+
+$\mu_t = \phi_1 \mu_{y-1} + \dots + \phi_p \mu_{y-p} + (\phi1 + \theta_1) u_{t-1} + \dots + (\phi_m + \theta_m) u_{t-m}$
+
+$\sigma_t^2 = \omega + \alpha_1 u_{t-1}^2 + \dots + \alpha_s u_{t-s}^2 + \dots + \beta_1 \sigma_{t-1}^2 + \dots + \beta_r \sigma_{t-r}^2$
+
+$\frac{u_t}{\sigma_t} \sim Normal(0, 1)$
+
+Where
+$u_t := y_t - \mu_t$
+$\phi_i = 0$ for $i > p$
+$\theta_j = 0$ for $j > q$
+
+--------
+別の書き方?
+
+$y_t = \mu_t + u_t$
+
+$\mu_t = c + \phi_1 y_{t-1} + \dots + \phi_p y_{t-p} + \theta_1 \epsilon_{t-1} + \dots + \theta_q \epsilon_{t-q}$
+
+$u_t = \sigma_t \epsilon_t$
+
+$\sigma_t^2 = \omega + \alpha_1^2 u_{t-1} + \dots + \alpha_r u_{t-r} + \beta_1 \sigma_{t-1}^2 + \dots + \beta_m \sigma_{t-m}$
+
+$\epsilon \sim N(0, 1)$
+
+#+begin_src stan :file models/arma_p-q.stan
+data {
+	int<lower=1> T;
+	int<lower=0> P;
+	int<lower=0> Q;
+	vector[T] y;
+	int<lower=0> T_forecast;
+}
+
+parameters {
+	real mu;
+	vector[P] phi;
+	vector[Q] theta;
+	real<lower=0> sigma;
+}
+
+transformed parameters {
+  // error term
+  vector[T] eps;
+  eps[1] = y[1] - mu;
+
+  for (t in 2:T) {
+    eps[t] = y[t] - mu;
+
+    for(p in 1:min(t-1, P))
+      eps[t] -= phi[p] * y[t-p];
+
+    for(q in 1:min(t-1, Q))
+      eps[t] -= theta[q] * eps[t-q];
+  }
+}
+
+model {
+  vector[T] eta;
+
+  // priors
+	mu ~ normal(0, 5);
+  phi ~ normal(0, 1);
+  theta ~ normal(0, 1);
+  sigma ~ cauchy(0, 5); // TODO half-t or half-norm
+
+	// log-likelihood
+	for (t in 1:T) {
+	  eta[t] = mu;
+
+    // AR terms
+	  for (p in 1:min(t-1, P))
+	    eta[t] += phi[p] * y[t-p];
+
+    // MA terms
+	  for (q in 1:min(t-1, Q))
+	    eta[t] += theta[q] * eps[t-q];
+
+	  y[t] ~ normal(eta[t], sigma);
+	}
+}
+
+generated quantities {
+  vector[T+T_forecast] y_pred;
+  vector[T+T_forecast] eps_pred;
+  
+  vector[T] log_lik;
+  vector[T] eta;
+
+  // prediction
+  eps_pred[1:T] = eps;
+  y_pred[1:T] = y;
+
+  for (t in (T+1):(T+T_forecast)) {
+    eps_pred[t] = normal_rng(0, sigma);
+    y_pred[t] = mu + eps_pred[t];
+
+    // AR terms
+    for (p in 1:P)
+	    y_pred[t] += phi[p] * y_pred[t-p];
+
+    // MA terms
+	  for (q in 1:Q)
+	    y_pred[t] += theta[q] * eps_pred[t-q];
+  }
+
+  // log-likelihood for WAIC calculation by {loo}
+  for (t in 1:T) {
+    eta[t] = mu;
+
+    // AR terms
+	  for (p in 1:min(t-1, P))
+	    eta[t] += phi[p] * y[t-p];
+
+    // MA terms
+	  for (q in 1:min(t-1, Q))
+	    eta[t] += theta[q] * eps[t-q];
+
+    log_lik[t] = normal_lpdf(y[t] | eta[t], sigma);
+  }
+}
+#+end_src
+
+#+RESULTS:
+[[file:models/arma_p-q.stan]]
+
+** ARMA(p, q) + eGARCH(r, m) Model
+** VARMA(1, 1)
+*** プロット用の関数
+
+#+begin_src R :results silent
+# plot 80 % & 90 % predition interval of y
+plot.stan.pred <- function(data,stanout, Time, Time.forecast, N, span=NULL){
+  if (is.null(span) ) span <- 1:(Time + Time.forecast) 
+  y_pred <- data.frame()
+  for ( i in 1:N){
+    m.pred <- rstan::extract(stanout, "y_pred")$y_pred[,,i]
+    # 90 % pred interval
+    temp <- data.frame(t = Time+1:Time.forecast,
+                       series = i,
+                       y90_l  = apply(m.pred, 2, quantile, probs=.05),
+                       y90_u = apply(m.pred, 2, quantile, probs=.95),
+                       y80_l  = apply(m.pred, 2, quantile, probs=.1),
+                       y80_u = apply(m.pred, 2, quantile, probs=.9),
+                       y_med  = apply(m.pred, 2, median),
+                       y_mean = apply(m.pred, 2, mean, rm.na=T)
+    )
+    y_pred <- rbind(y_pred, temp)
+  }
+  temp <- data.frame(t=1:Time, data)
+  colnames(temp)[1+1:N] <- seq(1:N)
+  y_pred <- temp %>% gather(key=series, value=y_mean, -t) %>% mutate(series=as.integer(series)) %>% bind_rows(y_pred)
+  y_pred <- y_pred %>% filter(t %in% span)
+  ggplot(y_pred) + geom_line(aes(x=t, y=y_mean)) + geom_line(aes(x=t, y_med), linetype=2) +
+    geom_ribbon(aes(x=t, ymin=y90_l, ymax=y90_u), alpha=.2, fill="blue") +  geom_ribbon(aes(x=t, ymin=y80_l, ymax=y80_u), alpha=.5, fill="grey") +
+    xlim(c(min(span),max(span))) + labs(title="ARMA (1,1) Forecasts by MCMC", y="y") + facet_wrap(~series, nrow = N)
+}
+#+end_src
+
+*** データ
+
+#+begin_src R :results silent
+varma11 <- arima.sim(n = 400, list(ar = c(0.8897), ma = c(-0.2279)),
+                     sd = sqrt(0.1796))
+#+end_src
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+ggtsdisplay(varma11)
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-QUnv7j.png]]
+
+*** モデル
+
+- [[http://ill-identified.hatenablog.com/entry/2016/02/14/205311][R + Stan で ベクトル ARMA (VARMA) を推定@ill-identified diary]]
+
+#+begin_src stan :file models/varma_1-1.stan
+data {
+	int<lower=1> T ; // num observations
+	int<lower=1> N ; // num series
+	vector[N] y[T] ; // observed outputs
+	int<lower=0> T_forecast ; // forecasting span
+}
+
+parameters {
+	vector[N] mu ;        // mean coeffs
+	matrix[N,N] Psi ;     // autoregression coeff matrix
+	matrix[N,N] Theta ;   // moving avg coeff matrix
+	cov_matrix[N] Sigma ; // noise scale matrix
+}
+
+transformed parameters{
+  vector[N] eps[T] ; // error terms 
+  
+  eps[1] <- y[1] -mu ;
+  for ( t in 2:T){
+    eps[t] <- y[t] - (mu + Psi* y[t-1] + Theta * eps[t-1]) ;
+  }
+}
+
+model {
+	/* priors  */
+	mu ~ normal(0,10) ;
+	to_vector(Psi)   ~ normal(0,2) ;
+	to_vector(Theta) ~ normal(0,2) ;
+	Sigma ~ inv_wishart(N, N*diag_matrix(rep_vector(1,N))) ;
+
+	/* likelihood */
+	for (t in 2:T){
+	  y[t] ~ multi_normal(mu + Psi * y[t-1] + Theta * eps[t-1], Sigma) ;
+	}
+	
+}
+
+/* prediction */
+generated quantities{
+  vector[N] y_pred[T_forecast] ; 
+  vector[N] eps_pred[T_forecast] ;
+  eps_pred[1] <- multi_normal_rng(rep_vector(0,N), Sigma) ;
+  y_pred[1] <- mu + Psi * y[T] + Theta * eps[T] + eps_pred[1] ;
+  for( t in 2:T_forecast) {
+    eps_pred[t]    <- multi_normal_rng(rep_vector(0,N), Sigma) ;
+    y_pred[t] <- mu + Psi*y_pred[t-1] + Theta * eps_pred[t-1] + eps_pred[t] ;
+  }
+}
+#+end_src
+
+#+RESULTS:
+[[file:models/varma_1-1.stan]]
+
+*** サンプリング
+
+#+begin_src R
+varma_11_fit <- stan(file = "models/varma_1-1.stan",
+                     data = list(T = 400, N = 1, y = matrix(varma11), T_forecast = 50),
+                     chain = 1)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+Error in (function (x)  : attempt to apply non-function
+recompiling to avoid crashing R session
+
+SAMPLING FOR MODEL 'varma_1-1' NOW (CHAIN 1).
+Chain 1: 
+Chain 1: Gradient evaluation took 0.001179 seconds
+Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 11.79 seconds.
+Chain 1: Adjust your expectations accordingly!
+Chain 1: 
+Chain 1: 
+Chain 1: Iteration:    1 / 2000 [  0%]  (Warmup)
+Chain 1: Iteration:  200 / 2000 [ 10%]  (Warmup)
+Chain 1: Iteration:  400 / 2000 [ 20%]  (Warmup)
+Chain 1: Iteration:  600 / 2000 [ 30%]  (Warmup)
+Chain 1: Iteration:  800 / 2000 [ 40%]  (Warmup)
+Chain 1: Iteration: 1000 / 2000 [ 50%]  (Warmup)
+Chain 1: Iteration: 1001 / 2000 [ 50%]  (Sampling)
+Chain 1: Iteration: 1200 / 2000 [ 60%]  (Sampling)
+Chain 1: Iteration: 1400 / 2000 [ 70%]  (Sampling)
+Chain 1: Iteration: 1600 / 2000 [ 80%]  (Sampling)
+Chain 1: Iteration: 1800 / 2000 [ 90%]  (Sampling)
+Chain 1: Iteration: 2000 / 2000 [100%]  (Sampling)
+Chain 1: 
+Chain 1:  Elapsed Time: 6.18923 seconds (Warm-up)
+Chain 1:                5.70018 seconds (Sampling)
+Chain 1:                11.8894 seconds (Total)
+Chain 1:
+#+end_example
+
+*** auto.arima() (比較用)
+
+#+begin_src R :results silent
+auto_arima_fit <- auto.arima(varma11)
+arima_fit <- arima(varma11, order = c(1,0,1))
+#+end_src
+
+*** 結果の確認
+**** fit object
+
+- Psi[1,1]=0.8897, Theta[1,1]=-0.2279, Sigma[1,1]=0.1796
+#+begin_src R
+print(varma_11_fit, pars = c("mu", "Psi", "Theta", "Sigma"))
+#+end_src
+
+#+RESULTS:
+#+begin_example
+Inference for Stan model: varma_1-1.
+1 chains, each with iter=2000; warmup=1000; thin=1; 
+post-warmup draws per chain=1000, total post-warmup draws=1000.
+
+            mean se_mean   sd  2.5%   25%   50%   75% 97.5% n_eff Rhat
+mu[1]      -0.01       0 0.02 -0.05 -0.02 -0.01  0.00  0.02   895    1
+Psi[1,1]    0.86       0 0.03  0.80  0.84  0.86  0.88  0.92   830    1
+Theta[1,1] -0.25       0 0.05 -0.35 -0.29 -0.25 -0.21 -0.14   712    1
+Sigma[1,1]  0.19       0 0.01  0.16  0.18  0.19  0.20  0.22   875    1
+
+Samples were drawn using NUTS(diag_e) at Thu Nov 14 22:20:28 2019.
+For each parameter, n_eff is a crude measure of effective sample size,
+and Rhat is the potential scale reduction factor on split chains (at 
+convergence, Rhat=1).
+#+end_example
+
+- =auto.arima()=
+#+begin_src R
+auto_arima_fit
+#+end_src
+
+#+RESULTS:
+#+begin_example
+Series: varma11 
+ARIMA(2,0,0) with zero mean 
+
+Coefficients:
+         ar1     ar2
+      0.5866  0.2344
+s.e.  0.0485  0.0485
+
+sigma^2 estimated as 0.1838:  log likelihood=-228.29
+AIC=462.57   AICc=462.63   BIC=474.55
+#+end_example
+
+- =arima()=
+#+begin_src R
+arima_fit
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+Call:
+arima(x = varma11, order = c(1, 0, 1))
+
+Coefficients:
+         ar1      ma1  intercept
+      0.8691  -0.2602    -0.0695
+s.e.  0.0302   0.0565     0.1194
+
+sigma^2 estimated as 0.1842:  log likelihood = -229.66,  aic = 467.33
+#+end_example
+
+**** stan_plot()
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+stan_plot(varma_11_fit, pars = c("mu", "Psi", "Theta", "Sigma"))
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-NjUKjw.png]]
+
+**** stan_trace()
+
+#+begin_src R :results output graphics file :file (my/get-babel-file) :height 640
+stan_trace(varma_11_fit, pars = c("mu", "Psi", "Theta", "Sigma"),nrow = 4, inc_warmup = TRUE)
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-2g9aCk.png]]
+
+** VARMA(p, q)
+*** モデル
+ 
+- [[http://ill-identified.hatenablog.com/entry/2016/02/14/205311][R + Stan で ベクトル ARMA (VARMA) を推定@ill-identified diary]]
+
+#+begin_src stan :file models/varma_p-q.stan
+data {
+	int<lower=1> T ; // num observations
+	int<lower=1> N ; // num series
+	int<lower=0> p ; // AR(p)
+	int<lower=0> q ; // MA(q)
+	vector[N] y[T] ; // observed outputs
+	int<lower=0> T_forecast ; // forecasting span
+}
+
+parameters {
+	vector[N] mu ;        // mean coeffs
+	matrix[N,N] Psi[p] ;     // autoregression coeff matrix
+	matrix[N,N] Theta[q] ;   // moving avg coeff matrix
+	cov_matrix[N] Sigma ; // noise scale matrix
+}
+
+transformed parameters{
+  vector[N] eps[T] ; // error terms 
+  
+  eps[1] <- y[1] -mu ;
+  for ( t in 2:T){
+    eps[t] <- y[t] - mu ;
+    for( i in 1:min(t-1,p) ){
+      eps[t] <- eps[t] - Psi[i] * y[t-i] ;
+    }
+    for( i in 1:min(t-1,q) ){
+      eps[t] <- eps[t] - Theta[i] * eps[t-i] ;
+    }
+  }
+}
+
+model {
+  vector[N] eta[T] ;
+	/* priors  */
+	mu ~ normal(0,10) ;
+	for( i in 1:p)
+	  to_vector(Psi[i])   ~ normal(0,2) ;
+	for( i in 1:q)
+	  to_vector(Theta[i]) ~ normal(0,2) ;
+	Sigma ~ inv_wishart(N, N*diag_matrix(rep_vector(1,N))) ;
+
+	/* likelihood */
+	for (t in 1:T){
+	  eta[t] <- mu ;
+	  for( i in 1:min(t-1,p))
+	    eta[t] <- eta[t] + Psi[i] * y[t-i] ;
+	  for( i in 1:min(t-1,q))
+	    eta[t] <- eta[t] + Theta[i] * eps[t-i] ;
+	  y[t] ~ multi_normal(eta[t], Sigma) ;
+	}
+}
+
+/* prediction */
+generated quantities{
+  vector[N] y_pred[T+T_forecast] ; 
+  vector[N] eps_pred[T+T_forecast] ;
+
+  eps_pred[1:T] <- eps ;
+  y_pred[1:T] <- y ;
+
+  for( t in (T+1):(T+T_forecast)) {
+    eps_pred[t] <- multi_normal_rng(rep_vector(0,N), Sigma) ;
+    y_pred[t]   <- mu + eps_pred[t] ;
+    for( i in 1:p)
+	    y_pred[t] <- y_pred[t] + Psi[i] * y_pred[t-i] ;
+	  for( i in 1:q)
+	    y_pred[t] <- y_pred[t] + Theta[i] * eps_pred[t-i] ;
+  }
+}
+#+end_src
+
+#+RESULTS:
+[[file:models/varma_p-q.stan]]
+
+** Hidden Markov
+*** 参考
+
+- Blog: 機械学習・自然言語処理の勉強メモ
+  - [[http://kento1109.hatenablog.com/entry/2017/12/15/160315][隠れマルコフモデル（HMM）について]]
+  - [[http://kento1109.hatenablog.com/entry/2018/06/21/121441][Stan：隠れマルコフモデル1]]
+  - [[http://kento1109.hatenablog.com/entry/2018/06/23/124927][Stan：隠れマルコフモデル2]]
+
+*** Model
+
+#+begin_src stan
+data {
+  int<lower=1> K;  // カテゴリーの数
+  int<lower=1> V;  // 単語(word)の数
+  int<lower=0> T;  // 時点の数
+  int<lower=1,upper=V> w[T]; // 単語(word)
+  int<lower=1,upper=K> z[T]; // カテゴリー
+  vector<lower=0>[K] alpha;  // 推移(transit)確率の事前確率
+  vector<lower=0>[V] beta;   // 単語 vを出力(emit)する確率の事前確率
+}
+
+parameters {
+  simplex[K] theta[K];  // 推移(transit)確率
+  simplex[V] phi[K];    // 単語 vを出力(emit)する確率
+}
+
+model {
+  for (k in 1:K)
+    theta[k] ~ dirichlet(alpha);
+  for (k in 1:K)
+    phi[k] ~ dirichlet(beta);
+  for (t in 1:T)
+    w[t] ~ categorical(phi[z[t]]);
+  for (t in 2:T)
+    z[t] ~ categorical(theta[z[t - 1]]);
+}
+#+end_src
+
+
+#+begin_src R
+
+#+end_src
+
+* 参考
+
+- Stan 公式ドキュメント一覧
+  - [[https://mc-stan.org/docs/2_21/stan-users-guide/time-series-chapter.html][Stan User’s Guide: 2 Time-Series Models]] ([[https://stan-ja.github.io/gh-pages-html/#%E6%99%82%E7%B3%BB%E5%88%97%E3%83%A2%E3%83%87%E3%83%AB][日本語訳]])
+ 
+- Blog
+  - [[http://statmodeling.hatenablog.com/entry/calc-waic-wbic][WAICとWBICを事後分布から計算する@StatModeling Memorandum]]
+  - [[http://ill-identified.hatenablog.com/entry/2016/02/14/205311][R + Stan で ベクトル ARMA (VARMA) を推定@ill-identified diary]]
+  - [[http://ill-identified.hatenablog.com/entry/2016/04/02/225155][stan + R ベクトル ARIMA (VARIMA) で人口予測 (?)@ill-identified diary]]
+
+- {rugarch}
+  - [[https://cran.r-project.org/web/packages/rugarch/vignettes/Introduction_to_the_rugarch_package.pdf][Introduction to the rugarch package (PDF)]]
+
+- Research paper
+  - [[http://www.fs.hub.hit-u.ac.jp/inc/files/performance/masters-thesis/2015/saito2015.pdf][Carhart 4 ファクターモデルの 条件付きモデルへの拡張と 投資戦略への応用 (PDF)]]

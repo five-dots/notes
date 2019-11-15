@@ -91,9 +91,12 @@ FANG_nested
 
 #+RESULTS:
 #+begin_example
+
 # A tibble: 209 x 2
    weekend    data             
-   <date>     <list>           
+   <
+    <
+          
  1 2013-01-11 <tibble [20 × 5]>
  2 2013-01-18 <tibble [20 × 5]>
  3 2013-01-25 <tibble [16 × 5]>

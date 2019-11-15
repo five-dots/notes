@@ -1,0 +1,67 @@
+#+STARTUP: folded indent
+#+OPTIONS: author:nil H:6 toc:nil
+#+HUGO_BASE_DIR: ~/Dropbox/repos/github/five-dots/blog
+#+HUGO_SECTION: post/2019/11/
+
+#+TITLE: [R と Stan で株式時系列分析シリーズ] シリーズの概要
+#+DATE: 2019-11-15
+#+HUGO_CATEGORIES: finance
+#+HUGO_TAGS: r etf stock
+#+HUGO_CUSTOM_FRONT_MATTER: :toc false
+
+* 著者について
+  
+- 自分のバックグラウンド
+  - 投資歴、R歴
+  - 理解レベル、その道で実務を積んだ人間ではない (=>参考文献)
+  - 投資 + R + 学びの楽しさ
+  - プログラミングを学ぶ上での投資
+- Github りんく + Logo?
+
+* 想定する読者
+* シリーズの最終的な目標
+  
+- リターンの予測 + ボラティティの予測 -> ポートフォリの構築
+  - 成績よりも手法の整理・理解
+  - よりよい戦略を自分で開発できるように
+    - 特に階層状態空間モデルを使って、自分のアイデアを自由に表現できるようになることが目標
+  - 実際のデータ + Working Code
+- 自分が初学者だったら、欲しかったコンテンツ
+- 基本から応用まで
+
+* 盛り込みたい内容
+  
+- 数式
+  - R での実装
+- R パッケージでの実装
+  - 役立つ R のパッケージ
+  - Stan での実装
+
+* 数学
+自分自身が数学を本格的に勉強してこなかった
+だからこその説明
+コードとともに理解する
+必要な数学、Stan での実装に不可欠
+
+* コード
+- 全ての記事は、Emacs org-mode + R/Stan で動くコード + 実際のデータ
+- R での手実装・ R パッケージ・ Stan での実装
+- 特にモデル化に関わるところは、Stan で Step by Step で積み上げていく
+
+- 分析の時間軸
+  日足データ
+
+- Why 米国株
+  データへのアクセス (株価だけでなく、ファンダメンタル・ファクターなど)
+ 
+- ロジ 
+  - 前回までの結果を RData 形式で保存して次回以降に利用
+
+- 免責
+  もっとも肝心でもっとも難しい
+  予測が当たるかは本題ではない
+  
+* COMMENT Local Variables                                           :ARCHIVE:
+  # Local Variables:
+  # eval: (org-hugo-auto-export-mode)
+  # End:

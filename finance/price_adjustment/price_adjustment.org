@@ -1,0 +1,195 @@
+#+STARTUP: folded indent
+#+PROPERTY: header-args:R :session *R:adjustment* :results output
+
+* Load Data
+
+#+begin_src R
+library(glue)
+library(market.data)
+library(tidyverse)
+library(timetk)
+library(xts)
+
+all_data <- sharadar_daily()
+corp_actions <- sharadar_actions()
+aapl <- filter(all_data, symbol == "AAPL")
+#+end_src
+
+* Reference
+
+- 参考 Quote Media @ Quandl
+  https://www.quandl.com/data/EOD-End-of-Day-US-Stock-Prices/documentation
+
+* Cash Dividend
+
+- 配当日以前のデータを減額していく
+- epchan の手法と TTR の手法は同じ
+- QuoteMedia の手法よりも epchan の手法の方が、掛け算なので、わかりやすい
+
+: Method
+ when a company issued a dividend $d per share with an ex-date of T,
+ all the prices before T need to be multiplied by the number (Close(T - 1) - d)/Close(T - 1),
+ where Close(T - 1) is the closing price of the trading day before T.
+
+$AdjRatio = \frac{close_{t-1} - div}{close_{t-1}}$
+
+$AdjClose = close_{t-1} * AdjRatio$
+
+- *Latest dividend*
+#+begin_src R
+div <- aapl %>%
+  filter(dividends != 0) %>%
+  slice(n()) %>%
+  select(symbol, date, dividends)
+div
+#+end_src
+
+#+RESULTS:
+:   symbol       date dividends
+: 1   AAPL 2019-05-10      0.77
+
+- *Un-adjusted close price*
+#+begin_src R
+unadj <- aapl %>%
+  filter(date <= div$date) %>%
+  slice((n() - 1):n()) %>%
+  select(symbol, date, close)
+unadj
+#+end_src
+
+#+RESULTS:
+:   symbol       date  close
+: 1   AAPL 2019-05-09 200.72
+: 2   AAPL 2019-05-10 197.18
+
+- *Adjusted close price (Prev day must be adjusted)*
+#+begin_src R
+adj <- aapl %>%
+  filter(date <= div$date) %>%
+  slice((n() - 1):n()) %>%
+  select(symbol, date, adj_close)
+adj
+#+end_src
+
+#+RESULTS:
+:   symbol       date adj_close
+: 1   AAPL 2019-05-09    199.95
+: 2   AAPL 2019-05-10    197.18
+
+- AAPL@Yahoo Finance https://finance.yahoo.com/quote/AAPL/history?p=AAPL
+#+begin_src R
+adj_ratio <- (unadj[1, ]$close - div$dividends) / unadj[1, ]$close
+adj_ratio
+adj_close <- unadj[1, ]$close * adj_ratio
+adj_close
+#+end_src
+
+#+RESULTS:
+: [1] 0.9961638
+: [1] 199.95
+
+- by ~TTR::adjRatios(splits, dividends, close)~
+#+begin_src R
+aapl2 <- aapl %>%
+  filter(date <= div$date) %>%
+  slice((n() - 1):n()) %>%
+  select(symbol, date, close, dividends)
+  
+xts_div <- tk_xts(aapl2, dividends, date)
+xts_cls <- tk_xts(aapl2, close, date)
+
+adj_ratio <- TTR::adjRatios(dividends = xts_div, close = xts_cls)
+adj_ratio
+xts_cls$close * adj_ratio$Div
+#+end_src
+
+#+RESULTS:
+:            Split       Div
+: 2019-05-09     1 0.9961638
+: 2019-05-10     1 1.0000000
+:             close
+: 2019-05-09 199.95
+: 2019-05-10 197.18
+
+* Split/Stock Dividend
+** Stock Dividend
+
+- 現金での配当の代わりに、自社株を配布する行為
+- 総発行株数も同時に増えるので、保有比率は変わらない
+- Split とは、25% 以上の Stock Dividend のことを言う
+
+- Adjustment Ratio = (New Float) / (Old Float)
+  Example: BIOL had a 0.5% stock dividend on 2014-03-12.
+  Shareholders were given 1 new share per 200 shares of BIOL already held.
+  
+#+begin_src R
+new_float <- 201
+old_float <- 200
+adj_ratio <- new_float / old_float
+## adjustment_ratio <- 1.005
+adj_ratio
+
+current_close <- 2.9
+prev_close <- 2.83
+adj_prev_close <- prev_close / adj_ratio
+adj_prev_close
+#+end_src
+
+#+RESULTS:
+: [1] 1.005
+: [1] 2.81592
+
+** Split
+
+- Adjustment Ratio = (New Float) / (Old Float)
+  For example, CPK had a 3 for 2 split on 2014-09-09.
+  Shareholders were given 3 shares per 2 shares previously held of CPK.
+  
+#+begin_src R
+adj_ratio <- 3 / 2
+adj_ratio # 1.5
+
+current_close = 45.11
+prev_close = 69.41
+adj_prev_close = prev_close / adj_ratio
+adj_prev_close
+#+end_src
+
+#+RESULTS:
+: [1] 1.5
+: [1] 46.27333
+
+* Spinoff
+
+- Adjustment Ratio 
+  += 1 + (Spinoff Open Price * Spinoff Shares) / (Parent Open Price * Parent Shares)+
+  = 1 + (spinoff_open_price / parent_open_price) * (spinoff_shares / parent_shares)
+ 
+  For spinoffs, we assume that you sell the spin-off stock at its open price,
+  and use the proceeds to buy back the parent stock at its open price.
+  This is the methodology used by most stock data providers.
+
+- For example, ADP spun off CDK on 2014-10-01.
+  ADP shareholders were given 1 share of CDK for every 3 shares of ADP they held.
+  => ADP を持っていた人は、3株あたり、1株の CDK 株をもらえる
+  => spin-off された CDK 1 株の価値だけ、ADP の価値を下げることで調整する
+
+  
+#+begin_src R
+parent_open_price  <- 73.03 # ADP
+spinoff_open_price <- 30.13 # CDK
+
+parent_shares <- 3
+spinoff_shares <- 1
+
+adj_ratio <- 1 + (spinoff_open_price / parent_open_price) * (spinoff_shares / parent_shares)
+adj_ratio # 1.13752
+
+parent_prev_close = 83.08
+parent_adj_prev_close <- parent_prev_close / adj_ratio
+parent_adj_prev_close # 73.036
+#+end_src
+
+#+RESULTS:
+: [1] 1.137523
+: [1] 73.03586

@@ -1,0 +1,37 @@
+#+STARTUP: folded indent
+#+OPTIONS: author:nil H:6 toc:nil
+#+HUGO_BASE_DIR: ~/Dropbox/repos/github/five-dots/blog
+#+HUGO_SECTION: post/2019/11/
+
+#+TITLE: [R と Stan で株式時系列分析シリーズ] 参考文献
+#+DATE: 2019-11-15
+#+HUGO_CATEGORIES: finance
+#+HUGO_TAGS: r etf stock
+#+HUGO_CUSTOM_FRONT_MATTER: :toc false
+
+- 書籍
+  - [[https://www.amazon.co.jp/%E7%B5%8C%E6%B8%88%E3%83%BB%E3%83%95%E3%82%A1%E3%82%A4%E3%83%8A%E3%83%B3%E3%82%B9%E3%83%87%E3%83%BC%E3%82%BF%E3%81%AE%E8%A8%88%E9%87%8F%E6%99%82%E7%B3%BB%E5%88%97%E5%88%86%E6%9E%90-%E7%B5%B1%E8%A8%88%E3%83%A9%E3%82%A4%E3%83%96%E3%83%A9%E3%83%AA%E3%83%BC-%E6%B2%96%E6%9C%AC-%E7%AB%9C%E7%BE%A9/dp/4254127928][沖本 竜義 (著), 経済・ファイナンスデータの計量時系列分析]]
+  - [[https://www.amazon.co.jp/%E6%9C%80%E9%81%A9%E6%8A%95%E8%B3%87%E6%88%A6%E7%95%A5-%E3%83%9D%E3%83%BC%E3%83%88%E3%83%95%E3%82%A9%E3%83%AA%E3%82%AA%E3%83%BB%E3%83%86%E3%82%AF%E3%83%8E%E3%83%AD%E3%82%B8%E3%83%BC%E3%81%AE%E7%90%86%E8%AB%96%E3%81%A8%E5%AE%9F%E8%B7%B5-FinTech%E3%83%A9%E3%82%A4%E3%83%96%E3%83%A9%E3%83%AA%E3%83%BC-%E6%B4%A5%E7%94%B0-%E5%8D%9A%E5%8F%B2/dp/4254275854][津田 博史 (監修), 小松 高広 (著), 最適投資戦略: ポートフォリオ・テクノロジーの理論と実践]]
+  - [[https://www.amazon.co.jp/%E6%99%82%E7%B3%BB%E5%88%97%E5%88%86%E6%9E%90%E3%81%A8%E7%8A%B6%E6%85%8B%E7%A9%BA%E9%96%93%E3%83%A2%E3%83%87%E3%83%AB%E3%81%AE%E5%9F%BA%E7%A4%8E-R%E3%81%A8Stan%E3%81%A7%E5%AD%A6%E3%81%B6%E7%90%86%E8%AB%96%E3%81%A8%E5%AE%9F%E8%A3%85-%E9%A6%AC%E5%A0%B4-%E7%9C%9F%E5%93%89/dp/4903814874/ref=pd_bxgy_14_img_2/358-7945696-6160824?_encoding=UTF8&pd_rd_i=4903814874&pd_rd_r=c7e60579-43c6-4de9-a703-b2d4fdaa13d8&pd_rd_w=jqZBT&pd_rd_wg=gx4yj&pf_rd_p=b25bd748-082b-4f2a-b724-125316a35a9c&pf_rd_r=1D5BJWD74Q3PP7GYZG5H&psc=1&refRID=1D5BJWD74Q3PP7GYZG5H][馬場 真哉 (著), 時系列分析と状態空間モデルの基礎: RとStanで学ぶ理論と実装]]
+  - [[https://www.amazon.co.jp/%E7%8F%BE%E5%A0%B4%E3%81%A7%E3%81%99%E3%81%90%E4%BD%BF%E3%81%88%E3%82%8B%E6%99%82%E7%B3%BB%E5%88%97%E3%83%87%E3%83%BC%E3%82%BF%E5%88%86%E6%9E%90-%E3%83%87%E3%83%BC%E3%82%BF%E3%82%B5%E3%82%A4%E3%82%A8%E3%83%B3%E3%83%86%E3%82%A3%E3%82%B9%E3%83%88%E3%81%AE%E3%81%9F%E3%82%81%E3%81%AE%E5%9F%BA%E7%A4%8E%E7%9F%A5%E8%AD%98-%E6%A8%AA%E5%86%85-%E5%A4%A7%E4%BB%8B/dp/4774163015/ref=pd_sbs_14_4/358-7945696-6160824?_encoding=UTF8&pd_rd_i=4774163015&pd_rd_r=330d21f2-b460-4eb1-9263-f2df0900fd2c&pd_rd_w=sRDgj&pd_rd_wg=RptFx&pf_rd_p=1585d594-d9d0-474b-8a4e-69eca1566911&pf_rd_r=D7KRZY6REETGYFK4RETK&psc=1&refRID=D7KRZY6REETGYFK4RETK][横内 大介 (著), 青木 義充 (著), 現場ですぐ使える時系列データ分析]]
+  - [[https://www.amazon.co.jp/%E3%83%87%E3%83%BC%E3%82%BF%E8%A7%A3%E6%9E%90%E3%81%AE%E3%81%9F%E3%82%81%E3%81%AE%E7%B5%B1%E8%A8%88%E3%83%A2%E3%83%87%E3%83%AA%E3%83%B3%E3%82%B0%E5%85%A5%E9%96%80%E2%80%95%E2%80%95%E4%B8%80%E8%88%AC%E5%8C%96%E7%B7%9A%E5%BD%A2%E3%83%A2%E3%83%87%E3%83%AB%E3%83%BB%E9%9A%8E%E5%B1%A4%E3%83%99%E3%82%A4%E3%82%BA%E3%83%A2%E3%83%87%E3%83%AB%E3%83%BBMCMC-%E7%A2%BA%E7%8E%87%E3%81%A8%E6%83%85%E5%A0%B1%E3%81%AE%E7%A7%91%E5%AD%A6-%E4%B9%85%E4%BF%9D-%E6%8B%93%E5%BC%A5/dp/400006973X/ref=pd_sbs_14_3/358-7945696-6160824?_encoding=UTF8&pd_rd_i=400006973X&pd_rd_r=cf3931c2-4a0e-4414-8790-fb9e7bd7c4ef&pd_rd_w=QwXDZ&pd_rd_wg=WNMVQ&pf_rd_p=1585d594-d9d0-474b-8a4e-69eca1566911&pf_rd_r=Y9NVKRZZMNAYMPPB12CP&psc=1&refRID=Y9NVKRZZMNAYMPPB12CP][久保 拓弥  (著), データ解析のための統計モデリング入門――一般化線形モデル・階層ベイズモデル・MCMC]]
+  - [[https://www.amazon.co.jp/Stan%E3%81%A8R%E3%81%A7%E3%83%99%E3%82%A4%E3%82%BA%E7%B5%B1%E8%A8%88%E3%83%A2%E3%83%87%E3%83%AA%E3%83%B3%E3%82%B0-Wonderful-R-%E6%9D%BE%E6%B5%A6-%E5%81%A5%E5%A4%AA%E9%83%8E/dp/4320112423/ref=pd_sbs_14_6/358-7945696-6160824?_encoding=UTF8&pd_rd_i=4320112423&pd_rd_r=108af845-02a0-471e-9ddc-6d7f59527485&pd_rd_w=tFsDX&pd_rd_wg=6s2vu&pf_rd_p=1585d594-d9d0-474b-8a4e-69eca1566911&pf_rd_r=BCJVNCBWB5Z13M8S5XZ3&psc=1&refRID=BCJVNCBWB5Z13M8S5XZ3][松浦 健太郎  (著), 石田 基広  (監修), StanとRでベイズ統計モデリング]]
+  - [[https://www.amazon.co.jp/%E9%81%93%E5%85%B7%E3%81%A8%E3%81%97%E3%81%A6%E3%81%AE%E3%83%95%E3%82%A1%E3%82%A4%E3%83%8A%E3%83%B3%E3%82%B9-%E7%9F%B3%E9%87%8E-%E9%9B%84%E4%B8%80/dp/4534039484/ref=sr_1_4?__mk_ja_JP=%E3%82%AB%E3%82%BF%E3%82%AB%E3%83%8A&keywords=%E3%83%95%E3%82%A1%E3%82%A4%E3%83%8A%E3%83%B3%E3%82%B9&qid=1573433956&s=books&sr=1-4][石野 雄一  (著), 道具としてのファイナンス]]
+
+- ウェブサイト
+  - [[https://otexts.com/fpp3/][Forecasting: Principles and Practice]]
+  - [[https://tidyverts.github.io/tidy-forecasting-principles/][Tidy time series forecasting with fable by ={tidyverts}= ]]
+  - [[https://www.quantopian.com/lectures][Quantopian Lectures]]
+
+- ブログ
+  - [[http://osashimix.hatenablog.com/entry/2019/02/17/201742][【仕事関連】Asset Allocation Model を R で組んでみた。@東京の投資顧問会社で働く社会人が研究に没頭するブログ]]
+  - [[http://grg.hatenablog.com/entry/2017/03/12/233826][S&P500と日経225の時系列分析（DCCモデル・多変量GARCH）@GRGと金融工学・統計解析]]
+  - [[http://grg.hatenablog.com/entry/2017/03/13/101234][コピュラとは（時系列分析・DCDモデルの前準備として）@GRGと金融工学・統計解析]]
+  - [[http://grg.hatenablog.com/entry/2017/03/19/001059][S&P500と日経225の時系列分析（コピュラ ＆ DCDモデル）@GRGと金融工学・統計解析]]
+  - [[https://www.r-bloggers.com/introduction-to-asset-allocation/][Introduction to Asset Allocation@R-bloggers]]
+  - [[https://stackoverflow.com/questions/34636402/using-covariance-matrix-for-portfolio-optimization-in-r][Using Covariance matrix for Portfolio Optimization in R@stackoverflow]]
+
+* COMMENT Local Variables                                           :ARCHIVE:
+  # Local Variables:
+  # eval: (org-hugo-auto-export-mode)
+  # End:

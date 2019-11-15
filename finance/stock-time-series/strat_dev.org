@@ -1,0 +1,319 @@
+#+STARTUP: folded indent inlineimages
+#+PROPERTY: header-args:R :session *R:strat_dev* :width 480 :height 360
+
+* マーケットデータを準備する
+** はじめに
+トレーディング戦略開発の第一歩は、データの準備からです。Rパッケージを利用すれば、簡単にウェブから無料で株価や指数のデータを取得することができます。
+
+このチュートリアルでは、一貫して、米国の代表的な株価指数である *S&P 500 指数* (以下 SP500) のデータを利用します。ただし、記載されている内容は SP500 に限られた内容ではなく、例えば アップル (AAPL) のような米国の個別株でも、トヨタ自動車 (7203) のような日本の個別株でも、同様の考え方で分析を進められるはずです。
+
+** 利用する R パッケージ
+
+#+begin_src R :results silent
+library(tidyquant)
+library(tidyverse)
+#+end_src
+
+** データの準備
+
+それでは、早速データを取得してみましょう。無料で利用できる情報源としてはいくつか選択肢がありますが、ここでは [[https://github.com/business-science/tidyquant][tidyquant]] パッケージを利用して、米国 Yahoo Finance からデータを取得してみます。リーマンショックのような大きな金融危機も含めて分析するために、データの期間は 2004 年から 2018 年までの 15 年間とします。
+
+- S&P 500 指数のシンボルは、 *^GSPC*
+- ~get = "stock.price"~ とした場合は、米国 Yahoo Finance からデータをダウンロードする
+
+#+begin_src R :results silent
+sp500 <- tq_get("^GSPC", get = "stock.price", from = "2004-01-01", to = "2018-12-31")
+#+end_src
+
+Note:
+R から米国 Yahoo Finance のデータを読み込む際には、一般的に、[[https://github.com/joshuaulrich/quantmod][quantmod]] が利用されることが多いようです。しかし、quantmod では、 ~xts~ でデータが取得されるため、tidyverse のパッケージ群を利用することができません。個人的には、データは ~data.frame~ (もしくは ~tibble~) に統一しておき、[[https://github.com/tidyverse/ggplot2][ggplot2]]、[[https://github.com/tidyverse/dplyr][dplyr]] や [[https://github.com/tidyverse/tidyr][tidyr]] などのパッケージの関数を扱えるようにしておいたほうが、快適にデータ分析を進められると思います。ただし、一部の時系列分析用のパッケージなどでは、入力に ~xts~ を求めるものがあるので、その場合は都度変換して対処することにします。
+
+** データの確認
+*** 価格データ
+
+#+begin_src R :colnames yes
+tail(sp500)
+#+end_src
+
+#+RESULTS:
+|       date |        open |        high |         low |       close |     volume |    adjusted |
+|------------+-------------+-------------+-------------+-------------+------------+-------------|
+| 2018-12-20 |  2496.77002 | 2509.629883 | 2441.179932 | 2467.419922 | 5585780000 | 2467.419922 |
+| 2018-12-21 | 2465.379883 | 2504.409912 | 2408.550049 | 2416.620117 | 7609010000 | 2416.620117 |
+| 2018-12-24 | 2400.560059 | 2410.340088 | 2351.100098 | 2351.100098 | 2613930000 | 2351.100098 |
+| 2018-12-26 | 2363.120117 |  2467.76001 | 2346.580078 | 2467.699951 | 4233990000 | 2467.699951 |
+| 2018-12-27 |      2442.5 | 2489.100098 | 2397.939941 | 2488.830078 | 4096610000 | 2488.830078 |
+| 2018-12-28 |  2498.77002 |  2520.27002 | 2472.889893 |  2485.73999 | 3702620000 |  2485.73999 |
+
+取得した ~data.frame~ はごく一般的な *四本値* (OHLC) の形式になっています。 ~adjusted~ 列は株式分割や配当等のイベントの影響を調整するための列ですが、SP500 は指数なので、 ~adjusted~ には、 ~close~ と同じデータが格納されています。
+
+*** 時系列プロット (原系列)
+
+データを取得したら、まずはデータに適した手法で可視化して、大まかな特徴を掴むのが定石です。株価のような時系列データは、x 軸に時間、y 軸に価格をとった線グラフで確認するのがよいでしょう。
+
+#+begin_src R :results graphics :file (get-babel-file)
+(p_close <- ggplot(data = sp500, aes(x = date, y = close)) + geom_line())
+#+end_src
+
+#+RESULTS:
+[[file:~/Dropbox/memo/img/babel/fig-CNnVGi.png]]
+
+*** 時系列プロット (対数系列)
+
+株をトレードする上では、その銘柄が絶対値としていくら上がったか (下がったか) よりも、何パーセント上がったか (下がったか) という *変化率* の方がより重要な情報といえます。株価の対数をとると、価格系列を変化率の系列に変換することができます。
+
+#+begin_src R :results graphics :file (get-babel-file)
+sp500 %>%
+   mutate(log_close = log(close)) %>%
+   gather("type", "close", close, log_close) %>%
+   ggplot(aes(x = date, y = close)) +
+   geom_line() +
+   facet_grid(type ~ ., scales = "free_y")
+#+end_src
+
+#+RESULTS:
+[[file:~/Dropbox/memo/img/babel/fig-oQxb7W.png]]
+
+こうしてみると、2008 年の金融危機時の下げの異常さがより明確に理解できるはずです。また、直近の下げも絶対値は大きいですが、ままある下落幅という見方もできると思います。
+
+#+begin_src R :results graphics :file (get-babel-file)
+sp500 %>%
+  mutate(year = year(date)) %>%
+  filter(year %in% c(2008, 2017)) %>%
+  ggplot(aes(x = date, y = close)) +
+  geom_line() +
+  facet_wrap(~ year, scales = "free") +
+  scale_x_date(date_labels = "%b' %Y")
+#+end_src
+
+#+RESULTS:
+[[file:~/Dropbox/memo/img/babel/fig-4K5dTB.png]]
+
+* TODO 収益率
+* 確率分布を当てはめる
+** 利用する R パッケージ
+
+#+begin_src R :results silent
+library(rugarch)
+library(tidyquant)
+library(tidyverse)
+#+end_src
+
+** データの準備
+
+Yahoo Finance から取得したデータから、 *収益率* と *対数収益率* を計算する。
+
+#+begin_src R :colnames yes
+sp500 <- sp500 %>%
+  mutate(ret = (adjusted - lag(adjusted)) / lag(adjusted),
+        log_ret = log(adjusted) - lag(log(adjusted))) %>%
+  slice(-1)
+tail(select(sp500, date, adjusted, ret, log_ret))
+#+end_src
+
+#+RESULTS:
+|       date |    adjusted |                 ret |              log_ret |
+|------------+-------------+---------------------+----------------------|
+| 2018-12-20 | 2467.419922 | -0.0157721063020998 |  -0.0158978094583739 |
+| 2018-12-21 | 2416.620117 | -0.0205882284353219 |  -0.0208031206267894 |
+| 2018-12-24 | 2351.100098 | -0.0271122542343713 |  -0.0274865726545181 |
+| 2018-12-26 | 2467.699951 |  0.0495937425629762 |   0.0484031774549472 |
+| 2018-12-27 | 2488.830078 | 0.00856268080381378 |   0.0085262289882424 |
+| 2018-12-28 |  2485.73999 | -0.0012415825521054 | -0.00124235395429473 |
+
+** 対数差収益率のヒストグラム
+
+#+begin_src R :results graphics :file (get-babel-file)
+(p_ret <- ggplot(data = sp500, aes(x = log_ret)) +
+   geom_histogram(aes(y = stat(density)), binwidth = 0.001, fill = "white", color = "black"))
+#+end_src
+
+#+RESULTS:
+[[file:~/Dropbox/memo/img/babel/fig-VurSUv.png]]
+
+** 正規分布
+*** 最尤法によるパラメーター推定
+
+~rugarch::fitdist()~ を使って正規分布のパラメタ (平均と標準偏差) をデータから推定する。
+
+#+begin_src R :results output
+norm_fit <- suppressWarnings(fitdist("norm", sp500$log_ret))
+norm_fit$pars
+#+end_src
+
+#+RESULTS:
+: 
+:           mu        sigma 
+: 0.0002112714 0.0115735777
+
+*** 推定されたパラメーターの正規分布を重ねる
+
+#+begin_src R :results graphics :file (get-babel-file)
+p_ret + stat_function(fun  = ddist,
+                      args = list(distribution = "norm",
+                                  mu           = norm_fit$pars[["mu"]],
+                                  sigma        = norm_fit$pars[["sigma"]]))
+#+end_src
+
+#+RESULTS:
+[[file:~/Dropbox/memo/img/babel/fig-zZhY2V.png]]
+
+明らかに、当てはまりが悪い。
+
+*** 指標の比較
+
+- 当てはまりの尺度 = 最大化対数尤度
+- ~rugarch::fitdist()~ は負の対数尤度を最小化する、という仕組みのため、符号を反転させる必要がある。
+#+begin_src R
+norm_llk <- -tail(norm_fit$values, 1)
+round(norm_llk)
+#+end_src
+
+#+RESULTS:
+: 11449
+
+- モデル選択の尺度 = AIC
+#+begin_src R
+norm_aic <- -2 * (norm_llk - length(norm_fit$pars))
+round(norm_aic)
+#+end_src
+
+#+RESULTS:
+: -22895
+
+** t 分布
+*** 最尤法によるパラメーター推定
+
+#+begin_src R :results output
+t_fit <- fitdist("std", sp500$log_ret)
+t_fit$pars
+#+end_src
+
+#+RESULTS:
+: 
+:           mu        sigma        shape 
+: 0.0007040159 0.0171279387 2.2778965220
+
+*** 推定されたパラメーターの t 分布を重ねる
+
+#+begin_src R :results graphics :file (get-babel-file)
+p_ret + stat_function(fun  = ddist,
+                      args = list(distribution = "std",
+                                  mu           = t_fit$pars[["mu"]],
+                                  sigma        = t_fit$pars[["sigma"]],
+                                  shape        = t_fit$pars[["shape"]]))
+#+end_src
+
+#+RESULTS:
+[[file:~/Dropbox/memo/img/babel/fig-C6yaFm.png]]
+
+かなり改善されているように見える
+
+*** 指標の比較
+
+- 最大化対数尤度
+#+begin_src R
+t_llk <- -tail(t_fit$values, 1)
+round(t_llk)
+#+end_src
+
+#+RESULTS:
+: 12154
+
+- AIC
+#+begin_src R
+t_aic <- -2 * (t_llk - length(t_fit$pars))
+round(t_aic)
+#+end_src
+
+#+RESULTS:
+: -24303
+
+- 最大化対数尤度
+  src_R{round(norm_llk)} {{{results(=11449=)}}} -> src_R{round(t_llk)} {{{results(=12154=)}}}
+  
+- AIC
+  src_R{round(norm_aic)} {{{results(=-22895=)}}} -> src_R{round(t_aic)} {{{results(=-24303=)}}}
+** TODO Skew/Kurtosis
+** まとめて計算
+
+~rugarch~ で対応している全ての確率分布を計算する。
+
+#+begin_src R :colnames yes
+dists <- c("norm", "snorm", "std", "sstd", "ged", "sged", "nig", "ghyp", "ghst", "jsu")
+fits <- map(dists, ~ fitdist(.x, sp500$log_ret))
+names(fits) <- dists
+
+results <- imap_dfr(fits, ~ {
+  loglik <- -tail(.x$values, 1)
+  aic <- -2 * (loglik - length(.x$pars))
+  tibble(Distribution = .y,
+         LogLik = round(loglik),
+         AIC = round(aic))
+})
+
+mutate(results, Best_AIC = ifelse(AIC == min(AIC), "*", ""))
+#+end_src
+
+#+RESULTS:
+| Distribution | LogLik |    AIC | Best_AIC |
+|--------------+--------+--------+----------|
+| norm         |  11449 | -22895 |          |
+| snorm        |  11460 | -22913 |          |
+| std          |  12154 | -24303 |          |
+| sstd         |  12160 | -24312 |          |
+| ged          |  12157 | -24309 |          |
+| sged         |  12161 | -24313 |          |
+| nig          |  12175 | -24341 | *        |
+| ghyp         |  12175 | -24340 |          |
+| ghst         |  12109 | -24210 |          |
+| jsu          |  12173 | -24338 |          |
+
+- もっとも AIC が良い数値だった nig の分布を重ねてみる。
+
+#+begin_src R :results graphics :file (get-babel-file)
+p_ret + stat_function(fun = ddist,
+                      args = list(distribution = "nig",
+                                  mu           = fits[["nig"]]$pars[["mu"]],
+                                  sigma        = fits[["nig"]]$pars[["sigma"]],
+                                  skew         = fits[["nig"]]$pars[["skew"]],
+                                  shape        = fits[["nig"]]$pars[["shape"]]))
+#+end_src
+
+#+RESULTS:
+[[file:~/Dropbox/memo/img/babel/fig-jS8on1.png]]
+
+* 単位根検定
+** 利用するパッケージ
+
+#+begin_src R
+library(urca)
+library(tidyquant)
+library(tidyverse)
+library(timetk)
+#+end_src
+
+** コレログラム
+
+原系列と対数差系列の2つのコレログラムを確認。差分をとっている
+
+#+begin_src R
+forecast::ggtsdisplay(sp500$close)
+#+end_src
+
+#+begin_src R
+forecast::ggtsdisplay(sp500$log_ret)
+#+end_src
+
+** 季節性
+** ur.df
+
+#+begin_src R
+ur_test <- ur.df(sp500$close, type = "none", lag = 10, selectlags = "AIC")
+summary(ur_test)
+#+end_src
+
+* 時系列モデル
+** SARFIMAX
+** GARCH
+** Hidden Markov

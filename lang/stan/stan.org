@@ -1,0 +1,2492 @@
+#+STARTUP: folded indent inlineimages latexpreview
+#+PROPERTY: header-args:R :session *R:stan* :width 640 :height 480 :results output
+
+* Load Libraries
+
+#+begin_src R :results silent
+library(forecast)
+library(ggmcmc)
+library(glue)
+library(lubridate)
+library(rstan)
+library(shinystan)
+library(tidyverse)
+library(loo)
+#+end_src
+
+* ={rstan}= Package
+** All Functions
+
+#+begin_src R
+pacman::p_funs(rstan)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+  [1] ".__C__stanfit"                   ".__C__stanmodel"                
+  [3] ".__T__[:base"                    ".__T__[[<-:base"                
+  [5] ".__T__[<-:base"                  ".__T__$:base"                   
+  [7] ".__T__$<-:base"                  ".__T__constrain_pars:rstan"     
+  [9] ".__T__extract:rstan"             ".__T__get_adaptation_info:rstan"
+ [11] ".__T__get_cppcode:rstan"         ".__T__get_cppo_mode:rstan"      
+ [13] ".__T__get_cxxflags:rstan"        ".__T__get_elapsed_time:rstan"   
+ [15] ".__T__get_inits:rstan"           ".__T__get_logposterior:rstan"   
+ [17] ".__T__get_num_upars:rstan"       ".__T__get_posterior_mean:rstan" 
+ [19] ".__T__get_sampler_params:rstan"  ".__T__get_seed:rstan"           
+ [21] ".__T__get_seeds:rstan"           ".__T__get_stancode:rstan"       
+ [23] ".__T__get_stanmodel:rstan"       ".__T__gqs:rstan"                
+ [25] ".__T__grad_log_prob:rstan"       ".__T__log_prob:rstan"           
+ [27] ".__T__loo:loo"                   ".__T__optimizing:rstan"         
+ [29] ".__T__plot:graphics"             ".__T__sampling:rstan"           
+ [31] ".__T__show:methods"              ".__T__summary:base"             
+ [33] ".__T__traceplot:rstan"           ".__T__unconstrain_pars:rstan"   
+ [35] ".__T__vb:rstan"                  "As.mcmc.list"                   
+ [37] "check_divergences"               "check_energy"                   
+ [39] "check_hmc_diagnostics"           "check_treedepth"                
+ [41] "constrain_pars"                  "cpp_object_initializer"         
+ [43] "ess_bulk"                        "ess_tail"                       
+ [45] "expose_stan_functions"           "extract"                        
+ [47] "extract_sparse_parts"            "get_adaptation_info"            
+ [49] "get_bfmi"                        "get_cppcode"                    
+ [51] "get_cppo_mode"                   "get_cxxflags"                   
+ [53] "get_divergent_iterations"        "get_elapsed_time"               
+ [55] "get_inits"                       "get_logposterior"               
+ [57] "get_low_bfmi_chains"             "get_max_treedepth_iterations"   
+ [59] "get_num_divergent"               "get_num_leapfrog_per_iteration" 
+ [61] "get_num_max_treedepth"           "get_num_upars"                  
+ [63] "get_posterior_mean"              "get_rng"                        
+ [65] "get_sampler_params"              "get_seed"                       
+ [67] "get_seeds"                       "get_stancode"                   
+ [69] "get_stanmodel"                   "get_stream"                     
+ [71] "gqs"                             "grad_log_prob"                  
+ [73] "log_prob"                        "loo"                            
+ [75] "lookup"                          "makeconf_path"                  
+ [77] "monitor"                         "optimizing"                     
+ [79] "OUT"                             "plot"                           
+ [81] "quietgg"                         "read_rdump"                     
+ [83] "read_stan_csv"                   "Rhat"                           
+ [85] "RNG"                             "rstan_gg_options"               
+ [87] "rstan_ggtheme_options"           "rstan_options"                  
+ [89] "rstan.package.skeleton"          "sampling"                       
+ [91] "sbc"                             "set_cppo"                       
+ [93] "sflist2stanfit"                  "show"                           
+ [95] "stan"                            "stan_ac"                        
+ [97] "stan_demo"                       "stan_dens"                      
+ [99] "stan_diag"                       "stan_ess"                       
+[101] "stan_hist"                       "stan_mcse"                      
+[103] "stan_model"                      "stan_par"                       
+[105] "stan_plot"                       "stan_rdump"                     
+[107] "stan_rhat"                       "stan_scat"                      
+[109] "stan_trace"                      "stan_version"                   
+[111] "stanc"                           "stanc_builder"                  
+[113] "summary"                         "traceplot"                      
+[115] "unconstrain_pars"                "vb"
+#+end_example
+
+** stan()
+
+*1 ~ 3 を一気に行う関数*
+1. Stan モデルを C++ コードに変換 (= =stanc()=)
+2. C++ コードをバイナリ Shared Object にコンパイル (= =stan_model()=)
+  - =stanmodel= S4 オブジェクトが作成される
+3. サンプリングの実行 (= =sampling()=)
+  - =stanfit= S4 オブジェクトが作成される
+
+#+begin_src R
+stan(
+  file,                       # stan file path
+  model_name = "anon_model",
+  model_code = "",            # stan model を文字列で指定
+  fit = NA,                   # stanfit オブジェクト (作成済みのオブジェクトで再度サンプリングする)
+  data = list(),
+  pars = NA,
+  chains = 4,                 # 4が推奨値
+  iter = 2000,
+  warmup = floor(iter / 2),
+  thin = 1,                   # iter が多い場合に事後分布のサイズを抑えるために間引く
+                              # 間引くことで自己相関を減らすことができるメリットもある
+  init = "random",            # パラメタの初期値
+  seed = sample.int(.Machine$integer.max, 1),
+  algorithm = c("NUTS", "HMC", "Fixed_param"),
+  control = NULL,
+  sample_file = NULL,
+  diagnostic_file = NULL,
+  save_dso = TRUE,
+  verbose = FALSE,
+  include = TRUE,
+  cores = getOption("mc.cores", 1L),
+  open_progress = interactive() && !isatty(stdout()) &&
+                  !identical(Sys.getenv("RSTUDIO"), "1"),
+  ...,
+  boost_lib = NULL,
+  eigen_lib = NULL
+)
+#+end_src
+
+- 並列実行
+#+begin_src R
+rstan_options(auto_write = TRUE) # コンパイル済みの stanmodel を HD に保存する
+options(mc.cores = parallel::detectCores())
+#+end_src
+
+** stan_model()
+
+- Stan model file からコンパイルのみを行う
+#+begin_src R
+stan_model(
+  file,
+  model_name = "anon_model",
+  model_code = "",
+  stanc_ret = NULL,
+  boost_lib = NULL,
+  eigen_lib = NULL,
+  save_dso = TRUE,
+  verbose = FALSE,
+  auto_write = rstan_options("auto_write"),
+  obfuscate_model_name = TRUE,
+  allow_undefined = FALSE,
+  includes = NULL,
+  isystem = c(if (!missing(file)) dirname(file), getwd())
+)
+#+end_src
+
+** sampling()
+
+- stanmodel class (コンパイル済みのモデル) を利用してサンプリングのみを行う
+#+begin_src R
+sampling(
+  object, # stanmodel object
+  data = list(),
+  pars = NA,
+  chains = 4,
+  iter = 2000,
+  warmup = floor(iter / 2),
+  thin = 1,
+  seed = sample.int(.Machine$integer.max, 1),
+  init = "random",
+  check_data = TRUE,
+  sample_file = NULL,
+  diagnostic_file = NULL,
+  verbose = FALSE,
+  algorithm = c("NUTS", "HMC", "Fixed_param"),
+  control = NULL,
+  include = TRUE,
+  cores = getOption("mc.cores", 1L),
+  open_progress = interactive() && !isatty(stdout()) &&
+                  !identical(Sys.getenv("RSTUDIO"), "1"),
+  show_messages = TRUE,
+  ...)
+#+end_src
+
+#+RESULTS:
+: 
+: Error: '...' used in an incorrect context
+
+** vb()
+
+- 変分ベイズ法でのサンプリング
+#+begin_src R
+vb(object, data = list(), pars = NA, include = TRUE,
+   seed = sample.int(.Machine$integer.max, 1),
+   init = "random", check_data = TRUE,
+   sample_file = tempfile(fileext = ".csv"),
+   algorithm = c("meanfield", "fullrank"), ...)
+#+end_src
+
+** Extract info from stanfit object
+*** Sample fit by iris
+
+#+begin_src R
+model <- "./models/iris_lm.stan"
+stan_data <- list(N = nrow(iris), X = iris$Petal.Length, Y = iris$Petal.Width)
+fit <- stan(file = model, data = stan_data, seed = 1234)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+SAMPLING FOR MODEL 'iris_lm' NOW (CHAIN 1).
+Chain 1: 
+Chain 1: Gradient evaluation took 1.6e-05 seconds
+Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 0.16 seconds.
+Chain 1: Adjust your expectations accordingly!
+Chain 1: 
+Chain 1: 
+Chain 1: Iteration:    1 / 2000 [  0%]  (Warmup)
+Chain 1: Iteration:  200 / 2000 [ 10%]  (Warmup)
+Chain 1: Iteration:  400 / 2000 [ 20%]  (Warmup)
+Chain 1: Iteration:  600 / 2000 [ 30%]  (Warmup)
+Chain 1: Iteration:  800 / 2000 [ 40%]  (Warmup)
+Chain 1: Iteration: 1000 / 2000 [ 50%]  (Warmup)
+Chain 1: Iteration: 1001 / 2000 [ 50%]  (Sampling)
+Chain 1: Iteration: 1200 / 2000 [ 60%]  (Sampling)
+Chain 1: Iteration: 1400 / 2000 [ 70%]  (Sampling)
+Chain 1: Iteration: 1600 / 2000 [ 80%]  (Sampling)
+Chain 1: Iteration: 1800 / 2000 [ 90%]  (Sampling)
+Chain 1: Iteration: 2000 / 2000 [100%]  (Sampling)
+Chain 1: 
+Chain 1:  Elapsed Time: 0.134757 seconds (Warm-up)
+Chain 1:                0.138432 seconds (Sampling)
+Chain 1:                0.273189 seconds (Total)
+Chain 1: 
+
+SAMPLING FOR MODEL 'iris_lm' NOW (CHAIN 2).
+Chain 2: 
+Chain 2: Gradient evaluation took 1.7e-05 seconds
+Chain 2: 1000 transitions using 10 leapfrog steps per transition would take 0.17 seconds.
+Chain 2: Adjust your expectations accordingly!
+Chain 2: 
+Chain 2: 
+Chain 2: Iteration:    1 / 2000 [  0%]  (Warmup)
+Chain 2: Iteration:  200 / 2000 [ 10%]  (Warmup)
+Chain 2: Iteration:  400 / 2000 [ 20%]  (Warmup)
+Chain 2: Iteration:  600 / 2000 [ 30%]  (Warmup)
+Chain 2: Iteration:  800 / 2000 [ 40%]  (Warmup)
+Chain 2: Iteration: 1000 / 2000 [ 50%]  (Warmup)
+Chain 2: Iteration: 1001 / 2000 [ 50%]  (Sampling)
+Chain 2: Iteration: 1200 / 2000 [ 60%]  (Sampling)
+Chain 2: Iteration: 1400 / 2000 [ 70%]  (Sampling)
+Chain 2: Iteration: 1600 / 2000 [ 80%]  (Sampling)
+Chain 2: Iteration: 1800 / 2000 [ 90%]  (Sampling)
+Chain 2: Iteration: 2000 / 2000 [100%]  (Sampling)
+Chain 2: 
+Chain 2:  Elapsed Time: 0.129364 seconds (Warm-up)
+Chain 2:                0.10398 seconds (Sampling)
+Chain 2:                0.233344 seconds (Total)
+Chain 2: 
+
+SAMPLING FOR MODEL 'iris_lm' NOW (CHAIN 3).
+Chain 3: 
+Chain 3: Gradient evaluation took 1.3e-05 seconds
+Chain 3: 1000 transitions using 10 leapfrog steps per transition would take 0.13 seconds.
+Chain 3: Adjust your expectations accordingly!
+Chain 3: 
+Chain 3: 
+Chain 3: Iteration:    1 / 2000 [  0%]  (Warmup)
+Chain 3: Iteration:  200 / 2000 [ 10%]  (Warmup)
+Chain 3: Iteration:  400 / 2000 [ 20%]  (Warmup)
+Chain 3: Iteration:  600 / 2000 [ 30%]  (Warmup)
+Chain 3: Iteration:  800 / 2000 [ 40%]  (Warmup)
+Chain 3: Iteration: 1000 / 2000 [ 50%]  (Warmup)
+Chain 3: Iteration: 1001 / 2000 [ 50%]  (Sampling)
+Chain 3: Iteration: 1200 / 2000 [ 60%]  (Sampling)
+Chain 3: Iteration: 1400 / 2000 [ 70%]  (Sampling)
+Chain 3: Iteration: 1600 / 2000 [ 80%]  (Sampling)
+Chain 3: Iteration: 1800 / 2000 [ 90%]  (Sampling)
+Chain 3: Iteration: 2000 / 2000 [100%]  (Sampling)
+Chain 3: 
+Chain 3:  Elapsed Time: 0.13905 seconds (Warm-up)
+Chain 3:                0.125813 seconds (Sampling)
+Chain 3:                0.264863 seconds (Total)
+Chain 3: 
+
+SAMPLING FOR MODEL 'iris_lm' NOW (CHAIN 4).
+Chain 4: 
+Chain 4: Gradient evaluation took 1.2e-05 seconds
+Chain 4: 1000 transitions using 10 leapfrog steps per transition would take 0.12 seconds.
+Chain 4: Adjust your expectations accordingly!
+Chain 4: 
+Chain 4: 
+Chain 4: Iteration:    1 / 2000 [  0%]  (Warmup)
+Chain 4: Iteration:  200 / 2000 [ 10%]  (Warmup)
+Chain 4: Iteration:  400 / 2000 [ 20%]  (Warmup)
+Chain 4: Iteration:  600 / 2000 [ 30%]  (Warmup)
+Chain 4: Iteration:  800 / 2000 [ 40%]  (Warmup)
+Chain 4: Iteration: 1000 / 2000 [ 50%]  (Warmup)
+Chain 4: Iteration: 1001 / 2000 [ 50%]  (Sampling)
+Chain 4: Iteration: 1200 / 2000 [ 60%]  (Sampling)
+Chain 4: Iteration: 1400 / 2000 [ 70%]  (Sampling)
+Chain 4: Iteration: 1600 / 2000 [ 80%]  (Sampling)
+Chain 4: Iteration: 1800 / 2000 [ 90%]  (Sampling)
+Chain 4: Iteration: 2000 / 2000 [100%]  (Sampling)
+Chain 4: 
+Chain 4:  Elapsed Time: 0.141526 seconds (Warm-up)
+Chain 4:                0.126494 seconds (Sampling)
+Chain 4:                0.26802 seconds (Total)
+Chain 4:
+#+end_example
+
+*** lm() fit
+
+#+begin_src R
+lm_fit <- lm(Petal.Width ~ Petal.Length, data = iris)
+summary(lm_fit)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+Call:
+lm(formula = Petal.Width ~ Petal.Length, data = iris)
+
+Residuals:
+     Min       1Q   Median       3Q      Max 
+-0.56515 -0.12358 -0.01898  0.13288  0.64272 
+
+Coefficients:
+              Estimate Std. Error t value Pr(>|t|)    
+(Intercept)  -0.363076   0.039762  -9.131  4.7e-16 ***
+Petal.Length  0.415755   0.009582  43.387  < 2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 0.2065 on 148 degrees of freedom
+Multiple R-squared:  0.9271,	Adjusted R-squared:  0.9266 
+F-statistic:  1882 on 1 and 148 DF,  p-value: < 2.2e-16
+#+end_example
+
+*** Help
+
+#+begin_src R
+?stanfit
+#+end_src
+
+*** Printing and summarizing
+**** =show()=
+
+- lm() の結果とほぼ同じ推定結果であることが確認できる
+- Rhat < 1.05 から収束していることが確認できる
+#+begin_src R
+show(fit)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+Inference for Stan model: iris_lm.
+4 chains, each with iter=2000; warmup=1000; thin=1; 
+post-warmup draws per chain=1000, total post-warmup draws=4000.
+
+        mean se_mean   sd   2.5%    25%    50%    75%  97.5% n_eff Rhat
+a      -0.36    0.00 0.04  -0.44  -0.39  -0.36  -0.34  -0.28  1857    1
+b       0.42    0.00 0.01   0.40   0.41   0.42   0.42   0.43  1809    1
+sigma   0.21    0.00 0.01   0.19   0.20   0.21   0.22   0.23  1735    1
+lp__  159.53    0.03 1.25 156.37 158.96 159.84 160.45 160.95  1408    1
+
+Samples were drawn using NUTS(diag_e) at Wed Nov 13 18:07:40 2019.
+For each parameter, n_eff is a crude measure of effective sample size,
+and Rhat is the potential scale reduction factor on split chains (at 
+convergence, Rhat=1).
+#+end_example
+
+**** =summary()=
+
+#+begin_src R
+summary(fit)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+$summary
+             mean      se_mean          sd        2.5%         25%         50%
+a      -0.3639236 0.0009299850 0.040076224  -0.4400942  -0.3909532  -0.3643917
+b       0.4159740 0.0002270238 0.009656189   0.3972422   0.4094476   0.4160083
+sigma   0.2084058 0.0002998728 0.012489147   0.1859405   0.1997911   0.2075656
+lp__  159.5264009 0.0332834958 1.248703685 156.3656597 158.9575340 159.8396846
+              75%       97.5%    n_eff     Rhat
+a      -0.3372566  -0.2842714 1857.042 1.000356
+b       0.4223881   0.4345410 1809.126 1.000235
+sigma   0.2166386   0.2345611 1734.568 1.002490
+lp__  160.4468054 160.9453920 1407.541 1.002203
+
+$c_summary
+, , chains = chain:1
+
+         stats
+parameter        mean         sd        2.5%         25%         50%
+    a      -0.3643122 0.03937499  -0.4403628  -0.3917993  -0.3632637
+    b       0.4159979 0.00937615   0.3985283   0.4092722   0.4158363
+    sigma   0.2093289 0.01277019   0.1861714   0.2006371   0.2084165
+    lp__  159.5463314 1.25082371 156.3458688 159.0125463 159.8702594
+         stats
+parameter         75%       97.5%
+    a      -0.3374743  -0.2910184
+    b       0.4223524   0.4339919
+    sigma   0.2171160   0.2366845
+    lp__  160.4635033 160.9316073
+
+, , chains = chain:2
+
+         stats
+parameter        mean          sd        2.5%         25%         50%
+    a      -0.3661150 0.039959975  -0.4390656  -0.3954190  -0.3667887
+    b       0.4164861 0.009769864   0.3972673   0.4102395   0.4162857
+    sigma   0.2079620 0.012581877   0.1859385   0.1990101   0.2074404
+    lp__  159.4933092 1.197125019 156.4691539 158.9455547 159.8018038
+         stats
+parameter         75%       97.5%
+    a      -0.3389187  -0.2851222
+    b       0.4233931   0.4352782
+    sigma   0.2170063   0.2317325
+    lp__  160.3716052 160.9326208
+
+, , chains = chain:3
+
+         stats
+parameter        mean          sd        2.5%         25%         50%
+    a      -0.3639918 0.037290384  -0.4342942  -0.3882851  -0.3644279
+    b       0.4160709 0.009100628   0.3979494   0.4098515   0.4163016
+    sigma   0.2082621 0.012290214   0.1861062   0.1999974   0.2072230
+    lp__  159.5922727 1.220878047 156.5079414 159.0260831 159.8997151
+         stats
+parameter         75%       97.5%
+    a      -0.3402082  -0.2907658
+    b       0.4221691   0.4329350
+    sigma   0.2160944   0.2345611
+    lp__  160.4821795 160.9661317
+
+, , chains = chain:4
+
+         stats
+parameter        mean         sd        2.5%         25%         50%
+    a      -0.3612753 0.04335312  -0.4446992  -0.3892711  -0.3625285
+    b       0.4153410 0.01031458   0.3944895   0.4084700   0.4156157
+    sigma   0.2080703 0.01227882   0.1856177   0.1995765   0.2072876
+    lp__  159.4736904 1.32094518 156.1326716 158.8803411 159.7984337
+         stats
+parameter         75%       97.5%
+    a      -0.3331724  -0.2721419
+    b       0.4219552   0.4359197
+    sigma   0.2164662   0.2342967
+    lp__  160.4286188 160.9367737
+#+end_example
+
+*** Plot (by {ggplot2})
+**** Overview
+
+- plotfun 引数でカスタマイズ
+#+begin_src R
+?plot.stanfit
+plot(fit, plotfun = "stan_plot")  # 区間推定・点推定
+plot(fit, plotfun = "stan_trace") # パラメタ毎のサンプリングの線グラフ
+plot(fit, plotfun = "stan_hist")  # パラメタ毎のヒストグラム
+plot(fit, plotfun = "stan_dens")  # パラメタ毎のヒストグラム(カーネル密度推定)
+plot(fit, plotfun = "stan_diag")  # ダイアグ情報
+plot(fit, plotfun = "stan_rhat")  # R hat
+plot(fit, plotfun = "stan_ess")   # Effective sample size
+plot(fit, plotfun = "stan_mcse")  # Monte Carlo SE
+plot(fit, plotfun = "stan_ac")    # Auto Correlation
+
+# 2パラメタの散布図
+plot(fit, plotfun = "stan_scat", pars = c("a", "b"))
+#+end_src
+
+**** =stan_plot()=
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+stan_plot(fit)
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-TwHYF3.png]]
+
+パラメタを絞ることもできる
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+stan_plot(fit, pars = c("a", "b"))
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-t4gtnO.png]]
+
+**** =stan_trace()=
+
+#+begin_src R :results output graphics file :file (my/get-babel-file) :height 640
+stan_trace(fit, nrow = 3)
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-Igro9n.png]]
+
+**** =stan_hist()=
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+stan_hist(fit)
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-SNcj9M.png]]
+
+**** =stan_dens()=
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+stan_dens(fit)
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-WbLqQG.png]]
+
+**** =stan_diag()=
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+stan_diag(fit)
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-sC940a.png]]
+
+**** =stan_rhat()=
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+stan_rhat(fit)
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-tQYiwC.png]]
+
+**** =stan_ess()=
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+stan_ess(fit)
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-4TWRzj.png]]
+
+**** =stan_mcse()=
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+stan_mcse(fit)
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-AsSBYE.png]]
+
+**** =stan_ac()=
+
+- 定常分布に収束していたとしたら、自己相関がなくなる
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+stan_ac(fit)
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-EcYXje.png]]
+
+*** Posterior Mean (事後平均)
+
+#+begin_src R
+get_posterior_mean(fit)
+#+end_src
+
+#+RESULTS:
+:       mean-chain:1 mean-chain:2 mean-chain:3 mean-chain:4 mean-all chains
+: a       -0.3643122   -0.3661150   -0.3639918   -0.3612753      -0.3639236
+: b        0.4159979    0.4164861    0.4160709    0.4153410       0.4159740
+: sigma    0.2093289    0.2079620    0.2082621    0.2080703       0.2084058
+: lp__   159.5463314  159.4933092  159.5922727  159.4736904     159.5264009
+
+*** Extracting posterior draws
+
+- サンプルされた乱数を取得 (list)
+  =extract(object, pars, permuted = TRUE, inc_warmup = FALSE, include = TRUE)=
+
+#+begin_src R
+rands <- extract(fit)
+str(rands)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+List of 4
+ $ a    : num [1:4000(1d)] -0.389 -0.306 -0.381 -0.342 -0.362 ...
+  ..- attr(*, "dimnames")=List of 1
+  .. ..$ iterations: NULL
+ $ b    : num [1:4000(1d)] 0.419 0.399 0.42 0.41 0.413 ...
+  ..- attr(*, "dimnames")=List of 1
+  .. ..$ iterations: NULL
+ $ sigma: num [1:4000(1d)] 0.212 0.196 0.207 0.209 0.216 ...
+  ..- attr(*, "dimnames")=List of 1
+  .. ..$ iterations: NULL
+ $ lp__ : num [1:4000(1d)] 161 159 161 161 161 ...
+  ..- attr(*, "dimnames")=List of 1
+  .. ..$ iterations: NULL
+#+end_example
+
+- 各種変換
+  =as.array()=, =as.matrix()=, =as.data.frame()=
+
+#+begin_src R :results value :colnames yes
+as.data.frame(rands) %>% head()
+#+end_src
+
+#+RESULTS:
+|                  a |                 b |             sigma |             lp__ |
+|--------------------+-------------------+-------------------+------------------|
+| -0.388847734909944 | 0.418880656361044 | 0.212210964006459 | 160.537883768359 |
+| -0.305668057923236 | 0.398628033746278 | 0.196236236355302 | 158.843283719602 |
+| -0.380738319436561 | 0.420351593420378 | 0.207398575459156 | 160.930486780425 |
+| -0.341934072274652 | 0.410420030508613 | 0.208750832322747 | 160.869933940043 |
+| -0.361874549010484 | 0.413102993149379 |  0.21648349597877 | 160.526146710837 |
+| -0.425485622440233 | 0.432808589379335 | 0.193206917108622 | 158.620508374949 |
+
+- =mcmc.list()=
+- 各 iter の内容が入っている
+#+begin_src R
+mcmc_list <- As.mcmc.list(fit) # mcmc.list class
+str(mcmc_list)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+List of 4
+ $ : 'mcmc' num [1:1000, 1:4] -0.295 -0.258 -0.416 -0.394 -0.345 ...
+  ..- attr(*, "dimnames")=List of 2
+  .. ..$ : NULL
+  .. ..$ : chr [1:4] "a" "b" "sigma" "lp__"
+  ..- attr(*, "mcpar")= num [1:3] 1001 2000 1
+ $ : 'mcmc' num [1:1000, 1:4] -0.33 -0.356 -0.349 -0.324 -0.425 ...
+  ..- attr(*, "dimnames")=List of 2
+  .. ..$ : NULL
+  .. ..$ : chr [1:4] "a" "b" "sigma" "lp__"
+  ..- attr(*, "mcpar")= num [1:3] 1001 2000 1
+ $ : 'mcmc' num [1:1000, 1:4] -0.373 -0.383 -0.355 -0.37 -0.428 ...
+  ..- attr(*, "dimnames")=List of 2
+  .. ..$ : NULL
+  .. ..$ : chr [1:4] "a" "b" "sigma" "lp__"
+  ..- attr(*, "mcpar")= num [1:3] 1001 2000 1
+ $ : 'mcmc' num [1:1000, 1:4] -0.417 -0.42 -0.296 -0.325 -0.291 ...
+  ..- attr(*, "dimnames")=List of 2
+  .. ..$ : NULL
+  .. ..$ : chr [1:4] "a" "b" "sigma" "lp__"
+  ..- attr(*, "mcpar")= num [1:3] 1001 2000 1
+ - attr(*, "class")= chr "mcmc.list"
+#+end_example
+
+*** Log Posterior
+
+- lp__ の抽出
+#+begin_src R
+lp <- get_logposterior(fit)
+str(lp)
+#+end_src
+
+#+RESULTS:
+: List of 4
+:  $ : num [1:2000] -148 -148 -148 -148 -118 ...
+:  $ : num [1:2000] -1506 -1506 -1506 -1506 -72 ...
+:  $ : num [1:2000] -4099 -4099 -4099 -4099 -4099 ...
+:  $ : num [1:2000] -343 -343 -343 -343 -132 ...
+
+*** Metadata and miscellaneous
+**** =get_stancode()=
+
+#+begin_src R
+get_stancode(fit)
+#+end_src
+
+#+RESULTS:
+: [1] "\ndata {\n  int N;\n  real X[N];\n  real Y[N];\n}\n\nparameters {\n  real a;\n  real b;\n  real<lower=
+: sigma;\n}\n\nmodel {\n  for (n in 1:N) {\n    Y[n] ~ normal(a
+: b * X[n], sigma);\n  }\n}\n"
+: attr(,"model_name2")
+: [1] "iris_lm"
+
+**** =get_stanmodel()=
+
+#+begin_src R
+get_stanmodel(fit)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+S4 class stanmodel 'iris_lm' coded as follows:
+
+data {
+  int N;
+  real X[N];
+  real Y[N];
+}
+
+parameters {
+  real a;
+  real b;
+  real<lower=
+sigma;
+}
+
+model {
+  for (n in 1:N) {
+    Y[n] ~ normal(a
+b * X[n], sigma);
+  }
+}
+#+end_example
+
+**** =get_elapsed_time()=
+
+#+begin_src R
+get_elapsed_time(fit)
+#+end_src
+
+#+RESULTS:
+:           warmup   sample
+: chain:1 0.134757 0.138432
+: chain:2 0.129364 0.103980
+: chain:3 0.139050 0.125813
+: chain:4 0.141526 0.126494
+
+**** =get_inits()=
+
+- 各 Chain の初期値
+#+begin_src R
+get_inits(fit)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+[[1]]
+[[1]]$a
+[1] -0.7987087
+
+[[1]]$b
+[1] 1.302652
+
+[[1]]$sigma
+[1] 1.523127
+
+
+[[2]]
+[[2]]$a
+[1] -1.379517
+
+[[2]]$b
+[1] 1.715228
+
+[[2]]$sigma
+[1] 0.5780068
+
+
+[[3]]
+[[3]]$a
+[1] -1.328141
+
+[[3]]$b
+[1] -1.015386
+
+[[3]]$sigma
+[1] 0.2422532
+
+
+[[4]]
+[[4]]$a
+[1] -0.6737976
+
+[[4]]$b
+[1] 1.833515
+
+[[4]]$sigma
+[1] 0.3695666
+#+end_example
+
+**** =get_cppo_mode()=
+
+- コンパイル時の最適化モード
+- "fast", "presentation2", "presentation1", or "debug"
+#+begin_src R
+get_cppo_mode(fit)
+#+end_src
+
+#+RESULTS:
+: [1] "presentation2"
+
+**** =get_seed()=, =get_seeds()=
+
+- 乱数
+#+begin_src R
+get_seed(fit)
+#+end_src
+
+#+RESULTS:
+: [1] 1234
+
+#+begin_src R
+get_seeds(fit)
+#+end_src
+
+#+RESULTS:
+: [1] 1234 1234 1234 1234
+
+*** Diagnostics, log probability and gradients
+**** =get_sampler_params()=
+
+- Paramters
+#+begin_src R
+get_sampler_params(fit)
+#+end_src
+
+#+RESULTS:
+
+**** =get_adaptation_info()=
+
+- Adaptation information (NUTS)
+#+begin_src R
+get_adaptation_info(fit)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+[[1]]
+[1] "# Adaptation terminated\n# Step size = 0.232961\n# Diagonal elements of inverse mass matrix:\n# 0.00196407, 0.000127494, 0.00316851\n"
+
+[[2]]
+[1] "# Adaptation terminated\n# Step size = 0.364564\n# Diagonal elements of inverse mass matrix:\n# 0.00138136, 8.81988e-05, 0.00352606\n"
+
+[[3]]
+[1] "# Adaptation terminated\n# Step size = 0.270051\n# Diagonal elements of inverse mass matrix:\n# 0.00163527, 0.000106573, 0.002799\n"
+
+[[4]]
+[1] "# Adaptation terminated\n# Step size = 0.29105\n# Diagonal elements of inverse mass matrix:\n# 0.00141373, 9.01215e-05, 0.00292007\n"
+#+end_example
+
+**** =log_prob()=
+
+- Compute the log probability density(lp__) for a set of parameter values
+#+begin_src R
+log_prob(fit)
+#+end_src
+
+#+RESULTS:
+: Error in object@.MISC$stan_fit_instance$log_prob(upars, adjust_transform,  : 
+:   argument "upars" is missing, with no default
+
+
+- Compute the gradient of log probability density function for a set of parameter values(on the unconstrained space) up to an additive constant. The unconstrained parameters are specified using a numeric vector with the length being the number of unconstrained parameters. A numeric vector is returned with the length of the number of unconstrained parameters and an attribute named log_prob being the lp__. See also the documentation in grad_log_prob.
+
+**** =grad_log_prob()=
+
+#+begin_src R
+grad_log_prob(fit)
+#+end_src
+
+#+RESULTS:
+: Error in object@.MISC$stan_fit_instance$grad_log_prob(upars, adjust_transform) : 
+:   argument "upars" is missing, with no default
+
+**** =get_num_upars()=
+
+- Get the number of unconstrained parameters of the model. The number of parameters for a model is not necessarily equal to this number of unconstrained parameters. For example, when a parameter is specified as a simplex of length K, the number of unconstrained parameters is K - 1.
+#+begin_src R
+get_num_upars(fit)
+#+end_src
+
+#+RESULTS:
+: [1] 3
+
+**** =unconstrain_pars()=, =constrain_pars()=
+
+- Transform the parameters to unconstrained space. The input is a named list as for specifying initial values for each parameter. A numeric vector is returned. See also the documentation in unconstrain_pars.
+
+#+begin_src R
+unconstrain_pars(fit)
+#+end_src
+
+#+RESULTS:
+: Error in object@.MISC$stan_fit_instance$unconstrain_pars(pars) : 
+:   argument "pars" is missing, with no default
+
+#+begin_src R
+constrain_pars(fit)
+#+end_src
+
+#+RESULTS:
+: Error in object@.MISC$stan_fit_instance$constrain_pars(upars) : 
+:   argument "upars" is missing, with no default
+
+* Stan as modelling language
+** Types
+
+- 基本: int, real
+  int N;
+  real Y;
+  
+- 配列:
+  int N[K];
+  real Y[N, M, L]; 3 次元の配列
+
+- ベクトル・行列: vector, row_vector, matrix (*要素は、real のみ, int NG*)
+  vector[K] V;       1 個の長さ K のベクトル
+  vector[K] V[N];    N 個の長さ K のベクトル
+  matrix[J, K] X;    1 個の J x K の行列
+  matrix[J, K] X[N]; N 個の J x K の行列
+
+- 要素の制約のある vector
+  simplex           合計 1 で各要素が 0 ~ 1 の列ベクトル
+  unit_vector       各要素の 2 乗の合計が 1 の列ベクトル
+  ordered           x1 < x2 < .. < xn の列ベクトル
+  positive_orderd   ordered の要素がすべて正
+
+- 要素に制約がある matrix
+  cov_matrix
+  corr_matrix
+  cholesky_factor_cov
+  cholesky_factor_corr
+
+- 制約
+  int<lower=1> N;
+  real<upper=0> log_p;
+  vector<lower=-1,upper=1>[3,3] corr;
+  
+** Blocks
+
+#+begin_src stan
+function {}
+
+// データの定義
+// 観測されたデータ
+// 制約を課すとデータの入力チェックができる
+data {}
+
+// 制約を課すとデータの入力チェックができる
+transformed data {}
+
+// 推定されるべきパラメタ
+// 観測されていないデータ
+// 制約を課すことができる
+parameters {}
+
+// パラメタの変換 (= で結ばれる式)
+// 制約を課すことができる
+transformed parameters {}
+
+// モデル・データ生成過程 (~ 確率分布で表されるもの)
+model {}
+
+// モデル推定には、不要だが別の目的で出力したいデータ
+// 制約を課すことができる
+// WAIC の算出など
+generated quantities {}
+#+end_src
+
+* Samples
+** [[http://statmodeling.hatenablog.com/entry/calc-waic-wbic][WAICとWBICを事後分布から計算する@StatModeling Memorandum]] の例 
+*** データ
+
+- 混合正規分布
+
+#+begin_src R :results silent
+N <- 100
+a_true <- 0.4
+mean1 <- 0
+mean2 <- 3
+sd1 <- 1
+sd2 <- 1
+set.seed(1)
+Y <- c(rnorm((1-a_true)*N, mean1, sd1), rnorm(a_true*N, mean2, sd2))
+#+end_src
+
+*** モデル
+
+- 2 つの正規分布のうち平均 0 の方は固定
+- もう片方の正規分布の平均 mu とそれらの混ぜ具合 a を推定
+
+- =log_sum_exp()= は以下を返す
+  $log_sum_exp(x,y) = log(exp(x) + exp(y))$
+  
+**** モデル 1-A
+
+- WAIC と汎化損失計算用のモデル
+
+#+begin_src stan :file models/waic-wbic_1a.stan
+data {
+  int<lower=1> N;
+  vector[N] Y;
+}
+
+parameters {
+  real<lower=0, upper=1> a;
+  real<lower=-50, upper=50> mu;
+}
+
+model {
+  for(n in 1:N)
+    target += log_sum_exp(
+      log(1-a) + normal_lpdf(Y[n] | 0, 1),
+      log(a) + normal_lpdf(Y[n] | mu, 1)
+    );
+}
+
+generated quantities {
+  vector[N] log_lik;
+  int index;
+  real y_pred;
+
+  for(n in 1:N)
+    log_lik[n] = log_sum_exp(
+      log(1-a) + normal_lpdf(Y[n] | 0, 1),
+      log(a) + normal_lpdf(Y[n] | mu, 1)
+    );
+  index = bernoulli_rng(a);
+  y_pred = normal_rng(index == 1 ? mu : 0, 1);
+}
+#+end_src
+
+#+RESULTS:
+[[file:models/waic-wbic_1a.stan]]
+
+**** モデル 1-B
+
+- WBIC 計算用のモデル
+- WBIC は逆温度 $\beta$ が $\frac{1}{\log{n}}$ の時の事後分布を用いて計算される
+
+#+begin_src stan :file models/waic-wbic_1b.stan
+data {
+  int<lower=1> N;
+  vector[N] Y;
+}
+
+parameters {
+  real<lower=0, upper=1> a;
+  real<lower=-50, upper=50> mu;
+}
+
+model {
+  for(n in 1:N)
+    // 対数尤度の部分だけ 1/log (データ数)
+    target += 1/log(N) * log_sum_exp(
+      log(1-a) + normal_lpdf(Y[n] | 0, 1),
+      log(a) + normal_lpdf(Y[n] | mu, 1)
+    );
+}
+
+generated quantities {
+  vector[N] log_lik;
+  for(n in 1:N)
+    log_lik[n] = log_sum_exp(
+      log(1-a) + normal_lpdf(Y[n] | 0, 1),
+      log(a) + normal_lpdf(Y[n] | mu, 1)
+    );
+}
+#+end_src
+
+#+RESULTS:
+[[file:models/waic-wbic_1b.stan]]
+
+**** モデル 2-A
+
+- WAIC と汎化損失計算用のモデル
+
+#+begin_src stan :file models/waic-wbic_2a.stan
+data {
+  int<lower=1> N;
+  vector[N] Y;
+}
+
+parameters {
+  real mu;
+  real<lower=0> s;
+}
+
+model {
+  Y ~ normal(mu, s);
+}
+
+generated quantities {
+  vector[N] log_lik;
+  int index;
+  real y_pred;
+  for(n in 1:N)
+    log_lik[n] = normal_lpdf(Y[n] | mu, s);
+  y_pred = normal_rng(mu, s);
+}
+#+end_src
+
+#+RESULTS:
+[[file:models/waic-wbic_2a.stan]]
+
+**** モデル 2-B
+
+- WBIC 計算用のモデル
+
+#+begin_src stan :file models/waic-wbic_2b.stan
+data {
+  int<lower=1> N;
+  vector[N] Y;
+}
+
+parameters {
+  real mu;
+  real<lower=0> s;
+}
+
+model {
+  for(n in 1:N)
+    target += 1/log(N) * normal_lpdf(Y[n] | mu, s);
+}
+
+generated quantities {
+  vector[N] log_lik;
+  for(n in 1:N)
+    log_lik[n] = normal_lpdf(Y[n] | mu, s);
+}
+#+end_src
+
+#+RESULTS:
+[[file:models/waic-wbic_2b.stan]]
+
+*** 関数
+
+#+begin_src R
+generalization_error <- function(ms) {
+  dens <- density(ms$y_pred)
+  f_pred <- approxfun(dens$x, dens$y, yleft=1e-18, yright=1e-18)
+  f_true <- function(x) (1-a_true)*dnorm(x, mean1, sd1) + a_true*dnorm(x, mean2, sd2)
+  f_ge <- function(x) f_true(x)*(-log(f_pred(x)))
+  # f_en <- function(x) f_true(x)*(-log(f_true(x)))
+  # entropy <- integrate(f_en, lower=-6, upper=9)$value
+  ge <- integrate(f_ge, lower=-6, upper=9)$value
+  return(ge)
+}
+
+waic <- function(log_likelihood) {
+  training_error <- - mean(log(colMeans(exp(log_likelihood))))
+  functional_variance_div_N <- mean(colMeans(log_likelihood^2) - colMeans(log_likelihood)^2)
+  waic <- training_error + functional_variance_div_N
+  return(waic)
+}
+
+wbic <- function(log_likelihood){
+  wbic <- - mean(rowSums(log_likelihood))
+  return(wbic)
+}
+
+#+end_src
+
+#+RESULTS:
+
+*** サンプリング
+
+#+begin_src R
+data  <- list(N=N, Y=Y)
+fit1a <- stan(file="models/waic-wbic_1a.stan", data=data, iter=11000, warmup=1000, seed=123)
+fit1b <- stan(file="models/waic-wbic_1b.stan", data=data, iter=11000, warmup=1000, seed=123)
+fit2a <- stan(file="models/waic-wbic_2a.stan", data=data, iter=11000, warmup=1000, seed=123)
+fit2b <- stan(file="models/waic-wbic_2b.stan", data=data, iter=11000, warmup=1000, seed=123)
+#+end_src
+
+*** 結果
+
+- 汎化損失と WAIC が近似の値を取っている
+
+#+begin_src R :results value :colnames yes
+ms1a <- extract(fit1a)
+ms1b <- extract(fit1b)
+ms2a <- extract(fit2a)
+ms2b <- extract(fit2b)
+
+ge1   <- generalization_error(ms1a)
+waic1 <- waic(ms1a$log_lik)
+wbic1 <- wbic(ms1b$log_lik)
+
+ge2   <- generalization_error(ms2a)
+waic2 <- waic(ms2a$log_lik)
+wbic2 <- wbic(ms2b$log_lik)
+
+data.frame(
+  model = c(1, 2),
+  ge = c(ge1, ge2),
+  waic = c(waic1, waic2),
+  wbic = c(wbic1, wbic2)
+) %>%
+  mutate_if(is.numeric, round, digit=3)
+#+end_src
+
+#+RESULTS:
+| model |    ge |  waic |    wbic |
+|-------+-------+-------+---------|
+|     1 |  1.93 | 1.914 | 193.818 |
+|     2 | 1.998 |  1.98 | 201.294 |
+
+*** [[https://rpubs.com/siero5335/92987][loo package動かしてみた: WAIC比較@RPubs]] での検証
+
+- =loo:waic= に対数尤度の matrix を渡すと WAIC を計算してくれる
+- =generated quantities= で log_lik を出力する必要あり 
+
+#+begin_src R
+llk1a <- extract_log_lik(fit1a)
+loo_waic1l <- loo::waic(llk1a)
+loo_waic1l
+#+end_src
+
+#+RESULTS:
+: 
+: Computed from 40000 by 100 log-likelihood matrix
+: 
+:           Estimate   SE
+: elpd_waic   -191.4  5.5
+: p_waic         2.0  0.3
+: waic         382.8 11.0
+
+
+- 上述の結果と比較
+  - waic は渡辺澄夫の定義
+  - ={loo}= で計算される値は BDA3 で定義されている値
+  - BDA3 で定義された値は渡辺の定義された値に 2N をかけたものなの
+  - ={loo}= で算出した値を 2N で割った値を比較に使う
+#+begin_src R :results value :colnames yes
+loo_waic1 <- loo_waic1l$estimates["waic", "Estimate"] / (2*N)
+loo_waic2 <- loo_waic2l$estimates["waic", "Estimate"] / (2*N)
+
+data.frame(
+  model = c(1, 2),
+  ge = c(ge1, ge2),
+  waic = c(waic1, waic2),
+  loo_waic = c(loo_waic1, loo_waic2)
+) %>%
+  mutate_if(is.numeric, round, digit=3)
+#+end_src
+
+#+RESULTS:
+| model |    ge |  waic | loo_waic |
+|-------+-------+-------+----------|
+|     1 |  1.93 | 1.914 |    1.914 |
+|     2 | 1.998 |  1.98 |     1.98 |
+
+* 『Stan と R でベイズ統計モデリング』(Duck Book) のサンプル
+** Setup
+
+#+begin_src R :results silent
+repo_dir <- here::here()
+book_dir <- glue("{repo_dir}/lang/stan/duck_book/support_data")
+stan_dir <- glue("{repo_dir}/lang/stan/duck_book/my_samples")
+
+## 並列計算
+options(mc.cores = parallel::detectCores())
+
+## 変更がないときは、再コンパイルしない
+rstan_options(auto_write = TRUE)
+#+end_src
+
+** Chapter 4
+*** Data
+
+- 年齢と年収のデータ
+#+begin_src R :results value :colnames yes
+data_path <- glue("{book_dir}/chap04/input/data-salary.txt")
+d <- read_csv(data_path)
+d
+#+end_src
+
+#+RESULTS:
+|  X |    Y |
+|----+------|
+| 24 |  472 |
+| 24 |  403 |
+| 26 |  454 |
+| 32 |  575 |
+| 33 |  546 |
+| 35 |  781 |
+| 38 |  750 |
+| 40 |  601 |
+| 40 |  814 |
+| 43 |  792 |
+| 43 |  745 |
+| 44 |  837 |
+| 48 |  868 |
+| 52 |  988 |
+| 56 | 1092 |
+| 56 | 1007 |
+| 57 | 1233 |
+| 58 | 1202 |
+| 59 | 1123 |
+| 59 | 1314 |
+
+#+begin_src R :results graphics :file (my/get-babel-file)
+d %>% ggplot(aes(x = X, y = Y)) +
+  geom_point() +
+  geom_smooth(method = lm)
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-2Pqnqu.png]]
+
+*** Model
+
+#+name: model-normal
+#+begin_src stan :file models/normal.stan
+data {
+  int N;
+  real X[N];
+  real Y[N];
+}
+
+parameters {
+  real a;
+  real b;
+  real<lower=0> sigma;
+}
+
+model {
+  for (n in 1:N) {
+    Y[n] ~ normal(a + b * X[n], sigma);
+  }
+}
+#+end_src
+
+#+RESULTS: model-normal
+[[file:models/normal.stan]]
+
+*** 信頼区間・予測区間
+
+- 切片 -120 万円, 年齢ごとに +22 万円
+#+begin_src R
+res_lm <- lm(Y ~ X, data = d)
+summary(res_lm)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+Call:
+lm(formula = Y ~ X, data = d)
+
+Residuals:
+     Min       1Q   Median       3Q      Max 
+-155.471  -51.523   -6.663   52.822  141.349 
+
+Coefficients:
+            Estimate Std. Error t value Pr(>|t|)    
+(Intercept) -119.697     68.148  -1.756    0.096 .  
+X             21.904      1.518  14.428 2.47e-11 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 79.1 on 18 degrees of freedom
+Multiple R-squared:  0.9204,	Adjusted R-squared:  0.916 
+F-statistic: 208.2 on 1 and 18 DF,  p-value: 2.466e-11
+#+end_example
+
+# 信頼区間
+#+begin_src R
+X_new <- data.frame(X = 23:60)
+
+# lwr, fit, uper
+conf_95 <- predict(res_lm, X_new, interval="confidence", level=0.95)
+pred_95 <- predict(res_lm, X_new, interval="prediction", level=0.95)
+#+end_src
+
+#+RESULTS:
+
+*** stan()
+
+#+begin_src R :var model=model-normal
+stan_data <- list(N = nrow(d), X = d$X, Y = d$Y)
+fit <- stan(file = model, data = stan_data, seed = 1234)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+SAMPLING
+SAMPLING FOR MODEL 'normal' NOW (CHAIN 2).
+Chain 2: 
+Chain 2: Gradient evaluation took 1.5e-05 seconds
+Chain 2: 1000 transitions using 10 leapfrog steps per transition would take 0.15 seconds.
+Chain 2: Adjust your expectations accordingly!
+Chain 2: 
+Chain 2: 
+Chain 2: Iteration:    1 / 2000 [  0%]  (Warmup)
+
+SAMPLING FOR MODEL 'normal' NOW (CHAIN 3).
+Chain 3: 
+Chain 3: Gradient evaluation took 1.8e-05 seconds
+Chain 3: 1000 transitions using 10 leapfrog steps per transition would take 0.18 seconds.
+Chain 3: Adjust your expectations accordingly!
+Chain 3: 
+Chain 3: 
+Chain 3: Iteration:    1 / 2000 [  0%]  (Warmup)
+ FOR MODEL 'normal' NOW (CHAIN 1).
+Chain 1: 
+Chain 1: Gradient evaluation took 1.7e-05 seconds
+Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 0.17 seconds.
+Chain 1: Adjust your expectations accordingly!
+Chain 1: 
+Chain 1: 
+Chain 1: Iteration:    1 / 2000 [  0%]  (Warmup)
+
+SAMPLING FOR MODEL 'normal' NOW (CHAIN 4).
+Chain 4: 
+Chain 4: Gradient evaluation took 1.5e-05 seconds
+Chain 4: 1000 transitions using 10 leapfrog steps per transition would take 0.15 seconds.
+Chain 4: Adjust your expectations accordingly!
+Chain 4: 
+Chain 4: 
+Chain 4: Iteration:    1 / 2000 [  0%]  (Warmup)
+Chain 2: Iteration:  200 / 2000 [ 10%]  (Warmup)
+Chain 3: Iteration:  200 / 2000 [ 10%]  (Warmup)
+Chain 4: Iteration:  200 / 2000 [ 10%]  (Warmup)
+Chain 2: Iteration:  400 / 2000 [ 20%]  (Warmup)
+Chain 2: Iteration:  600 / 2000 [ 30%]  (Warmup)
+Chain 4: Iteration:  400 / 2000 [ 20%]  (Warmup)
+Chain 3: Iteration:  400 / 2000 [ 20%]  (Warmup)
+Chain 2: Iteration:  800 / 2000 [ 40%]  (Warmup)
+Chain 4: Iteration:  600 / 2000 [ 30%]  (Warmup)
+Chain 3: Iteration:  600 / 2000 [ 30%]  (Warmup)
+Chain 2: Iteration: 1000 / 2000 [ 50%]  (Warmup)
+Chain 2: Iteration: 1001 / 2000 [ 50%]  (Sampling)
+Chain 4: Iteration:  800 / 2000 [ 40%]  (Warmup)
+Chain 3: Iteration:  800 / 2000 [ 40%]  (Warmup)
+Chain 4: Iteration: 1000 / 2000 [ 50%]  (Warmup)
+Chain 4: Iteration: 1001 / 2000 [ 50%]  (Sampling)
+Chain 2: Iteration: 1200 / 2000 [ 60%]  (Sampling)
+Chain 1: Iteration:  200 / 2000 [ 10%]  (Warmup)
+Chain 3: Iteration: 1000 / 2000 [ 50%]  (Warmup)
+Chain 3: Iteration: 1001 / 2000 [ 50%]  (Sampling)
+Chain 2: Iteration: 1400 / 2000 [ 70%]  (Sampling)
+Chain 4: Iteration: 1200 / 2000 [ 60%]  (Sampling)
+Chain 1: Iteration:  400 / 2000 [ 20%]  (Warmup)
+Chain 2: Iteration: 1600 / 2000 [ 80%]  (Sampling)
+Chain 4: Iteration: 1400 / 2000 [ 70%]  (Sampling)
+Chain 3: Iteration: 1200 / 2000 [ 60%]  (Sampling)
+Chain 2: Iteration: 1800 / 2000 [ 90%]  (Sampling)
+Chain 4: Iteration: 1600 / 2000 [ 80%]  (Sampling)
+Chain 3: Iteration: 1400 / 2000 [ 70%]  (Sampling)
+Chain 1: Iteration:  600 / 2000 [ 30%]  (Warmup)
+Chain 2: Iteration: 2000 / 2000 [100%]  (Sampling)
+Chain 2: 
+Chain 2:  Elapsed Time: 0.131936 seconds (Warm-up)
+Chain 2:                0.086536 seconds (Sampling)
+Chain 2:                0.218472 seconds (Total)
+Chain 2: 
+Chain 4: Iteration: 1800 / 2000 [ 90%]  (Sampling)
+Chain 3: Iteration: 1600 / 2000 [ 80%]  (Sampling)
+Chain 1: Iteration:  800 / 2000 [ 40%]  (Warmup)
+Chain 4: Iteration: 2000 / 2000 [100%]  (Sampling)
+Chain 4: 
+Chain 4:  Elapsed Time: 0.121837 seconds (Warm-up)
+Chain 4:                0.090836 seconds (Sampling)
+Chain 4:                0.212673 seconds (Total)
+Chain 4: 
+Chain 3: Iteration: 1800 / 2000 [ 90%]  (Sampling)
+Chain 1: Iteration: 1000 / 2000 [ 50%]  (Warmup)
+Chain 1: Iteration: 1001 / 2000 [ 50%]  (Sampling)
+Chain 3: Iteration: 2000 / 2000 [100%]  (Sampling)
+Chain 3: 
+Chain 3:  Elapsed Time: 0.120957 seconds (Warm-up)
+Chain 3:                0.079078 seconds (Sampling)
+Chain 3:                0.200035 seconds (Total)
+Chain 3: 
+Chain 1: Iteration: 1200 / 2000 [ 60%]  (Sampling)
+Chain 1: Iteration: 1400 / 2000 [ 70%]  (Sampling)
+Chain 1: Iteration: 1600 / 2000 [ 80%]  (Sampling)
+Chain 1: Iteration: 1800 / 2000 [ 90%]  (Sampling)
+Chain 1: Iteration: 2000 / 2000 [100%]  (Sampling)
+Chain 1: 
+Chain 1:  Elapsed Time: 0.142593 seconds (Warm-up)
+Chain 1:                0.069051 seconds (Sampling)
+Chain 1:                0.211644 seconds (Total)
+Chain 1: 
+Warning message:
+In readLines(file, warn = TRUE) :
+  incomplete final line found on '/home/shun/Dropbox/memo/lang/R/stats/models/normal.stan'
+#+end_example
+
+*** stan_model() -> sampling()
+
+#+begin_src R :var model=model-normal
+stanmodel <- stan_model(model)
+data <- list(N = nrow(d), X = d$X, Y = d$Y)
+
+# re-sampling
+fit2 <- sampling(
+  stanmodel,
+  data = data,
+  pars = c("b", "sigma"),
+  init = function() {
+    list(a = runif(1, -10, 10), b = runif(1, 0, 10), sigma = 10)
+  },
+  seed = 123, chains = 3, iter = 1000, warmup = 200, thin = 2
+)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+Warning message:
+In readLines(file, warn = TRUE) :
+  incomplete final line found on '/home/shun/Dropbox/memo/lang/R/stats/models/normal.stan'
+
+
+SAMPLING FOR MODEL 'normal' NOW (CHAIN 1).
+Chain 1: 
+Chain 1: Gradient evaluation took 1e-05 seconds
+Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 0.1 seconds.
+Chain 1: Adjust your expectations accordingly!
+Chain 1: 
+Chain 1: 
+Chain 1: Iteration:   1 / 1000 [  0%]  (Warmup)
+Chain 1: Iteration: 100 / 1000 [ 10%]  (Warmup)
+Chain 1: Iteration: 200 / 1000 [ 20%]  (Warmup)
+Chain 1: Iteration: 201 / 1000 [ 20%]  (Sampling)
+Chain 1: Iteration: 300 / 1000 [ 30%]  (Sampling)
+Chain 1: Iteration: 400 / 1000 [ 40%]  (Sampling)
+Chain 1: Iteration: 500 / 1000 [ 50%]  (Sampling)
+Chain 1: Iteration: 600 / 1000 [ 60%]  (Sampling)
+Chain 1: Iteration: 700 / 1000 [ 70%]  (Sampling)
+Chain 1: Iteration: 800 / 1000 [ 80%]  (Sampling)
+Chain 1: Iteration: 900 / 1000 [ 90%]  (Sampling)
+Chain 1: Iteration: 1000 / 1000 [100%]  (Sampling)
+Chain 1: 
+Chain 1:  Elapsed Time: 0.050055 seconds (Warm-up)
+Chain 1:                0.038388 seconds (Sampling)
+Chain 1:                0.088443 seconds (Total)
+Chain 1: 
+
+SAMPLING FOR MODEL 'normal' NOW (CHAIN 2).
+Chain 2: 
+Chain 2: Gradient evaluation took 7e-06 seconds
+Chain 2: 1000 transitions using 10 leapfrog steps per transition would take 0.07 seconds.
+Chain 2: Adjust your expectations accordingly!
+Chain 2: 
+Chain 2: 
+Chain 2: Iteration:   1 / 1000 [  0%]  (Warmup)
+Chain 2: Iteration: 100 / 1000 [ 10%]  (Warmup)
+Chain 2: Iteration: 200 / 1000 [ 20%]  (Warmup)
+Chain 2: Iteration: 201 / 1000 [ 20%]  (Sampling)
+Chain 2: Iteration: 300 / 1000 [ 30%]  (Sampling)
+Chain 2: Iteration: 400 / 1000 [ 40%]  (Sampling)
+Chain 2: Iteration: 500 / 1000 [ 50%]  (Sampling)
+Chain 2: Iteration: 600 / 1000 [ 60%]  (Sampling)
+Chain 2: Iteration: 700 / 1000 [ 70%]  (Sampling)
+Chain 2: Iteration: 800 / 1000 [ 80%]  (Sampling)
+Chain 2: Iteration: 900 / 1000 [ 90%]  (Sampling)
+Chain 2: Iteration: 1000 / 1000 [100%]  (Sampling)
+Chain 2: 
+Chain 2:  Elapsed Time: 0.051115 seconds (Warm-up)
+Chain 2:                0.046837 seconds (Sampling)
+Chain 2:                0.097952 seconds (Total)
+Chain 2: 
+
+SAMPLING FOR MODEL 'normal' NOW (CHAIN 3).
+Chain 3: 
+Chain 3: Gradient evaluation took 7e-06 seconds
+Chain 3: 1000 transitions using 10 leapfrog steps per transition would take 0.07 seconds.
+Chain 3: Adjust your expectations accordingly!
+Chain 3: 
+Chain 3: 
+Chain 3: Iteration:   1 / 1000 [  0%]  (Warmup)
+Chain 3: Iteration: 100 / 1000 [ 10%]  (Warmup)
+Chain 3: Iteration: 200 / 1000 [ 20%]  (Warmup)
+Chain 3: Iteration: 201 / 1000 [ 20%]  (Sampling)
+Chain 3: Iteration: 300 / 1000 [ 30%]  (Sampling)
+Chain 3: Iteration: 400 / 1000 [ 40%]  (Sampling)
+Chain 3: Iteration: 500 / 1000 [ 50%]  (Sampling)
+Chain 3: Iteration: 600 / 1000 [ 60%]  (Sampling)
+Chain 3: Iteration: 700 / 1000 [ 70%]  (Sampling)
+Chain 3: Iteration: 800 / 1000 [ 80%]  (Sampling)
+Chain 3: Iteration: 900 / 1000 [ 90%]  (Sampling)
+Chain 3: Iteration: 1000 / 1000 [100%]  (Sampling)
+Chain 3: 
+Chain 3:  Elapsed Time: 0.055606 seconds (Warm-up)
+Chain 3:                0.037807 seconds (Sampling)
+Chain 3:                0.093413 seconds (Total)
+Chain 3:
+#+end_example
+
+*** --- Extranct Info from stanfit ---
+*** print()/show()
+
+#+begin_src R
+fit
+#+end_src
+
+#+RESULTS:
+#+begin_example
+Inference for Stan model: normal.
+4 chains, each with iter=2000; warmup=1000; thin=1; 
+post-warmup draws per chain=1000, total post-warmup draws=4000.
+
+         mean se_mean    sd    2.5%     25%     50%    75%  97.5% n_eff Rhat
+a     -121.53    2.05 75.97 -270.45 -167.02 -120.34 -73.00  26.46  1379    1
+b       21.96    0.05  1.69   18.71   20.84   21.93  23.00  25.30  1350    1
+sigma   85.09    0.37 15.38   61.62   73.63   83.07  94.33 121.28  1697    1
+lp__   -93.63    0.04  1.31  -96.87  -94.24  -93.29 -92.66 -92.13  1045    1
+
+Samples were drawn using NUTS(diag_e) at Fri Aug 16 06:03:00 2019.
+For each parameter, n_eff is a crude measure of effective sample size,
+and Rhat is the potential scale reduction factor on split chains (at 
+convergence, Rhat=1).
+#+end_example
+
+*** summary()
+
+#+begin_src R
+summary(fit)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+$summary
+            mean    se_mean        sd       2.5%        25%        50%
+a     -121.52633 2.04601578 75.968902 -270.44843 -167.02177 -120.34476
+b       21.95864 0.04598207  1.689735   18.71095   20.83771   21.92951
+sigma   85.08866 0.37327712 15.378865   61.61879   73.63456   83.06646
+lp__   -93.62861 0.04043815  1.307186  -96.86523  -94.23696  -93.29446
+            75%     97.5%    n_eff     Rhat
+a     -72.99801  26.46270 1378.649 1.003296
+b      22.99612  25.29837 1350.393 1.002917
+sigma  94.32712 121.28169 1697.406 1.002693
+lp__  -92.66458 -92.12932 1044.942 1.004117
+
+$c_summary
+, , chains = chain:1
+
+         stats
+parameter       mean        sd       2.5%        25%        50%       75%
+    a     -118.56329 67.232667 -244.96883 -161.31332 -123.19294 -75.83356
+    b       21.89758  1.497618   18.95555   20.96052   21.96216  22.85642
+    sigma   84.04535 15.345803   61.81483   72.45616   82.18975  92.70970
+    lp__   -93.52806  1.276513  -96.73509  -94.05363  -93.20831 -92.62914
+         stats
+parameter     97.5%
+    a      16.36242
+    b      24.58117
+    sigma 118.61496
+    lp__  -92.12850
+
+, , chains = chain:2
+
+         stats
+parameter       mean        sd       2.5%        25%        50%       75%
+    a     -126.55505 81.263238 -286.52942 -177.97409 -125.46012 -72.68057
+    b       22.07644  1.796970   18.62443   20.92546   22.05685  23.31624
+    sigma   85.17997 15.180144   62.17554   73.50469   83.05287  94.85921
+    lp__   -93.69063  1.309188  -97.11833  -94.32373  -93.40198 -92.72511
+         stats
+parameter     97.5%
+    a      27.56214
+    b      25.54116
+    sigma 118.79127
+    lp__  -92.14394
+
+, , chains = chain:3
+
+         stats
+parameter       mean        sd       2.5%        25%        50%       75%
+    a     -125.56996 83.121182 -306.52138 -176.48600 -118.99107 -73.13262
+    b       22.03602  1.854235   18.58682   20.81655   21.89976  23.21197
+    sigma   86.06555 16.392457   60.53193   74.38133   84.16816  95.25130
+    lp__   -93.75462  1.423728  -97.08564  -94.38884  -93.35067 -92.70245
+         stats
+parameter     97.5%
+    a      35.14001
+    b      25.82787
+    sigma 125.08447
+    lp__  -92.13392
+
+, , chains = chain:4
+
+         stats
+parameter       mean        sd       2.5%        25%        50%       75%
+    a     -115.41700 70.579891 -264.47809 -159.12936 -114.55628 -69.31056
+    b       21.82451  1.574044   18.88006   20.72262   21.83090  22.78763
+    sigma   85.06377 14.493146   62.21172   74.39559   83.20410  94.21526
+    lp__   -93.54114  1.196699  -96.39110  -94.11812  -93.26633 -92.61230
+         stats
+parameter     97.5%
+    a      16.66945
+    b      25.04005
+    sigma 119.49906
+    lp__  -92.12762
+#+end_example
+
+*** plot() 
+**** "stan_plot"  区間推定・点推定
+
+#+begin_src R :results graphics :file (get-babel-file)
+plot(fit, plotfun = "stan_plot")
+#+end_src
+
+#+RESULTS:
+[[file:~/Dropbox/memo/img/babel/fig-c1eIcj.png]]
+
+- pars 引数で表示するパラメタを指定できる
+#+begin_src R :results graphics :file (get-babel-file)
+plot(fit,
+     plotfun = "stan_plot", 
+     pars = c("a", "b"),
+     point_est = "median", # median or mean
+     show_density = TRUE,  # 密度推定した分布をのせるか
+     ci_level = 0.95,
+     outer_level = 1.00,
+     show_outer_line = TRUE)
+#+end_src
+
+#+RESULTS:
+[[file:~/Dropbox/memo/img/babel/fig-EQmjO2.png]]
+
+**** "stan_trace" パラメタ毎のサンプリングの線グラフ
+
+#+begin_src R :results graphics :file (get-babel-file)
+plot(fit, plotfun = "stan_trace")
+#+end_src
+
+#+RESULTS:
+[[file:~/Dropbox/memo/img/babel/fig-bUbToC.png]]
+
+- パラメタ指定・ Warm up 表示
+#+begin_src R :results graphics :file (get-babel-file)
+plot(fit, plotfun = "stan_trace", pars = c("a"), inc_warmup = TRUE)
+#+end_src
+
+#+RESULTS:
+[[file:~/Dropbox/memo/img/babel/fig-bulp1t.png]]
+
+**** "stan_hist"  パラメタ毎のヒストグラム
+
+- bins で粗さを調整
+#+begin_src R :results graphics :file (get-babel-file)
+plot(fit, plotfun = "stan_hist", bins = 50)
+#+end_src
+
+#+RESULTS:
+[[file:~/Dropbox/memo/img/babel/fig-QKMu7C.png]]
+
+**** "stan_dens"  パラメタ毎のヒストグラム(カーネル密度推定)
+
+#+begin_src R :results graphics :file (get-babel-file)
+plot(fit, plotfun = "stan_dens")  
+#+end_src
+
+#+RESULTS:
+[[file:~/Dropbox/memo/img/babel/fig-GDUzhf.png]]
+
+#+begin_src R :results graphics :file (get-babel-file)
+plot(fit, plotfun = "stan_dens", separate_chains = TRUE)
+#+end_src
+
+#+RESULTS:
+[[file:~/Dropbox/memo/img/babel/fig-8wpubK.png]]
+
+**** "stan_diag"  ダイアグ情報
+
+#+begin_src R :results graphics :file (get-babel-file)
+plot(fit, plotfun = "stan_diag")  
+#+end_src
+
+#+RESULTS:
+[[file:~/Dropbox/memo/img/babel/fig-EglEN2.png]]
+
+**** "stan_rhat"  RHat
+
+#+begin_src R :results graphics :file (get-babel-file)
+plot(fit, plotfun = "stan_rhat")
+#+end_src
+
+#+RESULTS:
+[[file:~/Dropbox/memo/img/babel/fig-nv1LYI.png]]
+
+**** "stan_ess"   Effective Sample Size
+
+- 10% 以上であれば、効率的なサンプリングが行われていると考える
+#+begin_src R :results graphics :file (get-babel-file)
+plot(fit, plotfun = "stan_ess")
+#+end_src
+
+#+RESULTS:
+[[file:~/Dropbox/memo/img/babel/fig-4sntVZ.png]]
+
+**** "stan_mcse"  Monte-Carlo SE
+
+#+begin_src R :results graphics :file (get-babel-file)
+plot(fit, plotfun = "stan_mcse")
+#+end_src
+
+#+RESULTS:
+[[file:~/Dropbox/memo/img/babel/fig-eNFaAt.png]]
+
+**** "stan_ac"    Auto Correlation
+
+- 効率のよいサンプリングが行われていれば、自己相関はすぐに減少するはず
+#+begin_src R :results graphics :file (get-babel-file)
+plot(fit, plotfun = "stan_ac")
+#+end_src
+
+#+RESULTS:
+[[file:~/Dropbox/memo/img/babel/fig-8lOCmC.png]]
+
+**** "stan_scat"  散布図
+
+#+begin_src R :results graphics :file (get-babel-file)
+plot(fit, plotfun = "stan_scat", pars = c("a", "b"))
+#+end_src
+
+#+RESULTS:
+[[file:~/Dropbox/memo/img/babel/fig-7sICEJ.png]]
+
+**** "stan_par"   パラメタ個別のプロット集
+
+#+begin_src R :results graphics :file (get-babel-file)
+plot(fit, plotfun = "stan_par", par = c("a"))
+#+end_src
+
+#+RESULTS:
+[[file:~/Dropbox/memo/img/babel/fig-tGhsVw.png]]
+
+*** get_posterior_mean() 事後平均
+
+#+begin_src R
+get_posterior_mean(fit)
+#+end_src
+
+#+RESULTS:
+:       mean-chain:1 mean-chain:2 mean-chain:3 mean-chain:4 mean-all chains
+: a       -118.56329   -126.55505   -125.56996   -115.41700      -121.52633
+: b         21.89758     22.07644     22.03602     21.82451        21.95864
+: sigma     84.04535     85.17997     86.06555     85.06377        85.08866
+: lp__     -93.52806    -93.69063    -93.75462    -93.54114       -93.62861
+
+*** Other 
+
+N_mcmc <- length(ms$lp__)
+# 母数 = 基礎年収
+
+y50_base <- ms$a + ms$b * 50
+# 基礎年収 + 正規分布の乱数 = 予測分布
+y50 <- rnorm(n = N_mcmc, mean = y50_base, sd = ms$sigma)
+
+d_mcmc <- data.frame(a=ms$a, b=ms$b, sigma=ms$sigma, y50_base, y50)
+
+** Chapter 4 excercise
+
+set.seed(123)
+N1 <- 30
+N2 <- 20
+Y1 <- rnorm(N1, 0, 5)
+Y2 <- rnorm(N2, 1, 4)
+
+d1 <- tibble(group = 1, Y = Y1)
+d2 <- tibble(group = 2, Y = Y2)
+d  <- bind_rows(d1, d2)
+
+d$group <- as.factor(d$group)
+
+mean(Y1)
+mean(Y2)
+sd(Y1)
+sd(Y2)
+
+# 箱ひげ図
+d %>%
+  ggplot(aes(x = group, y = Y)) +
+  geom_boxplot() +
+  geom_point(position = "jitter")
+
+# カーネル密度
+ggplot() +
+  geom_density(data = tibble(Y1=Y1), aes(x = Y1, y = stat(density)), fill = "blue", alpha = 0.3) +
+  geom_density(data = tibble(Y2=Y2), aes(x = Y2, y = stat(density)), fill = "red", alpha = 0.3)
+
+# MCMC
+model_path <- glue("{stan_dir}/excercise-4.stan")
+data <- list(N1 = length(Y1), N2 = length(Y2), Y1 = Y1, Y2 = Y2)
+
+fit <- stan(model_path, data = data, seed = 1234)
+fit
+ms <- extract(fit)
+
+sum(ms$mu1 < ms$mu2) / length(ms$mu1)
+
+model_path <- glue("{stan_dir}/excercise-4-2.stan")
+fit <- stan(model_path, data = data, seed = 1234)
+fit
+ms <- extract(fit)
+sum(ms$mu1 < ms$mu2) / length(ms$mu1)
+
+plot(fit, plotfun = "stan_trace", pars = c("mu1", "mu2"))
+
+** Chapter 5
+
+## 重回帰
+data_path <- glue("{book_dir}/chap05/input/data-attendance-1.txt")
+
+d <- read_csv(data_path)
+d$A <- as.integer(d$A)
+
+lm(Y ~ A + Score, data = d) %>% summary()
+
+d$A <- as.factor(d$A)
+
+# 箱ひげ図
+ggplot(data = d, aes(x = A, y = Y)) + geom_boxplot()
+
+# 散布図
+ggplot(data = d, aes(x = Score, y = Y, shape = A, color = A), size = 2) + geom_point()
+
+
+stan_path <- glue("{stan_dir}/chapter-5-1.stan")
+data <- list(N = nrow(d), A = d$A, Score = d$Score / 200, Y = d$Y)
+fit <- stan(stan_path, data = data)
+fit
+
+plot(fit, plotfun = "stan_trace", pars = c("b1", "b2", "b3", "sigma"))
+plot(fit, plotfun = "stan_hist", pars = c("b1", "b2", "b3", "sigma"))
+
+
+d %>%
+  mutate(A = as.factor(A)) %>%
+  ggplot(aes(x = Score, y = Y)) +
+  geom_point(aes(shape = A, color = A), size = 2)
+
+## 二項ロジスティク回帰
+data_path <- glue("{book_dir}/chap05/input/data-attendance-2.txt")
+
+d <- read_csv(data_path)
+d$A <- as.integer(d$A)
+d$Score <- d$Score / 200
+
+#ggpairs(select(d, -PersonID))
+
+glm_fit <- glm(cbind(Y, M - Y) ~ A + Score, data = d, family = binomial)
+summary(glm_fit)
+
+stan_path <- glue("{stan_dir}/chapter-5-2.stan")
+data <- list(N = nrow(d), A = d$A, Score = d$Score, M = d$M, Y = d$Y)
+fit <- stan(stan_path, data = data)
+
+## ロジスティック回帰
+data_path <- glue("{book_dir}/chap05/input/data-attendance-3.txt")
+
+d <- read_csv(data_path)
+d$A <- as.integer(d$A)
+d$Score <- d$Score / 200
+d$Weather <- recode(d$Weather, A = 0, B = 0.2, C = 1)
+
+glm_fit <- glm(Y ~ A + Score + Weather, data = d, family = binomial)
+summary(glm_fit)
+MASS::stepAIC(glm_fit)
+
+stan_path <- glue("{stan_dir}/chapter-5-3.stan")
+data <- list(N = nrow(d), A = d$A, Score = d$Score, Weather = d$Weather, Y = d$Y)
+fit <- stan(stan_path, data = data)
+fit
+
+## ポアソン回帰
+data_path <- glue("{book_dir}/chap05/input/data-attendance-2.txt")
+
+d <- read_csv(data_path)
+d$A <- as.integer(d$A)
+#d$A <- as.factor(d$A)
+d$Score <- d$Score / 200
+
+ggplot(data = d, aes(x = Score, y = M, color = as.factor(A))) + geom_point() + geom_smooth(method = lm)
+ggpairs(select(d, -PersonID, -Y))
+
+glm_fit <- glm(M ~ A + Score, data = d, family = poisson)
+summary(glm_fit)
+
+stan_path <- glue("{stan_dir}/chapter-5-4.stan")
+data <- list(N = nrow(d), A = d$A, Score = d$Score, M = d$M)
+fit <- stan(stan_path, data = data)
+fit
+
+** Chapter 6 Excersise
+
+# Bernoulli(0.5)
+sample.int(0:1, size = 10, prob = c(0.5, 0.5))
+
+sample.int(2, size = 10, prob = c(0.5, 0.5), replace = TRUE) - 1
+
+** Chapter 8
+
+## 階層モデル
+data_path <- glue("{book_dir}/chap08/input/data-salary-2.txt")
+
+d <- read_csv(data_path)
+d$KID <- as.factor(d$KID)
+
+ggplot(data = d, aes(x = X, y = Y)) +
+  geom_smooth(method = lm, alpha = 0.5) +
+  geom_point() +
+  facet_wrap(~ KID, nrow = 2)
+
+stan_path <- glue("{stan_dir}/chapter-8-2.stan")
+data <- list(N = nrow(d), K = 4, X = d$X, Y = d$Y, KID = d$KID)
+fit <- stan(stan_path, data = data)
+
+# 会社平均 + 会社差のモデル
+stan_path <- glue("{stan_dir}/chapter-8-3.stan")
+data <- list(N = nrow(d), K = 4, X = d$X, Y = d$Y, KID = d$KID)
+fit <- stan(stan_path, data = data)
+
+## さらに複数の階層モデル
+data_path <- glue("{book_dir}/chap08/input/data-salary-3.txt")
+
+d <- read_csv(data_path)
+d$KID <- as.factor(d$KID)
+
+d %>%
+  mutate(GID = as.factor(GID)) %>%
+  ggplot(aes(x = X, y = Y, fill = GID)) +
+  geom_point(size = 2, alpha = 0.5) +
+  scale_fill_grey()
+
+stan_path <- glue("{stan_dir}/chapter-8-2.stan")
+data <- list(N = nrow(d), K = 4, X = d$X, Y = d$Y, KID = d$KID)
+fit <- stan(stan_path, data = data)
+
+# 会社平均 + 会社差のモデル
+stan_path <- glue("{stan_dir}/chapter-8-3.stan")
+data <- list(N = nrow(d), K = 4, X = d$X, Y = d$Y, KID = d$KID)
+fit <- stan(stan_path, data = data)
+
+# 業界平均 + 業界差、会社毎のバラツキ、個人ごとのバラツキ
+stan_path <- glue("{stan_dir}/chapter-8-6.stan")
+k2g <- unique(d[, c("KID", "GID")])$GID
+data <- list(N = nrow(d), K = 4, G = 3, X = d$X, Y = d$Y, KID = d$KID, K2G = k2g, GID = d$GID)
+fit <- stan(stan_path, data = data)
+
+## 非線形の階層モデル
+data_path <- glue("{book_dir}/chap08/input/data-conc-2.txt")
+d <- read_csv(data_path)
+
+d %>%
+  mutate(PersonID = as.factor(PersonID)) %>%
+  ggplot(aes(x = X, y = Y, fill = GID)) +
+  geom_point(size = 2, alpha = 0.5) +
+  scale_fill_grey()
+
+stan_path <- glue("{stan_dir}/chapter-8-2.stan")
+data <- list(N = nrow(d), K = 4, X = d$X, Y = d$Y, KID = d$KID)
+fit <- stan(stan_path, data = data)
+
+## 階層構造のあるロジスティック回帰
+
+data_path1 <- glue("{book_dir}/chap08/input/data-attendance-4-1.txt")
+data_path2 <- glue("{book_dir}/chap08/input/data-attendance-4-2.txt")
+d1 <- read_csv(data_path1)
+d2 <- read_csv(data_path2)
+
+** Chapter 9
+
+## 2 変量正規分布
+data_path <- glue("{book_dir}/chap09/input/data-mvn.txt")
+
+d <- read_csv(data_path)
+
+ggplot(data = d, aes(x = Y1, y = Y2)) +
+  geom_smooth(method = lm, alpha = 0.5) +
+  geom_point()
+
+stan_path <- glue("{stan_dir}/chapter-9-2.stan")
+data <- list(N = nrow(d), D = ncol(d), Y = d)
+fit <- stan(stan_path, data = data)
+
+fit
+
+## 重回帰分析 with matirx
+data_path <- glue("{book_dir}/chap09/input/data-attendance-5.txt")
+
+d <- read_csv(data_path)
+d$Score <- d$Score / 200
+X <- bind_cols(Intercept = rep(1, nrow(d)), select(d, -Y))
+
+stan_path <- glue("{stan_dir}/chapter-9-3.stan")
+data <- list(N = nrow(d), D = ncol(X), X = X, Y = d$Y)
+
+fit <- stan(stan_path, data = data)
+
+fit
+
+## サイコロの目の確率 by simplex
+data_path <- glue("{book_dir}/chap09/input/data-dice.txt")
+
+d <- read_csv(data_path)
+
+stan_path <- glue("{stan_dir}/chapter-9-4.stan")
+data <- list(N = nrow(d), K = 6, Y = d$Face)
+
+fit <- stan(stan_path, data = data)
+fit
+# 0.11, 0.37, 0.10, 0.25, 0.10, 0.07
+
+stan_path <- glue("{stan_dir}/chapter-9-5.stan")
+Y <- table(factor(d$Face, level = 1:6))
+data <- list(K = 6, Y = Y)
+
+fit <- stan(stan_path, data = data)
+fit
+
+** Chapter 10
+
+## 正の値を持つパラメタ
+data_path1 <- glue("{book_dir}/chap10/input/data-shogi-player.txt")
+data_path2 <- glue("{book_dir}/chap10/input/data-shogi-player-name.txt")
+
+d <- read_csv(data_path1)
+name <- read_tsv(data_path2)
+
+stan_path <- glue("{stan_dir}/chapter-10-4.stan")
+data <- list(N = nrow(name), G = nrow(d), LW = d)
+fit <- stan(stan_path, data = data)
+
+fit
+
+** Chapter 12
+
+data_path <- glue("{book_dir}/chap12/input/data-ss1.txt")
+
+d <- read_csv(data_path)
+
+ggplot(data = d, aes(x = X, y = Y)) + geom_line() + geom_point()
+
+stan_path <- glue("{stan_dir}/chapter-12-2.stan")
+data <- list(T = as.integer(nrow(d)), T_pred = 3, Y = d$Y)
+fit <- stan(stan_path, data = data, iter = 4000, thin = 5, seed = 123)
+
+fit
+
+* ={ggmcmc}= Package
+
+- mcmc 結果のプロットをまとめて PDF に書き出すライブラリ
+#+begin_src R
+ggmcmc(
+  D,
+  file = "ggmcmc-output.pdf",
+  family = NA,
+  plot = NULL,
+  param_page = 5,
+  width = 7,
+  height = 10,
+  simplify_traceplot = NULL,
+  dev_type_html = "png",
+  ...
+)
+  
+ggmcmc(
+  ggs(fit,
+      inc_warmup = TRUE,           # warmup 含める
+      stan_include_auxiliar=TRUE), # lp__ 含める
+  file = "fit-traceplot.pdf",
+  plot = "traceplot")
+
+# すべての種類のプロットを保存
+ggmcmc(ggs(fit), file="fit-ggmcmc.pdf")
+
+ggmcmc(
+  ggs(fit), file="output/fit-ggmcmc.pdf",
+  plot=c("traceplot", "density", "running", "autocorrelation"))
+#+end_src
+
+* ={loo}= Package
+** [[http://ushi-goroshi.hatenablog.com/entry/2017/12/24/225748][WAICを計算してみる@統計コンサルの議事メモ]] の例
+*** データ
+
+#+begin_src R :results value :colnames yes
+# シミュレーションデータの発生
+set.seed(123)
+N <- 100 # サンプルサイズ
+b <- 1.2 # 回帰係数
+X <- rnorm(N, 0, 1) # 説明変数
+E <- rnorm(N, 0, 2) # 誤差項
+Y <- b * X + E
+D <- data.frame(Y, X) # データフレーム
+head(D)
+#+end_src
+
+#+RESULTS:
+|                  Y |                  X |
+|--------------------+--------------------|
+|  -2.09338390326126 | -0.560475646552213 |
+|  0.237554430933123 |  -0.23017748948328 |
+|    1.3770662200542 |   1.55870831414912 |
+| -0.610475129085975 |  0.070508391424576 |
+|   -1.7480918523369 |  0.129287735160946 |
+|    1.9680225346421 |   1.71506498688328 |
+
+*** モデル
+
+#+begin_src stan :file models/waic.stan
+data {
+  int<lower=1> N;
+  vector[N] X;
+  vector[N] Y;
+}
+
+parameters {
+  real b0;
+  real b1;
+  real<lower=0> sigma;
+}
+
+model {
+  Y ~ normal(b0 + b1 * X, sigma);
+}
+
+generated quantities {
+  vector[N] log_lik;
+  for (n in 1:N)
+    log_lik[n] = normal_lpdf(Y[n] | b0 + b1 * X[n], sigma);
+}
+#+end_src
+
+#+RESULTS:
+[[file:models/waic.stan]]
+
+*** 当てはめ
+
+#+begin_src R
+dat_stan <- list(N = N, X = D$X, Y = D$Y)
+fit_01 <- stan(file = "models/waic.stan", data = dat_stan, 
+               iter = 3000, chains = 4, seed = 1234)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+
+SAMPLING FOR MODEL 'waic' NOW (CHAIN 1).
+Chain 1: 
+Chain 1: Gradient evaluation took 1.9e-05 seconds
+Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 0.19 seconds.
+Chain 1: Adjust your expectations accordingly!
+Chain 1: 
+Chain 1: 
+Chain 1: Iteration:    1 / 3000 [  0%]  (Warmup)
+Chain 1: Iteration:  300 / 3000 [ 10%]  (Warmup)
+Chain 1: Iteration:  600 / 3000 [ 20%]  (Warmup)
+Chain 1: Iteration:  900 / 3000 [ 30%]  (Warmup)
+Chain 1: Iteration: 1200 / 3000 [ 40%]  (Warmup)
+Chain 1: Iteration: 1500 / 3000 [ 50%]  (Warmup)
+Chain 1: Iteration: 1501 / 3000 [ 50%]  (Sampling)
+Chain 1: Iteration: 1800 / 3000 [ 60%]  (Sampling)
+Chain 1: Iteration: 2100 / 3000 [ 70%]  (Sampling)
+Chain 1: Iteration: 2400 / 3000 [ 80%]  (Sampling)
+Chain 1: Iteration: 2700 / 3000 [ 90%]  (Sampling)
+Chain 1: Iteration: 3000 / 3000 [100%]  (Sampling)
+Chain 1: 
+Chain 1:  Elapsed Time: 0.047774 seconds (Warm-up)
+Chain 1:                0.05261 seconds (Sampling)
+Chain 1:                0.100384 seconds (Total)
+Chain 1: 
+
+SAMPLING FOR MODEL 'waic' NOW (CHAIN 2).
+Chain 2: 
+Chain 2: Gradient evaluation took 8e-06 seconds
+Chain 2: 1000 transitions using 10 leapfrog steps per transition would take 0.08 seconds.
+Chain 2: Adjust your expectations accordingly!
+Chain 2: 
+Chain 2: 
+Chain 2: Iteration:    1 / 3000 [  0%]  (Warmup)
+Chain 2: Iteration:  300 / 3000 [ 10%]  (Warmup)
+Chain 2: Iteration:  600 / 3000 [ 20%]  (Warmup)
+Chain 2: Iteration:  900 / 3000 [ 30%]  (Warmup)
+Chain 2: Iteration: 1200 / 3000 [ 40%]  (Warmup)
+Chain 2: Iteration: 1500 / 3000 [ 50%]  (Warmup)
+Chain 2: Iteration: 1501 / 3000 [ 50%]  (Sampling)
+Chain 2: Iteration: 1800 / 3000 [ 60%]  (Sampling)
+Chain 2: Iteration: 2100 / 3000 [ 70%]  (Sampling)
+Chain 2: Iteration: 2400 / 3000 [ 80%]  (Sampling)
+Chain 2: Iteration: 2700 / 3000 [ 90%]  (Sampling)
+Chain 2: Iteration: 3000 / 3000 [100%]  (Sampling)
+Chain 2: 
+Chain 2:  Elapsed Time: 0.047229 seconds (Warm-up)
+Chain 2:                0.050102 seconds (Sampling)
+Chain 2:                0.097331 seconds (Total)
+Chain 2: 
+
+SAMPLING FOR MODEL 'waic' NOW (CHAIN 3).
+Chain 3: 
+Chain 3: Gradient evaluation took 1e-05 seconds
+Chain 3: 1000 transitions using 10 leapfrog steps per transition would take 0.1 seconds.
+Chain 3: Adjust your expectations accordingly!
+Chain 3: 
+Chain 3: 
+Chain 3: Iteration:    1 / 3000 [  0%]  (Warmup)
+Chain 3: Iteration:  300 / 3000 [ 10%]  (Warmup)
+Chain 3: Iteration:  600 / 3000 [ 20%]  (Warmup)
+Chain 3: Iteration:  900 / 3000 [ 30%]  (Warmup)
+Chain 3: Iteration: 1200 / 3000 [ 40%]  (Warmup)
+Chain 3: Iteration: 1500 / 3000 [ 50%]  (Warmup)
+Chain 3: Iteration: 1501 / 3000 [ 50%]  (Sampling)
+Chain 3: Iteration: 1800 / 3000 [ 60%]  (Sampling)
+Chain 3: Iteration: 2100 / 3000 [ 70%]  (Sampling)
+Chain 3: Iteration: 2400 / 3000 [ 80%]  (Sampling)
+Chain 3: Iteration: 2700 / 3000 [ 90%]  (Sampling)
+Chain 3: Iteration: 3000 / 3000 [100%]  (Sampling)
+Chain 3: 
+Chain 3:  Elapsed Time: 0.05837 seconds (Warm-up)
+Chain 3:                0.061302 seconds (Sampling)
+Chain 3:                0.119672 seconds (Total)
+Chain 3: 
+
+SAMPLING FOR MODEL 'waic' NOW (CHAIN 4).
+Chain 4: 
+Chain 4: Gradient evaluation took 8e-06 seconds
+Chain 4: 1000 transitions using 10 leapfrog steps per transition would take 0.08 seconds.
+Chain 4: Adjust your expectations accordingly!
+Chain 4: 
+Chain 4: 
+Chain 4: Iteration:    1 / 3000 [  0%]  (Warmup)
+Chain 4: Iteration:  300 / 3000 [ 10%]  (Warmup)
+Chain 4: Iteration:  600 / 3000 [ 20%]  (Warmup)
+Chain 4: Iteration:  900 / 3000 [ 30%]  (Warmup)
+Chain 4: Iteration: 1200 / 3000 [ 40%]  (Warmup)
+Chain 4: Iteration: 1500 / 3000 [ 50%]  (Warmup)
+Chain 4: Iteration: 1501 / 3000 [ 50%]  (Sampling)
+Chain 4: Iteration: 1800 / 3000 [ 60%]  (Sampling)
+Chain 4: Iteration: 2100 / 3000 [ 70%]  (Sampling)
+Chain 4: Iteration: 2400 / 3000 [ 80%]  (Sampling)
+Chain 4: Iteration: 2700 / 3000 [ 90%]  (Sampling)
+Chain 4: Iteration: 3000 / 3000 [100%]  (Sampling)
+Chain 4: 
+Chain 4:  Elapsed Time: 0.072774 seconds (Warm-up)
+Chain 4:                0.119478 seconds (Sampling)
+Chain 4:                0.192252 seconds (Total)
+Chain 4: 
+Warning message:
+In readLines(file, warn = TRUE) :
+  incomplete final line found on '/home/shun/Dropbox/repos/github/five-dots/notes/lang/stan/models/waic.stan'
+#+end_example
+
+*** 結果の確認
+
+#+begin_src R
+summary(fit_01)$summary[c("b1", "sigma"), c("mean", "50%")]
+#+end_src
+
+#+RESULTS:
+:           mean      50%
+: b1    1.092250 1.089015
+: sigma 1.966692 1.959185
+
+*** WAIC を計算
+
+$WAIC = -2(lppd - pWAIC)$
+
+- lppd (当てはまりの指標) を求める
+- 全データに対して、全てのステップのパラメタで尤度を計算し合計する
+#+begin_src R
+post_samples <- rstan::extract(fit_01)
+
+Des <- cbind(1, X) # 計画行列（Design Matrix）
+B   <- cbind(post_samples$b0, post_samples$b1) # パラメータ（Beta）
+tmp <- matrix(NA, length(post_samples$b0), N) # 6000行、 100列の行列
+for (i in 1:N) {
+   tmp[, i] <- dnorm(Y[i], mean = B %*% Des[i, ], 
+                     sd = post_samples$sigma)
+}
+
+lppd <- sum(log(colMeans(tmp)))
+lppd
+#+end_src
+
+#+RESULTS:
+: 
+: [1] -207.2566
+
+- pwaic (ペナルティの指標) を求める
+- パラメタ毎の分散の合計
+#+begin_src R
+pwaic <- sum(apply(tmp, 2, var))
+pwaic
+#+end_src
+
+#+RESULTS:
+: [1] 0.0241424
+
+
+#+begin_src R
+waic <- -2 * (lppd - pwaic)
+waic
+#+end_src
+
+#+RESULTS:
+: 
+: [1] 414.5616
+
+#+begin_src R
+lm_fit <- lm(Y ~ X, D)
+AIC(lm_fit)
+#+end_src
+
+#+RESULTS:
+: 
+: [1] 420.4523
+
+*** WAIC を計算 {loo}
+
+#+begin_src R
+tmp2  <- extract_log_lik(fit_01)
+waic2 <- waic(tmp2)
+waic2
+#+end_src
+
+#+RESULTS:
+#+begin_example
+Warning message:
+1 (1.0%) p_waic estimates greater than 0.4. We recommend trying loo instead.
+
+Computed from 6000 by 100 log-likelihood matrix
+
+          Estimate   SE
+elpd_waic   -210.5  8.2
+p_waic         3.2  0.9
+waic         420.9 16.4
+Warning message:
+1 (1.0%) p_waic estimates greater than 0.4. We recommend trying loo instead.
+#+end_example
+
+*** PSIS-CV
+
+- Pareto Smoothed Importance Sampling に 基づくクロスバリデーション (PSIS-CV)
+- パレート平滑化クロスバリデーション
+
+** 参考
+
+- [[https://cran.r-project.org/web/packages/loo/index.html][CRAN]]
+- [[https://cran.r-project.org/web/packages/loo/loo.pdf][Reference Manual]]
+- Vignette
+  - [[https://cran.r-project.org/web/packages/loo/vignettes/loo2-example.html][Using the loo package (version >= 2.0.0)]]
+  - [[https://cran.r-project.org/web/packages/loo/vignettes/loo2-lfo.html][Approximate leave-future-out cross-validation for time series models]]
+  - [[https://cran.r-project.org/web/packages/loo/vignettes/loo2-non-factorizable.html][Leave-one-out cross-validation for non-factorizable models]]
+  - [[https://cran.r-project.org/web/packages/loo/vignettes/loo2-weights.html][Bayesian Stacking and Pseudo-BMA weights using the loo package]]
+  - [[https://cran.r-project.org/web/packages/loo/vignettes/loo2-with-rstan.html][Writing Stan programs for use with the loo package]]
+
+- Blog
+  - [[http://ushi-goroshi.hatenablog.com/entry/2017/12/24/225748][WAICを計算してみる@統計コンサルの議事メモ]]
+  - [[https://rpubs.com/siero5335/92987][loo package動かしてみた: WAIC比較@RPubs]]
+
+* ={bayesplot}= Package
+* ={brms}= Package
+
+- Stan のラッパー
+- Stan コードを書く必要がない
+
+** 参考
+
+- [[https://das-kino.hatenablog.com/entry/2018/12/15/230938][brmsパッケージを用いたベイズモデリング入門@nora_goes_far]]
+
+* 参考
+
+- 公式ドキュメント一覧
+  - [[https://github.com/stan-dev/rstan/wiki/RStan-Getting-Started-(Japanese)][RStanをはじめよう]]
+  - [[https://mc-stan.org/docs/2_21/stan-users-guide/index.html][Stan User’s Guide]] ([[https://stan-ja.github.io/gh-pages-html/][日本語訳]])
+  - [[https://mc-stan.org/docs/2_21/reference-manual/index.html][Stan Reference Manual]]
+  - [[https://mc-stan.org/docs/2_21/functions-reference/index.html][Stan Functions Reference]]
+  - [[https://mc-stan.org/users/documentation/case-studies.html][Case Studies]]
+  - [[https://github.com/stan-dev/example-models][Example Models by Stan Dev @ github]]
+  - [[https://discourse.mc-stan.org/][Stan Forum]]
+
+- RStan
+  - [[https://mc-stan.org/rstan/][公式サイト]]
+  - [[https://cloud.r-project.org/web/packages/rstan/index.html][CRAN]]
+  - [[https://cloud.r-project.org/web/packages/rstan/rstan.pdf][Reference Manual]]
+  - Vignette
+    - [[https://cloud.r-project.org/web/packages/rstan/vignettes/rstan.html][RStan: the R interface to Stan]]
+    - [[https://cloud.r-project.org/web/packages/rstan/vignettes/SBC.html][Simulation Based Calibration]]
+    - [[http://mc-stan.org/rstan/articles/stanfit_objects.html][Accessing the contents of a stanfit object]]
+    - [[https://cloud.r-project.org/web/packages/rstan/vignettes/external.html][Interfacing with External C++ Code]]
+  
+- Qiita: Stan Advent Calender
+  - [[https://qiita.com/advent-calendar/2016/stan][2016]]
+  - [[https://qiita.com/advent-calendar/2017/stan][2017]]
+  - [[https://qiita.com/advent-calendar/2018/stan][2018]]
+
+- Blog
+  - [[https://logics-of-blue.com/category/%e7%b5%b1%e8%a8%88%e3%83%bbr/%e3%83%99%e3%82%a4%e3%82%ba%e7%b5%b1%e8%a8%88%e5%ad%a6/][ベイズ統計学@Logics of Blue]]
+  - [[https://mrunadon.github.io/RStan%E3%81%A712%E7%A8%AE%E9%A1%9E%E3%81%AE%E7%B7%9A%E5%BD%A2%E9%9D%9E%E7%B7%9A%E5%BD%A2%E5%9B%9E%E5%B8%B0%E3%83%99%E3%82%A4%E3%82%BA%E7%B5%B1%E8%A8%88%E3%83%A2%E3%83%87%E3%83%AA%E3%83%B3%E3%82%B0%E3%83%BC%E3%83%BC%E3%83%A9%E3%83%96%E3%83%A9%E3%82%A4%E3%83%96!%E3%82%B5%E3%83%B3%E3%82%B7%E3%83%A3%E3%82%A4%E3%83%B3%E5%9B%9E%E5%B8%B0!!/][Rstan で 12 種類の線形非線形回帰ベイズ統計モデリングーーラブ ...]]
+  - [[https://www.slideshare.net/simizu706/stan-62042940][Stan超初心者入門@SlideShare]]
+
+- WAIC & ={loo}=
+  - [[http://statmodeling.hatenablog.com/entry/calc-waic-wbic][WAICとWBICを事後分布から計算する@StatModeling Memorandum]]
+  - [[https://rpubs.com/siero5335/92987][loo package動かしてみた: WAIC比較@RPubs]]
+  - [[http://ushi-goroshi.hatenablog.com/entry/2017/12/24/225748][WAICを計算してみる@統計コンサルの議事メモ]]
