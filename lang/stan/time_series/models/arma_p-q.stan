@@ -9,7 +9,7 @@ data {
 parameters {
 	real mu;
 	vector[P] phi;
-	vector[Q] theta;
+	vector<lower=-1, upper=1>[Q] theta;
 	real<lower=0> sigma;
 }
 
@@ -34,8 +34,8 @@ model {
 
   // priors
 	mu ~ normal(0, 5);
-  phi ~ normal(0, 1);
-  theta ~ normal(0, 1);
+  phi ~ normal(0, 2);
+  theta ~ normal(0, 2);
   sigma ~ cauchy(0, 5); // TODO half-t or half-norm
 
 	// log-likelihood

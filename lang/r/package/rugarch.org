@@ -1,5 +1,6 @@
 #+STARTUP: folded indent inlineimages latexpreview
 #+PROPERTY: header-args:R :results output :colnames yes :session *R:rugarch*
+#+PROPERTY: header-args:R+ :width 640 :height 480
 
 * ~{rugarch}~: Univariate GARCH Models                               :noexport:
 
@@ -26,6 +27,7 @@
 
 #+begin_src R :results silent
 library(rugarch)
+library(fGarch) # シミュレーションデータ
 #+end_src
 \\
 
@@ -137,6 +139,24 @@ Registered S3 method overwritten by 'xts':
 #+end_example
 
 * 関数リスト
+** 関数の意味まとめ
+
+- spec
+  - モデルの定義
+
+- fit
+  - モデルの当てはめ
+
+- filter 
+  - 既に当てはめた fit のパラメタを使って、新データに当てはめる
+  - モデルのパラメタは変わらない
+  - 旧データ + 新データを指定する
+
+- forecast
+
+- distribution
+  - fit オブジェクトからパラメタの分布を得る
+
 ** Spec
 *** variance.model (x14)
 - sGARCH
@@ -561,6 +581,14 @@ plot(gd, which = 4, window = 12)
   - data required
   - まず ugarchfilter が実行される
 
+- _1-step ahead rolling forecast_
+  - data の指定が必要なので、fit ではなく、spec を渡す
+  - =n.ahead = 1=
+  - =n.roll= >= =out.sample=
+  - data は fit したデータと、新データを結合して渡す
+  - 新データ分だけ、out.sample を指定する
+  - 例 =ugarchforecast(spec, n.ahead = 1 n.roll = 10, out.sample = 10, data = data)=
+
 #+begin_src R
 ugarchforecast(
   fitORspec,
@@ -964,6 +992,134 @@ llh
 https://stats.stackexchange.com/questions/100003/cannot-replicate-the-aic-in-a-garch-model
 infocriteria(arfima_fit$fit)
 (-2 * llh) / length(x) + 2 * (length(arfima_fit$fit@fit$coef)) / length(x)
+* 1 Step vs. 2 Steps
+** シミュレーションデータ
+
+- どちらの方法が好ましいのか？
+  1. ARMA を当てはめてから、残差に GARCH モデルを当てはめる
+  2. ARMA+GARCH を同時に推定
+
+- ARMA(1,1) + GARCH(1,1) + norm のデータ
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+set.seed(123)
+garch_spec <- garchSpec(model = list(mu = 0.1, ar = 0.5, ma = 0.2,
+                                     alpha = 0.4, beta = 0.2))
+d <- garchSim(garch_spec, 500)
+forecast::ggtsdisplay(d)
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-DKRUSz.png]]
+
+** ARMA の当てはめ
+
+#+begin_src R
+arma_spec <- arfimaspec(
+  mean.model = list(armaOrder = c(1, 1), include.mean = TRUE),
+  distribution.model = "norm")
+arma_fit1 = arfimafit(arma_spec, d, solver = "solnp")
+arma_fit1@fit$coef
+#+end_src
+
+#+RESULTS:
+:          mu         ar1         ma1       sigma 
+: 0.200055329 0.368554862 0.249035371 0.001454464
+
+- 残差チェック
+- 自己相関はほぼ消えている
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+arma_resid1 <- residuals(arma_fit1)
+ggtsdisplay(arma_resid1)
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-w9PMaq.png]]
+
+- 残差の 2 乗系列
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+ggtsdisplay(arma_resid1^2)
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-aK495Z.png]]
+
+** ARMA の残差へ GARCH 当てはめ
+
+#+begin_src R
+uspec1 <- ugarchspec(
+  variance.model = list(model = "sGARCH", garchOrder = c(1, 1)),
+  mean.model = list(armaOrder = c(0, 0), include.mean = FALSE),
+  distribution.model = "norm")
+garch_fit1 <- ugarchfit(uspec1, arma_resid1)
+round(garch_fit1@fit$coef, 4)
+#+end_src
+
+#+RESULTS:
+:  omega alpha1  beta1 
+: 0.0000 0.3842 0.1529
+
+- 標準化残差の 2 乗系列に自己相関はなさそう
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+garch_resid1 <- residuals(garch_fit1, standardize = TRUE)
+ggtsdisplay(garch_resid1^2)
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-Q4IjQC.png]]
+
+- 正規性が棄却されない
+#+begin_src R
+tseries::jarque.bera.test(garch_resid1)
+#+end_src
+
+#+RESULTS:
+: 
+: 	Jarque Bera Test
+: 
+: data:  garch_resid1
+: X-squared = 0.74966, df = 2, p-value = 0.6874
+
+** ARMA+GARCH を一括で当てはめ
+
+- GARCH の当てはめ精度が良くない
+#+begin_src R
+uspec2 <- ugarchspec(
+  variance.model = list(model = "sGARCH", garchOrder = c(1, 1)),
+  mean.model = list(armaOrder = c(1, 1), include.mean = TRUE),
+  distribution.model = "norm")
+garch_fit2 <- ugarchfit(uspec2, d)
+round(garch_fit2@fit$coef, 4)
+#+end_src
+
+#+RESULTS:
+:     mu    ar1    ma1  omega alpha1  beta1 
+: 0.2000 0.3574 0.2795 0.0000 0.0476 0.9115
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+garch_resid2 <- residuals(garch_fit2, standardize = TRUE)
+ggtsdisplay(garch_resid2)
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-gtFU10.png]]
+
+#+begin_src R
+tseries::jarque.bera.test(garch_resid2)
+#+end_src
+
+#+RESULTS:
+: 
+: 	Jarque Bera Test
+: 
+: data:  garch_resid2
+: X-squared = 5.8217, df = 2, p-value = 0.05443
+
+** 結論
+
+- 今回のデータでは、2段階の方が精度が良かった
+- [[https://stats.stackexchange.com/questions/368229/explaining-volatility-with-garch-one-step-or-two-step-approach][Explaining volatility with GARCH: one-step or two-step approach?@CrossValidated]]
+
 * 実行環境
 
 #+begin_src R :results output :exports both

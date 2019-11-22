@@ -1,0 +1,1 @@
+mtcars$am <- as.factor(mtcars$am)

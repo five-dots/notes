@@ -372,6 +372,8 @@ loaded via a namespace (and not attached):
 - Vignette
   - [[https://cloud.r-project.org/web/packages/parsnip/vignettes/parsnip_Intro.html][parsnip Basics]]
 - Blog
+  - [[https://speakerdeck.com/s_uryu/tidymodels][tidymodelsによるモデル構築と運用@speakerdeck]]
   - [[https://dropout009.hatenablog.com/entry/2019/01/06/124932][tidymodelsによるtidyな機械学習フロー（その1）@Dropout]]
   - [[https://dropout009.hatenablog.com/entry/2019/01/09/214233][tidymodelsによるtidyな機械学習フロー（その2：Cross Varidation）@Dropout]]
-  - [[https://speakerdeck.com/s_uryu/tidymodels][tidymodelsによるモデル構築と運用@speakerdeck]]
+  - [[https://dropout009.hatenablog.com/entry/2019/11/10/125650][tidymodelsによるtidyな機械学習（その3：ハイパーパラメータのチューニング）@Dropout]]
+  - [[https://dropout009.hatenablog.com/entry/2019/11/17/112655][tidymodelsとDALEXによるtidyで解釈可能な機械学習@Dropout]]

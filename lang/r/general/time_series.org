@@ -1264,7 +1264,7 @@ _3. 自己相関は指数的に減数する_
 - 定常過程に定常過程を加えたものは、定常過程になるため、MA 過程の定常性は無視して良い
  
 : AR 過程の定常性条件
-- AR 特性方程式の解の絶対値が 1 よりも大きいこと
+- *AR 特性方程式の解の絶対値が 1 よりも大きいこと*
 - AR 過程が定常であるとき、MA(∞) で書き直すことができること
 
 _AR(p) 過程の特性方程式_
@@ -1400,8 +1400,8 @@ $y_t = \mu + u_t$
 
 - $\mu_t$ は ARMA などの条件付き期待値のモデル
 
-このとき、$\upsilon_t$ に自己相関は検出されない場合が多いため、上記のモデルは悪くないモデルと言える
-ただし、残差の 2 乗系列では自己相関が検出される場合がある
+このとき、$u_t$ に自己相関は検出されない場合が多いため、上記のモデルは悪くないモデルと言える
+ただし、残差 $u_t$ の 2 乗系列では自己相関が検出される場合がある
 
 $u^2 = (y_t - \mu)^2$
 
@@ -1423,6 +1423,7 @@ $h_t = \omega + \alpha_1 u_{t-1}^2 + \alpha_2 u_{t-2}^2 + \dots + \alpha_m u_{t-
 
 
 - $u_t^2$ の初期値としては、$yt - \mu_t$ の標本分散が一般的に用いられる
+- $h_t$ が条件付き *分散*
 - $h_t > 0$ である必要あり (分散なので)
   - $\omega > 0, \alpha_j > 0$ の制約が一般的に用いられる
 - ARCH は $u_t^2$ に対しての AR(p) モデルと考えられる
@@ -2817,17 +2818,6 @@ Chi-squared = 66.575, df = 1, p-value = 3.331e-16
 - レジーム判定のタイムラグ
 - Stan での実装
 
-*** Reference
-
-- [[https://cran.r-project.org/web/packages/MSwM/index.html][CRAN]]
-- [[https://cran.r-project.org/web/packages/MSwM/MSwM.pdf][Reference Manual]]
-- Vignette
-  - [[https://cran.r-project.org/web/packages/MSwM/vignettes/examples.pdf][example (PDF)]] 
-- Blog
-  - [[https://tjo.hatenablog.com/entry/2013/06/20/191317][マルコフ状態転換モデルのRパッケージ{MSwM}の使い方（異常値検出・ステータス変化検出などに有用）]]
-  - [[http://sinhrks.hatenablog.com/entry/2014/10/26/225850][R の {MSwM} パッケージでマルコフ転換モデルをためす]]
-  - [[http://user.keio.ac.jp/~nagakura/R/R_markov_regime.pdf][マルコフレジームスイッチングモデルの推定]]
-  
 *** 概要
 
 - n 個の状態があり、それに対応する n 個の AR 過程を仮定する
@@ -2851,6 +2841,39 @@ ls("package:MSwM")
 #+RESULTS:
 : [1] "AIC"       "intervals" "msmFit"    "msmResid"  "plot"      "plotDiag" 
 : [7] "plotProb"  "plotReg"   "summary"
+
+*** =msmFit()=
+
+#+begin_src R
+msmFit(
+  object,
+  k,
+  sw,
+  p,
+  data,
+  family,
+  control)
+#+end_src
+
+control paramters
+- =trace=:
+  A logical value. If it is TRUE, tracing information on the progress of the optimization is produced.
+
+- =maxiter=:
+  The maximum number of iterations in the EM method. Default is 100.
+
+- =tol=: 
+  Tolerance. 
+  The algorithm stops if it is unable to reduce the value by a factor of tol at a step. Default is 1e-8.
+
+- =maxiterOuter=:
+  The number of short runs of the EM method to stablish the initial values. Default is 5
+
+- =maxiterInner=:  
+  The number of iterations in the EM method in each short run to stablish the initial values. Default is 10
+
+- =parallelization=: 
+  A logical value. Whether the process is done by using parallelization or not. Default is TRUE.
 
 *** Vignette の例
 **** 例 1 (2 regimes)
@@ -3632,12 +3655,255 @@ plotDiag(ms_mod_r2, regime = 2, which = 3)
 #+RESULTS:
 [[file:/home/shun/Dropbox/memo/img/babel/fig-8lFXdt.png]]
 
+*** レジーム毎の正規性の検定例 (US Sector ETF)
+**** データ
+
+- US セクター ETF の例
+#+begin_src R :results silent
+symbols <- tribble(
+  ~symbol,  ~sector,
+  "XLE",    "Energy",
+  "XLF",    "Financials",
+  "XLU",    "Utilities",
+  "XLI",    "Industrial",
+  "XLK",    "Technology",
+  "XLV",    "Health",
+  "XLY",    "Consumer Discretionary",
+  "XLP",    "Consumer Staples",
+  "XLB",    "Materials",
+)
+rawdata <- tq_get(symbols$symbol, from = "1998-01-01")
+#+end_src
+
+- 日次・週次・月次リターンへ変換
+#+begin_src R :results silent
+convert_to_ret <- function(rawdata, symbols, mutate_fun) {
+  rawdata %>%
+    group_by(symbol) %>%
+    tq_transmute(adjusted, mutate_fun = mutate_fun, col_rename = "ret") %>%
+    slice(-1) %>%
+    ungroup() %>%
+    left_join(symbols, by = "symbol")
+}
+
+ret_daily <- convert_to_ret(rawdata, symbols, dailyReturn)
+ret_weekly <- convert_to_ret(rawdata, symbols, weeklyReturn)
+ret_monthly <- convert_to_ret(rawdata, symbols, monthlyReturn)
+#+end_src
+
+**** Jarque Bera Test
+
+- レジーム分割前の全データで正規性を検定
+- 月次の XLE 以外は全て正規性が棄却される
+
+#+begin_src R :results value :colnames yes
+test_normality <- function(ret_data) {
+  ret_data %>%
+    group_split(symbol) %>%
+    map_dfr(~ {
+      jb_test <- tseries::jarque.bera.test(.$ret)
+      data.frame(
+        symbol = .$symbol[1],
+        tstat = jb_test$statistic,
+        is_norm =  jb_test$p.value > 0.05,
+        stringsAsFactors = FALSE
+      )
+    })
+}
+
+test_normality(ret_daily)
+#+end_src
+
+#+RESULTS:
+| symbol |            tstat | is_norm |
+|--------+------------------+---------|
+| XLB    | 7405.53001751265 | FALSE   |
+| XLE    | 16799.7030671731 | FALSE   |
+| XLF    | 150941.025079799 | FALSE   |
+| XLI    | 6783.43326345647 | FALSE   |
+| XLK    | 10902.0814503221 | FALSE   |
+| XLP    | 4303.88094290034 | FALSE   |
+| XLU    | 19082.5234582995 | FALSE   |
+| XLV    | 15269.4343343103 | FALSE   |
+| XLY    | 6675.99324074053 | FALSE   |
+
+#+begin_src R :results value :colnames yes
+test_normality(ret_weekly)
+#+end_src
+
+#+RESULTS:
+| symbol |            tstat | is_norm |
+|--------+------------------+---------|
+| XLB    | 370.523771936547 | FALSE   |
+| XLE    | 963.483293806317 | FALSE   |
+| XLF    | 11450.7206191769 | FALSE   |
+| XLI    | 774.678737052825 | FALSE   |
+| XLK    | 398.222595474031 | FALSE   |
+| XLP    | 942.193589433312 | FALSE   |
+| XLU    | 2049.50449155199 | FALSE   |
+| XLV    | 1703.85589440475 | FALSE   |
+| XLY    | 919.382381623161 | FALSE   |
+
+#+begin_src R :results value :colnames yes
+test_normality(ret_monthly)
+#+end_src
+
+#+RESULTS:
+| symbol |            tstat | is_norm |
+|--------+------------------+---------|
+| XLB    | 27.7782064312772 | FALSE   |
+| XLE    | 2.38594549546992 | TRUE    |
+| XLF    | 114.708432400412 | FALSE   |
+| XLI    | 27.9000692110344 | FALSE   |
+| XLK    | 36.0558821398174 | FALSE   |
+| XLP    | 45.7197069916305 | FALSE   |
+| XLU    | 39.6569012993954 | FALSE   |
+| XLV    | 17.6988841515234 | FALSE   |
+| XLY    | 10.9475253792733 | FALSE   |
+
+**** Jarque Bera Test with Regimes
+***** 関数
+
+- Error in solve.default(res$Hessian) : 
+   Lapack routine dgesv: system is exactly singular: U[8,8] = 0
+  - [[https://stackoverflow.com/questions/6572119/r-solvesystem-is-exactly-singular][R solve:system is exactly singular]]
+  - 何度か繰り返すとうまく行く?
+
+#+begin_src R :results silent
+test_normality_ms <- function(ret_data, k = 3, smooth = TRUE) {
+  ret_data %>%
+    group_split(symbol) %>%
+    map_dfr(~ {
+      print(.$symbol[1])
+      lm_mod <- lm(ret ~ 1, .)
+      ms_mod_r3 <- msmFit(lm_mod, k = k, p = 1, sw = c(TRUE, TRUE, TRUE))
+
+      if (smooth) {
+        prob <- ms_mod_r3@Fit@smoProb
+      } else {
+        prob <- ms_mod_r3@Fit@filtProb
+      }
+
+      idx <- apply(prob, 1, which.max)
+      map_dfr(1:k, function(r) {
+        d <- .$ret[idx == r]
+        jb_test <- tseries::jarque.bera.test(d)
+        data.frame(
+          symbol = .$symbol[1],
+          regime = r,
+          count = length(d),
+          tstat = jb_test$statistic,
+          is_norm =  jb_test$p.value > 0.05,
+          mean = ms_mod_r3@Coef[r, 1],
+          ar = ms_mod_r3@Coef[r, 2],
+          sd = ms_mod_r3@std[r],
+          stringsAsFactors = FALSE
+        )
+      })
+    })
+}
+#+end_src
+
+***** k=3, Smooth=TRUE
+
+- 日次は、計算が収束しないので、除外
+
+- 9/27 で正規性が棄却されない
+- 金融セクター以外は、高ボラ期は、マイナス期待値
+- エクルギーセクター以外は、低ボラ期は、プラス期待値
+- 低ボラティリティの期間が長期間続く
+#+begin_src R :results value :colnames yes
+test_normality_ms(ret_weekly, k=3, smooth=TRUE) %>%
+  mutate_if(is.numeric, round, digits = 5)
+#+end_src
+
+#+RESULTS:
+| symbol | regime | count |     tstat | is_norm |     mean |       ar |      sd |
+|--------+--------+-------+-----------+---------+----------+----------+---------|
+| XLB    |      1 |   182 |   7.63538 | FALSE   |  0.00764 |  -0.4213 | 0.03673 |
+| XLB    |      2 |   245 |   2.15085 | TRUE    | -0.01267 |  0.31695 | 0.03874 |
+| XLB    |      3 |   663 |   0.27005 | TRUE    |  0.00468 | -0.04187 | 0.01829 |
+| XLE    |      1 |   268 |  65.88322 | FALSE   |   0.0128 | -0.19384 | 0.02145 |
+| XLE    |      2 |   434 |  25.40228 | FALSE   | -0.00336 |   0.0931 | 0.02156 |
+| XLE    |      3 |   388 |  79.52307 | FALSE   | -0.00263 | -0.07724 | 0.04695 |
+| XLF    |      1 |   184 | 114.92804 | FALSE   |  0.00075 | -0.15251 | 0.07702 |
+| XLF    |      2 |   282 |  13.31224 | FALSE   | -0.01008 |   0.3448 | 0.02221 |
+| XLF    |      3 |   624 |  28.42679 | FALSE   |  0.00848 | -0.31171 |  0.0193 |
+| XLI    |      1 |   421 |   4.34691 | TRUE    | -0.00345 |  0.11464 | 0.01769 |
+| XLI    |      2 |   405 |   35.3347 | FALSE   | -0.00095 | -0.03651 |  0.0404 |
+| XLI    |      3 |   264 |  10.08886 | FALSE   |  0.01145 | -0.19734 | 0.01408 |
+| XLK    |      1 |   355 |   1.36568 | TRUE    | -0.00346 | -0.04805 | 0.04902 |
+| XLK    |      2 |   547 |   1.92533 | TRUE    |  0.00402 |  0.09328 | 0.01533 |
+| XLK    |      3 |   188 |  10.69925 | FALSE   |  0.00465 | -0.46355 | 0.02395 |
+| XLP    |      1 |   297 |  27.56191 | FALSE   | -0.00227 |   -0.183 |  0.0293 |
+| XLP    |      2 |   447 |   17.5782 | FALSE   | -0.00248 |   0.1679 |  0.0127 |
+| XLP    |      3 |   346 |  36.99395 | FALSE   |  0.00771 | -0.34726 | 0.01139 |
+| XLU    |      1 |   168 |  37.16868 | FALSE   | -0.00326 |  0.02474 | 0.04079 |
+| XLU    |      2 |   579 |   9.02295 | FALSE   |  0.00844 | -0.31311 | 0.01412 |
+| XLU    |      3 |   343 |  72.32797 | FALSE   | -0.00279 |  0.14139 | 0.01889 |
+| XLV    |      1 |   286 |  10.64547 | FALSE   |  0.00577 |  -0.4206 | 0.02395 |
+| XLV    |      2 |    83 |   9.42916 | FALSE   | -0.01191 |   0.3758 | 0.03721 |
+| XLV    |      3 |   721 |   0.10347 | TRUE    |  0.00315 | -0.03406 | 0.01545 |
+| XLY    |      1 |   423 |   7.30396 | FALSE   | -0.00354 |  0.21802 | 0.01683 |
+| XLY    |      2 |   395 |  42.80729 | FALSE   | -0.00139 | -0.09625 | 0.04292 |
+| XLY    |      3 |   272 |   6.05458 | FALSE   |  0.01135 | -0.27703 | 0.01455 |
+
+- 19/27 で正規性が棄却されない
+- 金融セクター以外は、低ボラ期は、プラス期待値
+- 全てのセクターで、高ボラ期は、マイナス期待値
+#+begin_src R :results value :colnames yes
+test_normality_ms(ret_monthly, k=3, smooth=TRUE) %>%
+  mutate_if(is.numeric, round, digits = 5)
+#+end_src
+
+#+RESULTS:
+| symbol | regime | count |    tstat | is_norm |     mean |       ar |      sd |
+|--------+--------+-------+----------+---------+----------+----------+---------|
+| XLB    |      1 |   138 |  1.47028 | TRUE    |  0.00874 | -0.16343 | 0.02934 |
+| XLB    |      2 |    58 | 21.60477 | FALSE   | -0.01981 |  0.52459 | 0.06605 |
+| XLB    |      3 |    55 | 22.23397 | FALSE   |  0.04161 | -0.67228 | 0.04003 |
+| XLE    |      1 |    57 |  2.02057 | TRUE    |  0.00618 |  0.03042 | 0.03038 |
+| XLE    |      2 |    76 |  7.44185 | FALSE   | -0.03577 |  0.57911 |  0.0606 |
+| XLE    |      3 |   118 |  1.20628 | TRUE    |  0.04427 | -0.44353 | 0.04923 |
+| XLF    |      1 |    67 |  1.33663 | TRUE    |  -0.0012 |  0.12977 | 0.02792 |
+| XLF    |      2 |    43 |  6.12638 | FALSE   | -0.01783 |  0.75702 | 0.07746 |
+| XLF    |      3 |   141 | 20.87867 | FALSE   |  0.02809 |  -0.5606 | 0.03672 |
+| XLI    |      1 |    54 |  2.83525 | TRUE    |  0.02418 | -0.48113 | 0.04747 |
+| XLI    |      2 |   157 |   2.5697 | TRUE    |   0.0119 |  0.01434 |  0.0261 |
+| XLI    |      3 |    40 |   5.4946 | TRUE    | -0.02584 |   0.3571 | 0.06612 |
+| XLK    |      1 |    62 |  1.97459 | TRUE    |  0.01506 |  0.53386 | 0.03311 |
+| XLK    |      2 |    23 |  0.06087 | TRUE    | -0.11221 | -0.33531 | 0.06281 |
+| XLK    |      3 |   166 |  31.6576 | FALSE   |  0.02657 | -0.65704 | 0.04438 |
+| XLP    |      1 |   137 |  3.36996 | TRUE    |  0.01871 | -0.26327 | 0.02386 |
+| XLP    |      2 |    40 |  5.32266 | TRUE    | -0.03549 |   0.4914 | 0.03924 |
+| XLP    |      3 |    74 |  2.41446 | TRUE    |  0.01438 |  0.14091 |   0.023 |
+| XLU    |      1 |   160 |  5.24696 | TRUE    |  0.02329 |  0.01599 | 0.01984 |
+| XLU    |      2 |    48 | 23.56403 | FALSE   | -0.00421 | -0.41874 | 0.03917 |
+| XLU    |      3 |    43 |  0.96762 | TRUE    | -0.01164 |  0.46327 | 0.05278 |
+| XLV    |      1 |    78 | 49.33702 | FALSE   | -0.02659 |    0.216 |  0.0362 |
+| XLV    |      2 |    93 |  1.53938 | TRUE    |  0.03703 | -0.33574 | 0.02757 |
+| XLV    |      3 |    80 |  2.98639 | TRUE    |  0.00947 |  0.05026 | 0.01486 |
+| XLY    |      1 |    23 |  3.29333 | TRUE    |  0.00448 | -0.96136 | 0.04554 |
+| XLY    |      2 |   191 |  4.79991 | TRUE    |  0.01935 | -0.11274 | 0.03187 |
+| XLY    |      3 |    37 |  3.47931 | TRUE    | -0.00541 |  0.66678 |  0.0531 |
+
+*** 参考
+
+- [[https://cran.r-project.org/web/packages/MSwM/index.html][CRAN]]
+- [[https://cran.r-project.org/web/packages/MSwM/MSwM.pdf][Reference Manual]]
+- Vignette
+  - [[https://cran.r-project.org/web/packages/MSwM/vignettes/examples.pdf][example (PDF)]] 
+- Blog
+  - [[https://tjo.hatenablog.com/entry/2013/06/20/191317][マルコフ状態転換モデルのRパッケージ{MSwM}の使い方（異常値検出・ステータス変化検出などに有用）]]
+  - [[http://sinhrks.hatenablog.com/entry/2014/10/26/225850][R の {MSwM} パッケージでマルコフ転換モデルをためす]]
+  - [[http://user.keio.ac.jp/~nagakura/R/R_markov_regime.pdf][マルコフレジームスイッチングモデルの推定]]
+  
 ** {depmixS4} (Dependent Mixture Model)
 *** Reference
 
 - [[http://r-forge.r-project.org/projects/depmix/][Project site@R-Forge]]
-- [[https://cran.r-project.org/web/packages/depmixS4/index.html][CRAN
-]]- [[https://cran.r-project.org/web/packages/depmixS4/depmixS4.pdf][Reference Manual]]
+- [[https://cran.r-project.org/web/packages/depmixS4/index.html][CRAN]]
+- [[https://cran.r-project.org/web/packages/depmixS4/depmixS4.pdf][Reference Manual]]
 - Vignette
   [[https://cran.r-project.org/web/packages/depmixS4/vignettes/depmixS4.pdf][An R Package for Hidden Markov Models]]
 
@@ -3930,3 +4196,6 @@ St2           6.391  0.239   0.098   0.902
 #+end_example
 
 ** {MARSS}
+* 参考
+
+- [[https://stats.stackexchange.com/questions/251805/fitting-a-non-normal-arma-process-ols-or-mle][Fitting a non-normal ARMA process: OLS or MLE?@CrossValidated]]

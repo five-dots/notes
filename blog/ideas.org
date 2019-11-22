@@ -1,0 +1,28 @@
+#+STARTUP: showall indent
+
+* Ideas
+
+- トレーディング戦略開発の基礎
+
+- R のお役立ちパッケージ
+  - dplyr
+  - ess-r-spreadsheet 紹介記事
+
+- R 開発環境 by Emacs + ESS
+  - R package dev by ESS
+  - R 開発者のための emacs 入門
+  - org-mode + R のすすめ
+  - org note for R usages
+
+- Linux 設定関連
+  - Keymapping
+
+
+* Platform
+
+org-mode から 以下のサービスに対応した markdown を出力
+
+- はてなブログ
+- Qiita
+
+ob-R, ob-python, ob-shell から画像、表、コードを正しく出力する

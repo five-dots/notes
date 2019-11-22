@@ -1,0 +1,117 @@
+#+STARTUP: folded indent inlineimages latexpreview
+#+PROPERTY: header-args:R :session *R:stats-test* :results output :width 640 :height 480
+
+* ライブラリの読み込み
+
+#+begin_src R :results silent
+library(tseries)
+#+end_src
+
+* 2 つのデータの分布の同一性の検定 Kolmogorov-Sminov Test
+
+- 2 つのデータの確率分布の相違の検定
+- 1 つのデータが指定した確率分布に従っているかの検定
+- タイのデータが有ると p 値が正確に計算できない
+
+#+begin_src R
+ks.test(
+  x,   # vector data
+  y,   # 比較するデータ もしくはCDFの指定, 関数: pnorm or 文字列 "pnorm"
+  ..., # CDFの引数
+  alternative = c("two.sided", "less", "greater"), # 両側検定(two.sided), 左側検定(less), 右側検定(greater)
+  exact = NULL)
+#+end_src
+
+- H0: 正規分布にしたがっているか
+- 「正規分布に従う」が採択される
+#+begin_src R
+set.seed(1)
+x_norm <- rnorm(100, mean = 0, sd = 3)
+ks.test(x_norm, pnorm, mean = mean(x_norm), sd = sd(x_norm))
+#+end_src
+
+#+RESULTS:
+: 
+: 	One-sample Kolmogorov-Smirnov test
+: 
+: data:  x_norm
+: D = 0.047014, p-value = 0.9799
+: alternative hypothesis: two-sided
+
+- t 分布の乱数
+- H0: 正規分布に従うが、棄却される
+#+begin_src R
+x_t <- rt(100, 4)
+ks.test(x_t, pnorm, mean = mean(x_t), sd = sd(x_t))
+#+end_src
+
+#+RESULTS:
+: 
+: 	One-sample Kolmogorov-Smirnov test
+: 
+: data:  x_t
+: D = 0.13856, p-value = 0.04299
+: alternative hypothesis: two-sided
+
+* 正規分布の検定 Jarque-Bera Test
+
+- H0: 正規分布である
+- 「正規分布にしたがう」が採択される
+#+begin_src R
+jarque.bera.test(x_norm)
+#+end_src
+
+#+RESULTS:
+: 
+: 	Jarque Bera Test
+: 
+: data:  x_norm
+: X-squared = 0.087201, df = 2, p-value = 0.9573
+
+- コーシー分布
+- 「正規分布にしたがう」が棄却される
+#+begin_src R
+x_cauchy <- rcauchy(100)
+jarque.bera.test(x_cauchy)
+#+end_src
+
+#+RESULTS:
+: 
+: 	Jarque Bera Test
+: 
+: data:  x_cauchy
+: X-squared = 21656, df = 2, p-value < 2.2e-16
+
+* 正規分布の検定 Shapiro-Wilk Test
+
+- H0: 正規分布である
+#+begin_src R
+shapiro.test(x_norm)
+#+end_src
+
+#+RESULTS:
+: 
+: 	Shapiro-Wilk normality test
+: 
+: data:  x_norm
+: W = 0.9956, p-value = 0.9876
+
+- コーシー分布
+#+begin_src R
+shapiro.test(x_cauchy)
+#+end_src
+
+#+RESULTS:
+: 
+: 	Shapiro-Wilk normality test
+: 
+: data:  x_cauchy
+: W = 0.3009, p-value < 2.2e-16
+
+* 残差の自己相関の検定 Durbin-Watson Test
+
+- 参照 [[file:time_series.org]]
+
+* 残差の自己相関の検定 Ljung-Box Test
+
+- 参照 [[file:time_series.org]]

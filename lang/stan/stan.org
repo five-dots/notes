@@ -4,15 +4,81 @@
 * Load Libraries
 
 #+begin_src R :results silent
+library(tidyverse)
 library(forecast)
-library(ggmcmc)
 library(glue)
 library(lubridate)
+
 library(rstan)
+library(ggmcmc)
+library(bayesplot)
+library(rstanarm)
 library(shinystan)
-library(tidyverse)
-library(loo)
 #+end_src
+
+* Stan Overview
+** 基本
+
+- 条件付き確率で統計モデルを定義
+
+$p(\theta|y,x)$
+
+$\theta$  未知の変数 (例: モデルのパラメータ, 隠れ変数, 欠測データ, 将来の予測値)
+$y$  値が得られているデータ
+$x$  一連の説明変数
+
+- MCMC サンプリングは、連鎖が定常分布に収束した後に、周辺分布 $p(\theta|x,y)$ から抽出される
+
+_ベイズの定理_
+
+$p(\theta|y,x) = \frac{p(y|\theta)p(\theta, x)}{p(y)}$
+
+ここで $p(y)$ は正規化のための定数項と捉えて、(得られたデータのみに依存するため)
+
+$p(\theta|y,x) \propto p(y|\theta)p(\theta,x)$
+
+- パラメタの事後分布は、データの尤度と事前分布の積に比例する
+- 定数項は除かれる
+- 対数尤度関数の勾配を使うことで, 定常分布への収束とパラメタの探索を効率化
+
+** 最適化
+
+- Stan では、事後分布の最頻値 $\theta^*$ を見つけることもできる (点推定)
+
+$\theta^* = argmax_\theta P(\theta|y)$ 
+
+$argmax_\upsilon f(\upsilon)$ は $f(\upsilon)$ を最大にする $\upsilon$ を選ぶということ
+
+- 事前分布が一様分布の場合は、最尤推定量
+- 事後分布が一様分布以外の場合は *MAP 推定量* と呼ばれる
+  - MAP: Maximum a Posteriori (最大事後確率)
+- 点推定は推定のバラツキを考慮しないため、ベイズ推定ではない
+
+_変分推論_
+- ベイズ推論を近似する手法
+- 巨大なデータにスケールしやすく高速
+- ベイス推定を最適化問題に変換する
+- 自動微分変分推論（Automatic Differentiation Variational Inference, ADVI）というアルゴリズムが実装
+
+事後分布  $p(\theta|y)$ をパラメトリックな分布 $q(\theta|\phi)$ で近似する
+カルバック・ライブラー情報量 (KL) を最小化する $\phi^*$ を求めることに対応する
+
+$\phi^* = argmin_\phi KL[q(\theta|\phi)||p(\theta|y)]$
+
+- カルバック・ライブラー情報量
+  - 確率論と情報理論の 2 つにおける確率分布の差異を図る指標
+  - 以下のようにも呼ばれる
+    - 情報ダイバージェンス (Information divergence)
+    - 情報利得 (Information gain)
+    - 相対エントロピー (Relative entropy)
+
+** Why MCMC?
+
+- ベイズではパラメタを確率分布として得る
+- 確率分布からパラメタの期待値を計算することができる
+- ただし、式が複雑になってくると積分の計算が不可能になる -> 乱数発生メカニズムが必要
+- 確率を「数式」で求める代わりに、「乱数」で求めるアプローチ
+- 数式がわからなくても、乱数からのデータの平均をもとめれば、それが *EAP 推定量* になる
 
 * ={rstan}= Package
 ** All Functions
@@ -207,8 +273,8 @@ fit <- stan(file = model, data = stan_data, seed = 1234)
 
 SAMPLING FOR MODEL 'iris_lm' NOW (CHAIN 1).
 Chain 1: 
-Chain 1: Gradient evaluation took 1.6e-05 seconds
-Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 0.16 seconds.
+Chain 1: Gradient evaluation took 2.8e-05 seconds
+Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 0.28 seconds.
 Chain 1: Adjust your expectations accordingly!
 Chain 1: 
 Chain 1: 
@@ -225,15 +291,15 @@ Chain 1: Iteration: 1600 / 2000 [ 80%]  (Sampling)
 Chain 1: Iteration: 1800 / 2000 [ 90%]  (Sampling)
 Chain 1: Iteration: 2000 / 2000 [100%]  (Sampling)
 Chain 1: 
-Chain 1:  Elapsed Time: 0.134757 seconds (Warm-up)
-Chain 1:                0.138432 seconds (Sampling)
-Chain 1:                0.273189 seconds (Total)
+Chain 1:  Elapsed Time: 0.138109 seconds (Warm-up)
+Chain 1:                0.143925 seconds (Sampling)
+Chain 1:                0.282034 seconds (Total)
 Chain 1: 
 
 SAMPLING FOR MODEL 'iris_lm' NOW (CHAIN 2).
 Chain 2: 
-Chain 2: Gradient evaluation took 1.7e-05 seconds
-Chain 2: 1000 transitions using 10 leapfrog steps per transition would take 0.17 seconds.
+Chain 2: Gradient evaluation took 1.3e-05 seconds
+Chain 2: 1000 transitions using 10 leapfrog steps per transition would take 0.13 seconds.
 Chain 2: Adjust your expectations accordingly!
 Chain 2: 
 Chain 2: 
@@ -250,15 +316,15 @@ Chain 2: Iteration: 1600 / 2000 [ 80%]  (Sampling)
 Chain 2: Iteration: 1800 / 2000 [ 90%]  (Sampling)
 Chain 2: Iteration: 2000 / 2000 [100%]  (Sampling)
 Chain 2: 
-Chain 2:  Elapsed Time: 0.129364 seconds (Warm-up)
-Chain 2:                0.10398 seconds (Sampling)
-Chain 2:                0.233344 seconds (Total)
+Chain 2:  Elapsed Time: 0.165082 seconds (Warm-up)
+Chain 2:                0.130211 seconds (Sampling)
+Chain 2:                0.295293 seconds (Total)
 Chain 2: 
 
 SAMPLING FOR MODEL 'iris_lm' NOW (CHAIN 3).
 Chain 3: 
-Chain 3: Gradient evaluation took 1.3e-05 seconds
-Chain 3: 1000 transitions using 10 leapfrog steps per transition would take 0.13 seconds.
+Chain 3: Gradient evaluation took 1.8e-05 seconds
+Chain 3: 1000 transitions using 10 leapfrog steps per transition would take 0.18 seconds.
 Chain 3: Adjust your expectations accordingly!
 Chain 3: 
 Chain 3: 
@@ -275,15 +341,15 @@ Chain 3: Iteration: 1600 / 2000 [ 80%]  (Sampling)
 Chain 3: Iteration: 1800 / 2000 [ 90%]  (Sampling)
 Chain 3: Iteration: 2000 / 2000 [100%]  (Sampling)
 Chain 3: 
-Chain 3:  Elapsed Time: 0.13905 seconds (Warm-up)
-Chain 3:                0.125813 seconds (Sampling)
-Chain 3:                0.264863 seconds (Total)
+Chain 3:  Elapsed Time: 0.154612 seconds (Warm-up)
+Chain 3:                0.131164 seconds (Sampling)
+Chain 3:                0.285776 seconds (Total)
 Chain 3: 
 
 SAMPLING FOR MODEL 'iris_lm' NOW (CHAIN 4).
 Chain 4: 
-Chain 4: Gradient evaluation took 1.2e-05 seconds
-Chain 4: 1000 transitions using 10 leapfrog steps per transition would take 0.12 seconds.
+Chain 4: Gradient evaluation took 1.6e-05 seconds
+Chain 4: 1000 transitions using 10 leapfrog steps per transition would take 0.16 seconds.
 Chain 4: Adjust your expectations accordingly!
 Chain 4: 
 Chain 4: 
@@ -300,9 +366,9 @@ Chain 4: Iteration: 1600 / 2000 [ 80%]  (Sampling)
 Chain 4: Iteration: 1800 / 2000 [ 90%]  (Sampling)
 Chain 4: Iteration: 2000 / 2000 [100%]  (Sampling)
 Chain 4: 
-Chain 4:  Elapsed Time: 0.141526 seconds (Warm-up)
-Chain 4:                0.126494 seconds (Sampling)
-Chain 4:                0.26802 seconds (Total)
+Chain 4:  Elapsed Time: 0.147699 seconds (Warm-up)
+Chain 4:                0.127659 seconds (Sampling)
+Chain 4:                0.275358 seconds (Total)
 Chain 4:
 #+end_example
 
@@ -362,7 +428,7 @@ b       0.42    0.00 0.01   0.40   0.41   0.42   0.42   0.43  1809    1
 sigma   0.21    0.00 0.01   0.19   0.20   0.21   0.22   0.23  1735    1
 lp__  159.53    0.03 1.25 156.37 158.96 159.84 160.45 160.95  1408    1
 
-Samples were drawn using NUTS(diag_e) at Wed Nov 13 18:07:40 2019.
+Samples were drawn using NUTS(diag_e) at Mon Nov 18 10:17:52 2019.
 For each parameter, n_eff is a crude measure of effective sample size,
 and Rhat is the potential scale reduction factor on split chains (at 
 convergence, Rhat=1).
@@ -477,7 +543,7 @@ stan_plot(fit)
 #+end_src
 
 #+RESULTS:
-[[file:/home/shun/Dropbox/memo/img/babel/fig-TwHYF3.png]]
+[[file:/home/shun/Dropbox/memo/img/babel/fig-LSWGHR.png]]
 
 パラメタを絞ることもできる
 #+begin_src R :results output graphics file :file (my/get-babel-file)
@@ -928,14 +994,17 @@ constrain_pars(fit)
 ** Blocks
 
 #+begin_src stan
+// 上から順番に評価される
+
+// ユーザ定義関数
 function {}
 
-// データの定義
-// 観測されたデータ
-// 制約を課すとデータの入力チェックができる
+// 観測された確率変数
+// 制約はデータの入力チェックのみ
 data {}
 
-// 制約を課すとデータの入力チェックができる
+// 入力データではなく、生成するデータ
+// 制約はデータの入力チェックのみ
 transformed data {}
 
 // 推定されるべきパラメタ
@@ -948,6 +1017,7 @@ parameters {}
 transformed parameters {}
 
 // モデル・データ生成過程 (~ 確率分布で表されるもの)
+// モデルの対数尤度を定義するブロック
 model {}
 
 // モデル推定には、不要だが別の目的で出力したいデータ
@@ -2166,294 +2236,31 @@ ggmcmc(
   plot=c("traceplot", "density", "running", "autocorrelation"))
 #+end_src
 
-* ={loo}= Package
-** [[http://ushi-goroshi.hatenablog.com/entry/2017/12/24/225748][WAICを計算してみる@統計コンサルの議事メモ]] の例
-*** データ
+* ={rstanarm}= Package
+** 概要
 
-#+begin_src R :results value :colnames yes
-# シミュレーションデータの発生
-set.seed(123)
-N <- 100 # サンプルサイズ
-b <- 1.2 # 回帰係数
-X <- rnorm(N, 0, 1) # 説明変数
-E <- rnorm(N, 0, 2) # 誤差項
-Y <- b * X + E
-D <- data.frame(Y, X) # データフレーム
-head(D)
-#+end_src
-
-#+RESULTS:
-|                  Y |                  X |
-|--------------------+--------------------|
-|  -2.09338390326126 | -0.560475646552213 |
-|  0.237554430933123 |  -0.23017748948328 |
-|    1.3770662200542 |   1.55870831414912 |
-| -0.610475129085975 |  0.070508391424576 |
-|   -1.7480918523369 |  0.129287735160946 |
-|    1.9680225346421 |   1.71506498688328 |
-
-*** モデル
-
-#+begin_src stan :file models/waic.stan
-data {
-  int<lower=1> N;
-  vector[N] X;
-  vector[N] Y;
-}
-
-parameters {
-  real b0;
-  real b1;
-  real<lower=0> sigma;
-}
-
-model {
-  Y ~ normal(b0 + b1 * X, sigma);
-}
-
-generated quantities {
-  vector[N] log_lik;
-  for (n in 1:N)
-    log_lik[n] = normal_lpdf(Y[n] | b0 + b1 * X[n], sigma);
-}
-#+end_src
-
-#+RESULTS:
-[[file:models/waic.stan]]
-
-*** 当てはめ
-
-#+begin_src R
-dat_stan <- list(N = N, X = D$X, Y = D$Y)
-fit_01 <- stan(file = "models/waic.stan", data = dat_stan, 
-               iter = 3000, chains = 4, seed = 1234)
-#+end_src
-
-#+RESULTS:
-#+begin_example
-
-
-SAMPLING FOR MODEL 'waic' NOW (CHAIN 1).
-Chain 1: 
-Chain 1: Gradient evaluation took 1.9e-05 seconds
-Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 0.19 seconds.
-Chain 1: Adjust your expectations accordingly!
-Chain 1: 
-Chain 1: 
-Chain 1: Iteration:    1 / 3000 [  0%]  (Warmup)
-Chain 1: Iteration:  300 / 3000 [ 10%]  (Warmup)
-Chain 1: Iteration:  600 / 3000 [ 20%]  (Warmup)
-Chain 1: Iteration:  900 / 3000 [ 30%]  (Warmup)
-Chain 1: Iteration: 1200 / 3000 [ 40%]  (Warmup)
-Chain 1: Iteration: 1500 / 3000 [ 50%]  (Warmup)
-Chain 1: Iteration: 1501 / 3000 [ 50%]  (Sampling)
-Chain 1: Iteration: 1800 / 3000 [ 60%]  (Sampling)
-Chain 1: Iteration: 2100 / 3000 [ 70%]  (Sampling)
-Chain 1: Iteration: 2400 / 3000 [ 80%]  (Sampling)
-Chain 1: Iteration: 2700 / 3000 [ 90%]  (Sampling)
-Chain 1: Iteration: 3000 / 3000 [100%]  (Sampling)
-Chain 1: 
-Chain 1:  Elapsed Time: 0.047774 seconds (Warm-up)
-Chain 1:                0.05261 seconds (Sampling)
-Chain 1:                0.100384 seconds (Total)
-Chain 1: 
-
-SAMPLING FOR MODEL 'waic' NOW (CHAIN 2).
-Chain 2: 
-Chain 2: Gradient evaluation took 8e-06 seconds
-Chain 2: 1000 transitions using 10 leapfrog steps per transition would take 0.08 seconds.
-Chain 2: Adjust your expectations accordingly!
-Chain 2: 
-Chain 2: 
-Chain 2: Iteration:    1 / 3000 [  0%]  (Warmup)
-Chain 2: Iteration:  300 / 3000 [ 10%]  (Warmup)
-Chain 2: Iteration:  600 / 3000 [ 20%]  (Warmup)
-Chain 2: Iteration:  900 / 3000 [ 30%]  (Warmup)
-Chain 2: Iteration: 1200 / 3000 [ 40%]  (Warmup)
-Chain 2: Iteration: 1500 / 3000 [ 50%]  (Warmup)
-Chain 2: Iteration: 1501 / 3000 [ 50%]  (Sampling)
-Chain 2: Iteration: 1800 / 3000 [ 60%]  (Sampling)
-Chain 2: Iteration: 2100 / 3000 [ 70%]  (Sampling)
-Chain 2: Iteration: 2400 / 3000 [ 80%]  (Sampling)
-Chain 2: Iteration: 2700 / 3000 [ 90%]  (Sampling)
-Chain 2: Iteration: 3000 / 3000 [100%]  (Sampling)
-Chain 2: 
-Chain 2:  Elapsed Time: 0.047229 seconds (Warm-up)
-Chain 2:                0.050102 seconds (Sampling)
-Chain 2:                0.097331 seconds (Total)
-Chain 2: 
-
-SAMPLING FOR MODEL 'waic' NOW (CHAIN 3).
-Chain 3: 
-Chain 3: Gradient evaluation took 1e-05 seconds
-Chain 3: 1000 transitions using 10 leapfrog steps per transition would take 0.1 seconds.
-Chain 3: Adjust your expectations accordingly!
-Chain 3: 
-Chain 3: 
-Chain 3: Iteration:    1 / 3000 [  0%]  (Warmup)
-Chain 3: Iteration:  300 / 3000 [ 10%]  (Warmup)
-Chain 3: Iteration:  600 / 3000 [ 20%]  (Warmup)
-Chain 3: Iteration:  900 / 3000 [ 30%]  (Warmup)
-Chain 3: Iteration: 1200 / 3000 [ 40%]  (Warmup)
-Chain 3: Iteration: 1500 / 3000 [ 50%]  (Warmup)
-Chain 3: Iteration: 1501 / 3000 [ 50%]  (Sampling)
-Chain 3: Iteration: 1800 / 3000 [ 60%]  (Sampling)
-Chain 3: Iteration: 2100 / 3000 [ 70%]  (Sampling)
-Chain 3: Iteration: 2400 / 3000 [ 80%]  (Sampling)
-Chain 3: Iteration: 2700 / 3000 [ 90%]  (Sampling)
-Chain 3: Iteration: 3000 / 3000 [100%]  (Sampling)
-Chain 3: 
-Chain 3:  Elapsed Time: 0.05837 seconds (Warm-up)
-Chain 3:                0.061302 seconds (Sampling)
-Chain 3:                0.119672 seconds (Total)
-Chain 3: 
-
-SAMPLING FOR MODEL 'waic' NOW (CHAIN 4).
-Chain 4: 
-Chain 4: Gradient evaluation took 8e-06 seconds
-Chain 4: 1000 transitions using 10 leapfrog steps per transition would take 0.08 seconds.
-Chain 4: Adjust your expectations accordingly!
-Chain 4: 
-Chain 4: 
-Chain 4: Iteration:    1 / 3000 [  0%]  (Warmup)
-Chain 4: Iteration:  300 / 3000 [ 10%]  (Warmup)
-Chain 4: Iteration:  600 / 3000 [ 20%]  (Warmup)
-Chain 4: Iteration:  900 / 3000 [ 30%]  (Warmup)
-Chain 4: Iteration: 1200 / 3000 [ 40%]  (Warmup)
-Chain 4: Iteration: 1500 / 3000 [ 50%]  (Warmup)
-Chain 4: Iteration: 1501 / 3000 [ 50%]  (Sampling)
-Chain 4: Iteration: 1800 / 3000 [ 60%]  (Sampling)
-Chain 4: Iteration: 2100 / 3000 [ 70%]  (Sampling)
-Chain 4: Iteration: 2400 / 3000 [ 80%]  (Sampling)
-Chain 4: Iteration: 2700 / 3000 [ 90%]  (Sampling)
-Chain 4: Iteration: 3000 / 3000 [100%]  (Sampling)
-Chain 4: 
-Chain 4:  Elapsed Time: 0.072774 seconds (Warm-up)
-Chain 4:                0.119478 seconds (Sampling)
-Chain 4:                0.192252 seconds (Total)
-Chain 4: 
-Warning message:
-In readLines(file, warn = TRUE) :
-  incomplete final line found on '/home/shun/Dropbox/repos/github/five-dots/notes/lang/stan/models/waic.stan'
-#+end_example
-
-*** 結果の確認
-
-#+begin_src R
-summary(fit_01)$summary[c("b1", "sigma"), c("mean", "50%")]
-#+end_src
-
-#+RESULTS:
-:           mean      50%
-: b1    1.092250 1.089015
-: sigma 1.966692 1.959185
-
-*** WAIC を計算
-
-$WAIC = -2(lppd - pWAIC)$
-
-- lppd (当てはまりの指標) を求める
-- 全データに対して、全てのステップのパラメタで尤度を計算し合計する
-#+begin_src R
-post_samples <- rstan::extract(fit_01)
-
-Des <- cbind(1, X) # 計画行列（Design Matrix）
-B   <- cbind(post_samples$b0, post_samples$b1) # パラメータ（Beta）
-tmp <- matrix(NA, length(post_samples$b0), N) # 6000行、 100列の行列
-for (i in 1:N) {
-   tmp[, i] <- dnorm(Y[i], mean = B %*% Des[i, ], 
-                     sd = post_samples$sigma)
-}
-
-lppd <- sum(log(colMeans(tmp)))
-lppd
-#+end_src
-
-#+RESULTS:
-: 
-: [1] -207.2566
-
-- pwaic (ペナルティの指標) を求める
-- パラメタ毎の分散の合計
-#+begin_src R
-pwaic <- sum(apply(tmp, 2, var))
-pwaic
-#+end_src
-
-#+RESULTS:
-: [1] 0.0241424
-
-
-#+begin_src R
-waic <- -2 * (lppd - pwaic)
-waic
-#+end_src
-
-#+RESULTS:
-: 
-: [1] 414.5616
-
-#+begin_src R
-lm_fit <- lm(Y ~ X, D)
-AIC(lm_fit)
-#+end_src
-
-#+RESULTS:
-: 
-: [1] 420.4523
-
-*** WAIC を計算 {loo}
-
-#+begin_src R
-tmp2  <- extract_log_lik(fit_01)
-waic2 <- waic(tmp2)
-waic2
-#+end_src
-
-#+RESULTS:
-#+begin_example
-Warning message:
-1 (1.0%) p_waic estimates greater than 0.4. We recommend trying loo instead.
-
-Computed from 6000 by 100 log-likelihood matrix
-
-          Estimate   SE
-elpd_waic   -210.5  8.2
-p_waic         3.2  0.9
-waic         420.9 16.4
-Warning message:
-1 (1.0%) p_waic estimates greater than 0.4. We recommend trying loo instead.
-#+end_example
-
-*** PSIS-CV
-
-- Pareto Smoothed Importance Sampling に 基づくクロスバリデーション (PSIS-CV)
-- パレート平滑化クロスバリデーション
+- R スタイルのモデルに rstan をバックエンドとして利用するパッケージ
+- 一般的な回帰モデルの、コンパイル済みの stan モデルが収録されている
+- 収録モデル
+  - stan_lm(), stan_aov(), stan_biglm()
+  - stan_glm(), stan_glm.nb()
+  - stan_glmer(), stan_glmer.nb(), stan_lmer()
+  - stan_nlmer()
+  - stan_gamm4()
+  - stan_polr()
+  - stan_betareg()
+  - stan_clogit()
+  - stan_mvmer()
+  - stan_jm()
 
 ** 参考
 
-- [[https://cran.r-project.org/web/packages/loo/index.html][CRAN]]
-- [[https://cran.r-project.org/web/packages/loo/loo.pdf][Reference Manual]]
+- [[https://mc-stan.org/rstanarm/][公式サイト]]
+- [[https://cran.r-project.org/web/packages/rstanarm/index.html][CRAN]]
+- [[https://github.com/stan-dev/rstanarm][Github Repo]]
 - Vignette
-  - [[https://cran.r-project.org/web/packages/loo/vignettes/loo2-example.html][Using the loo package (version >= 2.0.0)]]
-  - [[https://cran.r-project.org/web/packages/loo/vignettes/loo2-lfo.html][Approximate leave-future-out cross-validation for time series models]]
-  - [[https://cran.r-project.org/web/packages/loo/vignettes/loo2-non-factorizable.html][Leave-one-out cross-validation for non-factorizable models]]
-  - [[https://cran.r-project.org/web/packages/loo/vignettes/loo2-weights.html][Bayesian Stacking and Pseudo-BMA weights using the loo package]]
-  - [[https://cran.r-project.org/web/packages/loo/vignettes/loo2-with-rstan.html][Writing Stan programs for use with the loo package]]
-
-- Blog
-  - [[http://ushi-goroshi.hatenablog.com/entry/2017/12/24/225748][WAICを計算してみる@統計コンサルの議事メモ]]
-  - [[https://rpubs.com/siero5335/92987][loo package動かしてみた: WAIC比較@RPubs]]
-
-* ={bayesplot}= Package
-* ={brms}= Package
-
-- Stan のラッパー
-- Stan コードを書く必要がない
-
-** 参考
-
-- [[https://das-kino.hatenablog.com/entry/2018/12/15/230938][brmsパッケージを用いたベイズモデリング入門@nora_goes_far]]
+  - [[https://cran.r-project.org/web/packages/rstanarm/vignettes/rstanarm.html][How to Use the rstanarm Package]]
+  - 他多数
 
 * 参考
 
@@ -2490,3 +2297,5 @@ Warning message:
   - [[http://statmodeling.hatenablog.com/entry/calc-waic-wbic][WAICとWBICを事後分布から計算する@StatModeling Memorandum]]
   - [[https://rpubs.com/siero5335/92987][loo package動かしてみた: WAIC比較@RPubs]]
   - [[http://ushi-goroshi.hatenablog.com/entry/2017/12/24/225748][WAICを計算してみる@統計コンサルの議事メモ]]
+
+- [[https://bookdown.org/ajkurz/Statistical_Rethinking_recoded/][Statistical Rethinking with brms, ggplot2, and the tidyverse]]

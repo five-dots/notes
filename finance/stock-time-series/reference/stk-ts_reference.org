@@ -30,6 +30,7 @@
   - [[http://grg.hatenablog.com/entry/2017/03/19/001059][S&P500と日経225の時系列分析（コピュラ ＆ DCDモデル）@GRGと金融工学・統計解析]]
   - [[https://www.r-bloggers.com/introduction-to-asset-allocation/][Introduction to Asset Allocation@R-bloggers]]
   - [[https://stackoverflow.com/questions/34636402/using-covariance-matrix-for-portfolio-optimization-in-r][Using Covariance matrix for Portfolio Optimization in R@stackoverflow]]
+  - [[https://github.com/inertia7/timeSeries_sp500_R][Forecasting the Stock Market (R)@Github]]
 
 * COMMENT Local Variables                                           :ARCHIVE:
   # Local Variables:

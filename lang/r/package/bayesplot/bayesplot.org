@@ -1,0 +1,607 @@
+#+STARTUP: folded indent inlineimages latexpreview
+#+PROPERTY: header-args:R :session *R:bayesplot* :width 640 :height 480 :results output
+
+* ={bayesplot}= Plotting Bayesian models
+* 全関数
+
+- =ppc_=, =mcmc_= のプレフィックス
+- ppc = Posterior Predictive Checking
+
+#+begin_src R
+pacman::p_funs(bayesplot)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+  [1] "abline_01"                  "available_mcmc"            
+  [3] "available_ppc"              "bayesplot_grid"            
+  [5] "bayesplot_theme_get"        "bayesplot_theme_replace"   
+  [7] "bayesplot_theme_set"        "bayesplot_theme_update"    
+  [9] "color_scheme_get"           "color_scheme_set"          
+ [11] "color_scheme_view"          "example_group_data"        
+ [13] "example_mcmc_draws"         "example_x_data"            
+ [15] "example_y_data"             "example_yrep_draws"        
+ [17] "facet_bg"                   "facet_text"                
+ [19] "grid_lines"                 "hline_0"                   
+ [21] "hline_at"                   "lbub"                      
+ [23] "legend_move"                "legend_none"               
+ [25] "legend_text"                "log_posterior"             
+ [27] "mcmc_acf"                   "mcmc_acf_bar"              
+ [29] "mcmc_areas"                 "mcmc_areas_data"           
+ [31] "mcmc_areas_ridges"          "mcmc_areas_ridges_data"    
+ [33] "mcmc_combo"                 "mcmc_dens"                 
+ [35] "mcmc_dens_chains"           "mcmc_dens_chains_data"     
+ [37] "mcmc_dens_overlay"          "mcmc_hex"                  
+ [39] "mcmc_hist"                  "mcmc_hist_by_chain"        
+ [41] "mcmc_intervals"             "mcmc_intervals_data"       
+ [43] "mcmc_neff"                  "mcmc_neff_data"            
+ [45] "mcmc_neff_hist"             "mcmc_nuts_acceptance"      
+ [47] "mcmc_nuts_divergence"       "mcmc_nuts_energy"          
+ [49] "mcmc_nuts_stepsize"         "mcmc_nuts_treedepth"       
+ [51] "mcmc_pairs"                 "mcmc_parcoord"             
+ [53] "mcmc_parcoord_data"         "mcmc_rank_hist"            
+ [55] "mcmc_rank_overlay"          "mcmc_recover_hist"         
+ [57] "mcmc_recover_intervals"     "mcmc_recover_scatter"      
+ [59] "mcmc_rhat"                  "mcmc_rhat_data"            
+ [61] "mcmc_rhat_hist"             "mcmc_scatter"              
+ [63] "mcmc_trace"                 "mcmc_trace_data"           
+ [65] "mcmc_trace_highlight"       "mcmc_violin"               
+ [67] "neff_ratio"                 "nuts_params"               
+ [69] "overlay_function"           "pairs_condition"           
+ [71] "pairs_style_np"             "panel_bg"                  
+ [73] "param_glue"                 "param_range"               
+ [75] "parcoord_style_np"          "plot_bg"                   
+ [77] "pp_check"                   "ppc_bars"                  
+ [79] "ppc_bars_grouped"           "ppc_boxplot"               
+ [81] "ppc_data"                   "ppc_dens"                  
+ [83] "ppc_dens_overlay"           "ppc_ecdf_overlay"          
+ [85] "ppc_error_binned"           "ppc_error_hist"            
+ [87] "ppc_error_hist_grouped"     "ppc_error_scatter"         
+ [89] "ppc_error_scatter_avg"      "ppc_error_scatter_avg_vs_x"
+ [91] "ppc_freqpoly"               "ppc_freqpoly_grouped"      
+ [93] "ppc_hist"                   "ppc_intervals"             
+ [95] "ppc_intervals_data"         "ppc_intervals_grouped"     
+ [97] "ppc_loo_intervals"          "ppc_loo_pit"               
+ [99] "ppc_loo_pit_overlay"        "ppc_loo_pit_qq"            
+[101] "ppc_loo_ribbon"             "ppc_ribbon"                
+[103] "ppc_ribbon_data"            "ppc_ribbon_grouped"        
+[105] "ppc_rootogram"              "ppc_scatter"               
+[107] "ppc_scatter_avg"            "ppc_scatter_avg_grouped"   
+[109] "ppc_stat"                   "ppc_stat_2d"               
+[111] "ppc_stat_freqpoly_grouped"  "ppc_stat_grouped"          
+[113] "ppc_violin_grouped"         "rhat"                      
+[115] "scatter_style_np"           "theme_default"             
+[117] "trace_style_np"             "vars"                      
+[119] "vline_0"                    "vline_at"                  
+[121] "xaxis_text"                 "xaxis_ticks"               
+[123] "xaxis_title"                "yaxis_text"                
+[125] "yaxis_ticks"                "yaxis_title"
+#+end_example
+
+* 公式サイトの Example
+** =mcmc_areas()=
+
+- =rstanarm::stan_glm()= でモデル作成
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+fit <- stan_glm(mpg ~ ., data = mtcars) # stanreg class
+posterior <- as.matrix(fit)
+
+plot_title <- ggtitle("Posterior distributions",
+                      "with medians and 80% intervals")
+mcmc_areas(posterior,
+           pars = c("cyl", "drat", "am", "wt"),
+           prob = 0.8) + plot_title
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-0Li31O.png]]
+
+** =ppc_dens_overlay()=
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+color_scheme_set("red")
+ppc_dens_overlay(y = fit$y,
+                 yrep = posterior_predict(fit, draws = 50))
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-OfvIJV.png]]
+
+** =ppc_stat_grouped()=
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+color_scheme_set("brightblue")
+fit %>%
+  posterior_predict(draws = 500) %>%
+  ppc_stat_grouped(y = mtcars$mpg,
+                   group = mtcars$carb,
+                   stat = "median")
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-rxG769.png]]
+
+** =mcmc_trace()=
+
+#+begin_src R :results silent
+fit2 <- stan_demo("eight_schools", warmup = 300, iter = 700)
+posterior2 <- extract(fit2, inc_warmup = TRUE, permuted = FALSE)
+#+end_src
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+color_scheme_set("mix-blue-pink")
+p <- mcmc_trace(posterior2,  pars = c("mu", "tau"), n_warmup = 300,
+                facet_args = list(nrow = 2, labeller = label_parsed))
+p + facet_text(size = 15)
+p
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-JgZNfq.png]]
+
+** =mcmc_scatter()=
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+color_scheme_set("darkgray")
+mcmc_scatter(
+  as.matrix(fit2),
+  pars = c("tau", "theta[1]"), 
+  np = nuts_params(fit2), 
+  np_style = scatter_style_np(div_color = "green", div_alpha = 0.8)
+)
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-e3MU7n.png]]
+
+** =mcmc_nuts_energy()=
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+color_scheme_set("red")
+np <- nuts_params(fit2)
+mcmc_nuts_energy(np) + ggtitle("NUTS Energy Diagnostic")
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-oktX1w.png]]
+
+** =ppc_intervals()=
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+color_scheme_set("purple")
+fit <- stan_glmer(mpg ~ wt + (1|cyl), data = mtcars)
+ppc_intervals(
+  y = mtcars$mpg,
+  yrep = posterior_predict(fit),
+  x = mtcars$wt,
+  prob = 0.5
+) +
+  labs(
+    x = "Weight (1000 lbs)",
+    y = "MPG",
+    title = "50% posterior predictive intervals \nvs observed miles per gallon",
+    subtitle = "by vehicle weight"
+  ) +
+  panel_bg(fill = "gray95", color = NA) +
+  grid_lines(color = "white")
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-hs7k4q.png]]
+
+* [[https://www.kosugitti.net/archives/6078][Bayesplotパッケージはいいよ@Kosugitti's BLOG]] の例
+** モデル
+
+#+begin_src stan :file models/bayesplot_sample.stan
+data {
+  int<lower=0> N;
+  vector[N] X;
+  vector[N] Y;
+}
+
+parameters {
+  real mu;
+  real beta;
+  real<lower=0> sigma;
+}
+
+model {
+  Y ~ normal(mu + beta * X, sigma);
+}
+
+generated quantities {
+  vector[N] pred;
+  for(n in 1:N)
+    pred[n] = normal_rng(mu + beta * X[n], sigma);
+}
+#+end_src
+
+#+RESULTS:
+[[file:models/bayesplot_sample.stan]]
+
+** サンプリング
+
+#+begin_src R
+N <- 100
+x <- runif(N, 1, 10)
+yhat <- 7 + 15 * x 
+y <- yhat + rnorm(N, 0, 10)
+
+fit <- stan("models/bayesplot_sample.stan", data = list(N = N, X = x, Y = y))
+print(fit, pars = c("mu", "beta", "sigma"))
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+SAMPLING FOR MODEL 'bayesplot_sample' NOW (CHAIN 1).
+Chain 1: 
+Chain 1: Gradient evaluation took 1e-05 seconds
+Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 0.1 seconds.
+Chain 1: Adjust your expectations accordingly!
+Chain 1: 
+Chain 1: 
+Chain 1: Iteration:    1 / 2000 [  0%]  (Warmup)
+Chain 1: Iteration:  200 / 2000 [ 10%]  (Warmup)
+Chain 1: Iteration:  400 / 2000 [ 20%]  (Warmup)
+Chain 1: Iteration:  600 / 2000 [ 30%]  (Warmup)
+Chain 1: Iteration:  800 / 2000 [ 40%]  (Warmup)
+Chain 1: Iteration: 1000 / 2000 [ 50%]  (Warmup)
+Chain 1: Iteration: 1001 / 2000 [ 50%]  (Sampling)
+Chain 1: Iteration: 1200 / 2000 [ 60%]  (Sampling)
+Chain 1: Iteration: 1400 / 2000 [ 70%]  (Sampling)
+Chain 1: Iteration: 1600 / 2000 [ 80%]  (Sampling)
+Chain 1: Iteration: 1800 / 2000 [ 90%]  (Sampling)
+Chain 1: Iteration: 2000 / 2000 [100%]  (Sampling)
+Chain 1: 
+Chain 1:  Elapsed Time: 0.09205 seconds (Warm-up)
+Chain 1:                0.072922 seconds (Sampling)
+Chain 1:                0.164972 seconds (Total)
+Chain 1: 
+
+SAMPLING FOR MODEL 'bayesplot_sample' NOW (CHAIN 2).
+Chain 2: 
+Chain 2: Gradient evaluation took 7e-06 seconds
+Chain 2: 1000 transitions using 10 leapfrog steps per transition would take 0.07 seconds.
+Chain 2: Adjust your expectations accordingly!
+Chain 2: 
+Chain 2: 
+Chain 2: Iteration:    1 / 2000 [  0%]  (Warmup)
+Chain 2: Iteration:  200 / 2000 [ 10%]  (Warmup)
+Chain 2: Iteration:  400 / 2000 [ 20%]  (Warmup)
+Chain 2: Iteration:  600 / 2000 [ 30%]  (Warmup)
+Chain 2: Iteration:  800 / 2000 [ 40%]  (Warmup)
+Chain 2: Iteration: 1000 / 2000 [ 50%]  (Warmup)
+Chain 2: Iteration: 1001 / 2000 [ 50%]  (Sampling)
+Chain 2: Iteration: 1200 / 2000 [ 60%]  (Sampling)
+Chain 2: Iteration: 1400 / 2000 [ 70%]  (Sampling)
+Chain 2: Iteration: 1600 / 2000 [ 80%]  (Sampling)
+Chain 2: Iteration: 1800 / 2000 [ 90%]  (Sampling)
+Chain 2: Iteration: 2000 / 2000 [100%]  (Sampling)
+Chain 2: 
+Chain 2:  Elapsed Time: 0.093108 seconds (Warm-up)
+Chain 2:                0.072866 seconds (Sampling)
+Chain 2:                0.165974 seconds (Total)
+Chain 2: 
+
+SAMPLING FOR MODEL 'bayesplot_sample' NOW (CHAIN 3).
+Chain 3: 
+Chain 3: Gradient evaluation took 1.1e-05 seconds
+Chain 3: 1000 transitions using 10 leapfrog steps per transition would take 0.11 seconds.
+Chain 3: Adjust your expectations accordingly!
+Chain 3: 
+Chain 3: 
+Chain 3: Iteration:    1 / 2000 [  0%]  (Warmup)
+Chain 3: Iteration:  200 / 2000 [ 10%]  (Warmup)
+Chain 3: Iteration:  400 / 2000 [ 20%]  (Warmup)
+Chain 3: Iteration:  600 / 2000 [ 30%]  (Warmup)
+Chain 3: Iteration:  800 / 2000 [ 40%]  (Warmup)
+Chain 3: Iteration: 1000 / 2000 [ 50%]  (Warmup)
+Chain 3: Iteration: 1001 / 2000 [ 50%]  (Sampling)
+Chain 3: Iteration: 1200 / 2000 [ 60%]  (Sampling)
+Chain 3: Iteration: 1400 / 2000 [ 70%]  (Sampling)
+Chain 3: Iteration: 1600 / 2000 [ 80%]  (Sampling)
+Chain 3: Iteration: 1800 / 2000 [ 90%]  (Sampling)
+Chain 3: Iteration: 2000 / 2000 [100%]  (Sampling)
+Chain 3: 
+Chain 3:  Elapsed Time: 0.077686 seconds (Warm-up)
+Chain 3:                0.076837 seconds (Sampling)
+Chain 3:                0.154523 seconds (Total)
+Chain 3: 
+
+SAMPLING FOR MODEL 'bayesplot_sample' NOW (CHAIN 4).
+Chain 4: 
+Chain 4: Gradient evaluation took 8e-06 seconds
+Chain 4: 1000 transitions using 10 leapfrog steps per transition would take 0.08 seconds.
+Chain 4: Adjust your expectations accordingly!
+Chain 4: 
+Chain 4: 
+Chain 4: Iteration:    1 / 2000 [  0%]  (Warmup)
+Chain 4: Iteration:  200 / 2000 [ 10%]  (Warmup)
+Chain 4: Iteration:  400 / 2000 [ 20%]  (Warmup)
+Chain 4: Iteration:  600 / 2000 [ 30%]  (Warmup)
+Chain 4: Iteration:  800 / 2000 [ 40%]  (Warmup)
+Chain 4: Iteration: 1000 / 2000 [ 50%]  (Warmup)
+Chain 4: Iteration: 1001 / 2000 [ 50%]  (Sampling)
+Chain 4: Iteration: 1200 / 2000 [ 60%]  (Sampling)
+Chain 4: Iteration: 1400 / 2000 [ 70%]  (Sampling)
+Chain 4: Iteration: 1600 / 2000 [ 80%]  (Sampling)
+Chain 4: Iteration: 1800 / 2000 [ 90%]  (Sampling)
+Chain 4: Iteration: 2000 / 2000 [100%]  (Sampling)
+Chain 4: 
+Chain 4:  Elapsed Time: 0.081708 seconds (Warm-up)
+Chain 4:                0.076328 seconds (Sampling)
+Chain 4:                0.158036 seconds (Total)
+Chain 4:
+Inference for Stan model: bayesplot_sample.
+4 chains, each with iter=2000; warmup=1000; thin=1; 
+post-warmup draws per chain=1000, total post-warmup draws=4000.
+
+       mean se_mean   sd  2.5%   25%   50%   75% 97.5% n_eff Rhat
+mu     5.51    0.06 2.57  0.41  3.81  5.53  7.19 10.56  1832    1
+beta  15.27    0.01 0.41 14.48 15.00 15.25 15.54 16.07  1920    1
+sigma 10.18    0.02 0.74  8.85  9.66 10.13 10.67 11.72  2046    1
+
+Samples were drawn using NUTS(diag_e) at Mon Nov 18 11:04:57 2019.
+For each parameter, n_eff is a crude measure of effective sample size,
+and Rhat is the potential scale reduction factor on split chains (at 
+convergence, Rhat=1).
+#+end_example
+
+** MCMC サンプルを抽出
+
+- array で抽出
+#+begin_src R
+fit.array <- as.array(fit)
+#+end_src
+
+** =mcmc_*= functions
+*** =mcmc_trace()=
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+mcmc_trace(fit.array,pars=c("mu","beta","sigma"))
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-D17dNi.png]]
+
+*** =mcmc_acf()=
+
+- 自己相関
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+mcmc_acf(fit.array,pars=c("mu","beta","sigma"))
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-tv9NvM.png]]
+
+*** =mcmc_dens()=
+
+- 事後確率密度
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+mcmc_dens(fit.array,pars=c("mu","beta","sigma"))
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-sItOAz.png]]
+
+*** =mcmc_dens_overlay()=
+
+- chain 毎に分けて表示
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+mcmc_dens_overlay(fit.array,pars=c("mu","beta","sigma"))
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-MkVNT9.png]]
+
+*** =mcmc_hist()=
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+mcmc_hist(fit.array,pars=c("mu","beta","sigma"))
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-y7rtaA.png]]
+
+*** =mcmc_hist_by_chain()=
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+mcmc_hist_by_chain(fit.array,pars=c("mu","beta","sigma"))
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-lTOiVw.png]]
+
+*** =mcmc_violin()=
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+mcmc_violin(fit.array,pars=c("mu","beta","sigma"))
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-qPoIZ6.png]]
+
+*** =mcmc_areas()=
+
+- 区間推定
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+mcmc_areas(fit.array,pars=c("mu","beta","sigma"),prob=0.95)
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-s2IHCX.png]]
+
+*** =mcmc_rhat()=
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+mcmc_rhat(rhat(fit))
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-EvjSOh.png]]
+
+*** =mcmc_neff()=
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+mcmc_neff(neff_ratio(fit))
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-euwZ05.png]]
+
+** =ppc_*= functions
+*** =ppc_stat()=
+
+- ppc = Posterior Predictive Checking
+- 事後予測をチェックするプロット
+- y = データ, yrep = 予測
+- generated quantities で発生させた予測値と観測データとの類似性を比較する
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+# 生成量としての予測値を抜き出す
+Yrep <- rstan::extract(fit, pars="pred")$pred
+# 事後予測チェックPosterior Predictive Checking の一連の関数
+ppc_stat(y, Yrep, stat="mean")
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-5cWOFm.png]]
+
+*** =ppc_stat_2d()=
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+ppc_stat_2d(y,Yrep,stat=c("mean","sd"))
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-zN2JIQ.png]]
+
+*** =ppc_dens()=
+
+- いくつかのサンプル(ここでは最初の 9 つ)とデータを並べてみる
+- サンプルを指定しないと(4000 あるので)反応が返ってこなくなる
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+ppc_dens(y,Yrep[1:9,])
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-ygVY8v.png]]
+
+*** =ppc_dens_overlay()=
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+ppc_dens_overlay(y,Yrep[1:9,])
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-lUMTXu.png]]
+
+*** =ppc_boxplot()=
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+ppc_boxplot(y,Yrep[1:9,])
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-q3OvBy.png]]
+
+*** =ppc_freqpoly()=
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+ppc_freqpoly(y,Yrep[1:9,])
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-H0mnQF.png]]
+
+*** =ppc_ecdf_overlay()=
+
+- ecdf = empirical cumulative distribution function
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+ppc_ecdf_overlay(y,Yrep[1:9,])
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-hO4AJL.png]]
+
+*** =ppc_scatter_avg()=
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+ppc_scatter_avg(y,Yrep) + 
+  ggplot2::lims(x=c(min(y), max(y)), y=c(min(y), max(y)))
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-pDb6wy.png]]
+
+*** =ppc_scatter()=
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+ppc_scatter(y,Yrep[1:9,])
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-zIRiPp.png]]
+
+*** =ppc_error_binned()=
+
+- 予測値とデータとの差 = error のプロット
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+ppc_error_binned(y,Yrep[1:9,])
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-7DWzz0.png]]
+
+*** =ppc_error_scatter()=
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+ppc_error_scatter(y,Yrep[1:9,])
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-rLQQwv.png]]
+
+*** =ppc_error_hist()=
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+ppc_error_hist(y,Yrep[1:9,])
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-jTbatE.png]]
+
+*** =ppc_error_scatter_avg()=
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+ppc_error_scatter_avg(y,Yrep)
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-jGx2w5.png]]
+
+*** =ppc_error_scatter_avg_vs_x()=
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+ppc_error_scatter_avg_vs_x(y,Yrep,x)
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-uzMAxz.png]]
+
+* 参考
+
+- [[https://mc-stan.org/bayesplot/][公式サイト]]
+- [[https://cran.r-project.org/web/packages/bayesplot/index.html][CRAN]]
+- [[https://cran.r-project.org/web/packages/bayesplot/bayesplot.pdf][Reference Manual]]
+- [[https://github.com/stan-dev/bayesplot][Github Repo]]
+- Vignette
+  - [[https://cran.r-project.org/web/packages/bayesplot/vignettes/graphical-ppcs.html][Graphical posterior predictive checks using the bayesplot package]]
+  - [[https://cran.r-project.org/web/packages/bayesplot/vignettes/plotting-mcmc-draws.html][Plotting MCMC draws using the bayesplot package]]
+  - [[https://cran.r-project.org/web/packages/bayesplot/vignettes/visual-mcmc-diagnostics.html][Visual MCMC diagnostics using the bayesplot package]]
+
+- Blog
+  - [[https://dastatis.github.io/pdf/StanAdvent2018/bayesplot.html#content][Introduction to bayesplot (mcmc_ series)]]
+  - [[https://www.kosugitti.net/archives/6078][Bayesplotパッケージはいいよ@Kosugitti's BLOG]]

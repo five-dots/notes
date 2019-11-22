@@ -535,31 +535,47 @@ $$ \alpha_i - r = \beta_{iM} (\alpha_M - r) + Hedge_i $$
 * マルチファクターモデル
 ** ファクターの種類
 
+_ファクター・アノマリーの種類_
 - バリュー
   - 本来の価値に対して、株価が低くなっている場合のリターン
   - 純資産倍率(PBR)、株価収益率(PER)、簿価、売上高、利益など
+  - Fama/French の HML
 
 - サイズ
   - 成長株など小型株のリターン (Small Firm Effect: 小型株効果)
   - 時価総額規模
+  - Fama/French の SMB
 
 - モメンタム
-  - 流行りの、より好調な株式のリターン
+  - 過去上昇したものは、上昇を続ける
   - 株価のリターン
+  - Carhart の PR1YR あるいは、MOM
 
 - ボラティリティ
+  - 低ボラティリティのパフォーマンスが良い
   - ベータなどの値動きのリターン
   - 標準偏差やベータ値
 
 - クオリティ
   - 安定的な利益成長を持つ株式のリターン
-  - ROE,収益安定性、配当成長、財務基盤、など
+  - ROE, 収益安定性、配当成長、財務基盤、など
+  - Fama/French の RMW (Robust Minus Week) = 営業利益の変化率
+  - QMJ (Quality Minus Junk)
+
+- 投資パターン
+  - Fama/French の CMA (Conservative Minus Aggresive) = 総資産の変化率
 
 - イールド
-  - 高配当利回りのリターン
+  - 高配当銘柄は高いリターンになりやすい
   - 配当利回り
 
 - 短期のリバーサル
+
+- 週末効果
+  - 月曜は下落し、金曜に上昇
+
+- 1 月効果
+  - 小型株は年初の 2 週間に高パフォーマンス
 
 ** Fama-French 3-Factor Model
 *** 基本
@@ -567,8 +583,8 @@ $$ \alpha_i - r = \beta_{iM} (\alpha_M - r) + Hedge_i $$
 - ユージン・ファーマ、ケネス・フレンチにより 1993 年に発表
 - 3 つのファクターを利用
   - マーケットポートフォリオ
-  - 時価総額
-  - 簿価時価比 (PBR の逆)
+  - 時価総額 (Size)
+  - 簿価時価比 (PBR の逆) (Value Facotr)
 
 $$ R_i - R_f = \beta_i^{MKT} MKT + \beta_i^{SMB} SMB + \beta_i^{HML} HML + \epsilon $$
  
@@ -719,7 +735,15 @@ $score = \Sigma_{i=max(0, N-63)}^N\frac{daily_return_i}{max(trailing_63_day_vola
 
 - Blog
   - [[https://www.americakabu.com/entry/%E3%82%B9%E3%83%9E%E3%83%BC%E3%83%88%E3%83%99%E3%83%BC%E3%82%BFETF][スマートベータETFとは@たぱぞうの米国株投資]]
-  - [[https://www.keito.luxe/2019/06/Fama-French-Three-Factor-Datal.html][ファーマ-フレンチの3ファクターモデルのデータを入手する方法]] 
+  - [[https://www.keito.luxe/2019/06/Fama-French-Three-Factor-Datal.html][ファーマ-フレンチの3ファクターモデルのデータを入手する方法]]
+  
+  - [[https://quant.stackexchange.com/questions/15441/how-to-get-real-time-data-for-fama-french-model][How to get real-time data for Fama-French model?@Stack Exchange]]
+  - [[https://www.quantopian.com/posts/computing-the-fama-french-factors-with-pipeline-1][Computing the Fama-French Factors with Pipeline@Quantopian]]
+  - [[https://quant.stackexchange.com/questions/38038/fama-french-typical-time-lag][Fama French- typical time lag@Stack Exchange]]
+  - [[https://quant.stackexchange.com/questions/18808/fama-french-data-from-daily-to-monthly-returns][Fama-French Data from daily to monthly returns@Stack Exchange]]
+  - [[https://quant.stackexchange.com/questions/31048/fama-french-3-factors-how-to-convert-published-daily-weekly-monthly-values-to-s][Fama/French 3 Factors: How to convert published daily/weekly/monthly values to semi-annual/annual?@Stack Exchange]]
+
+  - [[https://www.researchgate.net/post/Why_did_the_Fama_French_factors_calculated_using_simple_returns_instead_of_log_returns][Why did the Fama French factors calculated using simple returns instead of log returns?@ResearchGate]]
 
 - R View Series
   - [[https://rviews.rstudio.com/2018/02/08/capm-beta/][Calculating Beta in the Capital Asset Pricing Model@R Views]]

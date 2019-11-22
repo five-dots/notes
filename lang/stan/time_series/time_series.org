@@ -4,15 +4,17 @@
 * ライブラリの読み込みと事前準備
 
 #+begin_src R :results silent
+library(tidyverse)
 library(glue)
 library(lubridate)
-library(rstan)
-library(tidyverse)
+
 library(forecast)
-library(shinystan)
 library(fGarch)
-library(forecast)
+
+library(rstan)
+library(shinystan)
 library(loo)
+library(brms)
 #+end_src
 
 #+begin_src R :results silent
@@ -537,7 +539,7 @@ $y_t = \mu + u_t$
 
 $u_t = \sqrt{h_t \epsilon_t}, \epsilon_t \sim N(0, 1)$
 
-$h_t = \omega + \Sigma_{i=1}^m \alpha_i \upsilon_{t-i}$
+$h_t = \omega + \Sigma_{i=1}^m \alpha_i u_{t-i}$
 
 
 - $\mu$ は ARMA などの条件付き期待値のモデル
@@ -1667,7 +1669,7 @@ ggtsdisplay(arma22)
 #+end_src
 
 #+RESULTS:
-[[file:/home/shun/Dropbox/memo/img/babel/fig-kj9PNB.png]]
+[[file:/home/shun/Dropbox/memo/img/babel/fig-VlDjP6.png]]
 
 *** モデル
 
@@ -1689,7 +1691,7 @@ data {
 parameters {
 	real mu;
 	vector[P] phi;
-	vector[Q] theta;
+	vector<lower=-1, upper=1>[Q] theta;
 	real<lower=0> sigma;
 }
 
@@ -1714,8 +1716,8 @@ model {
 
   // priors
 	mu ~ normal(0, 5);
-  phi ~ normal(0, 1);
-  theta ~ normal(0, 1);
+  phi ~ normal(0, 2);
+  theta ~ normal(0, 2);
   sigma ~ cauchy(0, 5); // TODO half-t or half-norm
 
 	// log-likelihood
@@ -1813,7 +1815,6 @@ arma_22_fit <- stan(
 
 #+RESULTS:
 #+begin_example
-
 hash mismatch so recompiling; make sure Stan code ends with a blank line
 
 SAMPLING FOR MODEL 'arma_p-q' NOW (CHAIN 1).
@@ -1821,111 +1822,108 @@ SAMPLING FOR MODEL 'arma_p-q' NOW (CHAIN 1).
 SAMPLING FOR MODEL 'arma_p-q' NOW (CHAIN 2).
 
 SAMPLING FOR MODEL 'arma_p-q' NOW (CHAIN 3).
-
-SAMPLING FOR MODEL 'arma_p-q' NOW (CHAIN 4).
 Chain 1: 
-Chain 1: Gradient evaluation took 0.001353 seconds
-Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 13.53 seconds.
+Chain 1: Gradient evaluation took 0.001131 seconds
+Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 11.31 seconds.
 Chain 1: Adjust your expectations accordingly!
 Chain 1: 
 Chain 1: 
 Chain 1: Iteration:    1 / 2000 [  0%]  (Warmup)
+
+SAMPLING FOR MODEL 'arma_p-q' NOW (CHAIN 4).
 Chain 2: 
-Chain 2: Gradient evaluation took 0.001303 seconds
-Chain 2: 1000 transitions using 10 leapfrog steps per transition would take 13.03 seconds.
+Chain 2: Gradient evaluation took 0.000857 seconds
+Chain 2: 1000 transitions using 10 leapfrog steps per transition would take 8.57 seconds.
 Chain 2: Adjust your expectations accordingly!
 Chain 2: 
 Chain 2: 
 Chain 2: Iteration:    1 / 2000 [  0%]  (Warmup)
 Chain 3: 
-Chain 3: Gradient evaluation took 0.001387 seconds
-Chain 3: 1000 transitions using 10 leapfrog steps per transition would take 13.87 seconds.
+Chain 3: Gradient evaluation took 0.000786 seconds
+Chain 3: 1000 transitions using 10 leapfrog steps per transition would take 7.86 seconds.
 Chain 3: Adjust your expectations accordingly!
 Chain 3: 
 Chain 3: 
 Chain 3: Iteration:    1 / 2000 [  0%]  (Warmup)
 Chain 4: 
-Chain 4: Gradient evaluation took 0.001324 seconds
-Chain 4: 1000 transitions using 10 leapfrog steps per transition would take 13.24 seconds.
+Chain 4: Gradient evaluation took 0.001044 seconds
+Chain 4: 1000 transitions using 10 leapfrog steps per transition would take 10.44 seconds.
 Chain 4: Adjust your expectations accordingly!
 Chain 4: 
 Chain 4: 
 Chain 4: Iteration:    1 / 2000 [  0%]  (Warmup)
-Chain 3: Iteration:  200 / 2000 [ 10%]  (Warmup)
 Chain 2: Iteration:  200 / 2000 [ 10%]  (Warmup)
-Chain 4: Iteration:  200 / 2000 [ 10%]  (Warmup)
 Chain 1: Iteration:  200 / 2000 [ 10%]  (Warmup)
-Chain 3: Iteration:  400 / 2000 [ 20%]  (Warmup)
+Chain 4: Iteration:  200 / 2000 [ 10%]  (Warmup)
+Chain 3: Iteration:  200 / 2000 [ 10%]  (Warmup)
 Chain 2: Iteration:  400 / 2000 [ 20%]  (Warmup)
-Chain 1: Iteration:  400 / 2000 [ 20%]  (Warmup)
 Chain 4: Iteration:  400 / 2000 [ 20%]  (Warmup)
-Chain 3: Iteration:  600 / 2000 [ 30%]  (Warmup)
-Chain 1: Iteration:  600 / 2000 [ 30%]  (Warmup)
-Chain 4: Iteration:  600 / 2000 [ 30%]  (Warmup)
+Chain 1: Iteration:  400 / 2000 [ 20%]  (Warmup)
+Chain 3: Iteration:  400 / 2000 [ 20%]  (Warmup)
 Chain 2: Iteration:  600 / 2000 [ 30%]  (Warmup)
-Chain 3: Iteration:  800 / 2000 [ 40%]  (Warmup)
+Chain 4: Iteration:  600 / 2000 [ 30%]  (Warmup)
+Chain 1: Iteration:  600 / 2000 [ 30%]  (Warmup)
+Chain 3: Iteration:  600 / 2000 [ 30%]  (Warmup)
+Chain 2: Iteration:  800 / 2000 [ 40%]  (Warmup)
 Chain 1: Iteration:  800 / 2000 [ 40%]  (Warmup)
 Chain 4: Iteration:  800 / 2000 [ 40%]  (Warmup)
-Chain 2: Iteration:  800 / 2000 [ 40%]  (Warmup)
-Chain 3: Iteration: 1000 / 2000 [ 50%]  (Warmup)
-Chain 3: Iteration: 1001 / 2000 [ 50%]  (Sampling)
+Chain 3: Iteration:  800 / 2000 [ 40%]  (Warmup)
+Chain 2: Iteration: 1000 / 2000 [ 50%]  (Warmup)
+Chain 2: Iteration: 1001 / 2000 [ 50%]  (Sampling)
 Chain 1: Iteration: 1000 / 2000 [ 50%]  (Warmup)
 Chain 1: Iteration: 1001 / 2000 [ 50%]  (Sampling)
 Chain 4: Iteration: 1000 / 2000 [ 50%]  (Warmup)
 Chain 4: Iteration: 1001 / 2000 [ 50%]  (Sampling)
-Chain 2: Iteration: 1000 / 2000 [ 50%]  (Warmup)
-Chain 2: Iteration: 1001 / 2000 [ 50%]  (Sampling)
-Chain 1: Iteration: 1200 / 2000 [ 60%]  (Sampling)
-Chain 3: Iteration: 1200 / 2000 [ 60%]  (Sampling)
-Chain 1: Iteration: 1400 / 2000 [ 70%]  (Sampling)
-Chain 4: Iteration: 1200 / 2000 [ 60%]  (Sampling)
+Chain 3: Iteration: 1000 / 2000 [ 50%]  (Warmup)
+Chain 3: Iteration: 1001 / 2000 [ 50%]  (Sampling)
 Chain 2: Iteration: 1200 / 2000 [ 60%]  (Sampling)
-Chain 3: Iteration: 1400 / 2000 [ 70%]  (Sampling)
-Chain 1: Iteration: 1600 / 2000 [ 80%]  (Sampling)
+Chain 3: Iteration: 1200 / 2000 [ 60%]  (Sampling)
+Chain 1: Iteration: 1200 / 2000 [ 60%]  (Sampling)
+Chain 4: Iteration: 1200 / 2000 [ 60%]  (Sampling)
 Chain 2: Iteration: 1400 / 2000 [ 70%]  (Sampling)
-Chain 4: Iteration: 1400 / 2000 [ 70%]  (Sampling)
-Chain 3: Iteration: 1600 / 2000 [ 80%]  (Sampling)
-Chain 1: Iteration: 1800 / 2000 [ 90%]  (Sampling)
+Chain 3: Iteration: 1400 / 2000 [ 70%]  (Sampling)
+Chain 1: Iteration: 1400 / 2000 [ 70%]  (Sampling)
 Chain 2: Iteration: 1600 / 2000 [ 80%]  (Sampling)
-Chain 4: Iteration: 1600 / 2000 [ 80%]  (Sampling)
-Chain 3: Iteration: 1800 / 2000 [ 90%]  (Sampling)
-Chain 1: Iteration: 2000 / 2000 [100%]  (Sampling)
-Chain 1: 
-Chain 1:  Elapsed Time: 31.2872 seconds (Warm-up)
-Chain 1:                28.7865 seconds (Sampling)
-Chain 1:                60.0737 seconds (Total)
-Chain 1: 
+Chain 3: Iteration: 1600 / 2000 [ 80%]  (Sampling)
+Chain 4: Iteration: 1400 / 2000 [ 70%]  (Sampling)
 Chain 2: Iteration: 1800 / 2000 [ 90%]  (Sampling)
-Chain 4: Iteration: 1800 / 2000 [ 90%]  (Sampling)
+Chain 3: Iteration: 1800 / 2000 [ 90%]  (Sampling)
+Chain 1: Iteration: 1600 / 2000 [ 80%]  (Sampling)
+Chain 4: Iteration: 1600 / 2000 [ 80%]  (Sampling)
 Chain 3: Iteration: 2000 / 2000 [100%]  (Sampling)
 Chain 3: 
-Chain 3:  Elapsed Time: 32.0359 seconds (Warm-up)
-Chain 3:                33.1097 seconds (Sampling)
-Chain 3:                65.1455 seconds (Total)
+Chain 3:  Elapsed Time: 16.7943 seconds (Warm-up)
+Chain 3:                15.4723 seconds (Sampling)
+Chain 3:                32.2665 seconds (Total)
 Chain 3: 
 Chain 2: Iteration: 2000 / 2000 [100%]  (Sampling)
 Chain 2: 
-Chain 2:  Elapsed Time: 35.0106 seconds (Warm-up)
-Chain 2:                34.2884 seconds (Sampling)
-Chain 2:                69.2989 seconds (Total)
+Chain 2:  Elapsed Time: 15.1849 seconds (Warm-up)
+Chain 2:                17.3768 seconds (Sampling)
+Chain 2:                32.5617 seconds (Total)
 Chain 2: 
+Chain 1: Iteration: 1800 / 2000 [ 90%]  (Sampling)
+Chain 4: Iteration: 1800 / 2000 [ 90%]  (Sampling)
+Chain 1: Iteration: 2000 / 2000 [100%]  (Sampling)
+Chain 1: 
+Chain 1:  Elapsed Time: 16.2068 seconds (Warm-up)
+Chain 1:                21.0358 seconds (Sampling)
+Chain 1:                37.2426 seconds (Total)
+Chain 1: 
 Chain 4: Iteration: 2000 / 2000 [100%]  (Sampling)
 Chain 4: 
-Chain 4:  Elapsed Time: 33.3185 seconds (Warm-up)
-Chain 4:                36.6852 seconds (Sampling)
-Chain 4:                70.0037 seconds (Total)
+Chain 4:  Elapsed Time: 16.0809 seconds (Warm-up)
+Chain 4:                24.2027 seconds (Sampling)
+Chain 4:                40.2837 seconds (Total)
 Chain 4: 
 Warning messages:
 1: In readLines(file, warn = TRUE) :
   incomplete final line found on '/home/shun/Dropbox/repos/github/five-dots/notes/lang/stan/time_series/models/arma_p-q.stan'
-2: There were 394 divergent transitions after warmup. Increasing adapt_delta above 0.8 may help. See
+2: There were 31 divergent transitions after warmup. Increasing adapt_delta above 0.8 may help. See
 http://mc-stan.org/misc/warnings.html#divergent-transitions-after-warmup 
 3: Examine the pairs() plot to diagnose sampling problems
  
-4: Bulk Effective Samples Size (ESS) is too low, indicating posterior means and medians may be unreliable.
-Running the chains for more iterations may help. See
-http://mc-stan.org/misc/warnings.html#bulk-ess 
-5: Tail Effective Samples Size (ESS) is too low, indicating posterior variances and tail quantiles may be unreliable.
+4: Tail Effective Samples Size (ESS) is too low, indicating posterior variances and tail quantiles may be unreliable.
 Running the chains for more iterations may help. See
 http://mc-stan.org/misc/warnings.html#tail-ess
 #+end_example
@@ -2009,9 +2007,18 @@ waic$estimates["waic", "Estimate"]
 #+RESULTS:
 : [1] 2815.958
 
+- =Forecast::Arima()= での AIC と比較してみる
+#+begin_src R
+Arima(arma22, order = c(2,0,2)) %>% AIC
+#+end_src
+
+#+RESULTS:
+: [1] 2817.905
+
 *** WAIC による次数選択
 
-#+begin_src R
+- P=3, Q=3 までの 9 通りのサンプリング
+#+begin_src R :results silent
 arma_orders <- cross(list(P = c(1, 2, 3), Q = c(1, 2, 3)))
 arma_fits <- map(arma_orders, function(order) {
   stan(
@@ -2021,6 +2028,205 @@ arma_fits <- map(arma_orders, function(order) {
     seed = 1234)
 })
 #+end_src
+
+- 全てについて WAIC を計算
+- ARMA(1,1) が選択された
+#+begin_src R :results value :colnames yes
+arma_llks <- map2_dfr(arma_orders, arma_fits, function(order, fit) {
+  llk <- extract_log_lik(fit)
+  waic <- waic(llk)
+  data.frame(p = order$P, q = order$Q, waic = waic$estimates["waic", "Estimate"])
+})
+arma_llks %>% arrange(waic)
+#+end_src
+
+#+RESULTS:
+| p | q |             waic |
+|---+---+------------------|
+| 1 | 1 | 2813.68783337513 |
+| 3 | 1 | 2814.84588750635 |
+| 2 | 1 | 2815.40639900447 |
+| 1 | 2 | 2815.51976758479 |
+| 1 | 3 | 2815.71014210666 |
+| 2 | 2 | 2815.95823552817 |
+| 3 | 3 | 2816.08310844953 |
+| 2 | 3 | 2816.17007338453 |
+| 3 | 2 | 2816.46486329802 |
+
+** ARMA(p, q) by ={brms}=
+*** brms fit
+
+- ={brms}= パッケージを利用した場合
+#+begin_src R :results silent
+arma_22_brm <- brm(Y ~ 1, data = data.frame(Y = arma22), autocor = cor_arma(~1, p = 2, q = 2))
+#+end_src
+
+- ar[1]=0.4, ar[2]=0.1, ma[1]=0.3, ma[2]=-0.1 のシミュレーションデータ
+#+begin_src R
+arma_22_brm
+#+end_src
+
+#+RESULTS:
+#+begin_example
+ Family: gaussian 
+  Links: mu = identity; sigma = identity 
+Formula: Y ~ 1 
+   Data: data.frame(Y = arma22) (Number of observations: 1000) 
+Samples: 4 chains, each with iter = 2000; warmup = 1000; thin = 1;
+         total post-warmup samples = 4000
+
+Correlation Structures:
+      Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+ar[1]     0.44      0.52    -0.44     1.36 1.09       36      102
+ar[2]    -0.02      0.25    -0.44     0.40 1.08       41      117
+ma[1]     0.30      0.52    -0.63     1.16 1.09       35       68
+ma[2]     0.02      0.15    -0.26     0.26 1.07       42       72
+
+Population-Level Effects: 
+          Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+Intercept     0.08      0.07    -0.06     0.22 1.01      935      442
+
+Family Specific Parameters: 
+      Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+sigma     0.99      0.02     0.95     1.03 1.01      628     1617
+
+Samples were drawn using sampling(NUTS). For each parameter, Eff.Sample 
+is a crude measure of effective sample size, and Rhat is the potential 
+scale reduction factor on split chains (at convergence, Rhat = 1).
+Warning messages:
+1: The model has not converged (some Rhats are
+1.1). Do not analyse the results! 
+We recommend running more iterations and/or setting stronger priors. 
+2: There were 530 divergent transitions after warmup. Increasing adapt_delta above 0.8 may help.
+See http://mc-stan.org/misc/warnings.html#divergent-transitions-after-warmup
+#+end_example
+
+*** stan code by =make_stancode()=
+
+#+begin_src stan
+// generated with brms 2.10.0
+functions {
+}
+
+data {
+  int<lower=1> N; // number of observations
+  vector[N] Y;    // response variable
+
+  // data needed for ARMA correlations
+  int<lower=0> Kar;  // AR order
+  int<lower=0> Kma;  // MA order
+
+  // number of lags per observation
+  int<lower=0> J_lag[N];
+  int prior_only;  // should the likelihood be ignored?
+}
+
+transformed data {
+  int max_lag = max(Kar, Kma);
+}
+
+parameters {
+  // temporary intercept for centered predictors
+  real Intercept;
+  real<lower=0> sigma; // residual SD
+  vector[Kar] ar;      // autoregressive effects
+  vector[Kma] ma;      // moving-average effects
+}
+
+transformed parameters {
+}
+
+model {
+  // initialize linear predictor term
+  vector[N] mu = Intercept + rep_vector(0, N);
+
+  // objects storing residuals
+  matrix[N, max_lag] Err = rep_matrix(0, N, max_lag);
+  vector[N] err;
+
+  // include ARMA terms
+  for (n in 1:N) {
+    mu[n] += head(Err[n], Kma) * ma;
+    err[n] = Y[n] - mu[n];
+    for (i in 1:J_lag[n]) {
+      Err[n + 1, i] = err[n + 1 - i];
+    }
+    mu[n] += head(Err[n], Kar) * ar;
+  }
+
+  // priors including all constants
+  target += student_t_lpdf(Intercept | 3, 0, 10);
+  target += student_t_lpdf(sigma | 3, 0, 10) - 1 * student_t_lccdf(0 | 3, 0, 10);
+
+  // likelihood including all constants
+  if (!prior_only) {
+    target += normal_lpdf(Y | mu, sigma);
+  }
+}
+
+generated quantities {
+  // actual population-level intercept
+  real b_Intercept = Intercept;
+}
+#+end_src
+
+*** =get_prior()=
+
+#+begin_src R :results value :colnames yes
+brms::get_prior(Y ~ 1, data = data.frame(Y = arma22), autocor = cor_arma(~1, p = 2, q = 2))
+#+end_src
+
+#+RESULTS:
+| prior               | class     | coef | group | resp | dpar | nlpar | bound              |
+|---------------------+-----------+------+-------+------+------+-------+--------------------|
+|                     | ar        |      |       |      |      |       | <lower=-1,upper=1> |
+| student_t(3, 0, 10) | Intercept |      |       |      |      |       |                    |
+|                     | ma        |      |       |      |      |       | <lower=-1,upper=1> |
+| student_t(3, 0, 10) | sigma     |      |       |      |      |       |                    |
+
+*** WAIC & LOO
+
+#+begin_src R
+brms::waic(arma_22_brm)
+#+end_src
+
+#+RESULTS:
+: 
+: Computed from 4000 by 1000 log-likelihood matrix
+: 
+:           Estimate   SE
+: elpd_waic  -1408.0 22.2
+: p_waic         5.6  0.3
+: waic        2815.9 44.3
+
+#+begin_src R
+brms::loo(arma_22_brm)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+Computed from 4000 by 1000 log-likelihood matrix
+
+         Estimate   SE
+elpd_loo  -1408.0 22.2
+p_loo         5.6  0.3
+looic      2816.0 44.3
+------
+Monte Carlo SE of elpd_loo is 0.1.
+
+All Pareto k estimates are good (k < 0.5).
+See help('pareto-k-diagnostic') for details.
+#+end_example
+
+*** =plot()=
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+plot(arma_22_brm, pars = c("ar", "ma"))
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-9u86Uw.png]]
 
 ** ARMA(p, q) + GARCH(r, m) Model
 *** モデル
@@ -2512,18 +2718,273 @@ model {
 
 #+end_src
 
+** 時変係数 AR モデル
+*** データ
+**** 薬の効果なしのデータ
+
+- [[https://logics-of-blue.com/%e6%85%a3%e3%82%8c%e3%81%ae%e7%b5%b1%e8%a8%88%e3%83%a2%e3%83%87%e3%83%aa%e3%83%b3%e3%82%b0%ef%bc%9astan%e3%81%a7%e6%8e%a8%e5%ae%9a%e3%81%99%e3%82%8b%e6%99%82%e5%a4%89%e4%bf%82/][”慣れ”の統計モデリング：Stanで推定する時変係数モデル@Logics of Blue]] の例
+
+- シミュレーションデータの作成
+- 収縮期血圧をシミュレーション
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+N_NotMedicine <- 10              # 薬を投与しなかった日数
+N_Medicine <- 100                # 薬を投与した日数
+N <- N_NotMedicine + N_Medicine  # 合計日数
+muZero <- 160                    # 初期の血圧の「状態」
+
+## 血圧の「状態」のシミュレーション
+mu <- numeric()
+
+set.seed(12)
+
+mu[1] <- rnorm(1, mean=muZero, sd=3)
+
+for(i in 2:N) {
+  mu[i] <- rnorm(1, mean=mu[i-1], sd=3)
+}
+
+plot(mu, type="b")
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-vJb5GE.png]]
+
+**** 薬の効果トレンドのデータ
+
+- 薬を使っても、徐々に血圧は下がらなくなっていく
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+coefMedicineTrendZero <- 0.005
+
+## 時間的に変化する薬の効果
+coefMedicine <- numeric(N_Medicine)
+coefMedicineTrend <- numeric(N_Medicine)
+
+## 薬の効果をトレンドモデルで表す
+set.seed(1)
+coefMedicineTrend[1] <- rnorm(1, mean=coefMedicineTrendZero, sd=0.03)
+
+## トレンドのシミュレーション
+for(i in 2:N_Medicine) {
+  coefMedicineTrend[i] <- rnorm(1, mean=coefMedicineTrend[i-1], sd=0.03)
+}
+
+plot(coefMedicineTrend, type = "b")
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-jIiQvU.png]]
+
+**** 薬の効果のシミュレーションデータ
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+coefMedicineZero <- -25
+coefMedicine[1] <- rnorm(1, mean=coefMedicineTrend[1] + coefMedicineZero, sd=0.5)
+
+for(i in 2:N_Medicine) {
+  coefMedicine[i] <- rnorm(1, mean=coefMedicineTrend[i] + coefMedicine[i-1], sd=0.5)
+}
+
+plot(coefMedicine, type="b")
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-DmhZZU.png]]
+
+- 更にノイズを加える
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+coefMedicineReal <- numeric(100)
+set.seed(1)
+for(i in 1:100) {
+  coefMedicineReal[i] <- rnorm(1, mean=coefMedicine[i], sd=2)
+}
+
+plot(coefMedicineReal, type="b", ylab="薬の効果（マイナスだと血圧が下がる）")
+lines(coefMedicine, col=2)
+legend("topleft", legend=c("薬の効果", "薬の効果のトレンド"), col=c(1,2), lwd=1)
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-WVMWOw.png]]
+
+**** 血圧の観測データ
+
+- 血圧の観測値のシミュレーション
+  - 最初の 10 日は薬なし
+  - 70 日後に薬を倍にした
+  - 100 日後に薬を 3 倍にした
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+medicine <- c(rep(0, N_NotMedicine), rep(1, 60), rep(2, 30), rep(3, 10))
+medicine
+
+bloodPressure <- numeric(N)
+bloodPressureMean <- numeric(N)
+
+set.seed(1)
+
+                                        # 最初の10日は薬なし
+for(i in 1:N_NotMedicine) {
+  bloodPressureMean[i] <- mu[i]
+  bloodPressure[i] <- rnorm(1, mean=bloodPressureMean[i], sd=10)
+}
+
+                                        # 薬を投与した後の血圧のシミュレーション
+for(i in (N_NotMedicine+1):N) {
+  bloodPressureMean[i] <- mu[i] + coefMedicineReal[i-10] * medicine[i]
+  bloodPressure[i] <- rnorm(1, mean=bloodPressureMean[i], sd=10)
+}
+
+plot(bloodPressure, type="b")
+abline(v=10)
+abline(v=70)
+abline(v=100)
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-4qbHQi.png]]
+
+**** 状態と合わせたプロット
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+plot(bloodPressure, type="b")
+lines(mu, col=2, lwd=2)
+lines(bloodPressureMean, col=3, lty=2, lwd=2)
+legend("bottomright",
+       legend=c("観測値", "薬がなかった時の「状態」", "薬が入った時の「状態」"),
+       lwd=c(1,2,2), col=c(1,2,3), lty=c(1,1,2))
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-WuKXKW.png]]
+
+**** モデル
+
+#+begin_src stan :file models/variying_ar_1.stan
+data {
+  int N_Medicine;          // 薬を投与した日数
+  int N;                   // 合計日数
+  vector[N] bloodPressure; // 収縮期血圧値
+  vector[N] medicine;      // 投与した薬の量
+}
+
+parameters {
+  real muZero;                          // 血圧の「状態」の初期値
+  vector[N] mu;                         // 血圧の「状態」
+  real<lower=0> sigmaV;                 // 観測誤差の大きさ
+  real<lower=0> sigmaW;                 // 過程誤差の大きさ
+  real coefMedicineTrendZero;           // 薬の効果のトレンドの初期値
+  real coefMedicineZero;                // 薬の効果の初期値
+  vector[N_Medicine] coefMedicineTrend; // 薬の効果のトレンド
+  vector[N_Medicine] coefMedicine;      // 薬の効果
+  vector[N_Medicine] coefMedicineReal;  // ノイズの入った後の薬の効果
+  real<lower=0> sigmaWcoef;             // 薬の係数の過程誤差の大きさ
+  real<lower=0> sigmaWcoefTrend;        // 薬の係数のトレンドの過程誤差の大きさ
+  real<lower=0> sigmaVcoef;             // 薬の係数の観測誤差の大きさ
+}
+
+model {
+  /* 状態方程式の部分 */
+  // 血圧の状態の推定
+  // 左端から初年度の状態を推定する
+  mu[1] ~ normal(muZero, sigmaW/100);  
+
+  // 血圧の状態の遷移
+  for(i in 2:N) {
+    mu[i] ~ normal(mu[i-1], sigmaW/100);
+  }
+
+  // 薬の効果の変化をモデル化する部分
+  // 初年度の薬の効果のトレンドを推定する
+  coefMedicineTrend[1] ~ normal(coefMedicineTrendZero, sigmaWcoefTrend/100); 
+
+  // 薬の効果のトレンドの遷移
+  for(i in 2:N_Medicine) {
+    coefMedicineTrend[i] ~ normal(coefMedicineTrend[i-1], sigmaWcoefTrend/100);
+  }
+
+  // 初年度の薬の効果を推定する
+  coefMedicine[1] ~ normal(coefMedicineTrend[1] + coefMedicineZero, sigmaWcoef/100);  
+
+  // 薬の効果の遷移
+  for(i in 2:N_Medicine) {
+    coefMedicine[i] ~ normal(coefMedicineTrend[i] + coefMedicine[i-1], sigmaWcoef/100);
+  }
+
+  // 薬の効果にノイズが入る
+  for(i in 1:N_Medicine) {
+    coefMedicineReal[i] ~ normal(coefMedicine[i], sigmaVcoef/100);
+  }
+
+  /* 観測方程式の部分(薬なし) */
+  for(i in 1:10) {
+    bloodPressure[i] ~ normal(mu[i], sigmaV/100);
+  }
+
+  /* 観測方程式の部分(薬あり) */
+  for(i in 11:N) {
+    bloodPressure[i] ~ normal(mu[i] + coefMedicineReal[i-10]*medicine[i], sigmaV/100);
+  }
+}
+#+end_src
+
+#+RESULTS:
+[[file:models/variying_ar_1.stan]]
+
+**** 当てはめ
+
+#+begin_src R
+stanData <- list(
+  N_Medicine = N_Medicine, 
+  N = N,
+  bloodPressure = bloodPressure,
+  medicine = medicine)
+
+# 乱数の種
+set.seed(1)
+
+# ローカルレベルモデル
+time_variant_coef_Model_1 <- stan(
+  file="models/varying_ar_1.stan",
+  data=stanData,
+  iter=45000,
+  warmup=35000,
+  thin=10,
+  chains=3,
+  control=list(
+    adapt_delta=0.9,
+    max_treedepth=13
+  )
+)
+#+end_src
+
+#+RESULTS:
+: Error in file(fname, "rt") : cannot open the connection
+: In addition: Warning messages:
+: 1: In normalizePath(file) :
+:   path[1]="models/varying_ar_1.stan": No such file or directory
+: 2: In file(fname, "rt") :
+:   cannot open file 'models/varying_ar_1.stan': No such file or directory
+: Error in get_model_strcode(file, model_code) : 
+:   cannot open model file "models/varying_ar_1.stan"
+
 * 参考
 
 - Stan 公式ドキュメント一覧
   - [[https://mc-stan.org/docs/2_21/stan-users-guide/time-series-chapter.html][Stan User’s Guide: 2 Time-Series Models]] ([[https://stan-ja.github.io/gh-pages-html/#%E6%99%82%E7%B3%BB%E5%88%97%E3%83%A2%E3%83%87%E3%83%AB][日本語訳]])
- 
+  - [[https://discourse.mc-stan.org/t/regime-switching-model/4098][Regime Switching Model@Stan Forum]]
+
 - Blog
   - [[http://statmodeling.hatenablog.com/entry/calc-waic-wbic][WAICとWBICを事後分布から計算する@StatModeling Memorandum]]
   - [[http://ill-identified.hatenablog.com/entry/2016/02/14/205311][R + Stan で ベクトル ARMA (VARMA) を推定@ill-identified diary]]
   - [[http://ill-identified.hatenablog.com/entry/2016/04/02/225155][stan + R ベクトル ARIMA (VARIMA) で人口予測 (?)@ill-identified diary]]
+  - [[https://logics-of-blue.com/%e6%85%a3%e3%82%8c%e3%81%ae%e7%b5%b1%e8%a8%88%e3%83%a2%e3%83%87%e3%83%aa%e3%83%b3%e3%82%b0%ef%bc%9astan%e3%81%a7%e6%8e%a8%e5%ae%9a%e3%81%99%e3%82%8b%e6%99%82%e5%a4%89%e4%bf%82/][”慣れ”の統計モデリング：Stanで推定する時変係数モデル@Logics of Blue]]
 
-- {rugarch}
+- ={rugarch}=
   - [[https://cran.r-project.org/web/packages/rugarch/vignettes/Introduction_to_the_rugarch_package.pdf][Introduction to the rugarch package (PDF)]]
 
 - Research paper
   - [[http://www.fs.hub.hit-u.ac.jp/inc/files/performance/masters-thesis/2015/saito2015.pdf][Carhart 4 ファクターモデルの 条件付きモデルへの拡張と 投資戦略への応用 (PDF)]]
+
+- Github
+  - [[https://github.com/jeffalstott/pystan_time_series][pystan_time_series]]
+  - [[https://github.com/stan-dev/math/issues/309][Functions to ensure stationarity in autoregression and invertibility in moving average parameters #309@stan-dev]]

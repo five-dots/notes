@@ -1,0 +1,1001 @@
+#+STARTUP: folded indent inlineimages latexpreview
+#+PROPERTY: header-args:R :session *R:brms* :width 640 :height 480 :results output
+
+* ={brms}= Package
+
+- Stan のラッパー
+- メリット
+  1. Stan コードを書く必要がない
+  2. R formula スタイル
+  3. 多数の確率分布が用意されている
+  4. ={brms}= でコードを生成させることで学習用サンプルとして使える
+  5. 他パッケージとの連携
+
+* ライブラリの読み込み
+
+#+begin_src R :results silent
+library(tidyverse)
+library(rstan)
+library(brms)
+library(patchwork)
+#+end_src
+
+* 全関数
+
+#+begin_src R
+pacman::p_funs(brms)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+  [1] "acat"                       "add_criterion"             
+  [3] "add_ic"                     "add_ic<-"                  
+  [5] "add_loo"                    "add_waic"                  
+  [7] "as.mcmc"                    "asym_laplace"              
+  [9] "autocor"                    "bayes_factor"              
+ [11] "bayes_R2"                   "bernoulli"                 
+ [13] "Beta"                       "bf"                        
+ [15] "bridge_sampler"             "brm"                       
+ [17] "brm_multiple"               "brmsfamily"                
+ [19] "brmsformula"                "categorical"               
+ [21] "combine_models"             "compare_ic"                
+ [23] "control_params"             "cor_ar"                    
+ [25] "cor_arma"                   "cor_arr"                   
+ [27] "cor_bsts"                   "cor_car"                   
+ [29] "cor_cosy"                   "cor_errorsar"              
+ [31] "cor_fixed"                  "cor_icar"                  
+ [33] "cor_lagsar"                 "cor_ma"                    
+ [35] "cor_sar"                    "cratio"                    
+ [37] "cs"                         "cse"                       
+ [39] "cumulative"                 "custom_family"             
+ [41] "dasym_laplace"              "data_predictor"            
+ [43] "data_response"              "ddirichlet"                
+ [45] "density_ratio"              "dexgaussian"               
+ [47] "dfrechet"                   "dgen_extreme_value"        
+ [49] "dhurdle_gamma"              "dhurdle_lognormal"         
+ [51] "dhurdle_negbinomial"        "dhurdle_poisson"           
+ [53] "dinv_gaussian"              "dirichlet"                 
+ [55] "dmulti_normal"              "dmulti_student_t"          
+ [57] "do_call"                    "dshifted_lnorm"            
+ [59] "dskew_normal"               "dstudent_t"                
+ [61] "dvon_mises"                 "dwiener"                   
+ [63] "dzero_inflated_beta"        "dzero_inflated_binomial"   
+ [65] "dzero_inflated_negbinomial" "dzero_inflated_poisson"    
+ [67] "empty_prior"                "exgaussian"                
+ [69] "exponential"                "expose_functions"          
+ [71] "expp1"                      "extract_draws"             
+ [73] "fixef"                      "frechet"                   
+ [75] "gen_extreme_value"          "geometric"                 
+ [77] "get_prior"                  "get_y"                     
+ [79] "gp"                         "gr"                        
+ [81] "horseshoe"                  "hurdle_gamma"              
+ [83] "hurdle_lognormal"           "hurdle_negbinomial"        
+ [85] "hurdle_poisson"             "hypothesis"                
+ [87] "inv_logit_scaled"           "is.brmsfit"                
+ [89] "is.brmsfit_multiple"        "is.brmsformula"            
+ [91] "is.brmsprior"               "is.brmsterms"              
+ [93] "is.cor_arma"                "is.cor_brms"               
+ [95] "is.cor_car"                 "is.cor_cosy"               
+ [97] "is.cor_fixed"               "is.cor_sar"                
+ [99] "is.mvbrmsformula"           "is.mvbrmsterms"            
+[101] "kfold"                      "kfold_predict"             
+[103] "lasso"                      "launch_shinystan"          
+[105] "lf"                         "log_lik"                   
+[107] "log_posterior"              "logit_scaled"              
+[109] "logm1"                      "lognormal"                 
+[111] "loo"                        "LOO"                       
+[113] "loo_compare"                "loo_linpred"               
+[115] "loo_model_weights"          "loo_predict"               
+[117] "loo_predictive_interval"    "loo_R2"                    
+[119] "make_conditions"            "make_stancode"             
+[121] "make_standata"              "marginal_effects"          
+[123] "marginal_smooths"           "me"                        
+[125] "mi"                         "mixture"                   
+[127] "mm"                         "mmc"                       
+[129] "mo"                         "model_weights"             
+[131] "multinomial"                "mvbf"                      
+[133] "mvbind"                     "mvbrmsformula"             
+[135] "neff_ratio"                 "negbinomial"               
+[137] "ngrps"                      "nlf"                       
+[139] "nsamples"                   "nuts_params"               
+[141] "parnames"                   "parse_bf"                  
+[143] "pasym_laplace"              "pexgaussian"               
+[145] "pfrechet"                   "pgen_extreme_value"        
+[147] "phurdle_gamma"              "phurdle_lognormal"         
+[149] "phurdle_negbinomial"        "phurdle_poisson"           
+[151] "pinv_gaussian"              "post_prob"                 
+[153] "posterior_average"          "posterior_interval"        
+[155] "posterior_linpred"          "posterior_predict"         
+[157] "posterior_samples"          "posterior_summary"         
+[159] "posterior_table"            "pp_average"                
+[161] "pp_check"                   "pp_mixture"                
+[163] "predictive_error"           "predictive_interval"       
+[165] "prior"                      "prior_"                    
+[167] "prior_samples"              "prior_string"              
+[169] "prior_summary"              "pshifted_lnorm"            
+[171] "pskew_normal"               "pstudent_t"                
+[173] "pvon_mises"                 "pzero_inflated_beta"       
+[175] "pzero_inflated_binomial"    "pzero_inflated_negbinomial"
+[177] "pzero_inflated_poisson"     "qasym_laplace"             
+[179] "qfrechet"                   "qshifted_lnorm"            
+[181] "qskew_normal"               "qstudent_t"                
+[183] "ranef"                      "rasym_laplace"             
+[185] "rdirichlet"                 "reloo"                     
+[187] "resp_cat"                   "resp_cens"                 
+[189] "resp_dec"                   "resp_mi"                   
+[191] "resp_rate"                  "resp_se"                   
+[193] "resp_subset"                "resp_trials"               
+[195] "resp_trunc"                 "resp_vint"                 
+[197] "resp_vreal"                 "resp_weights"              
+[199] "restructure"                "rexgaussian"               
+[201] "rfrechet"                   "rgen_extreme_value"        
+[203] "rhat"                       "rinv_gaussian"             
+[205] "rmulti_normal"              "rmulti_student_t"          
+[207] "rows2labels"                "rshifted_lnorm"            
+[209] "rskew_normal"               "rstudent_t"                
+[211] "rvon_mises"                 "rwiener"                   
+[213] "s"                          "set_mecor"                 
+[215] "set_nl"                     "set_prior"                 
+[217] "set_rescor"                 "shifted_lognormal"         
+[219] "skew_normal"                "sratio"                    
+[221] "stancode"                   "standata"                  
+[223] "stanplot"                   "stanvar"                   
+[225] "student"                    "t2"                        
+[227] "theme_black"                "theme_default"             
+[229] "update_adterms"             "validate_newdata"          
+[231] "VarCorr"                    "von_mises"                 
+[233] "waic"                       "WAIC"                      
+[235] "weibull"                    "wiener"                    
+[237] "zero_inflated_beta"         "zero_inflated_binomial"    
+[239] "zero_inflated_negbinomial"  "zero_inflated_poisson"     
+[241] "zero_one_inflated_beta"
+#+end_example
+
+* =brmsfamily()=
+
+#+begin_src R
+?brms::brmsfamily
+#+end_src
+
+32 の確率分布
+- =student(                  link = "identity", link_sigma = "log", link_nu = "logm1")=
+- =bernoulli(                link = "logit")=
+- =negbinomial(              link = "log", link_shape = "log")=
+- =geometric(                link = "log")=
+- =lognormal(                link = "identity", link_sigma = "log")=
+- =shifted_lognormal(        link = "identity", link_sigma = "log", link_ndt = "log")=
+- =skew_normal(              link = "identity", link_sigma = "log", link_alpha = "identity")=
+- =exponential(              link = "log")=
+- =weibull(                  link = "log", link_shape = "log")=
+- =frechet(                  link = "log", link_nu = "logm1")=
+- =gen_extreme_value(        link = "identity", link_sigma = "log", link_xi = "log1p")=
+- =exgaussian(               link = "identity", link_sigma = "log", link_beta = "log")=
+- =wiener(                   link = "identity", link_bs = "log", link_ndt = "log", link_bias = "logit")=
+- =Beta(                     link = "logit", link_phi = "log")=
+- =dirichlet(                link = "logit", link_phi = "log", refcat = NULL)=
+- =von_mises(                link = "tan_half", link_kappa = "log")=
+- =asym_laplace(             link = "identity", link_sigma = "log", link_quantile = "logit")=
+- =hurdle_poisson(           link = "log")=
+- =hurdle_negbinomial(       link = "log", link_shape = "log", link_hu = "logit")=
+- =hurdle_gamma(             link = "log", link_shape = "log", link_hu = "logit")=
+- =hurdle_lognormal(         link = "identity", link_sigma = "log", link_hu = "logit")=
+- =zero_inflated_beta(       link = "logit", link_phi = "log", link_zi = "logit")=
+- =zero_one_inflated_beta(   link = "logit", link_phi = "log", link_zoi = "logit", link_coi = "logit")=
+- =zero_inflated_poisson(    link = "log", link_zi = "logit")=
+- =zero_inflated_negbinomial(link = "log", link_shape = "log", link_zi = "logit")=
+- =zero_inflated_binomial(   link = "logit", link_zi = "logit")=
+- =categorical(              link = "logit", refcat = NULL)=
+- =multinomial(              link = "logit", refcat = NULL)=
+- =cumulative(               link = "logit", link_disc = "log", threshold = c("flexible", "equidistant"))=
+- =sratio(                   link = "logit", link_disc = "log", threshold = c("flexible", "equidistant"))=
+- =cratio(                   link = "logit", link_disc = "log", threshold = c("flexible", "equidistant"))=
+- =acat(                     link = "logit", link_disc = "log", threshold = c("flexible", "equidistant"))=
+
+* =brm()=
+
+- ={brms}= では統一的に =brm()= 関数でもモデルを指定する
+#+begin_src R
+brm(
+  formula, # formula, brmsformula or mvbrmsformula class object
+  data,   # data.frame (モデル内の全ての変数を含むこと)
+  family = gaussian(),
+  prior = NULL,
+  autocor = NULL,
+  cov_ranef = NULL,
+  sample_prior = c("no", "yes", "only"),
+  sparse = NULL,
+  knots = NULL,
+  stanvars = NULL,
+  stan_funs = NULL,
+  fit = NA,
+  save_ranef = TRUE,
+  save_mevars = FALSE,
+  save_all_pars = FALSE,
+  inits = "random",
+  chains = 4,
+  iter = 2000,
+  warmup = floor(iter/2),
+  thin = 1,
+  cores = getOption("mc.cores", 1L),
+  control = NULL,
+  algorithm = c("sampling", "meanfield", "fullrank"),
+  future = getOption("future", FALSE),
+  silent = TRUE,
+  seed = NA,
+  save_model = NULL,
+  stan_model_args = list(),
+  save_dso = TRUE,
+  file = NULL,
+  ...)
+#+end_src
+
+* =cor_brms()=
+
+- 説明変数と被説明変数の相関関係を表す
+- =brm(autocor = )= で指定する
+#+begin_src R
+?cor_brms
+#+end_src
+
+- =cor_arma(formula = ~1, p = 0, q = 0, r = 0, cov = FALSE)=
+  ARMA モデル
+
+- =cor_ar(formula = ~1, p = 0, cov = FALSE)=
+  AR モデル
+
+- =cor_ma(formula = ~1, q = 0, cov = FALSE)=
+  MA モデル
+
+- =cor_car(W, formula = ~1, type = "escar")=
+  Spatial conditional autoregressive (CAR) structure
+
+- =cor_sar(W, type = c("lag", "error"))=
+  Spatial simultaneous autoregressive (SAR) structure
+
+- =cor_fixed(V)=
+  fixed user-defined covariance structure
+
+* [[https://das-kino.hatenablog.com/entry/2018/12/15/230938][brmsパッケージを用いたベイズモデリング入門@nora_goes_far]] の例
+** 線形モデル
+*** 比較用 lm() モデル
+
+- mtcars データ
+- mpg を wt (車体重量) + am (manual=0, automatic=1) で予測 (+交互作用項)
+
+- ファクターに変換
+#+begin_src R :results silent
+mtcars$am <- as.factor(mtcars$am)
+#+end_src
+
+#+begin_src R
+lm_fit <- lm(mpg ~ wt * am, data = mtcars)
+summary(lm_fit)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+Call:
+lm(formula = mpg ~ wt * am, data = mtcars)
+
+Residuals:
+    Min      1Q  Median      3Q     Max 
+-3.6004 -1.5446 -0.5325  0.9012  6.0909 
+
+Coefficients:
+            Estimate Std. Error t value Pr(>|t|)    
+(Intercept)  31.4161     3.0201  10.402 4.00e-11 ***
+wt           -3.7859     0.7856  -4.819 4.55e-05 ***
+am1          14.8784     4.2640   3.489  0.00162 ** 
+wt:am1       -5.2984     1.4447  -3.667  0.00102 ** 
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 2.591 on 28 degrees of freedom
+Multiple R-squared:  0.833,	Adjusted R-squared:  0.8151 
+F-statistic: 46.57 on 3 and 28 DF,  p-value: 5.209e-11
+#+end_example
+
+*** =brm()= で当てはめ
+
+#+begin_src R
+brm_fit <- brm(mpg ~ wt * am,
+               data = mtcars,
+               iter = 2000,
+               warmup = 1000,
+               seed = 1234,
+               chain = 4)
+summary(brm_fit)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+Compiling the C+
+model
+Start sampling
+
+SAMPLING FOR MODEL 'ef610224b5be7d3481a966ab94ce19c9' NOW (CHAIN 1).
+Chain 1: 
+Chain 1: Gradient evaluation took 2.2e-05 seconds
+Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 0.22 seconds.
+Chain 1: Adjust your expectations accordingly!
+Chain 1: 
+Chain 1: 
+Chain 1: Iteration:    1 / 2000 [  0%]  (Warmup)
+Chain 1: Iteration:  200 / 2000 [ 10%]  (Warmup)
+Chain 1: Iteration:  400 / 2000 [ 20%]  (Warmup)
+Chain 1: Iteration:  600 / 2000 [ 30%]  (Warmup)
+Chain 1: Iteration:  800 / 2000 [ 40%]  (Warmup)
+Chain 1: Iteration: 1000 / 2000 [ 50%]  (Warmup)
+Chain 1: Iteration: 1001 / 2000 [ 50%]  (Sampling)
+Chain 1: Iteration: 1200 / 2000 [ 60%]  (Sampling)
+Chain 1: Iteration: 1400 / 2000 [ 70%]  (Sampling)
+Chain 1: Iteration: 1600 / 2000 [ 80%]  (Sampling)
+Chain 1: Iteration: 1800 / 2000 [ 90%]  (Sampling)
+Chain 1: Iteration: 2000 / 2000 [100%]  (Sampling)
+Chain 1: 
+Chain 1:  Elapsed Time: 0.046841 seconds (Warm-up)
+Chain 1:                0.051058 seconds (Sampling)
+Chain 1:                0.097899 seconds (Total)
+Chain 1: 
+
+SAMPLING FOR MODEL 'ef610224b5be7d3481a966ab94ce19c9' NOW (CHAIN 2).
+Chain 2: 
+Chain 2: Gradient evaluation took 6e-06 seconds
+Chain 2: 1000 transitions using 10 leapfrog steps per transition would take 0.06 seconds.
+Chain 2: Adjust your expectations accordingly!
+Chain 2: 
+Chain 2: 
+Chain 2: Iteration:    1 / 2000 [  0%]  (Warmup)
+Chain 2: Iteration:  200 / 2000 [ 10%]  (Warmup)
+Chain 2: Iteration:  400 / 2000 [ 20%]  (Warmup)
+Chain 2: Iteration:  600 / 2000 [ 30%]  (Warmup)
+Chain 2: Iteration:  800 / 2000 [ 40%]  (Warmup)
+Chain 2: Iteration: 1000 / 2000 [ 50%]  (Warmup)
+Chain 2: Iteration: 1001 / 2000 [ 50%]  (Sampling)
+Chain 2: Iteration: 1200 / 2000 [ 60%]  (Sampling)
+Chain 2: Iteration: 1400 / 2000 [ 70%]  (Sampling)
+Chain 2: Iteration: 1600 / 2000 [ 80%]  (Sampling)
+Chain 2: Iteration: 1800 / 2000 [ 90%]  (Sampling)
+Chain 2: Iteration: 2000 / 2000 [100%]  (Sampling)
+Chain 2: 
+Chain 2:  Elapsed Time: 0.048476 seconds (Warm-up)
+Chain 2:                0.046117 seconds (Sampling)
+Chain 2:                0.094593 seconds (Total)
+Chain 2: 
+
+SAMPLING FOR MODEL 'ef610224b5be7d3481a966ab94ce19c9' NOW (CHAIN 3).
+Chain 3: 
+Chain 3: Gradient evaluation took 1e-05 seconds
+Chain 3: 1000 transitions using 10 leapfrog steps per transition would take 0.1 seconds.
+Chain 3: Adjust your expectations accordingly!
+Chain 3: 
+Chain 3: 
+Chain 3: Iteration:    1 / 2000 [  0%]  (Warmup)
+Chain 3: Iteration:  200 / 2000 [ 10%]  (Warmup)
+Chain 3: Iteration:  400 / 2000 [ 20%]  (Warmup)
+Chain 3: Iteration:  600 / 2000 [ 30%]  (Warmup)
+Chain 3: Iteration:  800 / 2000 [ 40%]  (Warmup)
+Chain 3: Iteration: 1000 / 2000 [ 50%]  (Warmup)
+Chain 3: Iteration: 1001 / 2000 [ 50%]  (Sampling)
+Chain 3: Iteration: 1200 / 2000 [ 60%]  (Sampling)
+Chain 3: Iteration: 1400 / 2000 [ 70%]  (Sampling)
+Chain 3: Iteration: 1600 / 2000 [ 80%]  (Sampling)
+Chain 3: Iteration: 1800 / 2000 [ 90%]  (Sampling)
+Chain 3: Iteration: 2000 / 2000 [100%]  (Sampling)
+Chain 3: 
+Chain 3:  Elapsed Time: 0.049338 seconds (Warm-up)
+Chain 3:                0.050054 seconds (Sampling)
+Chain 3:                0.099392 seconds (Total)
+Chain 3: 
+
+SAMPLING FOR MODEL 'ef610224b5be7d3481a966ab94ce19c9' NOW (CHAIN 4).
+Chain 4: 
+Chain 4: Gradient evaluation took 7e-06 seconds
+Chain 4: 1000 transitions using 10 leapfrog steps per transition would take 0.07 seconds.
+Chain 4: Adjust your expectations accordingly!
+Chain 4: 
+Chain 4: 
+Chain 4: Iteration:    1 / 2000 [  0%]  (Warmup)
+Chain 4: Iteration:  200 / 2000 [ 10%]  (Warmup)
+Chain 4: Iteration:  400 / 2000 [ 20%]  (Warmup)
+Chain 4: Iteration:  600 / 2000 [ 30%]  (Warmup)
+Chain 4: Iteration:  800 / 2000 [ 40%]  (Warmup)
+Chain 4: Iteration: 1000 / 2000 [ 50%]  (Warmup)
+Chain 4: Iteration: 1001 / 2000 [ 50%]  (Sampling)
+Chain 4: Iteration: 1200 / 2000 [ 60%]  (Sampling)
+Chain 4: Iteration: 1400 / 2000 [ 70%]  (Sampling)
+Chain 4: Iteration: 1600 / 2000 [ 80%]  (Sampling)
+Chain 4: Iteration: 1800 / 2000 [ 90%]  (Sampling)
+Chain 4: Iteration: 2000 / 2000 [100%]  (Sampling)
+Chain 4: 
+Chain 4:  Elapsed Time: 0.050159 seconds (Warm-up)
+Chain 4:                0.041576 seconds (Sampling)
+Chain 4:                0.091735 seconds (Total)
+Chain 4:
+
+ Family: gaussian 
+  Links: mu = identity; sigma = identity 
+Formula: mpg ~ wt * am 
+   Data: mtcars (Number of observations: 32) 
+Samples: 4 chains, each with iter = 2000; warmup = 1000; thin = 1;
+         total post-warmup samples = 4000
+
+Population-Level Effects: 
+          Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+Intercept    31.31      3.13    25.34    37.41 1.00     1854     2597
+wt           -3.76      0.80    -5.34    -2.19 1.00     1930     2333
+am1          15.01      4.51     5.95    23.91 1.00     1610     1835
+wt:am1       -5.34      1.54    -8.40    -2.25 1.00     1791     2207
+
+Family Specific Parameters: 
+      Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+sigma     2.71      0.38     2.08     3.57 1.00     2406     2229
+
+Samples were drawn using sampling(NUTS). For each parameter, Eff.Sample 
+is a crude measure of effective sample size, and Rhat is the potential 
+scale reduction factor on split chains (at convergence, Rhat = 1).
+#+end_example
+
+*** =waic()=, =loo()= 情報量を得る
+
+- ={loo}= を利用して、WAIC や LOO を計算
+#+begin_src R
+brms::waic(brm_fit)
+#+end_src
+
+#+RESULTS:
+: 
+: Computed from 4000 by 32 log-likelihood matrix
+: 
+:           Estimate  SE
+: elpd_waic    -78.9 3.9
+: p_waic         4.1 1.0
+: waic         157.7 7.9
+: Warning message:
+: 4 (12.5%) p_waic estimates greater than 0.4. We recommend trying loo instead.
+
+#+begin_src R
+brms::loo(brm_fit)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+Computed from 4000 by 32 log-likelihood matrix
+
+         Estimate  SE
+elpd_loo    -79.0 4.0
+p_loo         4.3 1.1
+looic       158.0 7.9
+------
+Monte Carlo SE of elpd_loo is 0.1.
+
+Pareto k diagnostic values:
+                         Count Pct.    Min. n_eff
+(-Inf, 0.5]   (good)     31    96.9%   595       
+ (0.5, 0.7]   (ok)        1     3.1%   463       
+   (0.7, 1]   (bad)       0     0.0%   <
+     
+   (1, Inf)   (very bad)  0     0.0%   <
+     
+
+All Pareto k estimates are ok (k < 0.7).
+See help('pareto-k-diagnostic') for details.
+#+end_example
+
+*** =get_prior()= モデル毎の事前分布を得る
+
+- 回帰係数 b にはデフォルトで事前分布が設定されない (無情報)
+- 指定したい場合は、手動で設定する
+#+begin_src R
+brms::get_prior(mpg ~ wt * am, data = mtcars)
+#+end_src
+
+#+RESULTS:
+:                  prior     class   coef group resp dpar nlpar bound
+: 1                              b                                   
+: 2                              b    am1                            
+: 3                              b     wt                            
+: 4                              b wt:am1                            
+: 5 student_t(3, 19, 10) Intercept                                   
+: 6  student_t(3, 0, 10)     sigma
+
+*** =set_prior()=
+
+- 事前分布を設定
+- 複数の指定方法がある
+#+begin_src R
+brm_fit2 <- brm(mpg ~ wt * am,
+               data = mtcars,
+               iter = 2000,
+               warmup = 1000,
+               seed = 1234,
+               chain = 4,
+               prior = c(prior_string("normal(0, 10)", class = "b"),
+                         prior(student_t(3, 19, 10), class = Intercept),
+                         prior_(~student_t(3, 0, 10), class = ~sigma)))
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+Compiling the C+
+model
+Start sampling
+
+SAMPLING FOR MODEL '27b7d9178b86df265107b2e994781f80' NOW (CHAIN 1).
+Chain 1: 
+Chain 1: Gradient evaluation took 2.4e-05 seconds
+Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 0.24 seconds.
+Chain 1: Adjust your expectations accordingly!
+Chain 1: 
+Chain 1: 
+Chain 1: Iteration:    1 / 2000 [  0%]  (Warmup)
+Chain 1: Iteration:  200 / 2000 [ 10%]  (Warmup)
+Chain 1: Iteration:  400 / 2000 [ 20%]  (Warmup)
+Chain 1: Iteration:  600 / 2000 [ 30%]  (Warmup)
+Chain 1: Iteration:  800 / 2000 [ 40%]  (Warmup)
+Chain 1: Iteration: 1000 / 2000 [ 50%]  (Warmup)
+Chain 1: Iteration: 1001 / 2000 [ 50%]  (Sampling)
+Chain 1: Iteration: 1200 / 2000 [ 60%]  (Sampling)
+Chain 1: Iteration: 1400 / 2000 [ 70%]  (Sampling)
+Chain 1: Iteration: 1600 / 2000 [ 80%]  (Sampling)
+Chain 1: Iteration: 1800 / 2000 [ 90%]  (Sampling)
+Chain 1: Iteration: 2000 / 2000 [100%]  (Sampling)
+Chain 1: 
+Chain 1:  Elapsed Time: 0.053348 seconds (Warm-up)
+Chain 1:                0.05269 seconds (Sampling)
+Chain 1:                0.106038 seconds (Total)
+Chain 1: 
+
+SAMPLING FOR MODEL '27b7d9178b86df265107b2e994781f80' NOW (CHAIN 2).
+Chain 2: 
+Chain 2: Gradient evaluation took 6e-06 seconds
+Chain 2: 1000 transitions using 10 leapfrog steps per transition would take 0.06 seconds.
+Chain 2: Adjust your expectations accordingly!
+Chain 2: 
+Chain 2: 
+Chain 2: Iteration:    1 / 2000 [  0%]  (Warmup)
+Chain 2: Iteration:  200 / 2000 [ 10%]  (Warmup)
+Chain 2: Iteration:  400 / 2000 [ 20%]  (Warmup)
+Chain 2: Iteration:  600 / 2000 [ 30%]  (Warmup)
+Chain 2: Iteration:  800 / 2000 [ 40%]  (Warmup)
+Chain 2: Iteration: 1000 / 2000 [ 50%]  (Warmup)
+Chain 2: Iteration: 1001 / 2000 [ 50%]  (Sampling)
+Chain 2: Iteration: 1200 / 2000 [ 60%]  (Sampling)
+Chain 2: Iteration: 1400 / 2000 [ 70%]  (Sampling)
+Chain 2: Iteration: 1600 / 2000 [ 80%]  (Sampling)
+Chain 2: Iteration: 1800 / 2000 [ 90%]  (Sampling)
+Chain 2: Iteration: 2000 / 2000 [100%]  (Sampling)
+Chain 2: 
+Chain 2:  Elapsed Time: 0.044066 seconds (Warm-up)
+Chain 2:                0.048835 seconds (Sampling)
+Chain 2:                0.092901 seconds (Total)
+Chain 2: 
+
+SAMPLING FOR MODEL '27b7d9178b86df265107b2e994781f80' NOW (CHAIN 3).
+Chain 3: 
+Chain 3: Gradient evaluation took 5e-06 seconds
+Chain 3: 1000 transitions using 10 leapfrog steps per transition would take 0.05 seconds.
+Chain 3: Adjust your expectations accordingly!
+Chain 3: 
+Chain 3: 
+Chain 3: Iteration:    1 / 2000 [  0%]  (Warmup)
+Chain 3: Iteration:  200 / 2000 [ 10%]  (Warmup)
+Chain 3: Iteration:  400 / 2000 [ 20%]  (Warmup)
+Chain 3: Iteration:  600 / 2000 [ 30%]  (Warmup)
+Chain 3: Iteration:  800 / 2000 [ 40%]  (Warmup)
+Chain 3: Iteration: 1000 / 2000 [ 50%]  (Warmup)
+Chain 3: Iteration: 1001 / 2000 [ 50%]  (Sampling)
+Chain 3: Iteration: 1200 / 2000 [ 60%]  (Sampling)
+Chain 3: Iteration: 1400 / 2000 [ 70%]  (Sampling)
+Chain 3: Iteration: 1600 / 2000 [ 80%]  (Sampling)
+Chain 3: Iteration: 1800 / 2000 [ 90%]  (Sampling)
+Chain 3: Iteration: 2000 / 2000 [100%]  (Sampling)
+Chain 3: 
+Chain 3:  Elapsed Time: 0.043455 seconds (Warm-up)
+Chain 3:                0.048536 seconds (Sampling)
+Chain 3:                0.091991 seconds (Total)
+Chain 3: 
+
+SAMPLING FOR MODEL '27b7d9178b86df265107b2e994781f80' NOW (CHAIN 4).
+Chain 4: 
+Chain 4: Gradient evaluation took 6e-06 seconds
+Chain 4: 1000 transitions using 10 leapfrog steps per transition would take 0.06 seconds.
+Chain 4: Adjust your expectations accordingly!
+Chain 4: 
+Chain 4: 
+Chain 4: Iteration:    1 / 2000 [  0%]  (Warmup)
+Chain 4: Iteration:  200 / 2000 [ 10%]  (Warmup)
+Chain 4: Iteration:  400 / 2000 [ 20%]  (Warmup)
+Chain 4: Iteration:  600 / 2000 [ 30%]  (Warmup)
+Chain 4: Iteration:  800 / 2000 [ 40%]  (Warmup)
+Chain 4: Iteration: 1000 / 2000 [ 50%]  (Warmup)
+Chain 4: Iteration: 1001 / 2000 [ 50%]  (Sampling)
+Chain 4: Iteration: 1200 / 2000 [ 60%]  (Sampling)
+Chain 4: Iteration: 1400 / 2000 [ 70%]  (Sampling)
+Chain 4: Iteration: 1600 / 2000 [ 80%]  (Sampling)
+Chain 4: Iteration: 1800 / 2000 [ 90%]  (Sampling)
+Chain 4: Iteration: 2000 / 2000 [100%]  (Sampling)
+Chain 4: 
+Chain 4:  Elapsed Time: 0.044984 seconds (Warm-up)
+Chain 4:                0.044183 seconds (Sampling)
+Chain 4:                0.089167 seconds (Total)
+Chain 4:
+#+end_example
+
+*** =make_stancode()= モデルの stan コードを生成
+
+#+begin_src R
+brms::make_stancode(mpg ~ wt * am,
+                    data = mtcars,
+                    prior = c(prior_string("normal(0, 10)", class = "b"),
+                              prior(student_t(3, 19, 10), class = Intercept),
+                              prior_(~student_t(3, 0, 10), class = ~sigma)))
+#+end_src
+
+#+RESULTS:
+#+begin_example
+// generated with brms 2.10.0
+functions {
+}
+data {
+  int<lower=
+N;  // number of observations
+  vector[N] Y;  // response variable
+  int<lower=
+K;  // number of population-level effects
+  matrix[N, K] X;  // population-level design matrix
+  int prior_only;  // should the likelihood be ignored?
+}
+transformed data {
+  int Kc = K - 1;
+  matrix[N, Kc] Xc;  // centered version of X without an intercept
+  vector[Kc] means_X;  // column means of X before centering
+  for (i in 2:K) {
+    means_X[i - 1] = mean(X[, i]);
+    Xc[, i - 1] = X[, i] - means_X[i - 1];
+  }
+}
+parameters {
+  vector[Kc] b;  // population-level effects
+  // temporary intercept for centered predictors
+  real Intercept;
+  real<lower=
+sigma;  // residual SD
+}
+transformed parameters {
+}
+model {
+  // priors including all constants
+  target += normal_lpdf(b | 0, 10);
+  target += student_t_lpdf(Intercept | 3, 19, 10);
+  target += student_t_lpdf(sigma | 3, 0, 10)
+    - 1 * student_t_lccdf(0 | 3, 0, 10);
+  // likelihood including all constants
+  if (!prior_only) {
+    target += normal_id_glm_lpdf(Y | Xc, Intercept, b, sigma);
+  }
+}
+generated quantities {
+  // actual population-level intercept
+  real b_Intercept = Intercept - dot_product(means_X, b);
+}
+#+end_example
+
+- ハイライト付きでみる
+#+begin_src stan
+// generated with brms 2.10.0
+functions {
+}
+
+data {
+  int<lower=1> N;  // number of observations
+  vector[N] Y;     // response variable
+  int<lower=1> K;  // number of population-level effects
+  matrix[N, K] X;  // population-level design matrix
+  int prior_only;  // should the likelihood be ignored?
+}
+
+transformed data {
+  int Kc = K - 1;
+  matrix[N, Kc] Xc;    // centered version of X without an intercept
+  vector[Kc] means_X;  // column means of X before centering
+  for (i in 2:K) {
+    means_X[i - 1] = mean(X[, i]);
+    Xc[, i - 1] = X[, i] - means_X[i - 1];
+  }
+}
+
+parameters {
+  vector[Kc] b;  // population-level effects
+  // temporary intercept for centered predictors
+  real Intercept;
+  real<lower=0> sigma;  // residual SD
+}
+
+transformed parameters {
+}
+
+model {
+  // priors including all constants
+  target += normal_lpdf(b | 0, 10);
+  target += student_t_lpdf(Intercept | 3, 19, 10);
+  target += student_t_lpdf(sigma | 3, 0, 10) - 1 * student_t_lccdf(0 | 3, 0, 10);
+  // likelihood including all constants
+  if (!prior_only) {
+    target += normal_id_glm_lpdf(Y | Xc, Intercept, b, sigma);
+  }
+}
+
+generated quantities {
+  // actual population-level intercept
+  real b_Intercept = Intercept - dot_product(means_X, b);
+}
+#+end_src
+
+*** =plot()=
+
+- =bayesplot::mcmc_combo()= を使って可視化
+- ={ggplot2}=, ={bayesplot}= でカスタマイズ可能
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+plot(brm_fit2)
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-ohjRYi.png]]
+
+- combo で組み合わせるプロットを変更できる
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+bayesplot::color_scheme_set("pink")
+plot(brm_fit2, combo = c("trace", "dens_overlay"))
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-LMyhTe.png]]
+
+*** =marginal_effects()=
+
+- 主効果や交互作用のプロット
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+marginal_effects(brm_fit2, effects = "wt") 
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-ejyVad.png]]
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+marginal_effects(brm_fit2, effects = "wt:am")
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-A3YsQV.png]]
+
+*** =pp_check()=
+
+- =bayesplot::ppc_dens_overlay()= を内部で利用
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+brms::pp_check(brm_fit2)
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-DZMVNk.png]]
+
+- type を指定
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+brms::pp_check(brm_fit2, type = "error_hist")
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-njywnx.png]]
+
+** 一般化線形モデル
+*** 比較用 glm() モデル
+
+- 目的変数を am (二値変数) にする
+- am を mpg, wt で回帰する
+#+begin_src R
+data(mtcars)
+## cbin(am, 1 - 1m) で成功試行数・失敗試行数を生成
+glm_fit <- glm(cbind(am, 1 - am) ~ mpg + wt, family = "binomial", data = mtcars)
+summary(glm_fit)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+Call:
+glm(formula = cbind(am, 1 - am) ~ mpg
+wt, family = "binomial", 
+    data = mtcars)
+
+Deviance Residuals: 
+     Min        1Q    Median        3Q       Max  
+-2.50806  -0.45191  -0.04684   0.24664   2.01168  
+
+Coefficients:
+            Estimate Std. Error z value Pr(>|z|)  
+(Intercept)  25.8866    12.1935   2.123   0.0338 *
+mpg          -0.3242     0.2395  -1.354   0.1759  
+wt           -6.4162     2.5466  -2.519   0.0118 *
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+(Dispersion parameter for binomial family taken to be 1)
+
+    Null deviance: 43.230  on 31  degrees of freedom
+Residual deviance: 17.184  on 29  degrees of freedom
+AIC: 23.184
+
+Number of Fisher Scoring iterations: 7
+#+end_example
+
+*** =brm()= で当てはめ
+
+#+begin_src R
+brm_glm_fit <- brm(am | trials(1) ~ mpg + wt, family = "binomial", data = mtcars)
+summary(brm_glm_fit)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+Only 2 levels detected so that family 'bernoulli' might be a more efficient choice.
+Compiling the C+
+model
+Start sampling
+
+SAMPLING FOR MODEL '2f81065a9d1926dcf096558e0a7da943' NOW (CHAIN 1).
+Chain 1: 
+Chain 1: Gradient evaluation took 2.6e-05 seconds
+Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 0.26 seconds.
+Chain 1: Adjust your expectations accordingly!
+Chain 1: 
+Chain 1: 
+Chain 1: Iteration:    1 / 2000 [  0%]  (Warmup)
+Chain 1: Iteration:  200 / 2000 [ 10%]  (Warmup)
+Chain 1: Iteration:  400 / 2000 [ 20%]  (Warmup)
+Chain 1: Iteration:  600 / 2000 [ 30%]  (Warmup)
+Chain 1: Iteration:  800 / 2000 [ 40%]  (Warmup)
+Chain 1: Iteration: 1000 / 2000 [ 50%]  (Warmup)
+Chain 1: Iteration: 1001 / 2000 [ 50%]  (Sampling)
+Chain 1: Iteration: 1200 / 2000 [ 60%]  (Sampling)
+Chain 1: Iteration: 1400 / 2000 [ 70%]  (Sampling)
+Chain 1: Iteration: 1600 / 2000 [ 80%]  (Sampling)
+Chain 1: Iteration: 1800 / 2000 [ 90%]  (Sampling)
+Chain 1: Iteration: 2000 / 2000 [100%]  (Sampling)
+Chain 1: 
+Chain 1:  Elapsed Time: 0.08708 seconds (Warm-up)
+Chain 1:                0.077997 seconds (Sampling)
+Chain 1:                0.165077 seconds (Total)
+Chain 1: 
+
+SAMPLING FOR MODEL '2f81065a9d1926dcf096558e0a7da943' NOW (CHAIN 2).
+Chain 2: 
+Chain 2: Gradient evaluation took 1.6e-05 seconds
+Chain 2: 1000 transitions using 10 leapfrog steps per transition would take 0.16 seconds.
+Chain 2: Adjust your expectations accordingly!
+Chain 2: 
+Chain 2: 
+Chain 2: Iteration:    1 / 2000 [  0%]  (Warmup)
+Chain 2: Iteration:  200 / 2000 [ 10%]  (Warmup)
+Chain 2: Iteration:  400 / 2000 [ 20%]  (Warmup)
+Chain 2: Iteration:  600 / 2000 [ 30%]  (Warmup)
+Chain 2: Iteration:  800 / 2000 [ 40%]  (Warmup)
+Chain 2: Iteration: 1000 / 2000 [ 50%]  (Warmup)
+Chain 2: Iteration: 1001 / 2000 [ 50%]  (Sampling)
+Chain 2: Iteration: 1200 / 2000 [ 60%]  (Sampling)
+Chain 2: Iteration: 1400 / 2000 [ 70%]  (Sampling)
+Chain 2: Iteration: 1600 / 2000 [ 80%]  (Sampling)
+Chain 2: Iteration: 1800 / 2000 [ 90%]  (Sampling)
+Chain 2: Iteration: 2000 / 2000 [100%]  (Sampling)
+Chain 2: 
+Chain 2:  Elapsed Time: 0.092746 seconds (Warm-up)
+Chain 2:                0.08748 seconds (Sampling)
+Chain 2:                0.180226 seconds (Total)
+Chain 2: 
+
+SAMPLING FOR MODEL '2f81065a9d1926dcf096558e0a7da943' NOW (CHAIN 3).
+Chain 3: 
+Chain 3: Gradient evaluation took 1.3e-05 seconds
+Chain 3: 1000 transitions using 10 leapfrog steps per transition would take 0.13 seconds.
+Chain 3: Adjust your expectations accordingly!
+Chain 3: 
+Chain 3: 
+Chain 3: Iteration:    1 / 2000 [  0%]  (Warmup)
+Chain 3: Iteration:  200 / 2000 [ 10%]  (Warmup)
+Chain 3: Iteration:  400 / 2000 [ 20%]  (Warmup)
+Chain 3: Iteration:  600 / 2000 [ 30%]  (Warmup)
+Chain 3: Iteration:  800 / 2000 [ 40%]  (Warmup)
+Chain 3: Iteration: 1000 / 2000 [ 50%]  (Warmup)
+Chain 3: Iteration: 1001 / 2000 [ 50%]  (Sampling)
+Chain 3: Iteration: 1200 / 2000 [ 60%]  (Sampling)
+Chain 3: Iteration: 1400 / 2000 [ 70%]  (Sampling)
+Chain 3: Iteration: 1600 / 2000 [ 80%]  (Sampling)
+Chain 3: Iteration: 1800 / 2000 [ 90%]  (Sampling)
+Chain 3: Iteration: 2000 / 2000 [100%]  (Sampling)
+Chain 3: 
+Chain 3:  Elapsed Time: 0.082842 seconds (Warm-up)
+Chain 3:                0.068112 seconds (Sampling)
+Chain 3:                0.150954 seconds (Total)
+Chain 3: 
+
+SAMPLING FOR MODEL '2f81065a9d1926dcf096558e0a7da943' NOW (CHAIN 4).
+Chain 4: 
+Chain 4: Gradient evaluation took 1.4e-05 seconds
+Chain 4: 1000 transitions using 10 leapfrog steps per transition would take 0.14 seconds.
+Chain 4: Adjust your expectations accordingly!
+Chain 4: 
+Chain 4: 
+Chain 4: Iteration:    1 / 2000 [  0%]  (Warmup)
+Chain 4: Iteration:  200 / 2000 [ 10%]  (Warmup)
+Chain 4: Iteration:  400 / 2000 [ 20%]  (Warmup)
+Chain 4: Iteration:  600 / 2000 [ 30%]  (Warmup)
+Chain 4: Iteration:  800 / 2000 [ 40%]  (Warmup)
+Chain 4: Iteration: 1000 / 2000 [ 50%]  (Warmup)
+Chain 4: Iteration: 1001 / 2000 [ 50%]  (Sampling)
+Chain 4: Iteration: 1200 / 2000 [ 60%]  (Sampling)
+Chain 4: Iteration: 1400 / 2000 [ 70%]  (Sampling)
+Chain 4: Iteration: 1600 / 2000 [ 80%]  (Sampling)
+Chain 4: Iteration: 1800 / 2000 [ 90%]  (Sampling)
+Chain 4: Iteration: 2000 / 2000 [100%]  (Sampling)
+Chain 4: 
+Chain 4:  Elapsed Time: 0.077241 seconds (Warm-up)
+Chain 4:                0.066696 seconds (Sampling)
+Chain 4:                0.143937 seconds (Total)
+Chain 4:
+ Family: binomial 
+  Links: mu = logit 
+Formula: am | trials(1) ~ mpg
+wt 
+   Data: mtcars (Number of observations: 32) 
+Samples: 4 chains, each with iter = 2000; warmup = 1000; thin = 1;
+         total post-warmup samples = 4000
+
+Population-Level Effects: 
+          Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+Intercept    32.41     14.44     8.56    64.22 1.00     1203     1407
+mpg          -0.39      0.28    -0.99     0.13 1.00     1287     1448
+wt           -8.08      3.07   -14.92    -3.15 1.01     1219     1345
+
+Samples were drawn using sampling(NUTS). For each parameter, Eff.Sample 
+is a crude measure of effective sample size, and Rhat is the potential 
+scale reduction factor on split chains (at convergence, Rhat = 1).
+#+end_example
+
+*** =marginal_effects()=
+
+- ロジットリンク関数によって、曲線で表現されている
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+marginal_effects(brm_glm_fit, effects = "mpg")
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-FIpVNn.png]]
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+marginal_effects(brm_glm_fit, effects = "wt")
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-ECTP6s.png]]
+
+* 参考
+
+- [[https://cran.r-project.org/web/packages/brms/index.html][CRAN]]
+- [[https://cran.r-project.org/web/packages/brms/brms.pdf][Reference Manual]]
+- [[https://github.com/paul-buerkner/brms][Github Repo]]
+- Vignette
+  - [[https://cran.r-project.org/web/packages/brms/vignettes/brms_overview.pdf][Overview of the brms Package(PDF)]]
+  - 他多数
+
+- [[https://bookdown.org/ajkurz/Statistical_Rethinking_recoded/][Statistical Rethinking with brms, ggplot2, and the tidyverse]]
+- [[http://xcelab.net/rm/statistical-rethinking/][Statistical Rethinking]]
+
+- Blog
+  - [[https://das-kino.hatenablog.com/entry/2018/12/15/230938][brmsパッケージを用いたベイズモデリング入門@nora_goes_far]]
+  - [[https://rpubs.com/kosugitti/131511][brms パッケージってのもあるよ@RPubs]]

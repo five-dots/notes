@@ -228,8 +228,26 @@ log(50) - log(400)
   - 差を取るだけなので、計算が楽
   - GARCH モデルの誤差をへらすため
   - 非定常過程も対数差分を取ると定常過程として扱える
-- [[https://quantivity.wordpress.com/2011/02/21/why-log-returns/][Why Log Returns@quantivity
-]]
+  - [[https://quantivity.wordpress.com/2011/02/21/why-log-returns/][Why Log Returns@quantivity]]
+
+* 収益率・対数収益率の使い分け
+
+- 収益率
+  - 実際にポートフォリオの収益率を算出するのに使う
+  - CAPM や Fama/French のモデル 
+    - ポートフォリオリターンの算出に対数収益率を使うことはできないから
+  - *Asset-additive*
+
+- 対数収益率
+  - 統計モデルの推定 
+  - 統計的に好ましい性質をもつ
+    - log-normality
+    - time additiveness
+    - approximate raw-log equality
+    - mathematical ease
+  - *Time-additive (Not Asset-additive)*
+
+
 * リターンの統計的有意性
 ** リターンが正規分布の場合 (t 検定)
 
@@ -274,3 +292,7 @@ sample estimates:
 0.0005806393
 #+end_example
 
+* 参考
+
+- [[https://soulinthegame.blogspot.com/2017/02/simple-or-log-returns.html][Simple or Log Returns?@Soul in the Game]]
+- [[https://www.researchgate.net/post/Why_did_the_Fama_French_factors_calculated_using_simple_returns_instead_of_log_returns][Why did the Fama French factors calculated using simple returns instead of log returns?@ResearchGate]]

@@ -6,38 +6,6 @@
 \\
 
 * 目次                                                                :quote:
-#+BEGIN_QUOTE
-- [[#ライブラリの読み込みとバージョンの確認][ライブラリの読み込みとバージョンの確認]]
-- [[#関数リスト][関数リスト]]
-  - [[#縦横変換][縦横変換]]
-    - [[#-pivot_longerdata-cols-names_to--name-names_prefix--null-names_sep--null-names_pattern--null-names_ptypes--list-names_repair--check_unique-values_to--value-values_drop_na--false-values_ptypes--list][★★★ ~pivot_longer(data, cols, names_to = "name", names_prefix = NULL, names_sep = NULL, names_pattern = NULL, names_ptypes = list(), names_repair = "check_unique", values_to = "value", values_drop_na = FALSE, values_ptypes = list())~.]]
-    - [[#-pivot_widerdata-id_cols--null-names_from--name-names_prefix---names_sep--_-names_repair--check_unique-values_from--value-values_fill--null-values_fn--null][★★★ ~pivot_wider(data, id_cols = NULL, names_from = name, names_prefix = "", names_sep = "_", names_repair = "check_unique", values_from = value, values_fill = NULL, values_fn = NULL)~.]]
-    - [[#-gatherdata-key--key-value--value--narm--false-convert--false-factor_key--false][★★★ ~gather(data, key = "key", value = "value", ..., na.rm = FALSE, convert = FALSE, factor_key = FALSE)~.]]
-    - [[#-spreaddata-key-value-fill--na-convert--false-drop--true-sep--null][★★★ ~spread(data, key, value, fill = NA, convert = FALSE, drop = TRUE, sep = NULL)~.]]
-  - [[#ネストされた-dataframe][ネストされた data.frame]]
-    - [[#-nestdata--key--deprecated][★★☆ ~nest(.data, ..., .key = deprecated())~.]]
-    - [[#-unnestdata-cols--keep_empty--false-ptype--null-names_sep--null-names_repair--check_unique-drop--deprecated-id--deprecated-sep--deprecated-preserve--deprecated][★★☆ ~unnest(data, cols, ..., keep_empty = FALSE, ptype = NULL, names_sep = NULL, names_repair = "check_unique", .drop = deprecated(), .id = deprecated(), .sep = deprecated(), .preserve = deprecated())~.]]
-    - [[#-chopdata-cols][★☆☆ ~chop(data, cols)~.]]
-    - [[#-unchopdata-cols-keep_empty--false-ptype--null][★☆☆ ~unchop(data, cols, keep_empty = FALSE, ptype = NULL)~.]]
-  - [[#na-処理][NA 処理]]
-    - [[#データセット][データセット]]
-    - [[#-drop_nadata-][★★☆ ~drop_na(data, ...)~.]]
-    - [[#-replace_nadata-replace-][★★☆ ~replace_na(data, replace, ...)~.]]
-    - [[#-filldata--direction--cdown-up][★★☆ ~fill(data, ..., .direction = c("down", "up"))~.]]
-  - [[#列の分割結合][列の分割・結合]]
-    - [[#-separatedata-col-into-sep--alnum-remove--true-convert--false-extra--warn-fill--warn-][★★☆ ~separate(data, col, into, sep = "[^[:alnum:]]+", remove = TRUE, convert = FALSE, extra = "warn", fill = "warn", ...)~.]]
-    - [[#-unitedata-col--sep--_-remove--true-narm--false][★★☆ ~unite(data, col, ..., sep = "_", remove = TRUE, na.rm = FALSE)~.]]
-    - [[#-extractdata-col-into-regex--alnum-remove--true-convert--false-][★☆☆ ~extract(data, col, into, regex = "([[:alnum:]]+)", remove = TRUE, convert = FALSE, ...)~.]]
-  - [[#直積集合][直積集合]]
-    - [[#-expand_grid][★☆☆ ~expand_grid(...)~.]]
-    - [[#-nesting][★☆☆ ~nesting(...)~.]]
-    - [[#-expanddata-][★☆☆ ~expand(data, ...)~.]]
-    - [[#-crossing][★☆☆ ~crossing(...)~.]]
-    - [[#-completedata--fill--list][★☆☆ ~complete(data, ..., fill = list())~.]]
-- [[#実行環境][実行環境]]
-- [[#参考リンク][参考リンク]]
-#+END_QUOTE
-
 * ライブラリの読み込みとバージョンの確認
 
 #+begin_src R :results silent
@@ -490,6 +458,8 @@ loaded via a namespace (and not attached):
   - [[https://cran.r-project.org/web/packages/tidyquant/vignettes/TQ03-scaling-and-modeling-with-tidyquant.html][Scaling and Modeling with tidyquant]]
   - [[https://cran.r-project.org/web/packages/tidyquant/vignettes/TQ04-charting-with-tidyquant.html][Charting with tidyquant]]
   - [[https://cran.r-project.org/web/packages/tidyquant/vignettes/TQ05-performance-analysis-with-tidyquant.html][Performance Analysis with tidyquant]]
+
 - Blog
   - [[http://delta0726.web.fc2.com/packages/finance/tidyquant.html][tidyquantの使い方]]
   - [[https://blog.exploratory.io/quantitative-financial-analysis-for-beginners-with-exploratory-io-and-tidyquant-808fe2793c2e][Quantitative Financial Analysis For Beginners with Exploratory.io and tidyquant@Exploratory]] ([[https://blog.exploratory.io/tidyquant%E3%81%A8exploratory%E3%81%A7%E5%A7%8B%E3%82%81%E3%82%8B0%E3%81%8B%E3%82%89%E3%81%AE%E3%83%95%E3%82%A1%E3%82%A4%E3%83%8A%E3%83%B3%E3%82%B9%E8%A8%88%E9%87%8F%E5%88%86%E6%9E%90-18f9399ec0e4][日本語訳]])
+  - [[https://www.business-science.io/code-tools/2017/03/19/tidyquant-quandl-integration.html][tidyquant Integrates Quandl: Getting Data Just Got Easier@Business Science]]

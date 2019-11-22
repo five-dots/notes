@@ -1,0 +1,42 @@
+#+STARTUP: folded indent
+#+OPTIONS: author:nil H:6 toc:nil
+#+HUGO_BASE_DIR: ~/Dropbox/repos/github/five-dots/blog
+#+HUGO_SECTION: post/2019/11/
+
+#+TITLE: [R と Stan で株式時系列分析シリーズ] 株価を入手する
+#+DATE: 2019-11-18
+#+HUGO_CATEGORIES: finance
+#+HUGO_TAGS: r etf stock
+#+HUGO_CUSTOM_FRONT_MATTER: :toc false
+
+
+* ライブラリの読み込み
+
+まずは、今回の記事に必要なライブラリを読み込みから。
+
+#+begin_src R :results silent
+library(tidyverse)
+
+## 株価の取得
+library(tidyquant)
+#+end_src
+
+* セクターの分類
+
+セクターの分類方法にはいくつかの種類があるが、ここでは [[https://www.msci.com/gics][GICS Sector]] の分類に従った [[http://www.sectorspdr.com/sectorspdr/][Select Sector SPDR ETFs]] シリーズの ETF を利用する。現在 11 のセクターに分類されているが、XLRE と XLC は近年追加されたものであるため、今回は除外する。
+
+| シンボル | セクター               | 主要銘柄        | メモ                    |
+|----------+------------------------+-----------------+-------------------------|
+| XLB      | Materials              | LIN, DD, ECL    | 素材                    |
+| XLE      | Energy                 | XOM, CVX, COP   | エネルギー              |
+| XLF      | Finance                | BRK.B, JPM, BAC | 金融                    |
+| XLI      | Industrial             | BA, HON, UNP    | 資本財                  |
+| XLK      | Technology             | MSFT, AAPL, V   | 情報技術                |
+| XLP      | Consumer Staples       | PG, KO, PEP     | 生活必需品              |
+| XLU      | Utilities              | NEE, DUK, D     | 公益事業                |
+| XLV      | Health Care            | JNJ, PFE, UNH   | ヘルスケア              |
+| XLY      | Consumer Discretionary | AMZN, HD, MCD   | 一般消費財              |
+|----------+------------------------+-----------------+-------------------------|
+| XLRE     | Real Estate            | AMT, CCI, PLD   | 2015-10-08 から取引開始 |
+| XLC      | Communication Service  | FB, GOOG, DIS   | 2018-11-03 から取引開始 |
+

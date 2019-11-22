@@ -496,8 +496,12 @@ plot(t_copula, type="contour")
 |------------+-------------------+-------------------------+----------------------------------|
 
 * 確率分布の詳細
-** Distributions for Continous Data
-*** Normal
+** 連続値の確率分布
+*** 正規分布 (ガウス分布) - Normal (Gaussian)
+**** 基本
+
+- ガウス (1777-1855)
+
 **** {base} funs
 
 #+begin_src R :results silent
@@ -1277,7 +1281,7 @@ ggplot(data = tibble(rand = rand), aes(x = rand)) +
 #+RESULTS:
 [[file:~/Dropbox/memo/img/babel/fig-JeeHZG.png]]
 
-** Distributions for Count Data (Discrete)
+** 離散値の確率分布 (カウントデータ)
 *** TODO Geometric
 *** Negative Binormal
 
@@ -1310,9 +1314,10 @@ var(a)
 : 
 : [1] 5.876592
 
-*** Binormal
-**** Overview
+*** 二項分布 (ベルヌーイ分布) - Binomial (Bernoulli)
+**** 基本
 
+- パスカル (1623 - 1662)
 - n 個のうち、y個が成功だった (2 値データ) という特性を持つデータの分布
 - n = 試行回数, p = 成功確率 (0 <= p <= 1)
 
@@ -1383,6 +1388,11 @@ rbinom(n = 10, size = 4, prob = 0.3)
 
 #+RESULTS:
 :  [1] 1 2 2 1 2 2 2 3 0 0
+
+*** 多項分布 - Multinomial
+**** 基本
+
+- フェルマー (1601 - 1665)
 
 *** TODO Multi-Normal
 *** Poisson

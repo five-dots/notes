@@ -1,0 +1,296 @@
+#+STARTUP: folded indent inlineimages
+#+PROPERTY: header-args:R :results output :exports both :colnames yes
+#+PROPERTY: header-args:R+ :session *R:blog*  :width 640 :height 480 :eval never-export
+#+OPTIONS: author:nil H:6 toc:nil
+#+HUGO_BASE_DIR: ~/Dropbox/repos/github/five-dots/blog
+#+HUGO_SECTION: post/2019/11/
+
+#+TITLE: [R と Stan で株式時系列分析シリーズ] 株価を入手する
+#+DATE: 2019-11-18
+#+HUGO_CATEGORIES: finance
+#+HUGO_TAGS: r etf stock
+#+HUGO_CUSTOM_FRONT_MATTER: :toc false
+
+
+* ライブラリの読み込み
+
+まずは、今回の記事に必要なライブラリを読み込みから。
+
+#+begin_src R :results silent
+library(tidyverse)
+
+## 株価の取得
+library(tidyquant)
+#+end_src
+
+* 関数リスト
+
+記事内で利用する関数を読み込む。現時点で全てを理解する必要はなく、以降の記事で登場してきたタイミングで見返してもらえればよい。 ={ggplot2}= のテーマである =theme_my()= 以外の関数は全て、引数に前述までに用意した =data= を受け取る関数である。
+
+#+begin_src R :results silent
+## 複数の銘柄の中で、最も遅い取引開始日を返す
+get_start_date <- function(data) {
+  data %>%
+    group_by(symbol) %>%
+    summarise(start_date =  min(date)) %>%
+    pull(start_date) %>%
+    max()
+}
+
+## get_start_date() の日付に全ての銘柄の開始日を合わせる
+align_start_date <- function(data) {
+  start_date <- get_start_date(data)
+  filter(data, date >= start_date)
+}
+
+## 累積リターンとドローダウンを追加する
+add_cumret_dd <- function(data) {
+  ## PerformanceAnalytics::Drawdowns() 関数の warning を抑制
+  suppressWarnings(
+    data %>%
+      group_by(symbol) %>%
+      mutate(cum_ret = cumprod(1 + ret) - 1,
+             drawdown = Drawdowns(ret)) %>%
+      ungroup()
+  )
+}
+
+## data.frame から xts へ変換
+convert_to_xts <- function(data, name_col, value_col) {
+  name_col <- enquo(name_col)
+  value_col <- enquo(value_col)
+  data %>%
+    select(date, !!name_col, !!value_col) %>%
+    pivot_wider(names_from = !!name_col, values_from = !!value_col) %>%
+    tk_xts(-date, date)
+}
+
+## 凡例なしのシンプルな ggplot2 テーマ
+theme_my <- function() {
+  theme_light() + theme(
+    plot.title = element_text(face = "bold.italic"),
+    axis.title = element_blank(),
+    legend.position = "none")
+}
+
+## 線グラフをプロット (累積リターン・ドローダウン・リターンで共通して利用)
+plot_lines <- function(data, y_var, color_var, alpha = 0.6, offset = 0.2, label = TRUE) {
+  y_var <- enquo(y_var)
+  color_var <- enquo(color_var)
+
+  min_date <- min(data$date)
+  max_date <- max(data$date)
+  range <- c(min_date, max_date + ((max_date - min_date) * offset))
+
+  p <- data %>%
+    group_by(!!color_var) %>%
+    mutate(label = if_else(date == max(date), !!color_var, NA_character_)) %>%
+    ggplot(aes(x = date, y = !!y_var, color = !!color_var)) +
+    geom_line(alpha = alpha) +
+    scale_x_date(limits = range) +
+    theme_my()
+
+  if (label) {
+    p + geom_label_repel(aes(label = label), na.rm = TRUE, xlim = c(max_date, NA), size = 3)
+  } else {
+    p
+  }
+}
+
+## {patchwork} を利用して複数の ggplot を 1 つに結合
+plot_perf_summary <- function(data, alpha = 0.6, offset = 0.2) {
+  p1 <- plot_lines(data, cum_ret, index, alpha, offset) +
+    ggtitle("Cumulative Returns")
+
+  p2 <- plot_lines(data, drawdown, index, alpha, offset, label = FALSE) +
+    ggtitle("Drawdowns")
+
+  p3 <- plot_lines(data, ret, index, alpha, offset, label = FALSE) +
+    ggtitle("Daily Returns")
+
+  p1 + p2 + p3 + plot_layout(ncol = 1, heights = c(2, 1, 1))
+}
+
+## {GGally} で散布図行列
+plot_ggpairs <- function(data) {
+  ## ベンチマークとの相関が高い順に並べる
+  cors <- map_dfr(unique(data$symbol), function(symbol) {
+    d1 <- filter(data, symbol == !!symbol) %>% pull(ret)
+    d2 <- filter(data, symbol == !!benchmark) %>% pull(ret)
+    cor <- cor(d1, d2)
+    data.frame(symbol = symbol, cor = cor, stringsAsFactors = FALSE)
+  })
+  symbol_order <- arrange(cors, -cor) %>% pull(symbol)
+
+  data %>%
+    select(symbol, date, ret) %>%
+    pivot_wider(names_from = symbol, values_from = ret) %>%
+    select(-date) %>%
+    ggpairs(aes(alpha = 0.1), columns = symbol_order, lower = list(continuous = "smooth")) +
+    theme_my()
+}
+
+## 銘柄毎のパフォーマンス指標を計算して data.frame で返す
+calc_perf_metrices <- function(data, etfs, benchmark = "SPY") {
+  xts_data <- convert_to_xts(data, symbol, ret)
+  rb <- xts_data[, benchmark]
+
+  map_dfr(names(xts_data), function(symbol) {
+    ra <- xts_data[, symbol]
+    data.frame(
+      Symbol  = symbol,
+      Index   = etfs[etfs$symbol == symbol, ]$index,
+      Sharpe  = round(as.numeric(SharpeRatio(ra, annualize = TRUE, FUN = "StdDev")), 2),
+      Alpha   = round(CAPM.alpha(ra, rb), 5),
+      Beta    = round(CAPM.beta(ra, rb), 2),
+      Avg_Ret = as.numeric(Return.annualized(ra)),
+      Cum_Ret = as.numeric(Return.cumulative(ra)),
+      StdDev  = as.numeric(StdDev.annualized(ra)),
+      MaxDD   = as.numeric(maxDrawdown(ra)),
+      stringsAsFactors = FALSE
+    )
+  }) %>%
+    mutate_at(vars(Avg_Ret, Cum_Ret, StdDev, MaxDD), percent, digits = 1) %>%
+    arrange(-Sharpe)
+}
+#+end_src
+
+* セクターの分類
+
+セクターの分類方法にはいくつかの種類があるが、ここでは [[https://www.msci.com/gics][GICS Sector]] の分類に従った [[http://www.sectorspdr.com/sectorspdr/][Select Sector SPDR ETFs]] シリーズの ETF を利用する。現在 11 のセクターに分類されているが、XLRE と XLC は近年追加されたものであるため、今回は除外する。
+
+| シンボル | セクター     | セクター (英語)          | 主要銘柄        | メモ                    |
+|----------+--------------+------------------------+-----------------+-------------------------|
+| XLB      | 素材         | Materials              | LIN, DD, ECL    |                         |
+| XLE      | エネルギー   | Energy                 | XOM, CVX, COP   |                         |
+| XLF      | 金融         | Finance                | BRK.B, JPM, BAC |                         |
+| XLI      | 資本財       | Industrial             | BA, HON, UNP    |                         |
+| XLK      | 情報技術     | Technology             | MSFT, AAPL, V   |                         |
+| XLP      | 生活必需品   | Consumer Staples       | PG, KO, PEP     |                         |
+| XLU      | 公益事業     | Utilities              | NEE, DUK, D     |                         |
+| XLV      | ヘルスケア   | Health Care            | JNJ, PFE, UNH   |                         |
+| XLY      | 一般消費財   | Consumer Discretionary | AMZN, HD, MCD   |                         |
+|----------+--------------+------------------------+-----------------+-------------------------|
+| XLRE     | 不動産       | Real Estate            | AMT, CCI, PLD   | 2015-10-08 から取引開始 |
+| XLC      | 通信サービス | Communication Service  | FB, GOOG, DIS   | 2018-11-03 から取引開始 |
+
+
+#+begin_src R
+symbols <- tribble(
+  ~symbol,  ~sector,
+  "XLE",    "Energy",
+  "XLF",    "Financials",
+  "XLU",    "Utilities",
+  "XLI",    "Industrial",
+  "XLK",    "Technology",
+  "XLV",    "Health",
+  "XLY",    "Consumer Discretionary",
+  "XLP",    "Consumer Staples",
+  "XLB",    "Materials",
+)
+#+end_src
+
+* ダウンロード
+* データのダウンロード
+** Yahoo Finance からダウンロード
+
+={tidyquant}= を利用して [[https://finance.yahoo.com/][Yahoo Finance]] からデータを取得する。 ={tidyquant}= は Tidy な =data.frame= として株価をダウンロードしてくれるので便利だ。
+
+R から Yahoo Finance のデータを読み込む際には、一般的に、[[https://github.com/joshuaulrich/quantmod][ ={quantmod}= ]]が利用されることが多いようだ。しかし ={quantmod}= では、 =xts= でデータが取得されるため ={tidyverse}= のパッケージ群を利用することができない。個人的には、データは =data.frame= (=tibble含む=) に統一しておき ={dplyr}= や ={ggplot2}= などのパッケージの関数を扱えるようにしておいたほうが、快適にデータ分析を進められると思う。
+
+ただし、一部の時系列分析用のパッケージなどでは、入力に =xts= を求めるものがあるので、その場合は都度変換して対処する方針だ。今回も ={PerformanceAnalytics}= を利用する際に =xts= に変換する処理が必要になる。
+
+それでは、先程用意した ETF リストの銘柄の株価を全て取得してみよう。
+#+begin_src R :results silent
+rawdata <- tq_get(symbols$symbol, from = "1998-01-01")
+#+end_src
+
+データは、典型的な四本値 + 分割・配当調整済みの終値 (adjusted) という構成だ。
+#+begin_src R :results value
+head(rawdata) %>% mutate_if(is.numeric, round, digits = 2)
+#+end_src
+
+#+RESULTS:
+| symbol |       date |  open |  high |   low | close | volume | adjusted |
+|--------+------------+-------+-------+-------+-------+--------+----------|
+| XLE    | 1998-12-22 | 23.31 | 23.39 | 23.19 | 23.27 |  15200 |    15.47 |
+| XLE    | 1998-12-23 | 23.34 | 23.75 | 23.31 | 23.75 |  67800 |     15.8 |
+| XLE    | 1998-12-24 | 23.81 | 23.81 | 23.59 | 23.62 |  12300 |    15.71 |
+| XLE    | 1998-12-28 | 23.75 | 23.75 | 23.34 |  23.5 |  13500 |    15.63 |
+| XLE    | 1998-12-29 | 23.56 | 23.73 | 23.34 | 23.73 |  22000 |    15.79 |
+| XLE    | 1998-12-30 | 23.72 | 23.72 | 23.36 | 23.38 |  21800 |    15.55 |
+
+** VXX を結合
+
+VIX 短期先物の ETN として有名な VXX は、2019 年 1 月 30 日に償還を迎えてしまっている。後継となる銘柄が VXXB として登場しているが、まだ 2 年弱しか取引されておらず、分析対象として不十分である。そのため、VXX のデータを別途 csv で用意し、Yahoo からダウンロードした最新の情報と結合する。(ちなみに、VXXB はその後、元々と同じ VXX に名称変更された。上述の ETF リストには、名称変更後の VXX を指定している。この方が、旧 VXX と結合する際にも好都合である。)
+
+#+attr_html:
+[[https://dl.dropboxusercontent.com/s/v8gykgcb26fzkqr/VXX.csv][ ダウンロード =VXX.csv= ]]
+
+#+begin_src R :results silent
+vxx <- read_csv("VXX.csv") %>% mutate(date = ymd(date))
+rawdata <- rawdata %>%
+  filter(!(symbol == "VXX" & date <= ymd("2019-01-29"))) %>%
+  bind_rows(vxx) %>%
+  arrange(symbol, date)
+#+end_src
+
+** 日次リターンを計算
+
+分析対象となる日次リターンを計算する。
+#+begin_src R :results silent
+data <- rawdata %>%
+  group_by(symbol) %>%
+  tq_transmute(adjusted, mutate_fun = dailyReturn, col_rename = "ret") %>%
+  slice(-1) %>% # リターン計算による先頭 0 を削除
+  ungroup() %>%
+  left_join(etfs, by = "symbol") # インデックスでもアクセスできるように結合しておく
+#+end_src
+
+** データの確認
+
+データの前処理が完了したタイミングで、利用可能期間や =NA= の有無などを確認しておく。
+#+begin_src R :results value :colnames yes :rownames yes
+data %>%
+  group_by(symbol, index) %>%
+  summarize(start = min(date), end = max(date), na = sum(is.na(ret)))
+#+end_src
+
+#+RESULTS:
+|    | symbol | index                         |      start |        end | na |
+|----+--------+-------------------------------+------------+------------+----|
+|  1 | DIA    | Dow 30                        | 1998-01-21 | 2019-11-12 |  0 |
+|  2 | FXB    | GBP                           | 2006-06-27 | 2019-11-12 |  0 |
+|  3 | FXE    | EUR                           | 2005-12-13 | 2019-11-12 |  0 |
+|  4 | FXF    | CHF                           | 2006-06-27 | 2019-11-12 |  0 |
+|  5 | FXY    | JPY                           | 2007-02-14 | 2019-11-12 |  0 |
+|  6 | GLD    | Gold                          | 2004-11-19 | 2019-11-12 |  0 |
+|  7 | HYG    | High Yield                    | 2007-04-12 | 2019-11-12 |  0 |
+|  8 | IEF    | 7-10 Year                     | 2002-07-31 | 2019-11-12 |  0 |
+|  9 | IJH    | S&P MidCap 400                | 2000-05-30 | 2019-11-12 |  0 |
+| 10 | IJR    | S&P SmallCap 600              | 2000-05-30 | 2019-11-12 |  0 |
+| 11 | IWB    | Russel 1000                   | 2000-05-22 | 2019-11-12 |  0 |
+| 12 | IWM    | Russel 2000                   | 2000-05-30 | 2019-11-12 |  0 |
+| 13 | IYR    | Dow Jones U.S. Real Estate    | 2000-06-20 | 2019-11-12 |  0 |
+| 14 | LQD    | Investment Grade              | 2002-07-31 | 2019-11-12 |  0 |
+| 15 | PFF    | Preffered Stock               | 2007-04-02 | 2019-11-12 |  0 |
+| 16 | QQQ    | NASDAQ 100                    | 1999-03-11 | 2019-11-12 |  0 |
+| 17 | SHV    | Short Term                    | 2007-01-12 | 2019-11-12 |  0 |
+| 18 | SHY    | 1-3 Year                      | 2002-07-31 | 2019-11-12 |  0 |
+| 19 | SLV    | Silver                        | 2006-05-01 | 2019-11-12 |  0 |
+| 20 | SPY    | S&P 500                       | 1993-02-01 | 2019-11-12 |  0 |
+| 21 | TIP    | Inflation Protected           | 2003-12-08 | 2019-11-12 |  0 |
+| 22 | TLT    | 20+ Year                      | 2002-07-31 | 2019-11-12 |  0 |
+| 23 | USO    | Crude Oil                     | 2006-04-11 | 2019-11-12 |  0 |
+| 24 | UUP    | USD                           | 2007-03-02 | 2019-11-12 |  0 |
+| 25 | VXX    | S&P 500 VIX Short-Term Future | 2009-02-02 | 2019-11-12 |  0 |
+| 26 | XLB    | Materials                     | 1998-12-23 | 2019-11-12 |  0 |
+| 27 | XLE    | Energy                        | 1998-12-23 | 2019-11-12 |  0 |
+| 28 | XLF    | Financials                    | 1998-12-23 | 2019-11-12 |  0 |
+| 29 | XLI    | Industrial                    | 1998-12-23 | 2019-11-12 |  0 |
+| 30 | XLK    | Technology                    | 1998-12-23 | 2019-11-12 |  0 |
+| 31 | XLP    | Consumer Staples              | 1998-12-23 | 2019-11-12 |  0 |
+| 32 | XLU    | Utilities                     | 1998-12-23 | 2019-11-12 |  0 |
+| 33 | XLV    | Health                        | 1998-12-23 | 2019-11-12 |  0 |
+| 34 | XLY    | Consumer Discretionary        | 1998-12-23 | 2019-11-12 |  0 |
+

@@ -1,6 +1,8 @@
 #+STARTUP: folded indent inlineimages latexpreview
 #+PROPERTY: header-args:R :session *R:ic* :width 560 :height 420 :results output
 
+* 情報量とは?
+
 * IC
 ** Overview
 
@@ -173,7 +175,10 @@ $\beta = \frac{1}{log{n}}$
 
 - [[https://www.slideshare.net/tomokimatsumoto37/waicwbic][WAICとWBICのご紹介@SlideShare]]
 
+- [[https://logics-of-blue.com/information-theory-basic/][情報理論の基礎～情報量の定義から相対エントロピー、相互情報量まで～@Logics of Blue]]
+
 - 渡辺澄夫
   - [[http://watanabe-www.math.dis.titech.ac.jp/users/swatanab/waic2011.html][広く使える情報量規準(WAIC)@渡辺澄夫のウェブサイト]]
   - [[http://watanabe-www.math.dis.titech.ac.jp/users/swatanab/wbic2012.html][広く使えるベイズ情報量規準 (WBIC)@渡辺澄夫のウェブサイト]]
+    
     
