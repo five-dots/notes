@@ -960,36 +960,52 @@ constrain_pars(fit)
 * Stan as modelling language
 ** Types
 
-- 基本: int, real
-  int N;
-  real Y;
-  
-- 配列:
-  int N[K];
-  real Y[N, M, L]; 3 次元の配列
+- [[https://qiita.com/hoxo_m/items/e4dab11fed062689eff2][Stan のデータ型についてまとめてみた@Qitta]]
 
-- ベクトル・行列: vector, row_vector, matrix (*要素は、real のみ, int NG*)
-  vector[K] V;       1 個の長さ K のベクトル
-  vector[K] V[N];    N 個の長さ K のベクトル
-  matrix[J, K] X;    1 個の J x K の行列
-  matrix[J, K] X[N]; N 個の J x K の行列
+- *変数名の後のインデックス* は配列の長さを表す
+  - int の配列, real の配列, vector の配列, matrix の配列
+- *型宣言の後のインデックスは* その型の要素の長さを表す
+- インデックスは、配列の要素が先
+  - =vector[K] val[T];= の場合は =val[t, k]= でアクセスする
+ 
+- 配列は、複数の要素を持つためのコンテナ
+- _行列は、行列演算・線形代数関数・多変量関数を使うためのデータ型_
 
-- 要素の制約のある vector
-  simplex           合計 1 で各要素が 0 ~ 1 の列ベクトル
-  unit_vector       各要素の 2 乗の合計が 1 の列ベクトル
-  ordered           x1 < x2 < .. < xn の列ベクトル
-  positive_orderd   ordered の要素がすべて正
 
-- 要素に制約がある matrix
-  cov_matrix
-  corr_matrix
-  cholesky_factor_cov
-  cholesky_factor_corr
+#+begin_src stan
+// 基本 (Premitive Types)
+int N;
+real x;
 
-- 制約
-  int<lower=1> N;
-  real<upper=0> log_p;
-  vector<lower=-1,upper=1>[3,3] corr;
+// 配列 (Array)
+int N[K];        // 長さK の1次元配列
+real Y[N, M, L]; // 3 次元の配列
+
+// ベクトル・行列 (Vector and Matrix)
+// 要素は、real のみ
+vector[K] v;       // 長さ K のベクトル
+vector[K] v[N];    // 長さ K のベクトルの配列[N]
+row_vector[K] rv;  // 長さ K の行ベクトル
+matrix[J, K] m;    // J x K の行列
+matrix[J, K] m[N]; // J x K の行列の配列[N]
+
+// 要素の制約のある vector
+simplex s;           // 非負で合計 1 かつ各要素が 0 ~ 1 の列ベクトル
+unit_vector uv;      // 各要素の 2 乗の合計が 1 の列ベクトル
+ordered ov;          // x1 < x2 < .. < xn の列ベクトル (昇順)
+positive_orderd pov; // ordered の要素がすべて正
+
+// 要素に制約がある matrix
+cov_matrix cm;            // 正定値対称行列
+corr_matrix cm;           // 対角要素が1の正定値対称行列
+cholesky_factor_cov cfc;  // 下三角正定値対称行列 (コレスキー分解に利用)
+cholesky_factor_corr cfc; // 下三角正定値対称行列 (相関行列のコレスキー分解)
+
+// 制約
+int<lower=1> N;
+real<upper=0> log_p;
+vector<lower=-1,upper=1>[3,3] corr;
+#+end_src
   
 ** Blocks
 
@@ -2291,7 +2307,11 @@ ggmcmc(
 - Blog
   - [[https://logics-of-blue.com/category/%e7%b5%b1%e8%a8%88%e3%83%bbr/%e3%83%99%e3%82%a4%e3%82%ba%e7%b5%b1%e8%a8%88%e5%ad%a6/][ベイズ統計学@Logics of Blue]]
   - [[https://mrunadon.github.io/RStan%E3%81%A712%E7%A8%AE%E9%A1%9E%E3%81%AE%E7%B7%9A%E5%BD%A2%E9%9D%9E%E7%B7%9A%E5%BD%A2%E5%9B%9E%E5%B8%B0%E3%83%99%E3%82%A4%E3%82%BA%E7%B5%B1%E8%A8%88%E3%83%A2%E3%83%87%E3%83%AA%E3%83%B3%E3%82%B0%E3%83%BC%E3%83%BC%E3%83%A9%E3%83%96%E3%83%A9%E3%82%A4%E3%83%96!%E3%82%B5%E3%83%B3%E3%82%B7%E3%83%A3%E3%82%A4%E3%83%B3%E5%9B%9E%E5%B8%B0!!/][Rstan で 12 種類の線形非線形回帰ベイズ統計モデリングーーラブ ...]]
-  - [[https://www.slideshare.net/simizu706/stan-62042940][Stan超初心者入門@SlideShare]]
+  - [[https://echizen-tm.hatenadiary.org/entry/20100628/1277735444][logsumexp(log sum exponential)とは@EchizenBlog-Zwei]]
+  - [[https://qiita.com/hoxo_m/items/e4dab11fed062689eff2][Stan のデータ型についてまとめてみた@Qiita]]
+  - Slide by 清水祐士
+    - [[https://www.slideshare.net/simizu706/stan-62042940][Stan超初心者入門@SlideShare]]
+    - [[https://www.slideshare.net/simizu706/stan-64926504][Stanコードの書き方　中級編@SlideShare]]
 
 - WAIC & ={loo}=
   - [[http://statmodeling.hatenablog.com/entry/calc-waic-wbic][WAICとWBICを事後分布から計算する@StatModeling Memorandum]]

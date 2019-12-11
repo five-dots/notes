@@ -11,7 +11,17 @@
 - [[#全関数][全関数]]
 - [[#関数リスト][関数リスト]]
   - [[#overview][Overview]]
+    - [[#overview-1][Overview]]
+    - [[#spec][spec()]]
+      - [[#dccspec][dccspec()]]
+      - [[#gogarchspec][gogarchspec()]]
+      - [[#cgarchspec][cgarchspec()]]
+    - [[#fit][fit()]]
+    - [[#forecast][forecast()]]
+    - [[#varx][varx]]
   - [[#the-garch-dcc-model-and-2-stage-dccmvt-estimation][The GARCH-DCC Model and 2-stage DCC(MVT) estimation.]]
+    - [[#1-stage][1-Stage]]
+    - [[#2-stage][2-Stage]]
 - [[#実行環境][実行環境]]
 - [[#参考リンク][参考リンク]]
 #+END_QUOTE
@@ -275,6 +285,9 @@ gogarchforecast(
 #+end_src
 
 *** varx
+
+- ={vars}= と似た機能を利用できる
+- ={vars}= では new data を与えた forecast ができないが ={rmgarch}= なら可能
 
 #+begin_src R
 varxfit(

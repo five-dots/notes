@@ -263,54 +263,116 @@ metrics(rf_pred, Sepal.Width, .pred)
 
 * 関数リスト
 ** 対応モデル
-*** mode = "unknown"
-**** ~boost_tree(mode = "unknown", mtry = NULL, trees = NULL, min_n = NULL, tree_depth = NULL, learn_rate = NULL, loss_reduction = NULL, sample_size = NULL)~.
-
-- 勾配ブースティング (Gradient Boosting)
-
-**** ~decision_tree(mode = "unknown", cost_complexity = NULL, tree_depth = NULL, min_n = NULL)~.
-
-- 決定木
-
-**** ~mars(mode = "unknown", num_terms = NULL, prod_degree = NULL, prune_method = NULL)~.
-
-- MARS (Multivariate Adaptive Regression Splines)
-
-**** ~mlp(mode = "unknown", hidden_units = NULL, penalty = NULL, dropout = NULL, epochs = NULL, activation = NULL)~.
-
-- Multilayer Perceptron 多層パーセプトロン
-
-**** ~nearest_neighbor(mode = "unknown", neighbors = NULL, weight_func = NULL, dist_power = NULL)~.
-
-- k 近傍法 (k-nearest neighbor algorithm, k-NN)
-
-**** ~rand_forest(mode = "unknown", mtry = NULL, trees = NULL, min_n = NULL)~.
-
-- ランダムフォレスト
-
+*** mode = "unknown" (分類・回帰どちらも使えるモデル)
 **** ~svm_poly(mode = "unknown", cost = NULL, degree = NULL, scale_factor = NULL, margin = NULL)~.
 
 - Support Vector Machine
 - 非線形多項式
+- Engines
+  - "kernlab": =kernlab::ksvm()= (the default)
 
 **** ~svm_rbf(mode = "unknown", cost = NULL, rbf_sigma = NULL, margin = NULL)~.
 
 - SVM Radial Basis Function
+- Engines
+  - "kernlab": =kernlab::ksvm()= (the default)
+
+**** ~decision_tree(mode = "unknown", cost_complexity = NULL, tree_depth = NULL, min_n = NULL)~.
+
+- 決定木
+- Engines
+  - "rpart": =rpart::rpart()= (default)
+  - "C5.0":  =parsnip::C5.0_train()= (classification only)
+  - "spark": =sparklyr::ml_decision_tree_classifier()=
+
+**** ~rand_forest(mode = "unknown", mtry = NULL, trees = NULL, min_n = NULL)~.
+
+- ランダムフォレスト
+- Engines
+  - "ranger":       =ranger::ranger()= (default)
+  - "randomForest": =randomForest::randomForest()=
+  - "spark":        =sparklyr::ml_random_forest()=
+
+- 引数 (ハイパーパラメター)
+  - mtry
+  - trees
+  - min_n
+
+**** ~boost_tree(mode = "unknown", mtry = NULL, trees = NULL, min_n = NULL, tree_depth = NULL, learn_rate = NULL, loss_reduction = NULL, sample_size = NULL)~.
+
+- 勾配ブースティング (Gradient Boosting)
+- Engines
+  - "xgboost": =parsnip::xgb_train()= (default)
+  - "C5.0":    =parsnip::C5.0_train()=
+  - "spark":   =sparklyr::ml_gradient_boosted_trees()=
+
+- ハイパーパラメタ (上の 3 つはランダムフォレストと共通)
+  - =mtry=: The number of predictors that will be randomly sampled at each split when creating the tree models.
+  - =trees=: The number of trees contained in the ensemble.
+  - =min_n=: The minimum number of data points in a node that are required for the node to be split further.
+  - =tree_depth=: The maximum depth of the tree (i.e. number of splits).
+  - =learn_rate=: The rate at which the boosting algorithm adapts from iteration-to-iteration.
+  - =loss_reduction=: The reduction in the loss function required to split further.
+  - =sample_size=: The amount of data exposed to the fitting routine.
+
+**** ~mars(mode = "unknown", num_terms = NULL, prod_degree = NULL, prune_method = NULL)~.
+
+- MARS (Multivariate Adaptive Regression Splines = 多変量適応型回帰スプライン法)
+- Engines
+  - "earth": =earth::earth()=
+
+**** ~mlp(mode = "unknown", hidden_units = NULL, penalty = NULL, dropout = NULL, epochs = NULL, activation = NULL)~.
+
+- Multilayer Perceptron 多層パーセプトロン
+- Engines
+  - "nnet":  =nnet::nnet()= (default)
+  - "keras": =parsnip::keras_mlp()=
+
+**** ~nearest_neighbor(mode = "unknown", neighbors = NULL, weight_func = NULL, dist_power = NULL)~.
+
+- k 近傍法 (k-nearest neighbor algorithm, k-NN)
+- Engines
+  - "kknn": =kknn::train.kknn()= (default)
 
 *** mode = "classification"
 **** ~logistic_reg(mode = "classification", penalty = NULL, mixture = NULL)~.
+
+- Engines
+  - glm:    =stats::glm()= (default)
+  - glmnet: =glmnet::glmnet()=
+  - stan:   =rstanarm::stan_glm()=
+  - spark:  =sparklyr::ml_logistic_regression()=
+  - keras:  =parsnip::keras_mlp()=
+
+- =penalty= = 正則化の程度を決める非負の数値 (={glmnet}=, ={keras}=, ={spark}= で有効)
+- =mixture= = 0-1 の数値 (={glmnet}=, ={spark}= で有効)
+
 **** ~multinom_reg(mode = "classification", penalty = NULL, mixture = NULL)~.
+
+- 多項ロジスティック回帰
+- Engines
+  - glmnet: =glmnet::glmnet()= (default)
+  - spark:  =sparklyr::ml_logistic_regression()=
+  - keras:  =parsnip::keras_mlp()=
+
 **** ~null_model(mode = "classification")~.
 *** mode = "regression"
 **** ~linear_reg(mode = "regression", penalty = NULL, mixture = NULL)~.
 
 - 対応エンジン
-  • "lm" (the default) or "glmnet"
-  • "stan"
-  • "spark"
-  • "keras"
+  • "lm":    =stats::lm()= (default)
+  - "glmnet" =glmnet::glmnet()=
+  • "stan"   =rstanarm::stan_glm()=
+  • "spark"  =sparklyr::ml_linear_regression()=
+  • "keras"  =parsnip::keras_mlp()=
 
 **** ~surv_reg(mode = "regression", dist = NULL)~.
+
+- Parametric Survival Models
+- Engines
+  - "survival": =survival::survreg()= (default)
+  - "flexsurv": =flexsurv::flexsurvreg()=
+
 ** ユーティリティ関数
 *** set_engine(object, engine, ...)
 *** set_args(object, ...)

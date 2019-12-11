@@ -32,7 +32,7 @@ packageVersion("tune")
 * Vignette: Getting Started with {tune}
 ** データセット
 
-- {AmesHousing}
+- ={AmesHousing}=
 - Latitude (緯度) と Longtude (経度) から 住宅価格を予測
 #+begin_src R
 library(AmesHousing)

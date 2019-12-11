@@ -1,0 +1,440 @@
+#+STARTUP: folded indent inlineimages latexpreview
+#+PROPERTY: header-args:R :session *R:stats-test* :results output :width 640 :height 480
+
+* ライブラリの読み込み
+
+#+begin_src R :results silent
+library(tseries)
+#+end_src
+
+* 検定
+
+- H0: 帰無仮説
+- H1: 対立仮設
+
+- H1 が主張したい仮設
+- _検定には非対称性があり、H0 を否定しても H1 が正しいとは限らない_
+
+* 平均値の検定 t test
+** 概要
+
+- 参考 [[https://logics-of-blue.com/t-test/][t検定の考え方@Logics of Blue]]
+- 母平均に対する検定
+  - 例: 平均が 0 と異なるか
+  - 例: グループ A の平均とグループ B の平均は異なるか
+  - 有意に異なるかを検定
+- 対象が正規分布である必要あり
+  - 正規分布出ない場合は、一般化線形モデルを利用する
+- 母分散が未知なので、標本分散を利用する
+  - 母分散が吉であれば、正規分布を使った検定が利用できる (= z 検定)
+
+_検定パターン_
+1. 1 群の t 検定
+   - 平均が 0 と異なる
+   - 1 つの平均 vs. 固定値
+
+2. 対応のある t 検定
+   - 対応のある = 同じ対象で 2 回繰り返し計測したデータの平均を比較
+
+3. 平均値の差の検定
+   - 最もよくある検定パターン
+   - 異なる 2 グループの平均値の差を検定
+   - 2 組の分散が異なる・同じで計算方法が変わる
+     - 事前に F 検定で分散が異なるかの検定を行う (「母分散比の検定」)
+     - _常に分散が異なる前提で検定することのほうが多い_
+     - 分散が異なることを仮定した t 検定 = *Welch の t 検定*
+
+** 1 群の t 検定
+*** t 値
+
+データの平均値が 0 と異なるといえる 3 つの条件
+1. データの平均値が 0 と大きく離れている
+2. データの平均値が信用できる（分散が小さい）
+3. サンプルサイズが大きい
+
+上記のポイントを盛り込むと t 値が計算できる
+- _元のデータが正規分布に従っているとすれば、t 値は 自由度 n-1 の t 分布に従う_
+
+$t = \frac{\mu - 0}{\sqrt{\sigma^2 \div n}} = \frac{\mu - 0}{\sigma / \sqrt{n}}$
+
+- t 値を計算
+#+begin_src R
+set.seed(123)
+x <- rnorm(10, 0.1, 1)
+t <-(mean(x) - 0) / (sd(x) / sqrt(length(x))) # 0.57897
+t.test(x) # 上記と同じ結果
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+	One Sample t-test
+
+data:  x
+t = 0.57897, df = 9, p-value = 0.5768
+alternative hypothesis: true mean is not equal to 0
+95 percent confidence interval:
+ -0.5076704  0.8569217
+sample estimates:
+mean of x 
+0.1746256
+#+end_example
+
+*** p 値
+
+- t 値が -2.26.. ~ 2.26.. の範囲に収まっているか (=H0)
+#+begin_src R
+df <- length(x) - 1
+qt(0.025, df = df)
+qt(0.975, df = df)
+#+end_src
+
+#+RESULTS:
+: [1] -2.262157
+: [1] 2.262157
+
+- =pt()= で p.value を計算
+- 検定する side (正・負) によって計算方法が異なる
+#+begin_src R
+pt(t, df, lower.tail = TRUE)         # 下側 (Default)
+pt(t, df, lower.tail = FALSE)        # 上側
+2*pt(t, df, lower.tail = FALSE)      # 両側
+2*pt(-abs(t), df, lower.tail = TRUE) # 両側
+
+print("---")
+## stats::t.test() の場合
+t.test(x, alternative = "less")$p.value      # 下側
+t.test(x, alternative = "greater")$p.value   # 上側
+t.test(x, alternative = "two.sided")$p.value # 両側
+#+end_src
+
+#+RESULTS:
+: [1] 0.7115956
+: [1] 0.2884044
+: [1] 0.5768087
+: [1] 0.5768087
+: [1] "---"
+: [1] 0.7115956
+: [1] 0.2884044
+: [1] 0.5768087
+
+- 自由度 9 の t 分布
+- 赤線が t 値
+- 0 と異なるとは言えない
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+library(tidyverse)
+ggplot(data = tibble(x = -5:5), aes(x = x)) +
+  stat_function(fun = dt, args = list(df = df)) +
+  geom_vline(xintercept = t, color = "red") +
+  geom_vline(xintercept = qt(0.025, df = df), linetype = "dotted") +
+  geom_vline(xintercept = qt(0.975, df = df), linetype = "dotted")
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-Ns8XoJ.png]]
+
+** 対応のある t 検定
+
+- 1 群の t 検定と考え方は同じ
+- 2 つのデータの差分がゼロと異なるかを考える
+
+#+begin_src R
+y <- rnorm(10, 0.1, 1)
+t.test(x - y)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+	One Sample t-test
+
+data:  x - y
+t = 0.71871, df = 9, p-value = 0.4906
+alternative hypothesis: true mean is not equal to 0
+95 percent confidence interval:
+ -0.8300711  1.6031269
+sample estimates:
+mean of x 
+0.3865279
+#+end_example
+
+** 平均値の差の検定
+*** t 値
+
+- 1 群の検定に比べて、分散の計算が難しくなる
+- _等分散の場合_
+
+2 群を合わせた分散を計算
+$s^2 = \frac{(\Sigma_{i=1}^m X_i - \bar{X})^2 + (\Sigma_{j=1}^n Y_j - \bar{Y})^2}{m + n - 2}$
+
+t 値を計算
+$t = \frac{\bar{X} - \bar{Y}}{s \sqrt{\frac{1}{m} + \frac{1}{n}}}$
+
+- _分散が異なる場合_ (=ウェルチの検定)
+
+$t = \frac{\bar{X} - \bar{Y}}{\sqrt{s_x^2/m + s_y^2/n}}$
+
+*** t.test()
+
+- ウェルチの検定を試してみる
+#+begin_src R
+x1 <- rnorm(100, 2, 4)
+x2 <- rnorm(100, 4, 6)
+t.test(x1, x2, var.equal = FALSE)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+	Welch Two Sample t-test
+
+data:  x1 and x2
+t = -2.2118, df = 169.46, p-value = 0.02832
+alternative hypothesis: true difference in means is not equal to 0
+95 percent confidence interval:
+ -3.1806033 -0.1806357
+sample estimates:
+mean of x mean of y 
+ 2.618907  4.299527
+#+end_example
+
+** 偏回帰係数の t 検定
+*** t 値
+
+- H0: 回帰モデルの係数 = ゼロ を検定
+- t 統計量 が n-k-1 の t 分布に従う
+- 回帰係数を標準誤差で割ったもの
+
+$t = \frac{\beta - 0}{s.e(\beta)}$
+
+#+begin_src R :results output
+lm_fit <- lm(Sepal.Width ~ ., data = iris)
+summary(lm_fit)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+Call:
+lm(formula = Sepal.Width ~ ., data = iris)
+
+Residuals:
+     Min       1Q   Median       3Q      Max 
+-1.00102 -0.14786  0.00441  0.18544  0.69719 
+
+Coefficients:
+                  Estimate Std. Error t value Pr(>|t|)    
+(Intercept)        1.65716    0.25595   6.475 1.40e-09 ***
+Sepal.Length       0.37777    0.06557   5.761 4.87e-08 ***
+Petal.Length      -0.18757    0.08349  -2.246   0.0262 *  
+Petal.Width        0.62571    0.12338   5.072 1.20e-06 ***
+Speciesversicolor -1.16029    0.19329  -6.003 1.50e-08 ***
+Speciesvirginica  -1.39825    0.27715  -5.045 1.34e-06 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 0.2678 on 144 degrees of freedom
+Multiple R-squared:  0.6352,	Adjusted R-squared:  0.6225 
+F-statistic: 50.14 on 5 and 144 DF,  p-value: < 2.2e-16
+#+end_example
+
+#+begin_src R :results value :colnames yes
+coefs <- broom::tidy(lm_fit)
+coefs %>% mutate_if(is.numeric, round, digits=5)
+#+end_src
+
+#+RESULTS:
+| term              | estimate | std.error | statistic | p.value |
+|-------------------+----------+-----------+-----------+---------|
+| (Intercept)       |  1.65716 |   0.25595 |   6.47467 |       0 |
+| Sepal.Length      |  0.37777 |   0.06557 |   5.76147 |       0 |
+| Petal.Length      | -0.18757 |   0.08349 |   -2.2465 | 0.02619 |
+| Petal.Width       |  0.62571 |   0.12338 |   5.07156 |       0 |
+| Speciesversicolor | -1.16029 |   0.19329 |  -6.00268 |       0 |
+| Speciesvirginica  | -1.39825 |   0.27715 |  -5.04519 |       0 |
+
+- t 統計量と p.value を計算
+#+begin_src R
+beta <- coefs$estimate[3]
+se <- coefs$std.error[3]
+t <- beta/se
+t
+df <- nrow(iris) - nrow(coefs) - 1
+2*pt(-abs(t), df, lower.tail = TRUE) # 両側
+#+end_src
+
+#+RESULTS:
+: 
+: [1] -2.246498
+: 
+: [1] 0.02620446
+
+*** 標準誤差とは
+
+- 標準誤差について
+  - 標準誤差とは、推定値の標準偏差のこと
+  - 標準誤差が小さいほど、推定値の精度がよい
+  - 回帰係数の分散共分散行列は =vcov(fit)= で取り出すことができる
+  - 対角成分の平方根が標準誤差
+
+#+begin_src R
+sqrt(diag(vcov(lm_fit)))
+#+end_src
+
+* 分散比の検定 F test
+
+- 2 つのデータの分散が異なるかの検定
+- F 値は、不偏分散の比
+- H0 = 分散比は 1
+
+$F = s_x^2/s_y^2$
+
+- =stats::var.test()=
+- 分散が異なるとは言えない
+#+begin_src R
+set.seed(123)
+x1 <- rnorm(100, 0, 10)
+x2 <- rnorm(100, 0, 11)
+F <- var(x1) / var(x2)
+F
+var.test(x1, x2)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+[1] 0.7364446
+
+	F test to compare two variances
+
+data:  x1 and x2
+F = 0.73644, num df = 99, denom df = 99, p-value = 0.1297
+alternative hypothesis: true ratio of variances is not equal to 1
+95 percent confidence interval:
+ 0.4955106 1.0945288
+sample estimates:
+ratio of variances 
+         0.7364446
+#+end_example
+
+#+begin_src R
+df1 <- length(x1) - 1
+df2 <- length(x2) - 1
+qf(F, df1, df2)
+#+end_src
+
+#+RESULTS:
+: [1] 1.135969
+
+* 2 つのデータの分布の同一性の検定 Kolmogorov-Sminov Test
+
+- 2 つのデータの確率分布の相違の検定
+- 1 つのデータが指定した確率分布に従っているかの検定
+- タイのデータが有ると p 値が正確に計算できない
+
+#+begin_src R
+ks.test(
+  x,   # vector data
+  y,   # 比較するデータ もしくはCDFの指定, 関数: pnorm or 文字列 "pnorm"
+  ..., # CDFの引数
+  alternative = c("two.sided", "less", "greater"), # 両側検定(two.sided), 左側検定(less), 右側検定(greater)
+  exact = NULL)
+#+end_src
+
+- H0: 正規分布にしたがっているか
+- 「正規分布に従う」が採択される
+#+begin_src R
+set.seed(1)
+x_norm <- rnorm(100, mean = 0, sd = 3)
+ks.test(x_norm, pnorm, mean = mean(x_norm), sd = sd(x_norm))
+#+end_src
+
+#+RESULTS:
+: 
+: 	One-sample Kolmogorov-Smirnov test
+: 
+: data:  x_norm
+: D = 0.047014, p-value = 0.9799
+: alternative hypothesis: two-sided
+
+- t 分布の乱数
+- H0: 正規分布に従うが、棄却される
+#+begin_src R
+x_t <- rt(100, 4)
+ks.test(x_t, pnorm, mean = mean(x_t), sd = sd(x_t))
+#+end_src
+
+#+RESULTS:
+: 
+: 	One-sample Kolmogorov-Smirnov test
+: 
+: data:  x_t
+: D = 0.13856, p-value = 0.04299
+: alternative hypothesis: two-sided
+
+* 正規分布の検定 Jarque-Bera Test
+
+- H0: 正規分布である
+- 「正規分布にしたがう」が採択される
+#+begin_src R
+jarque.bera.test(x_norm)
+#+end_src
+
+#+RESULTS:
+: 
+: 	Jarque Bera Test
+: 
+: data:  x_norm
+: X-squared = 0.087201, df = 2, p-value = 0.9573
+
+- コーシー分布
+- 「正規分布にしたがう」が棄却される
+#+begin_src R
+x_cauchy <- rcauchy(100)
+jarque.bera.test(x_cauchy)
+#+end_src
+
+#+RESULTS:
+: 
+: 	Jarque Bera Test
+: 
+: data:  x_cauchy
+: X-squared = 21656, df = 2, p-value < 2.2e-16
+
+* 正規分布の検定 Shapiro-Wilk Test
+
+- H0: 正規分布である
+#+begin_src R
+shapiro.test(x_norm)
+#+end_src
+
+#+RESULTS:
+: 
+: 	Shapiro-Wilk normality test
+: 
+: data:  x_norm
+: W = 0.9956, p-value = 0.9876
+
+- コーシー分布
+#+begin_src R
+shapiro.test(x_cauchy)
+#+end_src
+
+#+RESULTS:
+: 
+: 	Shapiro-Wilk normality test
+: 
+: data:  x_cauchy
+: W = 0.3009, p-value < 2.2e-16
+
+* 残差の自己相関の検定 Durbin-Watson Test
+
+- 参照 [[file:time_series.org]]
+
+* 残差の自己相関の検定 Ljung-Box Test
+
+- 参照 [[file:time_series.org]]
+* 参考
+
+- [[https://logics-of-blue.com/t-test/][t検定の考え方@Logics of Blue]]
+- [[https://www.cyclismo.org/tutorial/R/pValues.html][10. Calculating p Values@R Tutorial]]
+- [[https://stats.stackexchange.com/questions/45153/manually-calculating-p-value-from-t-value-in-t-test][Manually Calculating P value from t-value in t-test@CrossValidated]]

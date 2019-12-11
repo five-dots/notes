@@ -1,0 +1,1188 @@
+#+STARTUP: folded indent inlineimages latexpreview
+#+PROPERTY: header-args:R :results output :session *R:asset_return* :width 640 :height 480
+
+* ライブラリの読み込み
+
+#+begin_src R :results silent
+library(tidyverse)
+library(tidyquant)
+library(ggExtra)
+library(formattable)
+#+end_src
+
+* データのダウンロード
+
+- Yahoo Finance から入手
+#+begin_src R :results silent
+rawdata <- tq_get(c("SPY", "TLT"), from = "2008-12-31")
+#+end_src
+
+#+begin_src R :results value :colnames yes
+all_data <- rawdata %>%
+  ## 月末のデータを抽出
+  group_by(symbol, week = ceiling_date(date, "month")) %>%
+  slice(n()) %>%
+  ungroup() %>%
+  select(symbol, date, adjusted) %>%
+  rename(close = adjusted) %>%
+  filter(date <= ymd("2019-01-01"))
+head(all_data)
+#+end_src
+
+#+RESULTS:
+| symbol |       date |     close |
+|--------+------------+-----------|
+| SPY    | 2008-12-31 | 72.566963 |
+| SPY    | 2009-01-30 |  66.60817 |
+| SPY    | 2009-02-27 | 59.451191 |
+| SPY    | 2009-03-31 | 64.404106 |
+| SPY    | 2009-04-30 | 70.802376 |
+| SPY    | 2009-05-29 | 74.941063 |
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+ggplot(all_data, aes(x = date, y = close, color = symbol)) + geom_line()
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-FhUCJ6.png]]
+
+* リターン
+** 金利の基礎
+*** 単利 (Simple Interest)
+  
+- 初期資産 = 100 万円、利息 r = 2%, 期間 n = 10 年とする
+- _元本のみに利息がつく_
+- 利付債 （日本国債など）
+
+$P_{t+1} = P_t + P_t^r$
+
+- 年間で 2 万円の利子
+#+begin_src R
+100 + 100* 0.02
+#+end_src
+
+#+RESULTS:
+: 102
+
+- 10 年間で 20 万円
+#+begin_src R
+100 + 100 * 0.02 * 10
+#+end_src
+
+#+RESULTS:
+: 120
+
+*** 単純複利 (Discrete Compound)
+
+- 初期資産 = 1,000,000、利息 r = 2%, 期間 n = 10 年とする
+- いわゆる複利
+- 利息にも利息がつく
+- 利息がつくタイミングが決まっている（毎月・半年ごと・毎年など）
+- 預金など
+
+$P_{t+1} = P_t (1 + \frac{r}{n})^n$
+
+- 初年度が、年 1 回の場合は単利と同じ
+#+begin_src R
+100 * (1 + 0.02)
+#+end_src
+
+#+RESULTS:
+: 102
+
+- 半年に一回払いの場合は、複利効果により年間の利子が若干増える
+#+begin_src R
+100 * (1 + 0.02/2)^2
+#+end_src
+
+#+RESULTS:
+: 102.01
+
+- 10 年で約 21.9 万円
+#+begin_src R
+100 * (1 + 0.02)^10
+#+end_src
+
+#+RESULTS:
+: 121.899441999476
+
+- 単純複利は「幾何平均」を取ると平均利回り(CAGR)が算出できる
+#+begin_src R
+(121.899441999476 / 100) ^ (1 / (10 - 1)) - 1
+#+end_src
+
+#+RESULTS:
+: 0.0222467686272272
+
+*** 連続複利 (Continuous Compound)
+
+- 初期資産 = 1,000,000、利息 r = 2%, 期間 n = 10 年とする
+- 限りなく複利回数を増やした計算方法
+- その場合、増加分は *ネイピア数* $e^r$ になる
+
+利率 r で年間に n 回支払われる場合の単純複利
+$(1 + \frac{r}{n})^{nt}$
+
+この n を限りなく大きくすると以下が成り立つ
+$lim_{n \to \infty}(1 + \frac{r}{n})^{nt} = e^{rt}$
+
+[参考] そもそも e の定義
+$e=lim_{n \to \infty} (1 + \frac{1}{n})^n$
+
+r = 1 (100%) の時、以下が成り立つということ
+$lim_{n \to \infty}(1 + \frac{r}{n})^n = e \fallingdotseq 2.7172818$
+
+- 10 年間で 22.1 万円
+#+begin_src R
+100 * exp(0.02 * 10)
+#+end_src
+
+#+RESULTS:
+: 122.140275816017
+
+- 連続複利は「算術平均」を取ると平均利回り(CAGR)が算出できる
+#+begin_src R
+((122.140275816017 - 100) / 100) / 10
+#+end_src
+
+#+RESULTS:
+: 0.022140275816017
+
+- _連続複利での増加率は、対数収益率と等しい_
+#+begin_src R
+r <- 0.05
+p1 <- 100
+p2 <- exp(r) * p1
+p2
+round(log(p2) - log(p1), 2)
+#+end_src
+
+#+RESULTS:
+: 0.05
+
+*** 割引現在価値 (Discounted Present Value)
+
+- 10 年後に年利 2％分を受け取ることができる証券の現在価値
+- 複利計算と同じ (掛けるか割るかの違い)
+
+#+begin_src R
+pv <- 1000000 / (1 + 0.02) ^ 10
+pv
+#+end_src
+
+#+RESULTS:
+: [1] 820348.3
+
+- pv を複利計算すれば、100 万円に戻る
+#+begin_src R
+pv * (1 + 0.02) ^ 10
+#+end_src
+
+#+RESULTS:
+: [1] 1e+06
+
+** リターンへ変換
+*** なぜリターンを分析するのか？
+
+価格系列ではなく、変化率で分析する理由
+- そもそも関心があるはリターンだから
+- 標準化: 複数の銘柄を統一の指標で扱う
+- 定常過程への変換
+
+*** 用語の整理
+
+| 収益率 R    | 対数収益率 r |          |
+|-------------+--------------+----------|
+| Simple      | Log          | 名前     |
+| Arithimetic | Geometric    | 計算方法 |
+| Discrete    | Continuous   | 複利頻度 |
+
+*** 収益率 (Simple/Arithimetic/Discrete Return)
+
+- 時点 t-1 から t までの収益率
+- 決められた期間・不連続の期間 (Discrete) での *単純複利 (Discrete Compound)* という考え方
+- 通常の収益率は大文字の R で表すことが多い
+- 上昇率と下落率が非対称 (下落は、-100% が下限のため、上昇率が相対的に大きくなる)
+
+$R_t = \frac{P_t + d_t - P_{t-1}}{P_{t-1}} = \frac{P_t + d_t}{P_{t-1}} - 1$
+
+$R_t$    時点 t-1 から t までの収益率
+$P_t$    時点 t の資産価格
+$P_{t-1}$ 時点 t-1 の資産価格
+$d_t$    時点 t-t から t までに受け取る配当の合計
+
+- どちらの計算方法でも同じ
+#+begin_src R :results value :colnames yes
+all_data %>%
+  mutate(r1 = (close - lag(close)) / lag(close),
+         r2 = close / lag(close) - 1) %>% head()
+#+end_src
+
+#+RESULTS:
+| symbol |       date |     close |                  r1 |                  r2 |
+|--------+------------+-----------+---------------------+---------------------|
+| SPY    | 2008-12-31 | 72.566963 |                 nil |                 nil |
+| SPY    | 2009-01-30 |  66.60817 | -0.0821144051460442 | -0.0821144051460442 |
+| SPY    | 2009-02-27 | 59.451191 |    -0.1074489660953 |    -0.1074489660953 |
+| SPY    | 2009-03-31 | 64.404106 |  0.0833106102113244 |  0.0833106102113244 |
+| SPY    | 2009-04-30 | 70.802376 |  0.0993456845748313 |  0.0993456845748313 |
+| SPY    | 2009-05-29 | 74.941063 |  0.0584540693945074 |  0.0584540693945075 |
+
+*** 対数収益率(Log/Geometric/Continuous Return)
+**** 概要
+
+- 時点 t-1 から t までの対数収益率
+- 対数収益率 = *連続複利* で計算した利率
+- 対数収益率は、小文字の r で表現されることが多い
+- 上昇率と下落率を同等に扱う (そのため、下落率が -100% を超えることもある)
+
+$r_t = log(P_t + d_t) - log(P_{t-1}) = log(\frac{P_t + d_t}{P_{t-1}})$
+
+$r_t$    時点 t-1 から t までの対数収益率
+$P_t$    時点 t の資産価格
+$P_{t-1}$ 時点 t-1 の資産価格
+$d_t$    時点 t-t から t までに受け取る配当の合計
+$log$   自然対数
+
+#+begin_src R :results value :colnames yes
+all_data %>%
+  mutate(r1 = log(close) - log(lag(close)),
+         r2 = log(close / lag(close))) %>% head()
+#+end_src
+
+#+RESULTS:
+| symbol |       date |     close |                  r1 |                  r2 |
+|--------+------------+-----------+---------------------+---------------------|
+| SPY    | 2008-12-31 | 72.566963 |                 nil |                 nil |
+| SPY    | 2009-01-30 |  66.60817 | -0.0856825204700016 | -0.0856825204700012 |
+| SPY    | 2009-02-27 | 59.451191 |  -0.113671586117503 |  -0.113671586117503 |
+| SPY    | 2009-03-31 | 64.404106 |  0.0800217322640071 |  0.0800217322640073 |
+| SPY    | 2009-04-30 | 70.802376 |  0.0947151706167633 |  0.0947151706167633 |
+| SPY    | 2009-05-29 | 74.941063 |  0.0568094184874113 |  0.0568094184874115 |
+
+**** なぜ対数収益率で近似できるのか?
+
+- 近似はテイラー展開の二次の項以上を無視した結果
+- t と t-1 の間隔を小さくしていけばこの近似は精度が良くなっていく
+  - _月次・年次リターンなどの期間が長い場合やボラが大きいときは近似できなくなる_
+
+$R_t = \frac{P_t - P_{t-1}}{P_{t-1}}$
+
+x=0 近傍の log(1+x) のテーラー展開を考えると (マクローリン展開ともいう?)
+$log(1 + x) = x - \frac{x^2}{2} + \frac{x^3}{3} - \dots$
+
+log(1+x) の x=0 近傍での 1 次近似は
+$log(1 + x) \approx x$
+
+x=Rt を代入すると
+$R_t \approx log(1+R_t) = log(1 + \frac{P_t - P_{t-1}}{P_{t-1}}) = log(\frac{Pt}{P_{t-1}}) = log(P_t) - log(P_{t-1})$
+
+#+begin_src R :results output
+x <- 0.005
+log(1+x)
+x - (x^2/2) + (x^3/3) - (x^4/4) + (x^5/5)
+#+end_src
+
+#+RESULTS:
+: 
+: [1] TRUE
+
+**** テイラー展開
+
+- [[http://www.ice.tohtech.ac.jp/nakagawa/taylorexp/taylor1.htm][テイラー展開@東北工業大学 情報通信工学科 中川研究室]]
+- x がとても小さい値のとき、$(1+x)^n$ を $1 + x\times n$ で近似できると考えるのがテイラー展開
+
+- (1.0007)^15 を考える
+#+begin_src R
+1.0007 ^ 15
+#+end_src
+
+#+RESULTS:
+: 1.01055160639324
+
+- 0.0007 はとても近いから 1.0007 は 1 に近い
+- なので、1.0007 を 15 乗しても 1 に近いと考えるのが *0 次近似*
+- 1 + 0.0007 * 15 に近いと考えるのが *1 次近似*
+
+#+begin_src R
+1 + 0.0007 * 15
+#+end_src
+
+#+RESULTS:
+: 1.0105
+
+*** データに収益率を追加
+
+#+begin_src R :results value :colnames yes
+data <- all_data %>%
+  group_by(symbol) %>%
+  mutate(R = (close - lag(close)) / lag(close),
+         r = log(close) - log(lag(close))) %>%
+  slice(-1) %>%
+  ungroup()
+head(data)
+#+end_src
+
+#+RESULTS:
+| symbol |       date |     close |                     R |                     r |
+|--------+------------+-----------+-----------------------+-----------------------|
+| SPY    | 2009-01-30 |  66.60817 |   -0.0821144051460442 |   -0.0856825204700016 |
+| SPY    | 2009-02-27 | 59.451191 |      -0.1074489660953 |    -0.113671586117503 |
+| SPY    | 2009-03-31 | 64.404106 |    0.0833106102113244 |    0.0800217322640071 |
+| SPY    | 2009-04-30 | 70.802376 |    0.0993456845748313 |    0.0947151706167633 |
+| SPY    | 2009-05-29 | 74.941063 |    0.0584540693945074 |    0.0568094184874113 |
+| SPY    | 2009-06-30 | 74.891975 | -0.000655021399949952 | -0.000655236020192795 |
+
+*** 累積リターン
+
+- 合計の考え方に違いが出る
+  - 収益率 = 資産間で合計できる
+    - = ポートフォリオリターンは、収益率の加重合計
+    - Asset-additive
+  - 対数収益率 = 時点間で合計できる
+    - = 累積リターンは、対数収益率の合計
+    - Time-additive
+
+#+begin_src R :results value :colnames yes
+data <- data %>%
+  group_by(symbol) %>%
+  mutate(R_cum = cumprod(R + 1) - 1,
+         r_cum = cumsum(r)) %>%
+  ungroup()
+
+data %>%
+  mutate_if(is.numeric, round, digit = 6) %>%
+  head()
+#+end_src
+
+#+RESULTS:
+| symbol |       date |     close |         R |         r |     R_cum |     r_cum |
+|--------+------------+-----------+-----------+-----------+-----------+-----------|
+| SPY    | 2009-01-30 |  66.60817 | -0.082114 | -0.085683 | -0.082114 | -0.085683 |
+| SPY    | 2009-02-27 | 59.451191 | -0.107449 | -0.113672 |  -0.18074 | -0.199354 |
+| SPY    | 2009-03-31 | 64.404106 |  0.083311 |  0.080022 | -0.112487 | -0.119332 |
+| SPY    | 2009-04-30 | 70.802376 |  0.099346 |  0.094715 | -0.024317 | -0.024617 |
+| SPY    | 2009-05-29 | 74.941063 |  0.058454 |  0.056809 |  0.032716 |  0.032192 |
+| SPY    | 2009-06-30 | 74.891975 | -0.000655 | -0.000655 |   0.03204 |  0.031537 |
+
+*** Simple <-> Log 変換
+
+- 収益率から対数収益率
+- テイラー展開より
+
+$r = log(1+R)$
+
+- 対数収益率から収益率
+
+$R = exp(r) - 1$
+
+#+begin_src R :results value :colnames yes
+data %>%
+  mutate(R_to_r = log(R + 1),
+         r_to_R = exp(r) - 1) %>%
+  select(symbol, date, close, R, r_to_R, r, R_to_r) %>%
+  mutate_if(is.numeric, round, digit = 6) %>%
+  head()
+#+end_src
+
+#+RESULTS:
+| symbol |       date |     close |         R |    r_to_R |         r |    R_to_r |
+|--------+------------+-----------+-----------+-----------+-----------+-----------|
+| SPY    | 2009-01-30 |  66.60817 | -0.082114 | -0.082114 | -0.085683 | -0.085683 |
+| SPY    | 2009-02-27 | 59.451191 | -0.107449 | -0.107449 | -0.113672 | -0.113672 |
+| SPY    | 2009-03-31 | 64.404106 |  0.083311 |  0.083311 |  0.080022 |  0.080022 |
+| SPY    | 2009-04-30 | 70.802376 |  0.099346 |  0.099346 |  0.094715 |  0.094715 |
+| SPY    | 2009-05-29 | 74.941063 |  0.058454 |  0.058454 |  0.056809 |  0.056809 |
+| SPY    | 2009-06-30 | 74.891975 | -0.000655 | -0.000655 | -0.000655 | -0.000655 |
+
+*** 空売り
+
+- 対数収益率: そのままマイナスすればよい
+
+- 収益率 
+$-R / (R + 1)$
+
+#+begin_src R :results value :colnames yes
+data %>%
+  mutate(R_short = -R / (R + 1),
+         r_short = -r) %>%
+  select(symbol, date, close, R, R_short, r, r_short) %>%
+  mutate_if(is.numeric, round, digit = 6) %>%
+  head()
+#+end_src
+
+#+RESULTS:
+| symbol |       date |     close |         R |   R_short |         r |   r_short |
+|--------+------------+-----------+-----------+-----------+-----------+-----------|
+| SPY    | 2009-01-30 |  66.60817 | -0.082114 |   0.08946 | -0.085683 |  0.085683 |
+| SPY    | 2009-02-27 | 59.451191 | -0.107449 |  0.120384 | -0.113672 |  0.113672 |
+| SPY    | 2009-03-31 | 64.404106 |  0.083311 | -0.076904 |  0.080022 | -0.080022 |
+| SPY    | 2009-04-30 | 70.802376 |  0.099346 | -0.090368 |  0.094715 | -0.094715 |
+| SPY    | 2009-05-29 | 74.941063 |  0.058454 | -0.055226 |  0.056809 | -0.056809 |
+| SPY    | 2009-06-30 | 74.891975 | -0.000655 |  0.000655 | -0.000655 |  0.000655 |
+
+*** なぜ対数？使い分けは？
+
+- 収益率
+  - 実際にポートフォリオの収益率を算出するのに使う
+  - CAPM や Fama/French のモデル 
+    - ポートフォリオリターンの算出に対数収益率を使うことはできないから
+  - *Asset-additive*
+
+- 対数収益率
+  - 統計モデルの推定 
+  - 統計的に好ましい性質をもつ
+    - Log-normality
+      - 株価が対数収益率に従っていると *すれば* 対数差分は正規分布に従う
+      - 対数収益率を使えば、価格は *負にならない*
+      - 以下の _加法性と中心極限定理を用いて、対数収益率が正規分布に従うことを示すことができる_
+    - Time Additiveness (加法性)
+      - 正規分布に従う確率変数の和は正規分布に従う
+      - 正規分布に従う確率変数の積は正規分布に従わない
+      - Mathematical ease
+        - 小さな値を足すのは安全だが、掛けるのは arithmetic underflow を起こす
+        - 掛け算も対数を取れば足し算になる
+    - Approximate raw-log equality
+      - 変動が 0 に近ければ近似できる
+
+- [[http://studysummary.hatenablog.com/entry/2016/02/26/110704][収益率の代わりに対数差分を用いられる理由]]
+  - 差を取るだけなので、計算が楽
+  - GARCH モデルの誤差をへらすため
+  - 非定常過程も対数差分を取ると定常過程として扱える
+  - [[https://quantivity.wordpress.com/2011/02/21/why-log-returns/][Why Log Returns@quantivity]]
+
+*** 対数収益率は、かならず収益率よりも小さくなる
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+data %>%
+  ggplot(aes(x = R, y = r)) +
+  geom_point(alpha = 0.4) +
+  geom_point(aes(y = R), color = "red", alpha = 0.4) +
+  facet_grid(~ symbol)
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-KDNrOP.png]]
+
+** リターンの可視化
+*** 累積 + ドローダウン
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+data %>%
+  pivot_longer(c(R_cum, r_cum), names_to = "type", values_to = "cumulative return") %>%
+  ggplot(aes(x = date, y = `cumulative return`, color = type)) +
+  geom_line() +
+  facet_grid(~ symbol)
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-8WcWZI.png]]
+
+*** ヒストグラム
+
+- 対数収益率のヒストグラム
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+grid <- seq(min(data$r), max(data$r), length = 100)
+normaldens <- data %>%
+  group_split(symbol) %>%
+  map_dfr(~ {
+    data.frame(
+      symbol = .$symbol[1],
+      r = grid,
+      density = dnorm(grid, mean(.$r), sd(.$r)),
+      stringsAsFactors = FALSE
+    )
+  })
+data %>%
+  ggplot(aes(x = r))  +
+  geom_histogram(aes(y = stat(density)), binwidth = 0.005, fill = "white", color = "black") +
+  geom_density(fill = "black", alpha = 0.2) +
+  geom_line(aes(y = density), data = normaldens, color = "red", size = 1.5, alpha = 0.8) +
+  facet_wrap(~ symbol)
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-iTK7dP.png]]
+
+*** 同時分布
+
+- 2 変数 (SPY, TLT) の対数収益率の関係を確認する
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+g <- data %>%
+  select(symbol, date, r) %>%
+  pivot_wider(names_from = symbol, values_from = r) %>%
+  ggplot(aes(x = TLT, y = SPY)) +
+  geom_point(alpha = .5) +
+  geom_density_2d() +
+  geom_smooth(method = lm)
+
+ggMarginal(
+  g,
+  type = "histogram",
+  margins = "both",
+  size = 4,
+  groupColour = FALSE,
+  groupFill = FALSE,
+  xparams = list(alpha = 0.1),
+  yparams = list(alpha = 0.1)
+)
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-2kFXkW.png]]
+
+* 基本統計量
+** 期待値
+
+- そのまま平均を取れば良い
+- 定常時系列を想定
+#+begin_src R :results value :colnames yes 
+data %>%
+  group_by(symbol) %>%
+  summarise(`E(R)` = mean(R),
+            `E(r)` = mean(r)) %>%
+  mutate_if(is.numeric, percent)
+#+end_src
+
+#+RESULTS:
+| symbol |  E(R) |  E(r) |
+|--------+-------+-------|
+| SPY    | 1.10% | 1.02% |
+| TLT    | 0.34% | 0.27% |
+
+** 分散・標準偏差
+
+- 標準偏差 ≠ ボラティリティ
+- ボラティリティは _対数収益率の標準偏差を年率換算したもの_ (狭い定義)
+
+#+begin_src R :results value :colnames yes
+data %>%
+  group_by(symbol) %>%
+  summarise(`VAR(R)` = sum((R - mean(R))^2) / (length(R) - 1),
+            `VAR(r)` = var(r),
+            `SD(R)` = sqrt(`VAR(R)`),
+            `SD(r)` = sd(r)) %>%
+   mutate_if(is.numeric, round, digit = 4)
+#+end_src
+
+#+RESULTS:
+| symbol | VAR(R) | VAR(r) |  SD(R) |  SD(r) |
+|--------+--------+--------+--------+--------|
+| SPY    | 0.0015 | 0.0015 | 0.0392 | 0.0392 |
+| TLT    | 0.0015 | 0.0014 | 0.0382 |  0.038 |
+
+** 分散共分散行列
+
+- =cov()= もしくは =var()= に多変量の =matrix= もしくは =data.frame= を渡す
+#+begin_src R :results value :colnames yes
+R_mat <- data %>%
+  select(symbol, date, R) %>%
+  pivot_wider(names_from = symbol, values_from = R) %>%
+  select(-date) %>%
+  as.matrix()
+cov(R_mat)
+#+end_src
+
+#+RESULTS:
+|                   SPY |                   TLT |
+|-----------------------+-----------------------|
+|   0.00154014657896203 | -0.000482062632487646 |
+| -0.000482062632487646 |   0.00145800976327018 |
+
+** 相関係数
+
+#+begin_src R :results value :colnames yes
+cor(R_mat)
+#+end_src
+
+#+RESULTS:
+|                SPY |                TLT |
+|--------------------+--------------------|
+|                  1 | -0.321693454375512 |
+| -0.321693454375512 |                  1 |
+
+- 相関係数は、共分散をそれぞれの標準偏差の積で割ったもの
+- 標準偏差の積で割ることで、-1 ~ 1 に正規化できる
+#+begin_src R :results output
+cov(R_SPY, R_TLT) / (sd(R_SPY) * sd(R_TLT))
+#+end_src
+
+#+RESULTS:
+: [1] -0.3216935
+
+* ポートフォリオ
+** リターン
+
+- ウェイトに応じて期待値を計算するだけ
+
+\begin{equation*}
+\begin{split}
+  \ E(R_p)
+  &=
+  \ w_1 E(R_2) + w_w E(R_2)
+  \\&= \begin{pmatrix} w_1 & w_2 \end{pmatrix}
+       \begin{pmatrix} E(R_1) \\ E(R_1) \end{pmatrix}
+  \ 
+\end{split}
+\end{equation*}
+
+- SPY 40%, TLT 60% とした場合
+#+begin_src R
+R_SPY <- data[data$symbol == "SPY", ]$R
+R_TLT <- data[data$symbol == "TLT", ]$R
+
+0.4 * mean(R_SPY) + 0.6 * mean(R_TLT)
+#+end_src
+
+#+RESULTS:
+: 0.00643502518937121
+
+- 行列の積の計算でも同じ結果
+- ポートフォリオの銘柄数が多い場合は、行列表現を用いる
+
+例えば、ポートフォリオの期待リターン
+$r_p = {\bf w}^T E({\bf r})$
+
+#+begin_src R
+R <- c(mean(R_SPY), mean(R_TLT))
+W <- c(0.4, 0.6)
+R %*% W
+#+end_src
+
+#+RESULTS:
+: 0.00643502518937121
+
+** ウェイト
+
+$1 = {\bf w}^T {\bf 1}$
+
+${\bf w}$ 資産配分のベクトル (合計が 1)
+${\bf 1}$  全ての成分が 1 のベクトル
+
+- ウェイトの合計は 1
+#+begin_src R
+W <- c(0.1, 0.2, 0.3, 0.4)
+One <- rep(1, length(W))
+1 == W %*% One
+#+end_src
+
+#+RESULTS:
+: 
+:      [,1]
+: [1,] TRUE
+
+** 分散・ボラティリティ
+
+$Var(r_p) = W_a^2 Var(r_a) + W_b^2 Var(r_b) + 2 W_a W_b Cov(r_a, r_b)$
+
+相関係数を使って書くと
+$Var(r_p) = W_a^2 Var(r_a) + W_b^2 Var(r_b) + 2 W_a W_b \rho \sigma_a \sigma_b$
+
+- 行列計算バージョン
+$Var(r_p) = {\bf w}^T {\bf \Sigma} {\bf w}$
+
+Where:
+${\bf w}$ 資産配分ベクトル
+${\bf \Sigma}$ 分散共分散行列
+
+- 銘柄それぞれの分散 x 比率^2 に 2*比率*共分散
+#+begin_src R :results output
+## 素直に書いたバージョン
+p_cov1 <- W[1]^2 * var(R_SPY) + W[2]^2 * var(R_TLT) + 2 * W[1] * W[2] * cov(R_SPY, R_TLT)
+p_cov1
+
+## 素直に書いたバージョン (相関係数を利用)
+p_cov2 <- W[1]^2 * var(R_SPY) + W[2]^2 * var(R_TLT) + 2 * W[1] * W[2] * cor(R_SPY, R_TLT) * sd(R_SPY) * sd(R_TLT)
+p_cov2
+
+## 行列計算バージョン
+p_cov3 <- W %*% cov(R_mat) %*% W
+p_cov3
+
+sqrt(p_cov1)
+#+end_src
+
+#+RESULTS:
+: [1] 0.0005399169
+: [1] 0.0005399169
+:              [,1]
+: [1,] 0.0005399169
+: [1] 0.02323611
+
+** 効率的フロンティア
+
+- 資産配分を 1% づつ変化させてリスク・リターンの関係をみる
+- 下半分は、上半分の方が同リスクで高リターンのため、効率的ではないと言える
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+port <- map_dfr(seq(0, 1, 0.01), function(w_1) {
+  W <- c(w_1, 1-w_1)
+  data.frame(r  = R %*% W,
+             sd = W %*% cov(R_mat) %*% W)
+})
+ggplot(port, aes(x = sd, y = r)) + geom_point()
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-lP9ukQ.png]]
+
+** 効率的ポートフォリオ
+*** 概要
+
+- 効率的なポートフォリオを達成する資産配分を探索する
+- 最適化のアプローチ
+  1. 目標リターンを達成するポートフォリオのリスクを最小化する
+  2. 目標リスクを達成するポートフォリオのリターンを最大化する
+
+1. の場合、目的関数は、
+$min \, V(r) = \frac{1}{2} {\bf x}^T {\bf \Sigma} {\bf x}$
+
+その時、制約条件は、
+$s.t. \, E(r) = {\bf x}^T {\bf r}$
+
+ラグランジェ乗数 $\lambda$ を導入すると
+$min \, L = \frac{1}{2} {\bf x}^T {\bf \Sigma} {\bf x} - \lambda( {\bf x}^T {\bf r} - E(r))$
+
+一階の条件
+$\frac{\partial L}{\partial {\bf x}} = {\bf \Sigma x} - \lambda {\bf x} = 0$ - (1)
+
+$\frac{\partial L}{\partial \lambda} = -{\bf x}^T {\bf r} + E(r) = 0$ - (2)
+
+(1) を変形し
+${\bf x} = \lambda \Sigma^{-1} {\bf r}$   (${\bf \Sigma}^{-1}$ は分散共分散行列の逆行列)
+
+左から ${\bf r}^T$ を掛けると
+${\bf r}^T {\bf x} = E(r) = \lambda {\bf r}^T {\bf \Sigma}^{-1} {\bf r}$
+
+であるから
+$\lambda = \frac{E(r)}{{\bf r}^T {\bf \Sigma}^{-1} {\bf r}}$
+
+ポートフォリオ x は以下となる
+${\bf x} = \lambda {\bf \Sigma}^{-1} {\bf r} = \frac{E(r)}{{\bf r}^T {\bf \Sigma}^{-1} {\bf r}} {\bf \Sigma}^{-1} {\bf r}$
+
+
+- R での実装 (あっているか自身なし)
+- E(r) と r の関係が間違っている?
+#+begin_src R :results output
+R / (t(R) %*% solve(cov(R_mat)) %*% R) * solve(cov(R_mat)) %*% R
+
+## エラーが出るので、array -> vector に変換する
+w <- R / as.numeric(t(R) %*% solve(cov(R_mat)) %*% R) * solve(cov(R_mat)) %*% R
+w
+
+## 合計 1 の資産配分
+sum(w)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+         [,1]
+SPY 0.8452056
+TLT 0.1547944
+Warning message:
+In R/(t(R) %*% solve(cov(R_mat)) %*% R) :
+  Recycling array of length 1 in vector-array arithmetic is deprecated.
+  Use c() or as.vector() instead.
+
+         [,1]
+SPY 0.8452056
+TLT 0.1547944
+
+[1] 1
+#+end_example
+
+*** ラグランジェ乗数法
+
+- 制約条件のある多変量関数の極値を求める
+
+- ラグランジェの未定乗数法とは「求めたい a, b 変数の定義式 f – $\lambda$ 条件式」を関数 F として変数 a, b, $\lambda$ の偏微分が 0 になるように a, b, $\lambda$ を求めると関数 f が最大になるという魔法のような解法
+
+*** 平均分散ポートフォリオ (Mean Variance)
+
+- シャープレシオの最大化 
+
+${\bf w} = (\lambda {\bf \Sigma})^{-1} {\bf r}$
+
+$\lambda$ リスク回避度
+
+- =RiskPortfolios::optimalPortfolio()= のコードを参考
+- lambda/gamma が効いていないので、意味がよくわからない
+#+begin_src R
+gamma <- 0.8773
+mu <- apply(R_mat, 2, mean)
+inv_Sigmamu <- solve(Sigma, mu)
+
+w_tmp <- (1 / gamma) * inv_Sigmamu / sum(inv_Sigmamu)
+w <- w_tmp / sum(w_tmp)
+w
+
+## より単純に書くと
+inv_Sigmamu / sum(inv_Sigmamu)
+#+end_src
+
+#+RESULTS:
+:       SPY       TLT 
+: 0.6269026 0.3730974
+:       SPY       TLT 
+: 0.6269026 0.3730974
+
+- =RiskPortfolios::optimalPortfolio()=
+#+begin_src R
+optimalPortfolio(Sigma, mu, control = list(type = "mv"))
+#+end_src
+
+#+RESULTS:
+:       SPY       TLT 
+: 0.6269026 0.3730974
+
+- =PortfolioAnalytics::optimize.portfolio()= でも同じ結果
+#+begin_src R
+library(PortfolioAnalytics)
+init.portf <- portfolio.spec(assets=c("SPY", "TLT"))
+init.portf <- add.constraint(portfolio=init.portf, type="full_investment")
+init.portf <- add.objective(portfolio=init.portf, type="return", name="mean")
+init.portf <- add.objective(portfolio=init.portf, type="risk", name="StdDev")
+
+optimize.portfolio(R=R_xts, portfolio=init.portf,
+                   optimize_method="ROI", maxSR=TRUE, trace=TRUE)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+,***********************************
+PortfolioAnalytics Optimization
+,***********************************
+
+Call:
+optimize.portfolio(R = R_xts, portfolio = init.portf, optimize_method = "ROI", 
+    trace = TRUE, maxSR = TRUE)
+
+Optimal Weights:
+   SPY    TLT 
+0.6269 0.3731 
+
+Objective Measure:
+ StdDev 
+0.02414 
+
+
+    mean 
+0.008164 
+
+
+
+Warning messages:
+1: In maxret_opt(R = R, moments = moments, constraints = constraints,  :
+  Inf or -Inf values detected in box constraints, maximum return 
+            objectives must have finite box constraint values.
+2: In maxret_opt(R = R, moments = tmp_moments, constraints = constraints,  :
+  Inf or -Inf values detected in box constraints, maximum return 
+            objectives must have finite box constraint values.
+#+end_example
+
+*** 最小分散ポートフォリオ (Global Minimum Variance)
+
+参考
+ - [[http://osashimix.hatenablog.com/entry/2019/02/17/201742][【仕事関連】Asset Allocation ModelをRで組んでみた。]]
+ - ポートフォリの分散を最も小さくするウェイト
+ - GMV の算出にリターンは必要ない
+
+${\bf w} = \frac{{\bf \Sigma^{-1}} {\bf 1}}{{\bf 1^T} {\bf \Sigma}^{-1} {\bf 1}}$
+
+${\bf \Sigma}^{-1}$ 分散共分散行列の逆行列
+${\bf 1}$    全ての要素が 1 のベクトル
+
+#+begin_src R
+I <- matrix(1, ncol(R_mat), 1)
+Sigma <- cov(R_mat)
+inv_Sigma <- solve(Sigma)
+
+(inv_Sigma %*% I) / as.numeric(t(I) %*% inv_Sigma %*% I)
+#+end_src
+
+#+RESULTS:
+: 
+:          [,1]
+: SPY 0.4896352
+: TLT 0.5103648
+
+- =RiskPortfolios::optimalPortfolio()= で検算
+#+begin_src R
+optimalPortfolio(Sigma, mu = NULL, control = list(type = "minvol"))
+#+end_src
+
+#+RESULTS:
+:       SPY       TLT 
+: 0.4896352 0.5103648
+
+*** リスクパリティポートフォリオ
+
+- =RiskPortfolios::optimalPortfolio()= で検算
+- erc = Equal Risk Contribution
+- Volatility の大きさに比例したウェイト
+- gmv と似た結果
+
+#+begin_src R
+std <- c(sd(R_SPY), sd(R_TLT))
+1 / std / sum(1 / std)
+#+end_src
+
+#+RESULTS:
+: [1] 0.4931498 0.5068502
+
+#+begin_src R
+optimalPortfolio(Sigma, mu = NULL, control = list(type = "erc"))
+#+end_src
+
+#+RESULTS:
+: [1] 0.4931498 0.5068502
+
+- [[http://osashimix.hatenablog.com/entry/2019/02/17/201742][ここ]] で紹介されている関数
+#+begin_src R
+risk_parity <- function(r_dat,r_cov) {
+  fn <- function(weight, r_cov) {
+    N <- NROW(r_cov)
+    risks <-  weight * (r_cov %*% weight)
+    g <- rep(risks, times = N) - rep(risks, each = N)
+    return(sum(g^2))
+  }
+
+  dfn <- function(weight,r_cov) {
+    out <- weight
+    for (i in 0:length(weight)) {
+      up <- dn <- weight
+      up[i] <- up[i]+.0001
+      dn[i] <- dn[i]-.0001
+      out[i] = (fn(up,r_cov) - fn(dn,r_cov))/.0002
+    }
+    return(out)
+  }
+
+  std <- sqrt(diag(r_cov))
+  x0 <- 1 / std / sum(1 / std) # 初期ポートフォリオ
+  res <- nloptr::nloptr(
+    x0            = x0,
+    eval_f        = fn,
+    eval_grad_f   = dfn,
+    eval_g_eq     = function(weight,r_cov) { sum(weight) - 1 },
+    eval_jac_g_eq = function(weight,r_cov) { rep(1,length(std)) },
+    lb            = rep(0,length(std)),ub=rep(1,length(std)),
+    opts          = list("algorithm"="NLOPT_LD_SLSQP","print_level" = 0,"xtol_rel"=1.0e-8,"maxeval" = 1000),
+    r_cov         = r_cov)
+
+  r_weight <- res$solution
+  names(r_weight) <- colnames(r_cov)
+  wr_dat <- r_dat*r_weight
+  portfolio <- apply(wr_dat,1,sum)
+  pr_dat <- data.frame(wr_dat,portfolio)
+  sd <- sd(portfolio)
+  result <- list(r_weight,pr_dat,sd)
+  names(result) <- c("weight","return","portfolio risk")
+  return(result)
+}
+#+end_src
+
+*** CVaR (Conditional Value at Risk) 最小化
+* 以前のメモ
+** Libraries
+  
+#+begin_src R :results silent
+library(DEoptim)
+library(PerformanceAnalytics)
+library(PortfolioAnalytics)
+library(ROI.plugin.glpk)
+library(ROI.plugin.quadprog)
+library(RiskPortfolios)
+library(backtester)
+library(data.table)
+library(fPortfolio)
+library(formattable)
+library(glue)
+library(lubridate)
+library(market.data)
+library(rmgarch)
+library(rugarch)
+library(tidyquant)
+library(tidyverse)
+library(timetk)
+#+end_src
+
+** 収益率 (Discrete Return)
+
+- (当日の株価 - 前営業日の株価) / 前営業日の株価
+- _ある基準点から基準点までの収益率を計算する場合は、この方法で問題ない_
+- 決められた期間 (Discrete) での単純複利、という考え方
+
+#+begin_src R
+(110 - 100) / 100 # +10%
+(100 - 110) / 110 # -9.1%
+#+end_src
+
+#+RESULTS:
+: [1] 0.1
+: [1] -0.09090909
+
+- 時系列で各期の収益率を合計すると、 _プラスの収益率が大きく出てしまう_
+  http://capitalmarket.jp/post-431/
+
+#+begin_src R :results value :colnames yes
+data <- data.frame(price = c(1000, 900, 1200, 50, 500, 1000)) %>%
+  mutate(ret = (price - lag(price)) / lag(price),
+         log_ret = log(price) - log(lag(price))) %>%
+  mutate(ret = percent(ret), log_ret = percent(log_ret))
+#+end_src
+
+#+RESULTS:
+| price |     ret |  log_ret |
+|-------+---------+----------|
+|  1000 |      NA |       NA |
+|   900 | -10.00% |  -10.54% |
+|  1200 |  33.33% |   28.77% |
+|    50 | -95.83% | -317.81% |
+|   500 | 900.00% |  230.26% |
+|  1000 | 100.00% |   69.31% |
+
+- 上記の例では、1000 で買って、1000 で売るので、期間の収益率は、ゼロのはず
+- 通常の収益率では、マイナスは、-100% が最大だがプラスは上限がないため正確な計算ができない
+- 対数収益率であれば、上昇・下落を同等の変化率で扱うことができる
+- 対数収益率では、マイナスが -100% 以上になることもある
+
+#+begin_src R
+sum(data$ret, na.rm = T)
+cumsum(data$ret[2:6])
+
+sum(data$log_ret, na.rm = T)
+cumsum(data$log_ret[2:6])
+#+end_src
+
+#+RESULTS:
+: [1] 927.50%
+: 
+: [1] -10.00% 23.33%  -72.50% 827.50% 927.50%
+: 
+: [1] 0.00%
+: 
+: [1] -10.54%  18.23%   -299.57% -69.31%  0.00%
+
+- _収益率を合計したい場合、掛けて計算する_ (一方、対数収益率は足し算で OK)
+- 収益率に 1 を加えて、利率に変換し、cumprod()
+- 最後に 1 を引けば、収益率に変換可能
+#+begin_src R
+cumprod(1 + data$ret[2:6])
+#+end_src
+
+#+RESULTS:
+: [1] 0.90 1.20 0.05 0.50 1.00
+
+** 対数収益率 (Log Return / Continous Return)
+
+- 対数収益率 = 連続複利で計算した利率
+- したがって、Continous Return と呼ばれる
+- 下落も上昇も同等の変化率で扱ってくれる
+- 合計する場合は、そのまま足せば良い
+  
+#+begin_src R
+log(110) - log(100) # +9.5%
+log(100) - log(110) # -9.5%
+#+end_src
+
+#+RESULTS:
+: [1] 0.09531018
+: [1] -0.09531018
+
+- この方法でも良い
+#+begin_src R
+log(110 / 100)
+#+end_src
+
+#+RESULTS:
+: [1] 0.09531018
+
+- 大きく値下がりすると違和感のある数字になる
+- -207% !? (-100% 以上はありえないのに)
+#+begin_src R
+log(50) - log(400) 
+#+end_src
+
+#+RESULTS:
+: [1] -2.079442
+
+** 変換
+
+- 収益率 -> 対数収益率
+- =log(r + 1)=
+#+begin_src R :results output
+r <- 0.1234
+r_log <- log(r + 1) 
+r_log
+#+end_src
+
+#+RESULTS:
+: 
+: [1] 0.1163598
+
+- 対数収益率 -> 収益率
+- =exp(r) - 1=
+#+begin_src R
+exp(r_log) - 1
+#+end_src
+
+#+RESULTS:
+: [1] 0.1234
+
+** リターンの統計的有意性
+*** リターンが正規分布の場合 (t 検定)
+
+- 母集団が正規分布に従う場合の検定方法
+- t 統計量が正規分布に従うという性質を持つ
+- _1 群の t 検定 = 平均が 0 と異なると言えるか？_
+
+$t = \frac{\mu - 0}{\sigma \sqrt{n}}$
+
+- 平均 +0.05%, SD 0.5% の疑似リターン
+- t 統計量が 5% 棄却域 (1.645) よりも大きいか？
+#+begin_src R :results output
+set.seed(123)
+ret <- rnorm(1000, mean = 0.0005, sd = 0.005)
+
+tstats <- mean(ret) / sd(ret) * sqrt(length(ret))
+tstats
+#+end_src
+
+#+RESULTS:
+: 
+: [1] 3.703039
+
+- stats::t.test を使う
+- pvalue <= 0.05 なので、有意にゼロより大きい
+#+begin_src R
+t.test(ret)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+	One Sample t-test
+
+data:  ret
+t = 3.703, df = 999, p-value = 0.0002247
+alternative hypothesis: true mean is not equal to 0
+95 percent confidence interval:
+ 0.0002729427 0.0008883359
+sample estimates:
+   mean of x 
+0.0005806393
+#+end_example
+
+* 参考
+
+- Simple return/Log return
+  - [[http://capitalmarket.jp/post-431/][対数収益率について　株価リターンの計算～@みんなのピヨピヨ投資]]
+  - [[http://www.ice.tohtech.ac.jp/nakagawa/taylorexp/taylor1.htm][テイラー展開@東北工業大学 情報通信工学科 中川研究室]]
+  - [[https://soulinthegame.blogspot.com/2017/02/simple-or-log-returns.html][Simple or Log Returns?@Soul in the Game]]
+  - [[https://www.researchgate.net/post/Why_did_the_Fama_French_factors_calculated_using_simple_returns_instead_of_log_returns][Why did the Fama French factors calculated using simple returns instead of log returns?@ResearchGate]]
+  - [[https://www.portfolioprobe.com/2010/10/04/a-tale-of-two-returns/][A tale of two returns@PortfolioProbe]]
+
+- ポートフォリオ
+  - [[https://ja.wikipedia.org/wiki/%E7%8F%BE%E4%BB%A3%E3%83%9D%E3%83%BC%E3%83%88%E3%83%95%E3%82%A9%E3%83%AA%E3%82%AA%E7%90%86%E8%AB%96][現代ポートフォリオ理論@Wikipedia]]
+  - [[http://osashimix.hatenablog.com/entry/2019/02/17/201742][【仕事関連】Asset Allocation ModelをRで組んでみた。@東京の投資顧問会社で働く社会人が研究に没頭するブログ]]
+  - [[https://www.saa.or.jp/50year/pdf/a50_r4.pdf][時系列モデルを利用した動的資産配分]]

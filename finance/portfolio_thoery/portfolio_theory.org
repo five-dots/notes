@@ -59,6 +59,7 @@ port_ret(ibm, ko, 0.6)
 #+end_src
 
 #+RESULTS:
+: 
 : [1] 0.222136
 
 - 行列の積の計算でも同じ結果
@@ -88,7 +89,6 @@ One <- rep(1, length(W))
 
 $Var(r_p) = W_a^2 Var(r_a) + W_b^2 Var(r_b) + 2 W_a W_b Cov(r_a, r_b)$
 
-
 相関係数を使って書くと、
 
 $Var(r_p) = W_a^2 Var(r_a) + W_b^2 Var(r_b) + 2 W_a W_b \rho \sigma_a \sigma_b$
@@ -110,6 +110,7 @@ port_sd(ibm, ko, 0.6)
 #+end_src
 
 #+RESULTS:
+: 
 : [1] 0.2473688
 
 - 行列計算バージョン (不偏推定量)
@@ -143,7 +144,7 @@ ggplot(port, aes(x = sd, y = ret)) + geom_point()
 #+end_src
 
 #+RESULTS:
-[[file:~/Dropbox/memo/img/babel/fig-NGOn3K.png]]
+[[file:/home/shun/Dropbox/memo/img/babel/fig-XBMpEl.png]]
 
 - 相関係数が、1 以下であれば、ポートフォリオ分散効果が働く
 - 相関係数が -1 ではお互いの値動きを打ち消すため、リスクがゼロになる
@@ -173,20 +174,6 @@ port[which.max(sharpe), ]$w_a
 : [1] 0.898295
 : 
 : [1] 0.58
-
-** ポートフォリオ最適化理論
-
-https://www.saa.or.jp/50year/pdf/a50_r4.pdf
-
-- 平均・分散モデル (mean-variance)
-  期待リターンと分散共分散行列からポートフォリオを決定する
-  - シャープレシオ最大化
-  - 最小分散ポートフォリオ
-
-- ダウンサイドリスクに着目するもの
-  - CVaR (Conditional Value at Risk) 最小化
-
-- リスクパリティ (Equal Risk Contribution)
 
 ** {PortfolioAnalytics} 
 
@@ -249,7 +236,6 @@ port_sd(ibm, ko, w_mv["IBM"])
 : 0.2186216
 :       IBM 
 : 0.2433734
-
 
 - minvol = 最小分散ポートフォリオ
 - リターンは減っているが、ポートフォリオのボラティリティは減少
@@ -2051,7 +2037,7 @@ ls("package:RiskPortfolios")
   mv      = mean-variance portfolio
   minvol  = minimum variance portfolio
   invvol  = inverse volatility portfolio
-  erc     = equal-risk-contribution portfolio
+  erc     = equal-risk-contribution portfolio (リスクパリティ)
   maxdiv  = maximum diversification portfolio
   riskeff = risk-efficient portfolio:
   
@@ -2118,3 +2104,15 @@ semidevEstimation(
 #+end_src
 
 ** {portfolio}
+* 参考
+
+- ブログ
+  - [[http://osashimix.hatenablog.com/entry/2019/02/17/201742][【仕事関連】Asset Allocation Model を R で組んでみた。@東京の投資顧問会社で働く社会人が研究に没頭するブログ]]
+  - [[http://grg.hatenablog.com/entry/2017/03/12/233826][S&P500と日経225の時系列分析（DCCモデル・多変量GARCH）@GRGと金融工学・統計解析]]
+  - [[http://grg.hatenablog.com/entry/2017/03/13/101234][コピュラとは（時系列分析・DCDモデルの前準備として）@GRGと金融工学・統計解析]]
+  - [[http://grg.hatenablog.com/entry/2017/03/19/001059][S&P500と日経225の時系列分析（コピュラ ＆ DCDモデル）@GRGと金融工学・統計解析]]
+  - [[https://www.r-bloggers.com/introduction-to-asset-allocation/][Introduction to Asset Allocation@R-bloggers]]
+  - [[https://stackoverflow.com/questions/34636402/using-covariance-matrix-for-portfolio-optimization-in-r][Using Covariance matrix for Portfolio Optimization in R@stackoverflow]]
+  - [[https://github.com/inertia7/timeSeries_sp500_R][Forecasting the Stock Market (R)@Github]]
+
+

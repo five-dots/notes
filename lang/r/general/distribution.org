@@ -67,9 +67,25 @@ library(VineCopula)
   
   $P_{X|Y}(x | 1)$
 
-
 [[file:../../../img/download/Basics/doujibunpu1_2019-08-09_10-51-33.png]]
 #+DOWNLOADED: https://mathwords.net/wp-content/uploads/2017/02/doujibunpu1.png @ 2019-08-09 10:51:33
+
+** 混合分布
+
+- Mixture Distribution
+- 複数の確率分布を重み付けして混合
+
+** 中心極限定理 (Central Limit Theorem)
+
+- 独立な確率変数 $X_1, X_2, \dots , X_n$が, 同じ平均, 分散の確率分布に従う時 n が大きくなるにつれて、以下の Z は標準正規分布に近づく
+- _どんな確率分布であっても、n がおおきければ、Z値は標準正規分布になる_
+
+$Z = \frac{\bar{X} - \mu}{\sigma / \sqrt{n}}$
+
+このとき、
+$\bar{X} = \frac{X_1 + X_2 + X_3, \dots , X_n}{n}$
+
+$n \to \infty, Z \sim N(0,1)$
 
 ** モーメント
 *** Overview
@@ -119,8 +135,9 @@ moment(rn, 4)
 - リターン系列の分布形状を確かめる
 - 利大損小の収益率は、 Positive Skew になる
 - 計算方法: z-score を 3 乗した平均 (マイナスになりうる)
+- 正の値であると右に傾いた分布になる
 
-$Skew = \frac{E[(X - \mu)^3]}{\sigma^3} = \frac{1}{n}\sum(\frac{X_i - \mu}{\sigma})^3$
+$Sk = E[(\frac{X - \mu}{\sigma})^3] = E[Z^3]$
 
 - ={moments}=, ={e1071}=, ={PerformanceAnalytics}= に収録されている
 #+begin_src R
@@ -158,14 +175,16 @@ skew_fisher(rn)
 
 *** Kurtosis (尖度)
 
-- 尖度(せんど)。とんがりと裾野の厚み。上下の歪み。 
-- = 4 次のモーメント
-- 正規分布の尖度を 0 と定義する場合と、3 と定義する場合がある
-- リターンの尖度を正規分布以上に保つことが重要。(幅が広いよりもとんがった形状が良い)
-- 小さな数字は、fat-tailed risk が大きい
+- 尖度(せんど)。とんがりと裾野の厚み。上下の歪み。 (= 4 次のモーメント)
+- 相対尖度 = 正規分布との相対的な尖度 (3 を基準)
 
-$Kurtosis = \frac{E[(X - \mu])^4}{\sigma^4}$
+$k = E[(\frac{X - \mu}{\sigma})^4] -3 = E[Z^4] - 3$
 
+- 絶対尖度
+$k^' = E[(\frac{X - \mu}{\sigma})^4] = E[Z^4]$
+
+- 尖度が大きい = Fat-tail
+- 4 乗することで、絶対値の大きい変動が強調される (=fat tail)
 #+begin_src R
 kurt_moment <- function(x) {
   sum((x-mean(x))^4/sd(x)^4)/length(x)
@@ -197,10 +216,10 @@ kurt_moment(rn)
 ** {base} での関数命名規則
 
 - 統一的な名前を持つ
-| dxxx | density    | 確率密度関数                    |
-| rxxx | random     | 疑似乱数                        |
-| qxxx | quantile   | 確率点 = 確率になる確率点       |
-| pxxx | percentile | 累積確率分布 = 確率点になる確率 |
+| dxxx | density    | 確率密度関数                                                 |
+| rxxx | random     | 疑似乱数                                                     |
+| qxxx | quantile   | 確率点 = 確率になる確率点 (積分した累積確率を返す)           |
+| pxxx | percentile | 累積確率分布 = 確率点になる確率 (確率を入力し、確率点を返す) |
 
 - 乱数発生器
 ~.Random.seed~
@@ -453,22 +472,22 @@ plot(t_copula, type="contour")
 
 ** Distributions for Count Data (Discrete)
 
-|--------------+----------------------------+---------------+----------------------------------------|
-| Name (JP)    | Name (EN)                  | Parameters    | Note                                   |
-|--------------+----------------------------+---------------+----------------------------------------|
-| 幾何分布     | Geometric (geom)           | x, prob       | 最初に成功するまでに x 回試行する確率  |
-|              |                            |               | _負の二項分布の size=1_                  |
-| 負の二項分布 | Negative Binomial (nbinom) | x, size, prob | size 回成功するまでに x 回失敗する確率 |
-|              |                            |               | _二項分布の反転_, _幾何分布の多変量化_     |
-| 二項分布     | Binomial (binom)           | x, size, prob | size 回試行して、x 回成功する確率      |
-|              |                            |               | _size=1 でベルヌーイ分布_, _k=2 の多項分布_  |
-|              |                            |               | コイントスの確率                       |
-| 多項分布     | Multinomial (multinom)     | x, size, prob | k 個のカテゴリの生起確率               |
-|              |                            |               | prob は長さ k のベクトルで合計が 1     |
-|              |                            |               | _二項分布の多変量化_                     |
-| ポアソン分布 | Poisson (pois)             | x, lambda     | 時間内に x 回発生する確率              |
-|              |                            |               | _二項分布の極限 (size 大, prob 小)_      |
-|--------------+----------------------------+---------------+----------------------------------------|
+|--------------+----------------------------+---------------+-----------------------------------------|
+| Name (JP)    | Name (EN)                  | Parameters    | Note                                    |
+|--------------+----------------------------+---------------+-----------------------------------------|
+| 幾何分布     | Geometric (geom)           | x, prob       | 最初に成功するまでに x 回試行する確率   |
+|              |                            |               | _負の二項分布の size=1_                   |
+| 負の二項分布 | Negative Binomial (nbinom) | x, size, prob | size 回成功するまでに x 回失敗する確率  |
+|              |                            |               | _二項分布の反転_, _幾何分布の多変量化_      |
+| 二項分布     | Binomial (binom)           | x, size, prob | size 回試行して、x 回成功する確率       |
+|              |                            |               | _size=1 でベルヌーイ分布_, _k=2 の多項分布_ |
+|              |                            |               | コイントスの確率                        |
+| 多項分布     | Multinomial (multinom)     | x, size, prob | k 個のカテゴリの生起確率                |
+|              |                            |               | prob は長さ k のベクトルで合計が 1      |
+|              |                            |               | _二項分布の多変量化_                      |
+| ポアソン分布 | Poisson (pois)             | x, lambda     | 時間内に x 回発生する確率               |
+|              |                            |               | _二項分布の極限 (size 大, prob 小)_       |
+|--------------+----------------------------+---------------+-----------------------------------------|
 
 ** Distributions for Probability (Continous)
 
@@ -632,7 +651,7 @@ qnorm(0.05) # -1.644854
 : 
 : [1] -1.644854
 
-*** Multivariate Normal
+*** 多変量正規分布
 **** PDF
 
 単変量の正規分布
@@ -770,7 +789,6 @@ p3
 #+RESULTS:
 [[file:/home/shun/Dropbox/memo/img/babel/fig-x9oJ8e.png]]
 
-
 ***** 3D by Plotly
 
 #+begin_src R
@@ -822,7 +840,7 @@ ggplot(data = tibble(x = 0:8), aes(x = x)) +
 #+RESULTS:
 [[file:~/Dropbox/memo/img/babel/fig-bTNmFS.png]]
 
-*** Student-t
+*** t 分布
 
 - 正規分布よりも裾が厚い分布
 - 自由度によって、正規分布〜コーシー分布までを含む
@@ -842,13 +860,38 @@ ggplot(data = tibble(x = -5:5), aes(x = x)) +
   stat_function(fun = dt, args = list(df = 1)) + #? = コーシー分布(裾が厚い)
   stat_function(fun = dt, args = list(df = 2), linetype = "dotted") +
   stat_function(fun = dt, args = list(df = 8), linetype = "dashed") +
-  stat_function(fun = dt, args = list(df = Inf), color = "red") #? 正規分布(裾が薄くて、尖っている)
+  stat_function(fun = dt, args = list(df = Inf), color = "red") # 正規分布(裾が薄くて、尖っている)
 #+end_src
 
 #+RESULTS:
 [[file:~/Dropbox/memo/img/babel/fig-w5UGIP.png]]
 
-*** TODO F
+*** F 分布
+
+- スネデカーの F 分布 (英: Snedecor's F distribution)
+- またはフィッシャー-スネデカー分布 (英: Fisher-Snedecor distribution) とも呼ばれる
+- F 分布は F 検定で帰無仮説に従う分布として用いられる
+- 正規分布に従う二つの群に対して「標準偏差が等しい」という仮説の検定や、分散分析に応用される
+- _カイ 2 乗分布に従う 2 つの変数の比は F 分布に従う_
+
+- df1, df2: 2 つの自由度を指定
+#+begin_src R :results silent
+df(x, df1, df2, ncp, log = FALSE)
+pf(q, df1, df2, ncp, lower.tail = TRUE, log.p = FALSE)
+qf(p, df1, df2, ncp, lower.tail = TRUE, log.p = FALSE)
+rf(n, df1, df2, ncp)
+#+end_src
+
+#+begin_src R :results graphics :file (get-babel-file)
+ggplot(data = tibble(x = 0:5), aes(x = x)) +
+  stat_function(fun = df, args = list(df1 = 1, df2 = 5)) +
+  stat_function(fun = df, args = list(df1 = 2, df2 = 5), linetype = "dotted") +
+  stat_function(fun = df, args = list(df1 = 10, df2 = 20), linetype = "dotted")
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-pyBUew.png]]
+
 *** TODO Cauthy
 *** Double Exponential (Biexponential) / Laplae
 
@@ -1323,7 +1366,7 @@ var(a)
 
 - base funs
 #+begin_src R :results silent
-dbinom(x, size, prob, log = FALSE)
+dbinom(x, size, prob, log = FALSE) # x=成功数, size=試行回数, prob=成功確率
 pbinom(q, size, prob, lower.tail = TRUE, log.p = FALSE)
 qbinom(p, size, prob, lower.tail = TRUE, log.p = FALSE)
 rbinom(n, size, prob)

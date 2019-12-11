@@ -1,8 +1,13 @@
 #+STARTUP: folded indent inlineimages latexpreview
 #+PROPERTY: header-args:R :session *R:ic* :width 560 :height 420 :results output
 
-* 情報量とは?
+* ライブラリの読み込み
 
+#+begin_src R :results silent
+library(tidyverse)
+#+end_src
+
+* 情報量とは?
 * IC
 ** Overview
 

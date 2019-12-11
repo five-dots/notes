@@ -1,0 +1,875 @@
+#+STARTUP: folded indent inlineimages latexpreview
+#+PROPERTY: header-args:R :results output :session *R:titanic* :width 640 :height 480 :colnames yes
+
+* ライブラリの読み込み
+
+#+begin_src R :results silent
+library(tidyverse)
+library(tidymodels)
+library(glue)
+library(makedummies)
+library(tune)
+#+end_src
+
+* 前処理 (Skip)
+** 特徴量の追加 (title)
+
+- title = 役職・敬称
+- dfsize = "Single", "Small", "Large"
+#+begin_src R :results silent
+officer <- c('Capt', 'Col', 'Don', 'Dr', 'Major', 'Rev')
+royalty <- c('Dona', 'Lady', 'the Countess','Sir', 'Jonkheer')
+
+raw_data <- raw_data %>%
+  mutate(
+    ## 敬称を抽出
+    name_split = str_split(name, ",|\\."),
+    title = map_chr(name_split, ~ str_trim(.[[2]])),
+    title = case_when(
+      title %in% officer ~ "Officer",
+      title %in% royalty ~ "Royalty",
+      title %in% c("Mlle", "Ms") ~ "Miss",
+      title == "Mme" ~ "Mrs",
+      TRUE ~ title),
+    dfsize = case_when(
+      fsize == 1 ~ "Single",
+      2 <= fsize & fsize <= 4 ~ "Small",
+      TRUE ~ "Large")) %>%
+  select_if(~ !is_list(.))
+#+end_src
+
+** 欠損値の補完 (age)
+
+- title 毎の中央値で年齢を埋める
+#+begin_src R :results silent
+age_by_title <- raw_data %>%
+  group_by(title) %>%
+  summarise(age2 = median(age, na.rm = TRUE))
+
+raw_data <- raw_data %>%
+  left_join(age_by_title, by = "title") %>%
+  mutate(age = if_else(!is.na(age), age, age2)) %>%
+  select(-age2)
+#+end_src
+
+* データの読み込み
+** Data
+
+- 目的変数 = Survived
+- 説明変数 = 10
+
+| 変数名   | 内容                | データ範囲                   |
+|----------+---------------------+------------------------------|
+| id       | 乗客番号            | 1-891(train), 892-1309(test) |
+| survived | 目的変数            | 0=Died, 1=Survived           |
+| pclass   | 社会的地位          | 1=Upper, 2=Middle, 3=Lower   |
+| name     | 名前                |                              |
+| sex      | 性別                | male/female                  |
+| age      | 年齢                | 0.4 ~ 80                     |
+| sib_sp   | 配偶者と兄弟の数    | 0 ~ 8                        |
+| par_ch   | 両親と子供の数      | 0 ~ 6                        |
+| ticket   | チケット番号        |                              |
+| fare     | 運賃                | 0 ~ 512                      |
+| cabin    | 客席番号            |                              |
+| embarked | 乗船した港          | C(仏), Q(新) or S(英)        |
+|----------+---------------------+------------------------------|
+| fsize    | sib_sp + par_ch + 1 |                              |
+| dfsize   | fsize=1, 2~4, more  |                              |
+| title    | 名前から敬称を抽出  |                              |
+
+- 最低限の前処理を施したデータを csv に保存 ="titanic2.csv"=
+  - age は title 毎の中央値で補完
+  - fare の欠損値を 8.05 (embarked=S, pclass=3 の中央値)
+  - embarked の欠損値を C (pclass=1, fare=80 から計算)
+
+#+begin_src R :results silent
+raw_data <- read_csv("data/titanic2.csv")
+#+end_src
+
+** str()
+
+#+begin_src R
+str(raw_data)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+Classes ‘spec_tbl_df’, ‘tbl_df’, ‘tbl’ and 'data.frame':	1309 obs. of  15 variables:
+ $ id      : num  1 2 3 4 5 6 7 8 9 10 ...
+ $ survived: num  0 1 1 1 0 0 0 0 1 1 ...
+ $ pclass  : num  3 1 3 1 3 3 1 3 3 2 ...
+ $ name    : chr  "Braund, Mr. Owen Harris" "Cumings, Mrs. John Bradley (Florence Briggs Thayer)" "Heikkinen, Miss. Laina" "Futrelle, Mrs. Jacques Heath (Lily May Peel)" ...
+ $ title   : chr  "Mr" "Mrs" "Miss" "Mrs" ...
+ $ sex     : chr  "Male" "Female" "Female" "Female" ...
+ $ age     : num  22 38 26 35 35 29 54 2 27 14 ...
+ $ sib_sp  : num  1 1 0 1 0 0 0 3 0 1 ...
+ $ par_ch  : num  0 0 0 0 0 0 0 1 2 0 ...
+ $ fsize   : num  2 2 1 2 1 1 1 5 3 2 ...
+ $ dfsize  : chr  "Small" "Small" "Single" "Small" ...
+ $ ticket  : chr  "A/5 21171" "PC 17599" "STON/O2. 3101282" "113803" ...
+ $ fare    : num  7.25 71.28 7.92 53.1 8.05 ...
+ $ cabin   : chr  NA "C85" NA "C123" ...
+ $ embarked: chr  "S" "C" "S" "S" ...
+ - attr(*, "spec")=
+  .. cols(
+  ..   id = col_double(),
+  ..   survived = col_double(),
+  ..   pclass = col_double(),
+  ..   name = col_character(),
+  ..   title = col_character(),
+  ..   sex = col_character(),
+  ..   age = col_double(),
+  ..   sib_sp = col_double(),
+  ..   par_ch = col_double(),
+  ..   fsize = col_double(),
+  ..   dfsize = col_character(),
+  ..   ticket = col_character(),
+  ..   fare = col_double(),
+  ..   cabin = col_character(),
+  ..   embarked = col_character()
+  .. )
+#+end_example
+
+** データの確認
+
+#+begin_src R :results value
+raw_data %>%
+  select(-name, -ticket) %>%
+  head()
+#+end_src
+
+#+RESULTS:
+| id | survived | pclass | title | sex    | age | sib_sp | par_ch | fsize | dfsize |    fare | cabin | embarked |
+|----+----------+--------+-------+--------+-----+--------+--------+-------+--------+---------+-------+----------|
+|  1 |        0 |      3 | Mr    | Male   |  22 |      1 |      0 |     2 | Small  |    7.25 | nil   | S        |
+|  2 |        1 |      1 | Mrs   | Female |  38 |      1 |      0 |     2 | Small  | 71.2833 | C85   | C        |
+|  3 |        1 |      3 | Miss  | Female |  26 |      0 |      0 |     1 | Single |   7.925 | nil   | S        |
+|  4 |        1 |      1 | Mrs   | Female |  35 |      1 |      0 |     2 | Small  |    53.1 | C123  | S        |
+|  5 |        0 |      3 | Mr    | Male   |  35 |      0 |      0 |     1 | Single |    8.05 | nil   | S        |
+|  6 |        0 |      3 | Mr    | Male   |  29 |      0 |      0 |     1 | Single |  8.4583 | nil   | Q        |
+
+* 探索的データ分析 (EDA)
+** recipe()
+
+- 探索的データ解析に必要な前処理をここで行う
+- 最終的なモデリングに必要な前処理は、後工程で行う
+
+#+begin_src R :results silent
+features <- c(
+  ## factor
+  "pclass", "title", "sex", "dfsize", "embarked",
+  ## numeric
+  "age", "sib_sp", "par_ch", "fsize", "fare")
+
+rec_eda <- recipe(raw_data) %>%
+  update_role("survived", new_role = "outcome") %>%
+  update_role(features, new_role = "predictor") %>%
+  step_rm(-has_role("outcome"), -has_role("predictor")) %>%
+  ## バイナリ(0,1) をファクターに変換
+  step_bin2factor(survived, levels = c("Survived", "Died")) %>%
+  ## 数値をファクターに変換
+  step_num2factor(pclass) %>%
+  ## 文字列をファクターに変換
+  step_string2factor(title , sex, dfsize, embarked)
+
+eda_prepped <- prep(rec_eda)
+eda_juiced <- juice(eda_prepped)
+eda_train <- filter(eda_juiced, !is.na(survived))
+#+end_src
+
+** pclass
+
+- pclass が高いと生存率も高い
+
+#+begin_src R
+table(eda_train$survived, eda_train$pclass)
+#+end_src
+
+#+RESULTS:
+:           
+:              1   2   3
+:   Survived 136  87 119
+:   Died      80  97 372
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+eda_train %>%
+  group_by(pclass) %>%
+  summarise(percent = sum(survived == "Survived") / n()) %>%
+  ggplot(aes(x = pclass, y = percent)) +
+  geom_col()
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-8aUGqK.png]]
+
+** age
+
+- 子供の生存率が高く、成人になるに連れて生存率が低くなる
+- 壮年の男性が一番生存率が低そう
+- 非線形関係？
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+eda_train %>%
+  ggplot(aes(x = age, fill = survived)) +
+  geom_histogram()
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-Hb63G3.png]]
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+eda_train %>%
+  mutate(rank = ntile(age, 20)) %>%
+  group_by(rank) %>%
+  summarise(
+    percent = sum(survived == "Survived") / n()) %>%
+  ggplot(aes(x = rank, y = percent)) +
+  geom_col()
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-HkPYA7.png]]
+
+** sex
+
+- 女性の生存率が圧倒的に高い
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+eda_train %>%
+  group_by(sex) %>%
+  summarise(percent = sum(survived == "Survived") / n()) %>%
+  ggplot(aes(x = sex, y = percent)) +
+  geom_col()
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-nAtLE7.png]]
+
+** sib_sp
+
+- 配偶者 or 兄弟は 1-2 人が最も生存確率が高い (お互い助け合える？)
+- 3 人以上になると生存率が下がっていく
+#+begin_src R
+sibsp_ratio <- eda_train %>%
+  group_by(sib_sp) %>%
+  summarise(
+    all = n(),
+    survived = sum(survived == "Survived"),
+    percent = percent(survived / n()))
+sibsp_ratio
+#+end_src
+
+#+RESULTS:
+#+begin_example
+# A tibble: 7 x 4
+  sib_sp   all survived percent
+   <
+<
+   <
+<
+ 
+1      0   608      210 34.5%  
+2      1   209      112 53.6%  
+3      2    28       13 46.4%  
+4      3    16        4 25.0%  
+5      4    18        3 16.7%  
+6      5     5        0 0%     
+7      8     7        0 0%
+#+end_example
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+sibsp_ratio %>%
+  ggplot(aes(x = sib_sp, y = percent)) +
+  geom_col()
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-lKmcNu.png]]
+
+** par_ch
+
+- 両親・子供は 1-3 人が最も生存確率が高い (お互い助け合える？)
+- 4 人以上になると生存率が下がっていく
+#+begin_src R
+parch_ratio <- eda_train %>%
+  group_by(par_ch) %>%
+  summarise(
+    all = n(),
+    survived = sum(survived == "Survived"),
+    percent = percent(survived / n()))
+parch_ratio
+#+end_src
+
+#+RESULTS:
+#+begin_example
+# A tibble: 7 x 4
+  par_ch   all survived percent
+   <
+<
+   <
+<
+ 
+1      0   678      233 34.4%  
+2      1   118       65 55.1%  
+3      2    80       40 50.0%  
+4      3     5        3 60.0%  
+5      4     4        0 0%     
+6      5     5        1 20.0%  
+7      6     1        0 0%
+#+end_example
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+parch_ratio %>%
+  ggplot(aes(x = par_ch, y = percent)) +
+  geom_col()
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-YQN7Ds.png]]
+
+** dfsize
+
+- Single = 1 人     = 生存確率低い
+- Samll  = 2-4      = 生存確率高い
+- Large  = 5 人以上 = 生存確率非常に低い
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+eda_train %>%
+  group_by(dfsize) %>%
+  summarise(
+    all = n(),
+    survived = sum(survived == "Survived"),
+    percent = percent(survived / n())) %>%
+  ggplot(aes(x = dfsize, y = percent)) +
+  geom_col()
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-Riofpr.png]]
+
+** fare
+
+- 運賃が高い乗客が生存
+- Pclass と相関がありそう
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+eda_train %>%
+  select(survived, fare) %>%
+  mutate(rank = ntile(fare, 20)) %>%
+  group_by(rank) %>%
+  summarise(
+    percent = sum(survived == "Survived") / n()) %>%
+  ggplot(aes(x = rank, y = percent)) +
+  geom_col()
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-6U3BIt.png]]
+
+** embarked
+
+- C > Q > S の順で生存率が高い
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+eda_train %>%
+  select(survived, embarked) %>%
+  filter(!is.na(embarked)) %>%
+  group_by(embarked) %>%
+  summarise(
+    percent = sum(survived == "Survived") / n()) %>%
+  ggplot(aes(x = embarked, y = percent)) +
+  geom_col()
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-GgiggB.png]]
+
+** title
+
+- 男性と Officer(軍人・役人) が死に、女性・金持ち・子供 (master) が助かる
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+eda_train %>%
+  filter(!is.na(survived)) %>%
+  group_by(title) %>%
+  summarise(
+    all = n(),
+    survived = sum(survived == "Survived"),
+    percent = percent(survived / n())) %>%
+  ggplot(aes(x = title, y = percent)) +
+  geom_col()
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-TWoODx.png]]
+
+* ロジスティック回帰
+** recipe()
+
+#+begin_src R :results silent
+features <- c(
+  ## factor
+  "pclass", "title", "sex", "dfsize", "embarked",
+  ## numeric
+  "age", "sib_sp", "par_ch", "fsize", "fare")
+
+rec_logi <- recipe(raw_data) %>%
+  update_role("survived", new_role = "outcome") %>%
+  update_role(features, new_role = "predictor") %>%
+  step_rm(-has_role("outcome"), -has_role("predictor")) %>%
+  ## バイナリ(0,1) をファクターに変換
+  step_bin2factor(survived, levels = c("Survived", "Died")) %>%
+  ## 数値をファクターに変換
+  step_num2factor(pclass) %>%
+  ## 文字列をファクターに変換
+  step_string2factor(title , sex, dfsize, embarked) %>%
+  step_dummy(all_predictors())
+
+logi_prepped <- prep(rec_logi)
+#+end_src
+
+** 分割 ~ モデル当てはめ ~ 予測 ~ 評価
+
+- ={rsample}= で訓練データとテストデータに分割
+- 予測精度 83%
+#+begin_src R
+
+## 分割
+logi_splits <- raw_data %>%
+  filter(!is.na(survived)) %>%
+  initial_split()
+
+logi_train <- training(logi_splits)
+logi_test <- testing(logi_splits)
+
+## モデル
+logi_train_baked <- bake(logi_prepped, new_data = logi_train)
+logi_fitted <- logistic_reg() %>%
+  set_engine("glm") %>%
+  fit(survived ~ ., data = logi_train_baked)
+
+logi_test_baked <- bake(logi_prepped, new_data = logi_test)
+pred <- predict(logi_fitted, new_data = logi_test_baked)
+
+## 予測データを結合
+logi_res <- bind_cols(
+  select(logi_test_baked, survived),
+  pred
+)
+
+## 評価
+metrics(logi_res, survived, .pred_class)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+Warning message:
+In predict.lm(object, newdata, se.fit, scale = 1, type = if (type ==  :
+  prediction from a rank-deficient fit may be misleading
+# A tibble: 2 x 3
+  .metric  .estimator .estimate
+  <
+   <
+         <dbl>
+1 accuracy binary         0.892
+2 kap      binary         0.757
+#+end_example
+
+** クロスバリデーション
+
+- 82%
+#+begin_src R
+## デフォルトで10分割
+logi_cv <- raw_data %>%
+  filter(!is.na(survived)) %>%
+  vfold_cv()
+
+## モデル当てはめ ~ 予測 ~ 精度計算
+logi_mod <- logistic_reg() %>% set_engine("glm")
+
+logi_cv_fitted <- logi_cv %>%
+  mutate(recipe = map(splits, prepper, recipe = rec_logi)) %>%
+  mutate(fitted = map(recipe, ~ fit(logi_mod, survived ~ ., data = juice(.)))) %>%
+  mutate(pred = pmap(list(splits, recipe, fitted), function(splits, recipe, fitted) {
+    test <- bake(recipe, assessment(splits))
+    bind_cols(
+      select(test, survived),
+      predict(fitted, new_data = test)
+    )
+  })) %>%
+  mutate(eval = map(pred, metrics, survived, .pred_class))
+
+## 平均 Accuracy
+mean(map_dbl(logi_cv_fitted$eval, ~ .$.estimate[1]))
+#+end_src
+
+#+RESULTS:
+: There were 20 warnings (use warnings() to see them)
+: [1] 0.8282272
+
+** 提出
+
+- スコア 0.7799 (top 39%)
+#+begin_src R :results silent
+logi_fitted <- logi_mod %>%
+  fit(survived ~ ., data = bake(logi_prepped, filter(raw_data, !is.na(survived))))
+
+results <- bind_cols(
+  raw_data[892:1309, "id"],
+  predict(logi_fitted, new_data = bake(logi_prepped, filter(raw_data, is.na(survived))))
+) %>%
+  set_names("PassengerId", "Survived") %>%
+  mutate(Survived = if_else(Survived == "Survived", 1, 0))
+
+write_csv(results, "submission/logistic_reg.csv")
+#+end_src
+
+* ランダムフォレスト
+** recipe()
+
+#+begin_src R :results silent
+features <- c(
+  ## factor
+  "pclass", "title", "sex", "dfsize", "embarked",
+  ## numeric
+  "age", "sib_sp", "par_ch", "fsize", "fare")
+
+rec_rf <- recipe(raw_data) %>%
+  update_role("survived", new_role = "outcome") %>%
+  update_role(features, new_role = "predictor") %>%
+  step_rm(-has_role("outcome"), -has_role("predictor")) %>%
+  ## バイナリ(0,1) をファクターに変換
+  step_bin2factor(survived, levels = c("Survived", "Died")) %>%
+  ## 数値をファクターに変換
+  step_num2factor(pclass) %>%
+  ## 文字列をファクターに変換
+  step_string2factor(title , sex, dfsize, embarked) %>%
+  ## 文字列・ファクターをダミー変数へ変換
+  step_dummy(pclass, title, sex, dfsize, embarked) %>%
+  ## 数値を標準化
+  step_normalize(all_numeric())
+
+rf_prepped <- prep(rec_rf)
+#+end_src
+
+** 分割 ~ モデル当てはめ ~ 予測 ~ 評価
+
+- ={rsample}= で訓練データとテストデータに分割
+- 予測精度 83%
+#+begin_src R
+## 分割
+rf_splits <- raw_data %>%
+  filter(!is.na(survived)) %>%
+  initial_split()
+
+rf_train <- training(rf_splits)
+rf_test <- testing(rf_splits)
+
+## モデル
+rf_train_baked <- bake(rf_prepped, new_data = rf_train)
+rf_fitted <- rand_forest(mode = "classification") %>%
+  set_engine("ranger") %>%
+  fit(survived ~ ., data = rf_train_baked)
+
+rf_test_baked <- bake(rf_prepped, new_data = rf_test)
+pred <- predict(rf_fitted, new_data = rf_test_baked)
+
+## 予測データを結合
+rf_res <- bind_cols(
+  select(rf_test_baked, survived),
+  pred
+)
+
+## 評価
+metrics(rf_res, survived, .pred_class)
+#+end_src
+
+#+RESULTS:
+: # A tibble: 2 x 3
+:   .metric  .estimator .estimate
+:   <
+:    <
+:          <dbl>
+: 1 accuracy binary         0.824
+: 2 kap      binary         0.614
+
+** クロスバリデーション
+
+- 82%
+#+begin_src R
+## デフォルトで10分割
+rf_cv <- raw_data %>%
+  filter(!is.na(survived)) %>%
+  vfold_cv()
+
+## モデル当てはめ ~ 予測 ~ 精度計算
+rf_mod <- rand_forest(mode = "classification") %>%
+  set_engine("ranger")
+
+rf_cv_fitted <- rf_cv %>%
+  mutate(recipe = map(splits, prepper, recipe = rec_rf)) %>%
+  mutate(fitted = map(recipe, ~ fit(rf_mod, survived ~ ., data = juice(.)))) %>%
+  mutate(pred = pmap(list(splits, recipe, fitted), function(splits, recipe, fitted) {
+    test <- bake(recipe, assessment(splits))
+    bind_cols(
+      select(test, survived),
+      predict(fitted, new_data = test)
+    )
+  })) %>%
+  mutate(eval = map(pred, metrics, survived, .pred_class))
+
+## 平均 Accuracy
+mean(map_dbl(rf_cv_fitted$eval, ~ .$.estimate[1]))
+#+end_src
+
+#+RESULTS:
+#+begin_example
+Warning messages:
+1: The following variables are not factor vectors and will be ignored: `age`, `sib_sp`, `par_ch`, `fsize`, `fare` 
+2: The following variables are not factor vectors and will be ignored: `age`, `sib_sp`, `par_ch`, `fsize`, `fare` 
+3: The following variables are not factor vectors and will be ignored: `age`, `sib_sp`, `par_ch`, `fsize`, `fare` 
+4: The following variables are not factor vectors and will be ignored: `age`, `sib_sp`, `par_ch`, `fsize`, `fare` 
+5: The following variables are not factor vectors and will be ignored: `age`, `sib_sp`, `par_ch`, `fsize`, `fare` 
+6: The following variables are not factor vectors and will be ignored: `age`, `sib_sp`, `par_ch`, `fsize`, `fare` 
+7: The following variables are not factor vectors and will be ignored: `age`, `sib_sp`, `par_ch`, `fsize`, `fare` 
+8: The following variables are not factor vectors and will be ignored: `age`, `sib_sp`, `par_ch`, `fsize`, `fare` 
+9: The following variables are not factor vectors and will be ignored: `age`, `sib_sp`, `par_ch`, `fsize`, `fare` 
+10: The following variables are not factor vectors and will be ignored: `age`, `sib_sp`, `par_ch`, `fsize`, `fare`
+[1] 0.8215106
+#+end_example
+
+** 提出
+
+- スコア 0.77551 (top 39%)
+#+begin_src R :results silent
+rf_fitted <- rf_mod %>%
+  fit(survived ~ ., data = bake(rf_prepped, filter(raw_data, !is.na(survived))))
+
+results <- bind_cols(
+  raw_data[892:1309, "id"],
+  predict(rf_fitted, new_data = bake(rf_prepped, filter(raw_data, is.na(survived))))
+) %>%
+  set_names("PassengerId", "Survived") %>%
+  mutate(Survived = if_else(Survived == "Survived", 1, 0))
+
+write_csv(results, "submission/random_forest.csv")
+#+end_src
+
+* ランダムフォレスト + ハイパーパラメタサーチ
+** Recipe
+
+#+begin_src R :results silent
+features <- c(
+  ## factor
+  "pclass", "title", "sex", "dfsize", "embarked",
+  ## numeric
+  "age", "sib_sp", "par_ch", "fsize", "fare")
+
+rec_rf2 <- recipe(rf_train2) %>%
+  update_role("survived", new_role = "outcome") %>%
+  update_role(features, new_role = "predictor") %>%
+  step_rm(-has_role("outcome"), -has_role("predictor")) %>%
+  ## バイナリ(0,1) をファクターに変換
+  step_bin2factor(survived, levels = c("Survived", "Died")) %>%
+  ## 数値をファクターに変換
+  step_num2factor(pclass) %>%
+  ## 文字列をファクターに変換
+  step_string2factor(title , sex, dfsize, embarked) %>%
+  ## 文字列・ファクターをダミー変数へ変換
+  step_dummy(pclass, title, sex, dfsize, embarked) %>%
+  ## 数値を標準化
+  step_normalize(all_numeric())
+
+rf_prepped2 <- prep(rec_rf2)
+#+end_src
+
+** クロスバリデーション
+
+#+begin_src R
+## デフォルトで10分割
+rf_cv2 <- raw_data %>%
+  filter(!is.na(survived)) %>%
+  vfold_cv()
+
+## モデル当てはめ ~ 予測 ~ 精度計算
+## min_n と mtry をチューニング
+rf_mod2 <- rand_forest(mode = "classification",
+                       trees = 50,
+                       ## 探索するパラメタ
+                       min_n = tune(),
+                       mtry = tune()) %>%
+  set_engine("ranger", num.threads = parallel::detectCores(), seed = 42)
+
+## 探索するパラメタ
+params <- list(
+  min_n(),
+  ## mtry() にデータを渡して、mtryの終了地点を決定する
+  finalize(mtry(), rec_rf2 %>% prep() %>% juice())) %>%
+  ## パラメタを取り出す
+  parameters()
+
+## グリッドサーチ用のパラメタ
+rf_grid <- params %>%
+  grid_regular()
+
+## 計算実行
+ff_tuned = tune_grid(object = rec_rf2,    # レシピ (モデル式はここで連動してくれる)
+                     model = rf_mod2,     # {parsnip}モデル
+                     resamples =  rf_cv2, # rset オブジェクト by {rsampel}
+                     grid = rf_grid,      # パラメタ grid
+                     metrics = metric_set(accuracy)) # yardstick::metric_set()
+ff_tuned
+#+end_src
+
+** 結果の確認
+
+#+begin_src R :results value
+collect_metrics(ff_tuned)
+#+end_src
+
+#+RESULTS:
+| mtry | min_n | .metric  | .estimator |              mean |  n |            std_err |
+|------+-------+----------+------------+-------------------+----+--------------------|
+|    1 |     2 | accuracy | binary     | 0.827103620474407 | 10 | 0.0146732854728938 |
+|    1 |    21 | accuracy | binary     | 0.820374531835206 | 10 | 0.0149382653576517 |
+|    1 |    40 | accuracy | binary     |  0.82374531835206 | 10 | 0.0131408200773368 |
+|    9 |     2 | accuracy | binary     | 0.834968789013733 | 10 | 0.0153063004380655 |
+|    9 |    21 | accuracy | binary     | 0.846192259675406 | 10 | 0.0161063205222174 |
+|    9 |    40 | accuracy | binary     | 0.847278401997503 | 10 | 0.0160408146572888 |
+
+#+begin_src R :results value
+show_best(ff_tuned)
+#+end_src
+
+#+RESULTS:
+| mtry | min_n | .metric  | .estimator |              mean |  n |            std_err |
+|------+-------+----------+------------+-------------------+----+--------------------|
+|    9 |    40 | accuracy | binary     | 0.847278401997503 | 10 | 0.0160408146572888 |
+|    9 |    21 | accuracy | binary     | 0.846192259675406 | 10 | 0.0161063205222174 |
+|    9 |     2 | accuracy | binary     | 0.834968789013733 | 10 | 0.0153063004380655 |
+|    1 |     2 | accuracy | binary     | 0.827103620474407 | 10 | 0.0146732854728938 |
+|    1 |    40 | accuracy | binary     |  0.82374531835206 | 10 | 0.0131408200773368 |
+
+#+begin_src R :results value
+select_best(ff_tuned)
+#+end_src
+
+#+RESULTS:
+| mtry | min_n |
+|------+-------|
+|    9 |    40 |
+
+** ベストモデルで再学習
+
+- グリッドサーチからのベストパラメタで =update()= する
+#+begin_src R
+rf_best_mod <- update(rf_mod2, select_best(ff_tuned))
+rf_best_mod
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+Random Forest Model Specification (classification)
+
+Main Arguments:
+  mtry = 9
+  trees = 50
+  min_n = 40
+
+Engine-Specific Arguments:
+  num.threads = parallel::detectCores()
+  seed = 42
+
+Computational engine: ranger
+#+end_example
+
+** 提出
+
+- スコア 0.77551 (top 39%)
+#+begin_src R :results silent
+rf_fitted <- rf_mod %>%
+  fit(survived ~ ., data = bake(rf_prepped, filter(raw_data, !is.na(survived))))
+
+results <- bind_cols(
+  raw_data[892:1309, "id"],
+  predict(rf_fitted, new_data = bake(rf_prepped, filter(raw_data, is.na(survived))))
+) %>%
+  set_names("PassengerId", "Survived") %>%
+  mutate(Survived = if_else(Survived == "Survived", 1, 0))
+
+write_csv(results, "submission/random_forest.csv")
+#+end_src
+
+* 勾配ブースティング
+** recipe()
+
+#+begin_src R :results silent
+features <- c(
+  ## factor
+  "pclass", "title", "sex", "dfsize", "embarked",
+  ## numeric
+  "age", "sib_sp", "par_ch", "fsize", "fare")
+
+rec_xgb <- recipe(raw_data) %>%
+  update_role("survived", new_role = "outcome") %>%
+  update_role(features, new_role = "predictor") %>%
+  step_rm(-has_role("outcome"), -has_role("predictor")) %>%
+  ## バイナリ(0,1) をファクターに変換
+  step_bin2factor(survived, levels = c("Survived", "Died")) %>%
+  ## 数値をファクターに変換
+  step_num2factor(pclass) %>%
+  ## 文字列をファクターに変換
+  step_string2factor(title , sex, dfsize, embarked) %>%
+  ## 文字列・ファクターをダミー変数へ変換
+  step_dummy(pclass, title, sex, dfsize, embarked) %>%
+  ## 数値を標準化
+  step_normalize(all_numeric())
+
+xgb_prepped <- prep(rec_xgb)
+#+end_src
+
+** 分割 ~ モデル当てはめ ~ 予測 ~ 評価
+
+#+begin_src R
+## 分割
+xgb_splits <- raw_data %>%
+  filter(!is.na(survived)) %>%
+  initial_split()
+
+xgb_train <- training(xgb_splits)
+xgb_test <- testing(xgb_splits)
+
+## モデル
+xgb_train_baked <- bake(xgb_prepped, new_data = xgb_train)
+xgb_fitted <- boost_tree(mode = "classification") %>%
+  set_engine("xgboost") %>%
+  fit(survived ~ ., data = xgb_train_baked)
+
+xgb_test_baked <- bake(xgb_prepped, new_data = xgb_test)
+pred <- predict(xgb_fitted, new_data = xgb_test_baked)
+
+## 予測データを結合
+xgb_res <- bind_cols(
+  select(xgb_test_baked, survived),
+  pred
+)
+
+## 評価
+metrics(xgb_res, survived, .pred_class)
+#+end_src
+
+#+RESULTS:
+: # A tibble: 2 x 3
+:   .metric  .estimator .estimate
+:   <
+:    <
+:          <dbl>
+: 1 accuracy binary         0.815
+: 2 kap      binary         0.604
+
+* 参考
+
+- [[http://www.datannery.com/2018/12/24/tidy-titanic/][Tidy Titanic]]
+- [[http://zeema.hatenablog.com/entry/2017/09/04/003400][【Kaggle入門, R言語】Titanic号の乗客データを用いた生存者予測―ロジスティックモデルでスコア80%を超えることができるか挑戦してみた―]]
+
+- [[https://dropout009.hatenablog.com/entry/2019/01/06/124932][tidymodelsによるtidyな機械学習フロー（その1）@Dropout]]
+- [[https://dropout009.hatenablog.com/entry/2019/01/09/214233][tidymodelsによるtidyな機械学習フロー（その2：Cross Varidation）@Dropout]]
+- [[https://dropout009.hatenablog.com/entry/2019/11/10/125650][tidymodelsによるtidyな機械学習（その3：ハイパーパラメータのチューニング）@Dropout]]

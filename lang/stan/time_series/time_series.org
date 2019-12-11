@@ -36,7 +36,7 @@ ggtsdisplay(ar1)
 #+end_src
 
 #+RESULTS:
-[[file:/home/shun/Dropbox/memo/img/babel/fig-GbFrPm.png]]
+[[file:/home/shun/Dropbox/memo/img/babel/fig-n61REI.png]]
 
 *** モデル
 **** Basic
@@ -1021,9 +1021,7 @@ transformed parameters {
 
   // 観測値 - 平均 - MA 項を引いたものが当期の誤差項
   for (t in 3:T)
-    epsilon[t] = (y[t] - mu
-                  - theta[1] * epsilon[t - 1]
-                  - theta[2] * epsilon[t - 2]);
+    epsilon[t] = (y[t] - mu - theta[1] * epsilon[t - 1] - theta[2] * epsilon[t - 2]);
 }
 
 model {
@@ -1043,6 +1041,7 @@ model {
 
 #+RESULTS:
 [[file:models/ma_2.stan]]
+
 *** サンプリング
 
 - MA(2) を推定してみる
@@ -1781,6 +1780,102 @@ generated quantities {
 [[file:models/arma_p-q.stan]]
 
 *** TODO 収束対策・パラメタ制約・事前分布
+*** AR の定常性・ MA の反転可能性
+
+- [[https://github.com/stan-dev/math/issues/309][Functions to ensure stationarity in autoregression and invertibility in moving average parameters #309@stan-dev]]
+
+#+begin_src stan :file models/arma_funs.stan
+functions {
+  /*
+    Partial Autocorrelations to Autocorrelations
+
+    @param vector of coefficients of a partial autocorrelation function
+    @return vector of coefficients of an Autocorrelation function
+
+  */
+  row_vector pacf_to_acf(vector x) {
+    int n = num_elements(x);
+    matrix[n, n] y = diag_matrix(x);
+
+    for (k in 2:n) {
+      for (i in 1:(k - 1)) {
+        y[k, i] = y[k - 1, i] - x[k] * y[k - 1, k - i];
+      }
+    }
+    return y[n];
+  }
+
+  /*
+    Constrain vector of coefficients to the stationary and intertible region for AR or MA functions.
+
+    @param vector x An unconstrained vector in (-Inf, Inf)
+    @returns vector y A vector of coefficients for a stationary AR or inverible MA process.
+
+  */
+  row_vector constrain_stationary(vector x) {
+    vector[num_elements(x)] r;
+    int n = num_elements(x);
+
+    // transform (-Inf, Inf) to (-1, 1)
+    for (i in 1:n) {
+      r[i] = x[i] / (sqrt(1.0 + pow(x[i], 2)));
+    }
+    // Transform PACF to ACF
+    return pacf_to_acf(r);
+  }
+
+  /*
+  Convert coefficients of an autocorrelation function to partial autocorrelations.
+
+  @param vector x Coeffcients of an autocorrelation function.
+  @returns vector y Coefficients of the corresponding partial autocorrelation function.
+
+  */
+  vector acf_to_pacf(vector x) {
+    matrix[num_elements(x), num_elements(x)] y;
+    vector[num_elements(x)] r;
+    int n;
+    n = num_elements(x);
+    y = rep_matrix(0.0, n, n);
+    y[n] = -x ';
+    for (j in 0:(n - 1)) {
+      int k;
+      k = n - j;
+      for (i in 1:(k - 1)) {
+        y[k - 1, i] = (y[k, i] - y[k, k] * y[k, k - i]) / (1 - pow(y[k, k], 2));
+      }
+    }
+    r = diagonal(y);
+    return r;
+  }
+
+  /*
+  Transform from stationary and invertible space to (-Inf, Inf)
+
+  @param vector x Coeffcients of an autocorrelation function.
+  @returns vector y Coefficients of the corresponding partial autocorrelation function.
+
+  */
+  vector unconstrain_stationary(vector x) {
+    matrix[num_elements(x), num_elements(x)] y;
+    vector[num_elements(x)] r;
+    vector[num_elements(x)] z;
+    int n;
+    n = num_elements(x);
+    // Transform ACF to PACF
+    r = acf_to_pacf(x);
+    // Transform (-1, 1) to (-Inf, Inf)
+    for (i in 1:n) {
+      z[i] = r[i] / (sqrt(1.0 - pow(r[i], 2)));
+    }
+    return z;
+  }
+}
+#+end_src
+
+#+RESULTS:
+[[file:models/arma_funs.stan]]
+
 *** サンプリング
 
 - ARMA(2, 2) のデータを推定してみる
@@ -2602,72 +2697,72 @@ stan_trace(varma_11_fit, pars = c("mu", "Psi", "Theta", "Sigma"),nrow = 4, inc_w
 
 #+begin_src stan :file models/varma_p-q.stan
 data {
-	int<lower=1> T ; // num observations
-	int<lower=1> N ; // num series
-	int<lower=0> p ; // AR(p)
-	int<lower=0> q ; // MA(q)
-	vector[N] y[T] ; // observed outputs
-	int<lower=0> T_forecast ; // forecasting span
+	int<lower=1> T; // num observations
+	int<lower=1> N; // num series
+	int<lower=0> p; // AR(p)
+	int<lower=0> q; // MA(q)
+	vector[N] y[T]; // observed outputs
+	int<lower=0> T_forecast; // forecasting span
 }
 
 parameters {
-	vector[N] mu ;        // mean coeffs
-	matrix[N,N] Psi[p] ;     // autoregression coeff matrix
-	matrix[N,N] Theta[q] ;   // moving avg coeff matrix
-	cov_matrix[N] Sigma ; // noise scale matrix
+	vector[N] mu;         // mean coeffs
+	matrix[N,N] Psi[p];   // autoregression coeff matrix
+	matrix[N,N] Theta[q]; // moving avg coeff matrix
+	cov_matrix[N] Sigma;  // noise scale matrix
 }
 
 transformed parameters{
-  vector[N] eps[T] ; // error terms 
+  vector[N] eps[T]; // error terms 
   
-  eps[1] <- y[1] -mu ;
-  for ( t in 2:T){
-    eps[t] <- y[t] - mu ;
-    for( i in 1:min(t-1,p) ){
-      eps[t] <- eps[t] - Psi[i] * y[t-i] ;
+  eps[1] <- y[1] -mu;
+  for (t in 2:T) `{
+    eps[t] <- y[t] - mu;
+    for(i in 1:min(t-1,p)) {
+      eps[t] <- eps[t] - Psi[i] * y[t-i];
     }
-    for( i in 1:min(t-1,q) ){
-      eps[t] <- eps[t] - Theta[i] * eps[t-i] ;
+    for(i in 1:min(t-1,q)) {
+      eps[t] <- eps[t] - Theta[i] * eps[t-i];
     }
   }
 }
 
 model {
-  vector[N] eta[T] ;
+  vector[N] eta[T];
 	/* priors  */
-	mu ~ normal(0,10) ;
-	for( i in 1:p)
-	  to_vector(Psi[i])   ~ normal(0,2) ;
-	for( i in 1:q)
-	  to_vector(Theta[i]) ~ normal(0,2) ;
-	Sigma ~ inv_wishart(N, N*diag_matrix(rep_vector(1,N))) ;
+	mu ~ normal(0,10);
+	for(i in 1:p)
+	  to_vector(Psi[i]) ~ normal(0,2);
+	for(i in 1:q)
+	  to_vector(Theta[i]) ~ normal(0,2);
+	Sigma ~ inv_wishart(N, N * diag_matrix(rep_vector(1,N)));
 
 	/* likelihood */
-	for (t in 1:T){
-	  eta[t] <- mu ;
-	  for( i in 1:min(t-1,p))
-	    eta[t] <- eta[t] + Psi[i] * y[t-i] ;
-	  for( i in 1:min(t-1,q))
-	    eta[t] <- eta[t] + Theta[i] * eps[t-i] ;
-	  y[t] ~ multi_normal(eta[t], Sigma) ;
+	for (t in 1:T) {
+	  eta[t] <- mu 
+	  for(i in 1:min(t-1,p))
+	    eta[t] <- eta[t] + Psi[i] * y[t-i];
+	  for(i in 1:min(t-1,q))
+	    eta[t] <- eta[t] + Theta[i] * eps[t-i];
+	  y[t] ~ multi_normal(eta[t], Sigma);
 	}
 }
 
 /* prediction */
 generated quantities{
-  vector[N] y_pred[T+T_forecast] ; 
-  vector[N] eps_pred[T+T_forecast] ;
+  vector[N] y_pred[T+T_forecast]; 
+  vector[N] eps_pred[T+T_forecast];
 
-  eps_pred[1:T] <- eps ;
-  y_pred[1:T] <- y ;
+  eps_pred[1:T] <- eps;
+  y_pred[1:T] <- y;
 
-  for( t in (T+1):(T+T_forecast)) {
-    eps_pred[t] <- multi_normal_rng(rep_vector(0,N), Sigma) ;
-    y_pred[t]   <- mu + eps_pred[t] ;
-    for( i in 1:p)
-	    y_pred[t] <- y_pred[t] + Psi[i] * y_pred[t-i] ;
-	  for( i in 1:q)
-	    y_pred[t] <- y_pred[t] + Theta[i] * eps_pred[t-i] ;
+  for(t in (T+1):(T+T_forecast)) {
+    eps_pred[t] <- multi_normal_rng(rep_vector(0,N), Sigma);
+    y_pred[t]   <- mu + eps_pred[t];
+    for(i in 1:p)
+	    y_pred[t] <- y_pred[t] + Psi[i] * y_pred[t-i];
+	  for(i in 1:q)
+	    y_pred[t] <- y_pred[t] + Theta[i] * eps_pred[t-i]
   }
 }
 #+end_src
@@ -2683,9 +2778,10 @@ generated quantities{
   - [[http://kento1109.hatenablog.com/entry/2018/06/21/121441][Stan：隠れマルコフモデル1]]
   - [[http://kento1109.hatenablog.com/entry/2018/06/23/124927][Stan：隠れマルコフモデル2]]
 
-*** Model
+*** User Guide の例
+**** Model
 
-#+begin_src stan
+#+begin_src stan :file models/hmm1.stan
 data {
   int<lower=1> K;  // カテゴリーの数
   int<lower=1> V;  // 単語(word)の数
@@ -2697,15 +2793,24 @@ data {
 }
 
 parameters {
-  simplex[K] theta[K];  // 推移(transit)確率
-  simplex[V] phi[K];    // 単語 vを出力(emit)する確率
+  // 推移(transit)確率
+  // simplex[K] = 長さK で合計1のベクトル
+  // つまり K x K の推移確率行列 P
+  simplex[K] theta[K];
+  
+  // 単語 vを出力(emit)する確率
+  simplex[V] phi[K];
 }
 
 model {
+  // simplex 型のパラメタの事前分布
+  // alpha, beta は ディリクレ分布のパラメタ
   for (k in 1:K)
     theta[k] ~ dirichlet(alpha);
   for (k in 1:K)
     phi[k] ~ dirichlet(beta);
+  
+  // カテゴリカル分布: Simplex 型の確率を受取り、K カテゴリーのいずれかを返す
   for (t in 1:T)
     w[t] ~ categorical(phi[z[t]]);
   for (t in 2:T)
@@ -2713,10 +2818,1453 @@ model {
 }
 #+end_src
 
+*** [[https://khakieconomics.github.io/2018/02/24/Regime-switching-models.html][Regime-switching models in Stan]] の例
+**** データ (GOOGL)
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+library(tidyverse)
+library(rstan)
+library(Quandl)
+
+googl <- Quandl("WIKI/GOOGL", collapse = "weekly")
+googl <- googl %>%
+  mutate(Date = as.Date(Date)) %>%
+  arrange(Date) %>%
+  mutate(l_ac = log(`Adj. Close`),
+         dl_ac = c(NA, diff(l_ac))) %>%
+  dplyr::filter(Date > "2010-01-01")
+
+plot.ts(googl$dl_ac, main = "Weekly changes in Google's adjusted close price")
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-fqKCzJ.png]]
+
+**** モデル
+
+- 2 状態モデル
+
+$\eta$ eta
+$\xi$ xi
+
+#+begin_src stan :file models/hmm2.stan
+data {
+  int T;
+  vector[T] y;
+}
+
+parameters {
+  vector<lower=0, upper=1>[2] p;    // 推移確率 (2状態なので、一方は 1-p で定義)
+  real<lower=0> rho;                // AR(1)係数
+  vector[2] alpha;
+  vector<lower=0>[2] sigma;
+  real<lower=0, upper=1> xi1_init;  // 初期値
+  real y_tm1_init;                  // 初期値
+}
+
+transformed parameters {
+  matrix[T, 2] eta; // 観測方程式の対数尤度の指数関数
+  matrix[T, 2] xi;  // フィルター化確率
+  vector[T] f;      // 時点Tの尤度 (各状態の加重平均)
+  
+  // fill in etas
+  // 各観測方程式の尤度
+  for(t in 1:T) {
+    // ランダムウォーク (状態1)
+    eta[t, 1] = exp(normal_lpdf(y[t]| alpha[1], sigma[1]));
+    
+    // AR(1)
+    if(t == 1) {
+      eta[t, 2] = exp(normal_lpdf(y[t]| alpha[2] + rho * y_tm1_init, sigma[2]));
+    } else {
+      eta[t, 2] = exp(normal_lpdf(y[t]| alpha[2] + rho * y[t-1], sigma[2]));
+    }
+  }
+  
+  // work out likelihood contributions
+  for(t in 1:T) {
+    // for the first observation
+    if(t == 1) {
+      f[t] = p[1]       * xi1_init       * eta[t, 1] + // stay in state 1
+             (1 - p[1]) * xi1_init       * eta[t, 2] + // transition from 1 to 2
+             p[2]       * (1 - xi1_init) * eta[t, 2] + // stay in state 2 
+             (1 - p[2]) * (1 - xi1_init) * eta[t, 1];  // transition from 2 to 1
+      
+      // 時点1のフィルター化確率を更新
+      xi[t, 1] = (p[1] * xi1_init * eta[t, 1] + (1 - p[2]) * (1 - xi1_init) * eta[t, 1]) / f[t];
+      xi[t, 2] = 1.0 - xi[t, 1];
+    
+    } else {
+      // and for the rest
+      f[t] = p[1]       * xi[t-1, 1] * eta[t, 1] + // stay in state 1
+             (1 - p[1]) * xi[t-1, 1] * eta[t, 2] + // transition from 1 to 2
+             p[2]       * xi[t-1, 2] * eta[t, 2] + // stay in state 2 
+             (1 - p[2]) * xi[t-1, 2] * eta[t, 1];  // transition from 2 to 1
+      
+      // work out xi
+      // t-1 のフィルター化確率を使う
+      xi[t, 1] = (p[1] * xi[t-1, 1] * eta[t, 1] + (1 - p[2]) * xi[t-1, 2] * eta[t, 1]) / f[t];
+      
+      // there are only two states so the probability of the other state is 1 - prob of the first
+      xi[t, 2] = 1.0 - xi[t, 1];
+    }
+  }
+  
+}
+model {
+  // priors
+  p ~ beta(10, 2);
+  rho ~ normal(1, .1);
+  alpha ~ normal(0, .1);
+  sigma ~ cauchy(0, 1);
+  xi1_init ~ beta(2, 2);
+  y_tm1_init ~ normal(0, .1);
+  
+  // likelihood is really easy here!
+  // 一度 exp() したのを再度 log() で元に戻す
+  // log_sum_exp を使った方がいい?
+  target += sum(log(f));
+}
+#+end_src
+
+#+RESULTS:
+[[file:models/hmm2.stan]]
+
+**** 当てはめ
 
 #+begin_src R
-
+compiled_model <- stan_model("models/hmm2.stan")
+googl_mod <- sampling(compiled_model,
+                      data= list(T = nrow(googl),
+                                 y = googl$dl_ac * 100), # リターン x 100 の方が収束しやすい?
+                      iter = 1000, chains = 4)
 #+end_src
+
+#+RESULTS:
+#+begin_example
+recompiling to avoid crashing R session
+Warning message:
+In readLines(file, warn = TRUE) :
+  incomplete final line found on '/home/shun/Dropbox/repos/github/five-dots/notes/lang/stan/time_series/models/hmm2.stan'
+
+
+SAMPLING FOR MODEL 'hmm2' NOW (CHAIN 1).
+
+SAMPLING FOR MODEL 'hmm2' NOW (CHAIN 2).
+
+SAMPLING FOR MODEL 'hmm2' NOW (CHAIN 3).
+Chain 1: 
+Chain 1: Gradient evaluation took 0.000917 seconds
+Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 9.17 seconds.
+Chain 1: Adjust your expectations accordingly!
+Chain 1: 
+Chain 1: 
+Chain 1: Iteration:   1 / 1000 [  0%]  (Warmup)
+Chain 2: 
+Chain 2: Gradient evaluation took 0.000989 seconds
+Chain 2: 1000 transitions using 10 leapfrog steps per transition would take 9.89 seconds.
+Chain 2: Adjust your expectations accordingly!
+Chain 2: 
+Chain 2: 
+Chain 2: Iteration:   1 / 1000 [  0%]  (Warmup)
+Chain 3: 
+Chain 3: Gradient evaluation took 0.00082 seconds
+Chain 3: 1000 transitions using 10 leapfrog steps per transition would take 8.2 seconds.
+Chain 3: Adjust your expectations accordingly!
+Chain 3: 
+Chain 3: 
+Chain 3: Iteration:   1 / 1000 [  0%]  (Warmup)
+Chain 1: Iteration: 100 / 1000 [ 10%]  (Warmup)
+Chain 3: Iteration: 100 / 1000 [ 10%]  (Warmup)
+Chain 2: Iteration: 100 / 1000 [ 10%]  (Warmup)
+Chain 1: Iteration: 200 / 1000 [ 20%]  (Warmup)
+Chain 1: Iteration: 300 / 1000 [ 30%]  (Warmup)
+Chain 3: Iteration: 200 / 1000 [ 20%]  (Warmup)
+Chain 2: Iteration: 200 / 1000 [ 20%]  (Warmup)
+Chain 1: Iteration: 400 / 1000 [ 40%]  (Warmup)
+Chain 2: Iteration: 300 / 1000 [ 30%]  (Warmup)
+Chain 3: Iteration: 300 / 1000 [ 30%]  (Warmup)
+Chain 1: Iteration: 500 / 1000 [ 50%]  (Warmup)
+Chain 1: Iteration: 501 / 1000 [ 50%]  (Sampling)
+Chain 2: Iteration: 400 / 1000 [ 40%]  (Warmup)
+Chain 1: Iteration: 600 / 1000 [ 60%]  (Sampling)
+Chain 3: Iteration: 400 / 1000 [ 40%]  (Warmup)
+Chain 1: Iteration: 700 / 1000 [ 70%]  (Sampling)
+Chain 2: Iteration: 500 / 1000 [ 50%]  (Warmup)
+Chain 2: Iteration: 501 / 1000 [ 50%]  (Sampling)
+Chain 3: Iteration: 500 / 1000 [ 50%]  (Warmup)
+Chain 3: Iteration: 501 / 1000 [ 50%]  (Sampling)
+Chain 1: Iteration: 800 / 1000 [ 80%]  (Sampling)
+Chain 2: Iteration: 600 / 1000 [ 60%]  (Sampling)
+Chain 1: Iteration: 900 / 1000 [ 90%]  (Sampling)
+Chain 3: Iteration: 600 / 1000 [ 60%]  (Sampling)
+Chain 1: Iteration: 1000 / 1000 [100%]  (Sampling)
+Chain 1: 
+Chain 1:  Elapsed Time: 3.43312 seconds (Warm-up)
+Chain 1:                1.66614 seconds (Sampling)
+Chain 1:                5.09926 seconds (Total)
+Chain 1: 
+Chain 2: Iteration: 700 / 1000 [ 70%]  (Sampling)
+Chain 3: Iteration: 700 / 1000 [ 70%]  (Sampling)
+Chain 2: Iteration: 800 / 1000 [ 80%]  (Sampling)
+Chain 3: Iteration: 800 / 1000 [ 80%]  (Sampling)
+Chain 2: Iteration: 900 / 1000 [ 90%]  (Sampling)
+Chain 3: Iteration: 900 / 1000 [ 90%]  (Sampling)
+Chain 2: Iteration: 1000 / 1000 [100%]  (Sampling)
+Chain 2: 
+Chain 2:  Elapsed Time: 4.30065 seconds (Warm-up)
+Chain 2:                2.13856 seconds (Sampling)
+Chain 2:                6.4392 seconds (Total)
+Chain 2: 
+
+SAMPLING FOR MODEL 'hmm2' NOW (CHAIN 4).
+Chain 4: 
+Chain 4: Gradient evaluation took 0.002263 seconds
+Chain 4: 1000 transitions using 10 leapfrog steps per transition would take 22.63 seconds.
+Chain 4: Adjust your expectations accordingly!
+Chain 4: 
+Chain 4: 
+Chain 4: Iteration:   1 / 1000 [  0%]  (Warmup)
+Chain 3: Iteration: 1000 / 1000 [100%]  (Sampling)
+Chain 3: 
+Chain 3:  Elapsed Time: 4.1207 seconds (Warm-up)
+Chain 3:                2.25941 seconds (Sampling)
+Chain 3:                6.38011 seconds (Total)
+Chain 3: 
+Chain 4: Iteration: 100 / 1000 [ 10%]  (Warmup)
+Chain 4: Iteration: 200 / 1000 [ 20%]  (Warmup)
+Chain 4: Iteration: 300 / 1000 [ 30%]  (Warmup)
+Chain 4: Iteration: 400 / 1000 [ 40%]  (Warmup)
+Chain 4: Iteration: 500 / 1000 [ 50%]  (Warmup)
+Chain 4: Iteration: 501 / 1000 [ 50%]  (Sampling)
+Chain 4: Iteration: 600 / 1000 [ 60%]  (Sampling)
+Chain 4: Iteration: 700 / 1000 [ 70%]  (Sampling)
+Chain 4: Iteration: 800 / 1000 [ 80%]  (Sampling)
+Chain 4: Iteration: 900 / 1000 [ 90%]  (Sampling)
+Chain 4: Iteration: 1000 / 1000 [100%]  (Sampling)
+Chain 4: 
+Chain 4:  Elapsed Time: 3.91466 seconds (Warm-up)
+Chain 4:                1.19022 seconds (Sampling)
+Chain 4:                5.10488 seconds (Total)
+Chain 4:
+#+end_example
+
+**** 収束確認
+
+#+begin_src R
+print(googl_mod, pars = c("alpha", "rho", "p", "sigma"))
+#+end_src
+
+#+RESULTS:
+#+begin_example
+Inference for Stan model: hmm2.
+4 chains, each with iter=1000; warmup=500; thin=1; 
+post-warmup draws per chain=500, total post-warmup draws=2000.
+
+         mean se_mean   sd  2.5%   25%  50%   75% 97.5% n_eff Rhat
+alpha[1] 0.06    0.00 0.08 -0.11  0.00 0.06  0.11  0.21  3930    1
+alpha[2] 0.01    0.00 0.10 -0.18 -0.06 0.01  0.08  0.19  3710    1
+rho      0.96    0.00 0.10  0.75  0.89 0.96  1.03  1.16  3458    1
+p[1]     0.96    0.00 0.02  0.91  0.95 0.96  0.97  0.98  1769    1
+p[2]     0.53    0.00 0.12  0.31  0.45 0.53  0.61  0.77  2544    1
+sigma[1] 2.87    0.00 0.13  2.61  2.78 2.87  2.96  3.13  2067    1
+sigma[2] 9.48    0.05 2.13  6.61  8.10 9.08 10.39 15.30  1551    1
+
+Samples were drawn using NUTS(diag_e) at Tue Dec  3 11:53:22 2019.
+For each parameter, n_eff is a crude measure of effective sample size,
+and Rhat is the potential scale reduction factor on split chains (at 
+convergence, Rhat=1).
+#+end_example
+
+**** プロット確認
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+goog <- as.data.frame(googl_mod, pars = "xi") %>% 
+  gather(par, value) %>% 
+  dplyr::filter(grepl(",1", par)) %>%
+  mutate(time = readr::parse_number(stringr::str_extract(par, "[0-9]{1,3}[,]"))) %>% 
+  group_by(par) %>% 
+  summarise(time = first(time), 
+            mean = mean(value),
+            lower = quantile(value, .025),
+            upper = quantile(value, .975)) %>% 
+  ## mutate(date = readr::parse_date(googl$Date)) %>% 
+  mutate(date = googl$Date) %>% 
+  ggplot(aes(x = date, y = mean)) +
+  #geom_point(alpha = 0.3) +
+  geom_ribbon(aes(ymin = lower, ymax = upper), alpha = 0.3,  fill = "green") +
+  labs(title ="Probability of being in random walk state\n vsv momentum state",
+       y = "Probability",
+       subtitle = "GOOGL")
+
+close <- ggplot(data = googl,aes(x = Date, y = `Adj. Close`)) +
+  geom_line(colour = "green")
+
+gridExtra::grid.arrange(goog, close)
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-RaptiS.png]]
+
+*** [[https://discourse.mc-stan.org/t/regime-switching-model/4098][Regime Switching Model@Stan Forum]] の例
+
+#+begin_src stan :file models/hmm3.stan
+data {
+  int<lower=1> T; // number of observations (length) - time series of returns
+  real r[T];      // weekly return
+  
+  // 1-2 bear regime
+  // 3-4 bull regime
+  real m[4];  // mu prior mean m = c(-0.7, 0.2, -0.2, 0.3)
+  real n[4];  // mu prior sd n = c(1, 1, 1, 1)
+  real v[4];  // sigma2 prior v = c(1, 1, 1, 1)
+  real s[4];  // sigma2 prior s = c(1, 1, 1, 1)
+  
+  vector<lower=0>[3] alpha[4];  // transit prior rows
+  // {p11, p12, p14} ~ Dir(8, 1.5, 0.5), 
+  // {p21, p22, p24} ~ Dir(1.5, 8, 0.5), 
+  // {p31, p33, p34} ~ Dir(0.5, 8, 1.5), 
+  // {p41, p43, p44} ~ Dir(0.5, 1.5, 8).
+  
+  simplex[4] s0;             // inital state
+}
+
+parameters {
+  simplex[3] reppp[4];     // transit probs row i 
+  real<upper=0> mu1;       // bear market
+  real<lower=0> mu2;       // bear rally
+  real<upper=0> mu3;       // bull correction
+  real<lower=0> mu4;       // bull market
+  real<lower=0> sigma2[4]; // sd
+  // simplex[4] s0;        // inital state
+}
+
+transformed parameters {
+  // First, let’s define the likelihood contribution of an observation r[t] under each state
+  vector[4] eta[T]; 
+  simplex[4] si[T]; // probability of being in each state
+  vector[T] f;      // likelihood
+  vector[4] PI;     // unconditional state probs
+  matrix[4,4] P;    // transit probs
+  real mu_bull;
+  real mu_bear;
+
+  // put together the transition matrix
+  for (j in 1:4){
+    P[j, 1] = reppp[j,1];
+     if ( j == 1 || j==2 ){
+       P[j, 2] = reppp[j,2];
+       P[j, 3] = 0;
+     } else {
+       P[j, 2] = 0;
+       P[j, 3] = reppp[j,2];
+     }
+     P[j, 4] = reppp[j,3];
+   }
+  
+  // fill in etas (likelihood contribution of an observation r[t] under each state)
+  {
+    real mu[4];                // expected returns
+    
+    mu[1] = mu1;
+    mu[2] = mu2;
+    mu[3] = mu3;
+    mu[4] = mu4;
+   
+    for(t in 1:T) {
+      for(j in 1:4 ){
+        eta[t,j] = exp(normal_lpdf(r[t] | mu[j], sigma2[j]));
+      }
+    }
+  }
+  
+   // work out likelihood contributions
+   f[1] = dot_product(P * s0, eta[1]);
+   si[1] = ((P * s0) .* eta[1]) / f[1];
+   
+   // and for the rest
+   for(t in 2:T) {
+     f[t] = dot_product(P * si[t-1], eta[t]);
+     si[t] =  ((P * si[t-1]) .* eta[t]) / f[t];
+   }
+  
+  // unconditional probabilities PI
+  {
+    matrix[4,5] A;
+    vector[5] ee;
+
+    matrix[4,4] AAprime;
+    vector[4] AE;
+
+    A = append_col(P - diag_matrix(rep_vector(1., 4)),rep_vector(1., 4));
+    ee = rep_vector(0., 5);
+    ee[5] = 1.0;
+    // PI = (A' * A) \ (A' * ee);
+    AAprime = tcrossprod(A);
+    AE = A * ee;
+    PI = AAprime \ AE;
+
+    mu_bear = PI[1]/(PI[1]+PI[2])*mu1 + PI[2]/(PI[1]+PI[2])*mu2;
+    mu_bull = PI[3]/(PI[3]+PI[4])*mu3 + PI[4]/(PI[3]+PI[4])*mu4;
+  }
+}
+
+
+// T observations (length)
+model {
+  // Priors
+  for (kk in 1:4) {
+    reppp[kk] ~ dirichlet(alpha[kk]); // Sample the transition probability
+    sigma2[kk] ~ cauchy(v[kk], s[kk]);
+  }
+  mu1 ~ normal(m[1], n[1]);
+  mu2 ~ normal(m[2], n[2]);
+  mu3 ~ normal(m[3], n[3]);
+  mu4 ~ normal(m[4], n[4]);
+  
+  // likelihood is really easy here!
+  target += sum(log(f));
+
+  if (mu_bull < 0)
+    target += negative_infinity();
+  if(mu_bear > 0)
+    target += negative_infinity();
+}
+#+end_src
+
+*** [[https://zenodo.org/record/1284341/files/main_pdf.pdf?download=1][A Tutorial on Hidden Markov Models using Stan - Zenodo]]
+**** Gaussian の例
+***** モデル
+
+#+begin_src stan :file models/hmm_gaussian.stan
+functions {
+  vector normalize(vector x) {
+    return x / sum(x);
+  }
+}
+
+data {
+  int<lower=1> T; // number of observations (length)
+  int<lower=1> K; // number of hidden states
+  real y[T];      // observations
+}
+
+parameters {
+  // Discrete state model
+  simplex[K] pi1;  // initial state probabilities
+  simplex[K] A[K]; // transition probabilities
+                   // A[i][j] = p(z_t = j | z_{t-1} = i)
+
+  // Continuous observation model
+  ordered[K] mu;          // observation means
+  real<lower=0> sigma[K]; // observation standard deviations
+}
+
+transformed parameters {
+  vector[K] logalpha[T];
+
+  { // log p(z_t = j | x_{1:t})
+    real accumulator[K];
+
+    // t=1 の対数尤度
+    // 確率 x 尤度の積ではなく、対数の和にしている
+    logalpha[1] = log(pi1) + normal_lpdf(y[1] | mu, sigma);
+
+    // t>1 の対数尤度
+    for (t in 2:T) {
+      for (j in 1:K) { // j = current (t)
+        for (i in 1:K) { // i = previous (t-1)
+         // Murphy (2012) Eq. 17.48
+         // belief state + transition prob + local evidence at t
+          accumulator[i] = logalpha[t-1, i] + log(A[i, j]) + normal_lpdf(y[t] | mu[j], sigma[j]);
+        }
+        logalpha[t, j] = log_sum_exp(accumulator);
+      }
+    }
+  }
+}
+
+model {
+  // Note: update based only on last logalpha
+  target += log_sum_exp(logalpha[T]);
+}
+
+generated quantities {
+  vector[K] logbeta[T];
+  vector[K] loggamma[T];
+
+  vector[K] alpha[T];
+  vector[K] beta[T];
+  vector[K] gamma[T];
+
+  int<lower=1, upper=K> zstar[T];
+  real logp_zstar;
+
+  { // Forward algortihm
+    // 人間が理解しやすいように、合計 1 の確率ベクトルに変換する
+    for (t in 1:T)
+      alpha[t] = softmax(logalpha[t]);
+  }
+
+  { // Backward algorithm log p(x_{t+1:T} | z_t = j)
+    real accumulator[K];
+
+    // 初期値 (=最新のデータ)
+    for (j in 1:K)
+      logbeta[T, j] = 1;
+
+    // 最後から decrement していく
+    // T=100 であれば、100, 99, 98, ..., 2 まで
+    for (tforward in 0:(T-2)) {
+      int t;
+      t = T - tforward;
+
+      // フィルタ化確率の逆のアルゴリズム
+      // t-1 の状態から t の状態への遷移確率ではなく、
+      // t の状態で t-1 を更新していく
+      for (j in 1:K) { // j = previous (t-1)
+        for (i in 1:K) { // i = next (t)
+          // Murphy (2012) Eq. 17.58
+          // backwards t + transition prob + local evidence at t
+          accumulator[i] = logbeta[t, i] + log(A[j, i]) + normal_lpdf(y[t] | mu[i], sigma[i]);
+        }
+        logbeta[t-1, j] = log_sum_exp(accumulator);
+      }
+    }
+
+    for (t in 1:T)
+      beta[t] = softmax(logbeta[t]);
+  }
+
+  { // Forwards-backwards algorithm log p(z_t = j | x_{1:T})
+    for(t in 1:T)
+      loggamma[t] = alpha[t] .* beta[t];
+
+    for(t in 1:T)
+      gamma[t] = normalize(loggamma[t]);
+  }
+
+  { // Viterbi algorithm
+
+    // backpointer to the most likely previous state on the most probable path
+    int bpointer[T, K];
+
+    // max prob for the seq up to t with final output from state k for time t
+    real delta[T, K];
+
+    // 初期値
+    for (j in 1:K)
+      delta[1, K] = normal_lpdf(y[1] | mu[j], sigma[j]);
+
+    for (t in 2:T) {
+      for (j in 1:K) { // j = current (t)
+        delta[t, j] = negative_infinity();
+        for (i in 1:K) { // i = previous (t-1)
+          real logp;
+          logp = delta[t-1, i] + log(A[i, j]) + normal_lpdf(y[t] | mu[j], sigma[j]);
+          if (logp > delta[t, j]) {
+            bpointer[t, j] = i;
+            delta[t, j] = logp;
+          }
+        }
+      }
+    }
+
+    logp_zstar = max(delta[T]);
+
+    for (j in 1:K)
+      if (delta[T, j] == logp_zstar)
+        zstar[T] = j;
+
+    for (t in 1:(T - 1)) {
+      zstar[T - t] = bpointer[T - t + 1, zstar[T - t + 1]];
+    }
+  }
+}
+#+end_src
+
+#+RESULTS:
+[[file:models/hmm_gaussian.stan]]
+
+***** データ
+
+- シミュレーションデータ
+  - 状態 = マルコフ過程
+  - 観測 = 正規分布
+
+#+begin_src R
+runif_simplex <- function(T) {
+  x <- -log(runif(T))
+  x / sum(x) # 合計1に規格化
+}
+
+hmm_generate <- function(K, T) {
+  ## 1. Parameters
+  pi1   <- runif_simplex(K)                  # 一様分布から初期確率を生成
+  A     <- t(replicate(K, runif_simplex(K))) # K x K 推移確率
+  mu    <- sort(rnorm(K, 10 * 1:K, 1))       # 弱情報事前分布
+  sigma <- abs(rnorm(K))                     # 弱情報事前分布 (半正規分布)
+
+  ## 2. Hidden path
+  z <- vector("numeric", T)
+
+  z[1] <- sample(1:K, size = 1, prob = pi1) # 初期確率pi1 に合わせて初期状態を生成
+  for (t in 2:T) {
+    z[t] <- sample(1:K, size = 1, prob = A[z[t-1], ]) # 1期前の状態の推移確率から生成
+  }
+
+  ## 3. Observations
+  y <- vector("numeric", T)
+  for (t in 1:T) {
+    y[t] <- rnorm(1, mu[z[t]], sigma[z[t]]) # 時点 t の状態毎の平均 + SD
+  }
+
+  list(y = y, z = z,
+       theta = list(pi1 = pi1, A = A, mu = mu, sigma = sigma))
+}
+K <- 3
+T <- 100
+hmm_generate(K, T)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+$y
+  [1] 21.268295 29.977281 21.553754 30.091668 21.793068 30.436615 21.630538
+  [8] 29.851415 21.406993 29.582339 21.033803 29.599152 20.550432 30.199135
+ [15] 30.562921  9.778520 30.381841 30.421998 21.760930 30.874117 21.178774
+ [22] 29.571076 21.446960 30.237837 21.265799 29.623402 21.691275 30.096701
+ [29] 21.824414 29.863263 21.126033 30.191233 21.059094 30.351043 21.178656
+ [36] 29.889396 21.562872 29.804812 20.986227 30.740604 29.878973 29.812671
+ [43] 11.959417 30.573676  8.455726 21.021542 30.028140 21.620053 30.135953
+ [50] 21.346760 29.761529 30.055181 20.969060 30.095072 21.036770 30.207374
+ [57] 20.658925 30.071083 20.998896 30.215695 21.036372 30.922591 21.784041
+ [64] 30.022398 13.635601 29.745553 10.984886 21.462227 30.046907 21.643819
+ [71] 29.950412 21.372514 30.378084 21.647405 30.136669 20.931928 30.321928
+ [78]  9.588104 30.709045 21.230994 30.009067 21.241585 30.025377 20.326908
+ [85] 29.860756 21.017206 30.174947 21.543332 30.114428 20.566399 30.360670
+ [92] 21.102488 28.733215 20.782250 30.002217 21.701332 29.823083 21.569586
+ [99] 29.700245 30.121535
+
+$z
+  [1] 2 3 2 3 2 3 2 3 2 3 2 3 2 3 3 1 3 3 2 3 2 3 2 3 2 3 2 3 2 3 2 3 2 3 2 3 2
+ [38] 3 2 3 3 3 1 3 1 2 3 2 3 2 3 3 2 3 2 3 2 3 2 3 2 3 2 3 1 3 1 2 3 2 3 2 3 2
+ [75] 3 2 3 1 3 2 3 2 3 2 3 2 3 2 3 2 3 2 3 2 3 2 3 2 3 3
+
+$theta
+$theta$pi1
+[1] 0.01356010 0.95684187 0.02959803
+
+$theta$A
+           [,1]      [,2]      [,3]
+[1,] 0.21027981 0.2888930 0.5008272
+[2,] 0.01402289 0.0192630 0.9667141
+[3,] 0.10689710 0.8333865 0.0597164
+
+$theta$mu
+[1] 10.41895 21.15231 30.05361
+
+$theta$sigma
+[1] 1.0943002 0.4693637 0.3329071
+#+end_example
+
+***** 当てはめ
+
+#+begin_src R :results silent
+hmm_init <- function(K, y) {
+  clasif <- kmeans(y, K)
+  init.mu <- by(y, clasif$cluster, mean)
+  init.sigma <- by(y, clasif$cluster, sd)
+  init.order <- order(init.mu)
+
+  list(
+    mu = init.mu[init.order],
+    sigma = init.sigma[init.order]
+  )
+}
+
+hmm_fit <- function(K, y) {
+  rstan_options(auto_write = TRUE)
+  options(mc.cores = parallel::detectCores())
+  stan.model = "models/hmm_gaussian.stan"
+  stan.data = list(
+    T = length(y),
+    K = K,
+    y = y
+  )
+
+  stan(file = stan.model,
+       data = stan.data,
+       verbose = T,
+       iter = 400,
+       warmup = 200,
+       thin = 1,
+       chains = 1,
+       cores = 1,
+       seed = 900,
+       ## 初期値をリストで返す関数
+       init = function() { hmm_init(K, y) })
+}
+#+end_src
+
+#+begin_src R
+set.seed(900)
+K <- 3
+T_length <- 500
+dataset <- hmm_generate(K, T_length)
+fit <- hmm_fit(K, dataset$y)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+TRANSLATING MODEL 'hmm_gaussian' FROM Stan CODE TO C+
+CODE NOW.
+successful in parsing the Stan model 'hmm_gaussian'.
+COMPILING THE C+
+CODE FOR MODEL 'hmm_gaussian' NOW.
+OS: x86_64, linux-gnu; rstan: 2.19.2; Rcpp: 1.0.2; inline: 0.3.15 
+g+
+-std=gnu++14 -I"/usr/share/R/include" -DNDEBUG   -I"/home/shun/Dropbox/R/x86_64-pc-linux-gnu-library/3.6/Rcpp/include/"  -I"/home/shun/Dropbox/R/x86_64-pc-linux-gnu-library/3.6/RcppEigen/include/"  -I"/home/shun/Dropbox/R/x86_64-pc-linux-gnu-library/3.6/RcppEigen/include/unsupported"  -I"/home/shun/Dropbox/R/x86_64-pc-linux-gnu-library/3.6/BH/include" -I"/home/shun/Dropbox/R/x86_64-pc-linux-gnu-library/3.6/StanHeaders/include/src/"  -I"/home/shun/Dropbox/R/x86_64-pc-linux-gnu-library/3.6/StanHeaders/include/"  -I"/home/shun/Dropbox/R/x86_64-pc-linux-gnu-library/3.6/rstan/include" -DEIGEN_NO_DEBUG  -DBOOST_DISABLE_ASSERTS    -fpic  -g -O2 -fdebug-prefix-map=/build/r-base-uuRxut/r-base-3.6.1=. -fstack-protector-strong -Wformat -Werror=format-security -Wdate-time -D_FORTIFY_SOURCE=2 -g  -c file347c6f84380a.cpp -o file347c6f84380a.o
+g+
+-std=gnu++14 -shared -L/usr/lib/R/lib -Wl,-Bsymbolic-functions -Wl,-z,relro -o file347c6f84380a.so file347c6f84380a.o -L/home/shun/Dropbox/R/x86_64-pc-linux-gnu-library/3.6/StanHeaders/lib/ -lStanHeaders -L/usr/lib/R/lib -lR
+
+CHECKING DATA AND PREPROCESSING FOR MODEL 'hmm_gaussian' NOW.
+
+COMPILING MODEL 'hmm_gaussian' NOW.
+
+STARTING SAMPLER FOR MODEL 'hmm_gaussian' NOW.
+
+SAMPLING FOR MODEL 'hmm_gaussian' NOW (CHAIN 1).
+Chain 1: 
+Chain 1: Gradient evaluation took 0.001119 seconds
+Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 11.19 seconds.
+Chain 1: Adjust your expectations accordingly!
+Chain 1: 
+Chain 1: 
+Chain 1: Iteration:   1 / 400 [  0%]  (Warmup)
+Chain 1: Iteration:  40 / 400 [ 10%]  (Warmup)
+Chain 1: Iteration:  80 / 400 [ 20%]  (Warmup)
+Chain 1: Iteration: 120 / 400 [ 30%]  (Warmup)
+Chain 1: Iteration: 160 / 400 [ 40%]  (Warmup)
+Chain 1: Iteration: 200 / 400 [ 50%]  (Warmup)
+Chain 1: Iteration: 201 / 400 [ 50%]  (Sampling)
+Chain 1: Iteration: 240 / 400 [ 60%]  (Sampling)
+Chain 1: Iteration: 280 / 400 [ 70%]  (Sampling)
+Chain 1: Iteration: 320 / 400 [ 80%]  (Sampling)
+Chain 1: Iteration: 360 / 400 [ 90%]  (Sampling)
+Chain 1: Iteration: 400 / 400 [100%]  (Sampling)
+Chain 1: 
+Chain 1:  Elapsed Time: 24.3301 seconds (Warm-up)
+Chain 1:                2.71976 seconds (Sampling)
+Chain 1:                27.0498 seconds (Total)
+Chain 1: 
+Warning messages:
+1: In readLines(file, warn = TRUE) :
+  incomplete final line found on '/home/shun/Dropbox/repos/github/five-dots/notes/lang/stan/time_series/models/hmm_gaussian.stan'
+2: The largest R-hat is 1.08, indicating chains have not mixed.
+Running the chains for more iterations may help. See
+http://mc-stan.org/misc/warnings.html#r-hat 
+3: Bulk Effective Samples Size (ESS) is too low, indicating posterior means and medians may be unreliable.
+Running the chains for more iterations may help. See
+http://mc-stan.org/misc/warnings.html#bulk-ess 
+4: Tail Effective Samples Size (ESS) is too low, indicating posterior variances and tail quantiles may be unreliable.
+Running the chains for more iterations may help. See
+http://mc-stan.org/misc/warnings.html#tail-ess
+#+end_example
+
+***** フィルタ化確率
+
+- かなり良い正答率
+#+begin_src R
+alpha <- extract(fit, pars = "alpha")[[1]]
+gamma <- extract(fit, pars = "gamma")[[1]]
+
+alpha_med <- apply(alpha, c(2, 3), function(x) { quantile(x, c(0.50)) })
+alpha_hard <- apply(alpha_med, 1, which.max)
+table(true = dataset$z, estimated = alpha_hard)
+#+end_src
+
+#+RESULTS:
+:     estimated
+: true   1   2   3
+:    1 155   0   0
+:    2   6 226   1
+:    3   0   5 107
+
+***** zstar のプロット
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+zstar <- extract(fit, pars = 'zstar')[[1]]
+plot_statepath(zstar, dataset$z)
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-LTbcWJ.png]]
+
+#+begin_src R
+table(true = dataset$z, estimated = apply(zstar, 2, median))
+#+end_src
+
+#+RESULTS:
+:     estimated
+: true   1   2   3
+:    1 154   1   0
+:    2   4 227   2
+:    3   0   5 107
+
+***** Most probable path
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+plot_outputvit(x = dataset$y,
+               z = dataset$z,
+               zstar = zstar,
+               main = "Most probable path")
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-9BcTJd.png]]
+
+**** MS-GARCH の例
+***** モデル
+
+#+begin_src stan :file models/hmm_garch.stan
+data {
+  int<lower=0> T; // Length of series (number of observations)
+  real y[T];      // Return series
+}
+
+parameters {
+  // GARCH Parameters
+  positive_ordered[2] alpha0; // Ordering prevents label switching
+
+  real<lower=0, upper=1> alpha1[2];
+  real<lower=0, upper=1-alpha1[1]> beta1_1;
+  real<lower=0, upper=1-alpha1[2]> beta1_2;
+
+  // HMM Transition Probabilities =>
+  // Parameterize by probability of staying in state
+  real<lower=0, upper=1> p_remain[2];
+}
+
+transformed parameters {
+  // GARCH Parameters
+  real<lower=0> beta1[2];
+
+  // Vector of instantaneous GARCH volatilities
+  vector[2] sigma_t[T];
+
+  // HMM Parameters
+  vector[2] log_alpha[T]; // Accumulated (unnormalized) state probabilities
+
+  // Transition probabilities
+  matrix[2, 2] A;
+  A[1, 1] =  p_remain[1];
+  A[1, 2] = 1 - p_remain[1];
+  A[2, 1] = 1 - p_remain[2];
+  A[2, 2] = p_remain[2];
+
+  // GARCH Component
+  // ------------------
+
+  // Load beta1 from parameters
+  beta1[1] = beta1_1;
+  beta1[2] = beta1_2;
+
+  // Initialize at unconditional variances
+  sigma_t[1, 1] = alpha0[1] / (1 - alpha1[1] - beta1[1]); // Low-vol
+  sigma_t[1, 2] = alpha0[2] / (1 - alpha1[2] - beta1[2]); // High-vol
+
+  // GARCH dynamics rolling forward
+  for(t in 2:T){
+    for(i in 1:2){
+      sigma_t[t, i] = sqrt(alpha0[i] +
+                           alpha1[i] * pow(y[t-1], 2) +
+                           beta1[i] * pow(sigma_t[t-1, i], 2));
+    }
+  }
+
+  // HMM Component
+  // ------------------
+
+  { // Calculate log p(state at t = j | history up to t) recursively
+    // Markov property allows us to do one-step updates
+
+    real accumulator[2];
+
+    // Assume initial equal distribution among two states
+    // Better model would be to weight by HMM stationary distribution
+    log_alpha[1, 1] = log(0.5) + normal_lpdf(y[1] | 0, sigma_t[1, 1]);
+    log_alpha[1, 2] = log(0.5) + normal_lpdf(y[1] | 0, sigma_t[1, 2]);
+
+    for(t in 2:T){
+      for(j in 1:2) { // Current state
+        for(i in 1:2) { // Previous state
+          accumulator[i] = log_alpha[t-1, i] + // Probability from previous obs
+                           log(A[i, j]) + // Transition probability
+                           // (Local) likelihood / evidence for given state
+                           normal_lpdf(y[t] | 0, sigma_t[t-1, i]);
+        }
+        log_alpha[t, j] = log_sum_exp(accumulator);
+      }
+    }
+  }
+}
+
+model {
+  // Priors
+
+  // GARCH components (weakly informative)
+  alpha0 ~ normal(0, 0.5); // Baseline vol is ~ 0.05
+  alpha1 ~ normal(0, 1);
+  beta1 ~ normal(1, 1); // Most volatility persistance from MA term of GARCH models
+
+  // HMM components
+  p_remain ~ beta(3, 1); // Weakly informative way to say that states are sort-of sticky
+
+  // Likelihood
+  target += log_sum_exp(log_alpha[T]); // Note: update based only on last log_alpha
+}
+
+generated quantities{
+  vector[2] alpha[T];
+
+  for(t in 1:T){
+    alpha[t] = softmax(log_alpha[t]);
+  }
+}
+#+end_src
+
+#+RESULTS:
+[[file:models/hmm_garch.stan]]
+
+*** MSAR(1)
+**** 注意点
+
+- MCMC Chain がレジームを混同してしまう問題。(混合モデルのラベルスイッチング問題)
+- Chain 毎に別のレジームを捉えてしまうため、係数が Mix されてしまう
+- 対策
+  1. パラメタに =ordered= や =positive_ordered= を使う
+  2. =chains = 1= でサンプリングする
+  3. 初期値をレジーム毎に変更する
+
+- [[https://stan-ja.github.io/gh-pages-html/#%E6%B7%B7%E5%90%88%E5%88%86%E5%B8%83%E3%83%A2%E3%83%87%E3%83%AB%E3%81%A7%E3%81%AE%E3%83%A9%E3%83%99%E3%83%AB%E3%82%B9%E3%82%A4%E3%83%83%E3%83%81%E3%83%B3%E3%82%B0][混合分布モデルでのラベルスイッチング@Stan Manual]]
+- [[http://kento1109.hatenablog.com/entry/2018/07/01/134603][Stan：混合モデルとラベルスイッチング@機械学習・自然言語処理の勉強メモ]]
+
+**** モデル 1 (モデル 2 の方が完成度が高い)
+
+- [[https://khakieconomics.github.io/2018/02/24/Regime-switching-models.html][Regime-switching models in Stan]] を参考
+
+#+begin_src stan :file models/msar_1_1.stan
+#include arma_funs.stan
+
+data {
+  int<lower=1> T;
+  real r[T];
+}
+
+parameters {
+  vector<lower=0, upper=1>[2] p;
+  vector[2] alpha;
+  // vector<lower=-1, upper=1>[2] beta;
+  real<lower=0> beta1;
+  real<upper=0> beta2;
+  vector<lower=0>[2] sigma;
+
+  real<lower=0, upper=1> xi1_init; // 状態 1 のフィルター確率の初期値
+  real r_tm1_init;
+}
+
+transformed parameters {
+  matrix[T, 2] eta; // 2 状態分の尤度
+  matrix[T, 2] xi;  // 状態毎のフィルター化確率
+  vector[T] f;
+  real p11;
+  real p12;
+  real p21;
+  real p22;
+
+  // 観測方程式 (状態毎の尤度)
+  for (t in 1:T) {
+    if (t == 1) {
+      eta[t, 1] = exp(normal_lpdf(r[t]| alpha[1] + beta1 * r_tm1_init, sigma[1]));
+      eta[t, 2] = exp(normal_lpdf(r[t]| alpha[2] + beta2 * r_tm1_init, sigma[2]));
+    } else {
+      eta[t, 1] = exp(normal_lpdf(r[t]| alpha[1] + beta1 * r[t-1], sigma[1]));
+      eta[t, 2] = exp(normal_lpdf(r[t]| alpha[2] + beta2 * r[t-1], sigma[2]));
+    }
+  }
+
+  // 観測方程式を元に、状態の確率毎に重み付け
+  for (t in 1:T) {
+    if (t == 1) {
+      p11 = p[1]       * xi1_init       * eta[t, 1];
+      p12 = (1 - p[1]) * xi1_init       * eta[t, 2];
+      p22 = p[2]       * (1 - xi1_init) * eta[t, 2];
+      p21 = (1 - p[2]) * (1 - xi1_init) * eta[t, 1];
+    } else {
+      p11 = p[1]       * xi[t-1, 1] * eta[t, 1];
+      p12 = (1 - p[1]) * xi[t-1, 1] * eta[t, 2];
+      p22 = p[2]       * xi[t-1, 2] * eta[t, 2];
+      p21 = (1 - p[2]) * xi[t-1, 2] * eta[t, 1];
+    }
+
+    f[t] = p11 + p12 + p22 + p21;
+    xi[t, 1] = (p11 + p12) / f[t];
+    xi[t, 2] = 1.0 - xi[t, 1];
+  }
+}
+
+model {
+  // Priors
+  p ~ beta(10, 2);
+  // beta ~ normal(0, 2);
+  beta1 ~ normal(0, 2);
+  beta2 ~ normal(0, 2);
+  sigma ~ cauchy(0, 5);
+  xi1_init ~ beta(2, 2);
+  r_tm1_init ~ normal(0, 0.1);
+
+  target += sum(log(f));
+  // for (t in 2:T) {
+  //   r[t] ~ normal(alpha + constrain_stationary(beta) * r[t-1], sigma);
+  // }
+}
+#+end_src
+
+#+RESULTS:
+[[file:models/msar_1_1.stan]]
+
+**** モデル 2
+
+- [[https://zenodo.org/record/1284341/files/main_pdf.pdf?download=1][A Tutorial on Hidden Markov Models using Stan - Zenodo]] を参考
+
+#+begin_src stan :file models/msar_1_2.stan
+// TODO constrain_stationary() の real 対応
+
+#include arma_funs.stan
+
+data {
+  int<lower=1> K;
+  int<lower=1> T;
+  real y[T];
+}
+
+parameters {
+  // State model
+  simplex[K] pi1;  // レジーム確率の初期値
+  simplex[K] P[K]; // K x K の推移確率行列
+
+  // Observation model
+  vector[K] mu;
+  vector<lower=-1, upper=1>[K] beta; // AR 係数
+
+  // ボラティリティ順にレジームを並べる
+  positive_ordered[K] sigma;
+}
+
+transformed parameters {
+  // 対数レジーム確率 (フィルタ化確率) の時系列
+  vector[K] log_pi[T];
+  vector[K] accumulator;
+
+  log_pi[1] = log(pi1) + normal_lpdf(y[1] | mu, sigma);
+
+  for (t in 2:T) {
+    // j = current (t)
+    for (j in 1:K) {
+      // i = previous (t-1)
+      for (i in 1:K) {
+        accumulator[i] =
+          log_pi[t-1, i] +
+          log(P[i, j]) +
+          normal_lpdf(y[t] | mu[j] + beta[j] * y[t-1], sigma[j]);
+      }
+      // 対数尤度を一旦、指数関数で元に戻した上で合算し、再度対数化
+      log_pi[t, j] = log_sum_exp(accumulator);
+    }
+  }
+}
+
+model {
+  mu ~ normal(0, 0.05); // リターンの切片が 0 より大きく異なることは稀
+  beta ~ normal(0, 2);
+  sigma ~ cauchy(0, 5);
+
+  // 対数尤度を累積しているので、最終時点 T のみを評価すればよい
+  target += log_sum_exp(log_pi[T]);
+}
+
+generated quantities {
+  vector[K] log_xi[T];
+  vector[K] log_gamma[T];
+
+  vector[K] pi[T];
+  vector[K] xi[T];
+  vector[K] gamma[T];
+
+  // レジーム確率
+  { // Forward algorithm
+    for (t in 1:T)
+      // 対数尤度を合計 1 の確率ベクトルに変換する
+      pi[t] = softmax(log_pi[t]);
+  }
+
+  // 平滑化確率
+  { // Backward algorithm
+    real accumulator2[K];
+
+    // 初期値 (=最新のデータ)
+    for (j in 1:K)
+      log_xi[T, j] = 1;
+
+    // 新->旧の順に計算していく
+    for (tforward in 0:(T-2)) {
+      int t = T - tforward;
+
+      /* レジーム確率の逆のアルゴリズム
+         t-1 の状態から t の状態への遷移確率ではなく、
+         t の状態で t-1 を更新していく */
+
+      // j = previous (t-1)
+      for (j in 1:K) {
+        // i = next (t)
+        for (i in 1:K) {
+          // backwards t + transition prob + local evidence at t
+          accumulator2[i] = log_xi[t, i] + log(P[j, i]) + normal_lpdf(y[t] | mu[i], sigma[i]);
+        }
+        log_xi[t-1, j] = log_sum_exp(accumulator2);
+      }
+    }
+    for (t in 1:T)
+      xi[t] = softmax(log_xi[t]);
+  }
+
+  { // Forwards-backwards algorithm
+    for(t in 1:T)
+      log_gamma[t] = pi[t] .* xi[t];
+
+    for(t in 1:T)
+      gamma[t] = normalize(log_gamma[t]);
+  }
+}
+#+end_src
+
+**** データ
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+ar1 <- arima.sim(model = list(order = c(1,0,0), ar = 0.5), mean = 0, sd = 1, n = 500)
+ar2 <- arima.sim(model = list(order = c(1,0,0), ar = -0.5), mean = 0, sd = 3, n = 200)
+msar1 <- c(ar1[1:200], ar2[1:100], ar1[201:500], ar2[101:200])
+ggtsdisplay(msar1)
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-AhZBwV.png]]
+
+**** 当てはめ
+
+#+begin_src R
+msar1_2_fit <- stan(file = "models/msar_1_2.stan",
+                    data = list(K = 2, T = length(msar1), y = msar1),
+                    iter = 2000,
+                    chains = 1)
+msar1_2_fit
+#+end_src
+
+#+RESULTS:
+#+begin_example
+SYNTAX ERROR, MESSAGE(S) FROM PARSER:
+Variable "p" does not exist.
+ error in 'model89e54efd31_msar_1' at line 44, column 13
+  -------------------------------------------------
+    42:   for (t in 1:T) {
+    43:     if (t == 1) {
+    44:       p11 = p[1]       * xi1_init       * eta[t, 1];
+                    ^
+    45:       p12 = (1 - p[1]) * xi1_init       * eta[t, 2];
+  -------------------------------------------------
+
+Error in stanc(file = file, model_code = model_code, model_name = model_name,  : 
+  failed to parse Stan model 'msar_1' due to the above error.
+In addition: Warning message:
+In readLines(file, warn = TRUE) :
+  incomplete final line found on '/home/shun/Dropbox/repos/github/five-dots/notes/lang/stan/time_series/models/msar_1.stan'
+Inference for Stan model: msar_1.
+4 chains, each with iter=3000; warmup=1500; thin=1; 
+post-warmup draws per chain=1500, total post-warmup draws=6000.
+
+              mean se_mean   sd    2.5%     25%     50%     75%   97.5% n_eff
+p[1]          0.74    0.01 0.17    0.44    0.57    0.79    0.89    0.97   360
+p[2]          0.66    0.01 0.14    0.47    0.56    0.62    0.75    0.95   352
+alpha[1]     -0.13    0.00 0.12   -0.36   -0.21   -0.14   -0.06    0.09  3799
+alpha[2]     -0.03    0.00 0.21   -0.47   -0.17   -0.03    0.11    0.37  4319
+beta1         0.41    0.00 0.17    0.16    0.29    0.39    0.50    0.87  1289
+beta2        -0.65    0.00 0.09   -0.82   -0.71   -0.65   -0.60   -0.50  2604
+sigma[1]      0.84    0.00 0.12    0.61    0.76    0.84    0.91    1.08  1648
+sigma[2]      2.33    0.00 0.20    2.00    2.19    2.31    2.45    2.76  1680
+xi1_init      0.45    0.01 0.22    0.09    0.29    0.44    0.62    0.87  1301
+r_tm1_init    0.01    0.00 0.10   -0.19   -0.06    0.01    0.07    0.21  5971
+eta[1,1]      0.26    0.00 0.05    0.16    0.24    0.27    0.29    0.35  3717
+eta[1,2]      0.16    0.00 0.01    0.14    0.15    0.16    0.17    0.19  1520
+eta[2,1]      0.38    0.00 0.06    0.29    0.34    0.37    0.40    0.56  1525
+eta[2,2]      0.15    0.00 0.01    0.12    0.14    0.15    0.16    0.17  1469
+eta[3,1]      0.37    0.00 0.06    0.28    0.33    0.36    0.39    0.54  1573
+eta[3,2]      0.15    0.00 0.01    0.12    0.14    0.15    0.16    0.17  1479
+eta[4,1]      0.44    0.00 0.07    0.34    0.40    0.43    0.48    0.60  1495
+eta[4,2]      0.16    0.00 0.01    0.13    0.15    0.16    0.16    0.18  1409
+eta[5,1]      0.43    0.00 0.06    0.33    0.39    0.42    0.46    0.56  3842
+eta[5,2]      0.17    0.00 0.01    0.14    0.16    0.17    0.18    0.20  1628
+eta[6,1]      0.04    0.00 0.03    0.00    0.02    0.04    0.06    0.10  1384
+eta[6,2]      0.14    0.00 0.01    0.12    0.13    0.14    0.15    0.16  1934
+eta[7,1]      0.30    0.00 0.09    0.17    0.24    0.29    0.35    0.58  1540
+eta[7,2]      0.10    0.00 0.01    0.08    0.09    0.10    0.11    0.12  3050
+eta[8,1]      0.06    0.00 0.04    0.00    0.04    0.06    0.09    0.14  1499
+eta[8,2]      0.17    0.00 0.01    0.14    0.16    0.17    0.18    0.19  2246
+eta[9,1]      0.32    0.00 0.09    0.08    0.27    0.32    0.38    0.47  1602
+eta[9,2]      0.16    0.00 0.01    0.14    0.15    0.16    0.17    0.19  2070
+eta[10,1]     0.44    0.00 0.06    0.34    0.40    0.44    0.48    0.58  1731
+eta[10,2]     0.17    0.00 0.01    0.14    0.16    0.17    0.18    0.20  1962
+eta[11,1]     0.24    0.00 0.05    0.14    0.21    0.24    0.27    0.34  2517
+eta[11,2]     0.14    0.00 0.01    0.12    0.13    0.14    0.14    0.16  5737
+eta[12,1]     0.45    0.00 0.07    0.32    0.40    0.45    0.49    0.59  1647
+eta[12,2]     0.13    0.00 0.01    0.11    0.12    0.13    0.14    0.15  4732
+eta[13,1]     0.25    0.00 0.07    0.12    0.20    0.24    0.28    0.42  1667
+eta[13,2]     0.12    0.00 0.01    0.10    0.11    0.12    0.12    0.14  5855
+eta[14,1]     0.33    0.00 0.10    0.16    0.25    0.32    0.38    0.59  1271
+eta[14,2]     0.10    0.00 0.01    0.08    0.09    0.10    0.11    0.12  4651
+eta[15,1]     0.36    0.00 0.10    0.19    0.29    0.35    0.41    0.59  1227
+eta[15,2]     0.11    0.00 0.01    0.08    0.10    0.11    0.11    0.13  4872
+eta[16,1]     0.07    0.00 0.05    0.01    0.04    0.07    0.10    0.18  2198
+eta[16,2]     0.07    0.00 0.01    0.04    0.06    0.07    0.07    0.09  3127
+eta[17,1]     0.30    0.00 0.12    0.01    0.23    0.32    0.40    0.50  1578
+eta[17,2]     0.12    0.00 0.01    0.10    0.12    0.12    0.13    0.15  3790
+eta[18,1]     0.45    0.00 0.06    0.36    0.41    0.45    0.49    0.58  3073
+eta[18,2]     0.17    0.00 0.01    0.14    0.16    0.17    0.18    0.20  1770
+eta[19,1]     0.23    0.00 0.04    0.14    0.20    0.23    0.25    0.31  4139
+eta[19,2]     0.15    0.00 0.01    0.13    0.14    0.15    0.16    0.17  3949
+eta[20,1]     0.15    0.00 0.07    0.01    0.10    0.15    0.20    0.28  1156
+eta[20,2]     0.17    0.00 0.01    0.14    0.16    0.17    0.18    0.20  1671
+eta[21,1]     0.36    0.00 0.06    0.27    0.32    0.35    0.38    0.52  1652
+eta[21,2]     0.15    0.00 0.01    0.12    0.14    0.15    0.16    0.17  1473
+eta[22,1]     0.47    0.00 0.07    0.36    0.43    0.47    0.51    0.61  2755
+eta[22,2]     0.17    0.00 0.01    0.14    0.16    0.17    0.18    0.19  1415
+eta[23,1]     0.21    0.00 0.04    0.12    0.19    0.22    0.24    0.29  3014
+eta[23,2]     0.16    0.00 0.01    0.13    0.15    0.16    0.16    0.18  1531
+eta[24,1]     0.20    0.00 0.06    0.10    0.16    0.20    0.23    0.35  2408
+eta[24,2]     0.12    0.00 0.01    0.10    0.11    0.12    0.13    0.14  2274
+eta[25,1]     0.21    0.00 0.09    0.09    0.16    0.20    0.24    0.45  1715
+eta[25,2]     0.10    0.00 0.01    0.08    0.09    0.10    0.11    0.12  3207
+eta[26,1]     0.25    0.00 0.09    0.12    0.19    0.23    0.28    0.53  1562
+eta[26,2]     0.10    0.00 0.01    0.07    0.09    0.10    0.11    0.12  3227
+eta[27,1]     0.29    0.00 0.09    0.17    0.24    0.28    0.33    0.56  1518
+eta[27,2]     0.11    0.00 0.01    0.08    0.10    0.11    0.11    0.13  2703
+eta[28,1]     0.45    0.00 0.06    0.35    0.41    0.45    0.49    0.59  2086
+eta[28,2]     0.14    0.00 0.01    0.12    0.13    0.14    0.15    0.17  1479
+eta[29,1]     0.47    0.00 0.07    0.36    0.43    0.47    0.51    0.62  2348
+eta[29,2]     0.17    0.00 0.01    0.14    0.16    0.17    0.18    0.20  1485
+eta[30,1]     0.46    0.00 0.07    0.35    0.41    0.45    0.50    0.61  1571
+eta[30,2]     0.17    0.00 0.01    0.14    0.16    0.17    0.18    0.20  1934
+eta[31,1]     0.37    0.00 0.06    0.27    0.33    0.36    0.40    0.52  1462
+eta[31,2]     0.15    0.00 0.01    0.13    0.15    0.15    0.16    0.17  3523
+eta[32,1]     0.46    0.00 0.07    0.34    0.41    0.46    0.51    0.61  1498
+eta[32,2]     0.15    0.00 0.01    0.13    0.14    0.15    0.16    0.17  3381
+eta[33,1]     0.17    0.00 0.05    0.08    0.14    0.17    0.21    0.27  2613
+eta[33,2]     0.12    0.00 0.01    0.10    0.11    0.12    0.12    0.14  5925
+eta[34,1]     0.03    0.00 0.03    0.00    0.01    0.02    0.04    0.10  1204
+eta[34,2]     0.17    0.00 0.01    0.14    0.16    0.17    0.18    0.20  1701
+eta[35,1]     0.11    0.00 0.06    0.03    0.07    0.10    0.13    0.27  2230
+eta[35,2]     0.08    0.00 0.01    0.06    0.07    0.08    0.09    0.10  4726
+eta[36,1]     0.29    0.00 0.10    0.02    0.24    0.31    0.36    0.45  1785
+eta[36,2]     0.15    0.00 0.01    0.13    0.14    0.15    0.16    0.18  1318
+eta[37,1]     0.45    0.00 0.07    0.34    0.41    0.44    0.49    0.61  1434
+eta[37,2]     0.17    0.00 0.01    0.14    0.16    0.17    0.17    0.19  2151
+eta[38,1]     0.43    0.00 0.07    0.32    0.38    0.42    0.47    0.61  1253
+eta[38,2]     0.16    0.00 0.01    0.13    0.15    0.16    0.16    0.18  3055
+eta[39,1]     0.28    0.00 0.07    0.11    0.24    0.28    0.32    0.39  1594
+eta[39,2]     0.17    0.00 0.01    0.14    0.16    0.17    0.18    0.20  1664
+eta[40,1]     0.48    0.00 0.07    0.36    0.43    0.47    0.52    0.63  1680
+eta[40,2]     0.17    0.00 0.01    0.14    0.16    0.17    0.18    0.20  1485
+eta[41,1]     0.42    0.00 0.05    0.34    0.39    0.42    0.45    0.54  2202
+eta[41,2]     0.17    0.00 0.01    0.14    0.16    0.17    0.18    0.20  1513
+eta[42,1]     0.47    0.00 0.07    0.36    0.43    0.47    0.51    0.63  1648
+eta[42,2]     0.17    0.00 0.01    0.14    0.16    0.17    0.18    0.20  1510
+eta[43,1]     0.48    0.00 0.07    0.37    0.43    0.47    0.51    0.63  1684
+eta[43,2]     0.17    0.00 0.01    0.14    0.16    0.17    0.18    0.20  1591
+eta[44,1]     0.09    0.00 0.04    0.02    0.07    0.09    0.12    0.17  1681
+eta[44,2]     0.14    0.00 0.01    0.12    0.13    0.14    0.15    0.16  1747
+eta[45,1]     0.46    0.00 0.07    0.34    0.42    0.46    0.50    0.60  2903
+eta[45,2]     0.14    0.00 0.01    0.12    0.13    0.14    0.15    0.17  1448
+           Rhat
+p[1]       1.01
+p[2]       1.00
+alpha[1]   1.00
+alpha[2]   1.00
+beta1      1.00
+beta2      1.00
+sigma[1]   1.00
+sigma[2]   1.00
+xi1_init   1.00
+r_tm1_init 1.00
+eta[1,1]   1.00
+eta[1,2]   1.00
+eta[2,1]   1.00
+eta[2,2]   1.00
+eta[3,1]   1.00
+eta[3,2]   1.00
+eta[4,1]   1.00
+eta[4,2]   1.00
+eta[5,1]   1.00
+eta[5,2]   1.00
+eta[6,1]   1.00
+eta[6,2]   1.00
+eta[7,1]   1.00
+eta[7,2]   1.00
+eta[8,1]   1.00
+eta[8,2]   1.00
+eta[9,1]   1.00
+eta[9,2]   1.00
+eta[10,1]  1.00
+eta[10,2]  1.00
+eta[11,1]  1.00
+eta[11,2]  1.00
+eta[12,1]  1.00
+eta[12,2]  1.00
+eta[13,1]  1.00
+eta[13,2]  1.00
+eta[14,1]  1.00
+eta[14,2]  1.00
+eta[15,1]  1.00
+eta[15,2]  1.00
+eta[16,1]  1.00
+eta[16,2]  1.00
+eta[17,1]  1.00
+eta[17,2]  1.00
+eta[18,1]  1.00
+eta[18,2]  1.00
+eta[19,1]  1.00
+eta[19,2]  1.00
+eta[20,1]  1.00
+eta[20,2]  1.00
+eta[21,1]  1.00
+eta[21,2]  1.00
+eta[22,1]  1.00
+eta[22,2]  1.00
+eta[23,1]  1.00
+eta[23,2]  1.00
+eta[24,1]  1.00
+eta[24,2]  1.00
+eta[25,1]  1.00
+eta[25,2]  1.00
+eta[26,1]  1.00
+eta[26,2]  1.00
+eta[27,1]  1.00
+eta[27,2]  1.00
+eta[28,1]  1.00
+eta[28,2]  1.00
+eta[29,1]  1.00
+eta[29,2]  1.00
+eta[30,1]  1.00
+eta[30,2]  1.00
+eta[31,1]  1.00
+eta[31,2]  1.00
+eta[32,1]  1.00
+eta[32,2]  1.00
+eta[33,1]  1.00
+eta[33,2]  1.00
+eta[34,1]  1.00
+eta[34,2]  1.00
+eta[35,1]  1.00
+eta[35,2]  1.00
+eta[36,1]  1.00
+eta[36,2]  1.00
+eta[37,1]  1.00
+eta[37,2]  1.00
+eta[38,1]  1.00
+eta[38,2]  1.00
+eta[39,1]  1.00
+eta[39,2]  1.00
+eta[40,1]  1.00
+eta[40,2]  1.00
+eta[41,1]  1.00
+eta[41,2]  1.00
+eta[42,1]  1.00
+eta[42,2]  1.00
+eta[43,1]  1.00
+eta[43,2]  1.00
+eta[44,1]  1.00
+eta[44,2]  1.00
+eta[45,1]  1.00
+eta[45,2]  1.00
+ [ reached getOption("max.print") -- omitted 1415 rows ]
+
+Samples were drawn using NUTS(diag_e) at Tue Dec  3 16:52:29 2019.
+For each parameter, n_eff is a crude measure of effective sample size,
+and Rhat is the potential scale reduction factor on split chains (at 
+convergence, Rhat=1).
+#+end_example
+
+***
+
+**** フィルタ化確率
+
+- 200-300, 600-700 がレジーム 2
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+as.data.frame(msar1_2_fit, pars = "pi") %>%
+  pivot_longer(everything()) %>%
+  ## 状態 1 のみ抽出
+  dplyr::filter(str_detect(name, ",1")) %>%
+  group_by(name) %>%
+  summarise(mean = mean(value),
+            lower = quantile(value, .025),
+            upper = quantile(value, .975)) %>%
+  mutate(no = as.integer(str_extract(name, "(?<=^pi\\[).*(?=,1\\]$)"))) %>%
+  arrange(no) %>%
+  ggplot(aes(x = no, y = mean)) +
+  geom_point(alpha = 0.3) +
+  geom_ribbon(aes(ymin = lower, ymax = upper), alpha = 0.3,  fill = "green")
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-yTHuR3.png]]
+
+**** 平滑化確率
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+as.data.frame(msar1_2_fit, pars = "gamma") %>%
+  pivot_longer(everything()) %>%
+  ## 状態 1 のみ抽出
+  dplyr::filter(str_detect(name, ",1")) %>%
+  group_by(name) %>%
+  summarise(mean = mean(value),
+            lower = quantile(value, .025),
+            upper = quantile(value, .975)) %>%
+  mutate(no = as.integer(str_extract(name, "(?<=^pi\\[).*(?=,1\\]$)"))) %>%
+  arrange(no) %>%
+  ggplot(aes(x = no, y = mean)) +
+  geom_point(alpha = 0.3) +
+  geom_ribbon(aes(ymin = lower, ymax = upper), alpha = 0.3,  fill = "green")
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-yTHuR3.png]]
+
+**** MAP 推定量
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+as.data.frame(msar1_2_fit, pars = "zstar") %>%
+  pivot_longer(everything()) %>%
+  group_by(name) %>%
+  summarise(mean = round(mean(value))) %>%
+  mutate(no = readr::parse_number(name)) %>%
+  arrange(no) %>%
+  ggplot(aes(x = no, y = mean)) +
+  geom_line()
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-vfJoxW.png]]
 
 ** 時変係数 AR モデル
 *** データ
@@ -2971,20 +4519,27 @@ time_variant_coef_Model_1 <- stan(
 
 - Stan 公式ドキュメント一覧
   - [[https://mc-stan.org/docs/2_21/stan-users-guide/time-series-chapter.html][Stan User’s Guide: 2 Time-Series Models]] ([[https://stan-ja.github.io/gh-pages-html/#%E6%99%82%E7%B3%BB%E5%88%97%E3%83%A2%E3%83%87%E3%83%AB][日本語訳]])
-  - [[https://discourse.mc-stan.org/t/regime-switching-model/4098][Regime Switching Model@Stan Forum]]
+  - Stan Forum Discussion
+    - [[https://discourse.mc-stan.org/t/regime-switching-model/4098][Regime Switching Model]]
+    - [[https://discourse.mc-stan.org/t/hidden-markov-model-with-constraints/1625][Hidden Markov Model with constraints]]
+    - [[https://discourse.mc-stan.org/t/transversing-up-a-graph-hierarchical-hidden-markov-model/1304][Transversing up a graph (Hierarchical Hidden Markov Model)]]
 
 - Blog
   - [[http://statmodeling.hatenablog.com/entry/calc-waic-wbic][WAICとWBICを事後分布から計算する@StatModeling Memorandum]]
   - [[http://ill-identified.hatenablog.com/entry/2016/02/14/205311][R + Stan で ベクトル ARMA (VARMA) を推定@ill-identified diary]]
   - [[http://ill-identified.hatenablog.com/entry/2016/04/02/225155][stan + R ベクトル ARIMA (VARIMA) で人口予測 (?)@ill-identified diary]]
   - [[https://logics-of-blue.com/%e6%85%a3%e3%82%8c%e3%81%ae%e7%b5%b1%e8%a8%88%e3%83%a2%e3%83%87%e3%83%aa%e3%83%b3%e3%82%b0%ef%bc%9astan%e3%81%a7%e6%8e%a8%e5%ae%9a%e3%81%99%e3%82%8b%e6%99%82%e5%a4%89%e4%bf%82/][”慣れ”の統計モデリング：Stanで推定する時変係数モデル@Logics of Blue]]
+  - [[https://khakieconomics.github.io/2018/02/24/Regime-switching-models.html][Regime-switching models in Stan]]
+  - [[https://statmodeling.stat.columbia.edu/2017/02/07/hmms-stan-absolutely/][HMMs in Stan? Absolutely!]]
 
 - ={rugarch}=
-  - [[https://cran.r-project.org/web/packages/rugarch/vignettes/Introduction_to_the_rugarch_package.pdf][Introduction to the rugarch package (PDF)]]
+  - [[https://cran.r-project.org/web/packages/rugarch/vignettes/Introduction_to_the_rugarch_package.pdf][Introduction to the rugarch package (PDF)]] Stan モデルの数式の参考に
 
 - Research paper
   - [[http://www.fs.hub.hit-u.ac.jp/inc/files/performance/masters-thesis/2015/saito2015.pdf][Carhart 4 ファクターモデルの 条件付きモデルへの拡張と 投資戦略への応用 (PDF)]]
+  - [[https://zenodo.org/record/1284341/files/main_pdf.pdf?download=1][A Tutorial on Hidden Markov Models using Stan - Zenodo]]
 
 - Github
+  - [[https://github.com/luisdamiano/gsoc17-hhmm][Bayesian Hierarchical Hidden Markov Models applied to financial time series, a research replication project for Google Summer of Code 2017.]]
   - [[https://github.com/jeffalstott/pystan_time_series][pystan_time_series]]
   - [[https://github.com/stan-dev/math/issues/309][Functions to ensure stationarity in autoregression and invertibility in moving average parameters #309@stan-dev]]

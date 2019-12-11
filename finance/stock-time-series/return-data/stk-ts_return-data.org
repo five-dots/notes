@@ -1,0 +1,36 @@
+#+STARTUP: folded indent inlineimages
+#+PROPERTY: header-args:R :results output :exports both :colnames yes
+#+PROPERTY: header-args:R+ :session *R:return-data*  :width 640 :height 480 :eval never-export
+#+OPTIONS: author:nil H:6 toc:nil
+#+HUGO_BASE_DIR: ~/Dropbox/repos/github/five-dots/blog
+#+HUGO_SECTION: post/2019/12/
+
+#+TITLE: [R と Stan で株式時系列分析シリーズ] リターンへの変換
+#+DATE: 2019-12-05
+#+HUGO_CATEGORIES: finance
+#+HUGO_TAGS: r etf stock series
+#+HUGO_CUSTOM_FRONT_MATTER: :toc false
+
+前回は、{tidyquant} パッケージを利用して、セクター ETF と SPY の株価データを入手した。今回は、
+
+* 前回までのデータを復元
+
+#+begin_src R :results silent
+load(url("https://dl.dropboxusercontent.com/s/8luhv4yx9y1mca1/price-data.RData"))
+#+end_src
+
+* データの保存
+
+#+begin_comment
+rm("settings")
+save.image("us-etf-research.RData")
+#+end_comment
+
+#+begin_src R :results silent
+save.image("return-data.RData")
+#+end_src
+
+* COMMENT Local Variables                                           :ARCHIVE:
+  # Local Variables:
+  # eval: (org-hugo-auto-export-mode)
+  # End:

@@ -1,0 +1,688 @@
+#+STARTUP: folded indent inlineimages latexpreview
+#+PROPERTY: header-args:R :session *R:nlm* :results output :width 560 :height 420
+
+* Libraries
+  
+#+begin_src R :results silent
+library(DescTools)
+library(Metrics)
+library(broom)
+library(glmmML)
+library(glue)
+library(tidyverse)
+library(mgcv)
+#+end_src
+
+* 曲線の例
+** 非線形関数の一覧
+
+https://www.lightstone.co.jp/origin/flist2.html
+
+** 放物線
+
+- 2 次曲線のプロット
+- 基準となる値 (この場合は 20) を起点とした放物線
+- 気温 (0 - 40℃) と 消費電力の関係など (Stan 本の例題を参考)
+#+begin_src R :results graphics :file (get-babel-file)
+data <- (seq(1, 40) - 20)^2
+plot(data, type = "l")
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-NA2tI4.png]]
+
+** 増加し頭打ち (指数関数)
+
+- y = a {(1 - exp(bt)}
+- a が上限を決めるパラメタ
+- b で増加の程度を決める
+#+begin_src R :results graphics :file (get-babel-file)
+t <- 1:5
+a <- 5
+b <- 0.8
+y <- a * (1 - exp(-b * t))
+plot(y, type = "l")
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-mU6uwt.png]]
+
+** 減少し頭打ち（指数関数)
+
+- y = 2exp(-t)
+#+begin_src R :results graphics :file (get-babel-file)
+t <- 1:5
+y <- 2 * exp(-t)
+plot(y, type = "l")
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-vJt90W.png]]
+
+** S 字
+
+- y = c / (1 + a exp(-bt))
+- ロジスティック関数など
+#+begin_src R :results graphics :file (get-babel-file)
+t <- seq(1, 5, 0.1)
+c <- 1.8
+a <- 50
+b <- 2
+y <- c / (1 + a*exp(-b*t))
+plot(y, type = "l")
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-BQks1x.png]]
+** 三角関数
+*** sin()
+
+#+begin_src R :results graphics :file (get-babel-file)
+plot(sin(seq(0, 10, 0.1)), type = "l")
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-vjRSgc.png]]
+
+*** cos()
+
+#+begin_src R :results graphics :file (get-babel-file)
+plot(cos(seq(0, 10, 0.1)), type = "l")
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-kl7eQm.png]]
+
+*** Fit a sinusoidal term to data @ StackExchange
+**** Data
+
+https://stats.stackexchange.com/questions/60994/fit-a-sinusoidal-term-to-data
+
+#+begin_src R :results graphics :file (get-babel-file)
+y <- c(11.622967, 12.006081, 11.760928, 12.246830, 12.052126, 12.346154, 12.039262, 12.362163, 12.009269, 11.260743, 10.950483, 10.522091,  9.346292,  7.014578,  6.981853,  7.197708,  7.035624,  6.785289, 7.134426,  8.338514,  8.723832, 10.276473, 10.602792, 11.031908, 11.364901, 11.687638, 11.947783, 12.228909, 11.918379, 12.343574, 12.046851, 12.316508, 12.147746, 12.136446, 11.744371,  8.317413, 8.790837, 10.139807,  7.019035,  7.541484,  7.199672,  9.090377,  7.532161,  8.156842,  9.329572, 9.991522, 10.036448, 10.797905)
+t <- 18:65
+plot(t, y)
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-tYTIfd.png]]
+
+**** Model (Failed)
+
+#+begin_src R :results graphics :file (get-babel-file)
+res <- nls(y ~ A*sin(omega*t+phi)+C,
+           data=data.frame(t,y),
+           start=list(A=1,omega=1,phi=1,C=1))
+co <- coef(res)
+
+fit <- function(x, a, b, c, d) {a*sin(b*x+c)+d}
+
+# Plot result
+plot(x=t, y=y)
+curve(fit(x, a=co["A"], b=co["omega"], c=co["phi"], d=co["C"]), add=TRUE ,lwd=2, col="steelblue")
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-pWNsxQ.png]]
+
+**** Model (Improved)
+***** First fit
+
+#+begin_src R
+ssp <- stats::spectrum(y)  
+per <- 1/ssp$freq[ssp$spec==max(ssp$spec)]
+reslm <- lm(y ~ sin(2*pi/per*t)+cos(2*pi/per*t))
+summary(reslm)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+Call:
+lm(formula = y ~ sin(2 * pi/per * t)
+cos(2 * pi/per * t))
+
+Residuals:
+     Min       1Q   Median       3Q      Max 
+-1.44304 -0.42128 -0.03112  0.38608  1.68219 
+
+Coefficients:
+                    Estimate Std. Error t value Pr(>|t|)    
+(Intercept)          10.1557     0.1034   98.24  < 2e-16 ***
+sin(2 * pi/per * t)  -1.1389     0.1462   -7.79 6.98e-10 ***
+cos(2 * pi/per * t)   2.3105     0.1462   15.80  < 2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 0.7162 on 45 degrees of freedom
+Multiple R-squared:  0.8734,	Adjusted R-squared:  0.8678 
+F-statistic: 155.2 on 2 and 45 DF,  p-value: < 2.2e-16
+#+end_example
+
+#+begin_src R :results graphics :file (get-babel-file)
+rg <- diff(range(y))
+plot(y~t,ylim=c(min(y)-0.1*rg,max(y)+0.1*rg))
+lines(fitted(reslm)~t,col=4,lty=2)   # dashed blue line is sin fit
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-jluiQO.png]]
+
+***** Second fit
+
+#+begin_src R
+# including 2nd harmonic really improves the fit
+reslm2 <- lm(y ~ sin(2*pi/per*t)+cos(2*pi/per*t)+sin(4*pi/per*t)+cos(4*pi/per*t))
+summary(reslm2)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+Call:
+lm(formula = y ~ sin(2 * pi/per * t)
+cos(2 * pi/per * t)
+
+    sin(4 * pi/per * t)
+cos(4 * pi/per * t))
+
+Residuals:
+     Min       1Q   Median       3Q      Max 
+-1.69712 -0.27059  0.01848  0.17896  1.86313 
+
+Coefficients:
+                    Estimate Std. Error t value Pr(>|t|)    
+(Intercept)         10.15572    0.08744 116.152  < 2e-16 ***
+sin(2 * pi/per * t) -1.13891    0.12365  -9.211 9.85e-12 ***
+cos(2 * pi/per * t)  2.31051    0.12365  18.686  < 2e-16 ***
+sin(4 * pi/per * t)  0.54184    0.12365   4.382 7.43e-05 ***
+cos(4 * pi/per * t) -0.10391    0.12365  -0.840    0.405    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 0.6058 on 43 degrees of freedom
+Multiple R-squared:  0.9135,	Adjusted R-squared:  0.9054 
+F-statistic: 113.5 on 4 and 43 DF,  p-value: < 2.2e-16
+#+end_example
+
+#+begin_src R :results graphics :file (get-babel-file)
+plot(y~t,ylim=c(min(y)-0.1*rg,max(y)+0.1*rg))
+lines(fitted(reslm)~t,col=4,lty=2)   # dashed blue line is sin fit
+lines(fitted(reslm2)~t,col=3)    # solid green line is periodic with second harmonic
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-kVsxwQ.png]]
+
+* stats::nls()
+
+- R で非線形近似
+  https://qiita.com/hnishi/items/2a8a7e70aa8223b99f15
+
+#+begin_src R :results graphics :file (get-babel-file)
+x1<-c(0,4,10,20,25,30,40)
+y1<-c(3.37E+00,-2.48E+00,-3.92E+00,-4.30E+00,-5.72E+00,-6.54E+00,-7.83E+00)
+plot(x1, y1)
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-QFvkdF.png]]
+
+- 以下の式を当てはめる
+
+$y = ax^{\frac{3}{2}} + b$
+
+#+begin_src R
+fm <- nls(y1 ~ a * x1^(3/2) + b, start = c(a = 1, b = 1), trace = TRUE)
+summary(fm)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+125879.5 :  1 1
+26.45031 :  -0.03253588 -0.79665247
+
+Formula: y1 ~ a * x1^(3/2)
+b
+
+Parameters:
+  Estimate Std. Error t value Pr(>|t|)  
+a -0.03254    0.01015  -3.204   0.0239 *
+b -0.79665    1.30549  -0.610   0.5684  
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 2.3 on 5 degrees of freedom
+
+Number of iterations to convergence: 1 
+Achieved convergence tolerance: 1.527e-07
+#+end_example
+
+#+begin_src R :results graphics :file (get-babel-file)
+plot(x1, y1)
+lines(x1, fitted(fm))
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-DQJ8SO.png]]
+* stats::loess()
+
+http://r-statistics.co/Loess-Regression-With-R.html
+
+- Loess = Local Regression 
+- ノンパラメトリック手法
+
+* 多項式回帰 
+** 例 1 (poly() を使わない例)
+*** Data
+
+- 【R によるデータサイエンス】非線形回帰分析　〜　多項式回帰
+https://financial-it-engineer.hatenablog.com/entry/20140502/1398993662
+
+#+begin_src R :results graphics :file (get-babel-file)
+x<-seq(-5,5,0.1) #-5から5までを当分割した長さ0.1のベクトルの作成
+y<-10*x^3+100*rnorm(x,0,1)
+plot(x,y)
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-P2pxHx.png]]
+
+*** Model1
+
+- 想定する多項式
+$y = a + bx + cx^2 + dx^3$
+
+#+begin_src R
+fm3 <- nls(y ~a+b*x+c*x^2+d*x^3,start=c(a=1,b=1,c=1,d=1),trace=T)
+summary(fm3)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+19537320 :  1 1 1 1
+1089458 :  18.163217  3.718091 -1.235325  9.626331
+
+Formula: y ~ a
+b * x
+c * x^2
+d * x^3
+
+Parameters:
+Estimate Std. Error t value Pr(>|t|)    
+a   18.163     15.819   1.148    0.254    
+b    3.718      9.046   0.411    0.682    
+c   -1.235      1.387  -0.890    0.375    
+d    9.626      0.542  17.762   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 106 on 97 degrees of freedom
+
+Number of iterations to convergence: 1 
+Achieved convergence tolerance: 6.723e-08
+#+end_example
+
+*** Model2
+
+#+begin_src R
+fm4 <- nls(y~b*x+d*x^3, start=c(b=1,d=1), trace=T)
+summary(fm4)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+19522655 :  1 1
+1104295 :  3.718094 9.626331
+
+Formula: y ~ b * x
+d * x^3
+
+Parameters:
+Estimate Std. Error t value Pr(>|t|)    
+b   3.7181     9.0145   0.412    0.681    
+d   9.6263     0.5401  17.823   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 105.6 on 99 degrees of freedom
+
+Number of iterations to convergence: 1 
+Achieved convergence tolerance: 2.324e-08
+#+end_example
+
+*** Model3
+
+#+begin_src R
+fm5<-nls(y~d*x^3,start=c(d=1),trace=T)
+summary(fm5)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+19754765 :  1
+1106192 :  9.830515
+
+Formula: y ~ d * x^3
+
+Parameters:
+Estimate Std. Error t value Pr(>|t|)    
+d   9.8305     0.2151   45.71   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 105.2 on 100 degrees of freedom
+
+Number of iterations to convergence: 1 
+Achieved convergence tolerance: 1.659e-09
+#+end_example
+
+*** Plots
+
+#+begin_src R :results graphics :file (get-babel-file)
+data <- data.frame(
+x = x, y = y,
+fitted3 = fitted(fm3),
+fitted4 = fitted(fm4),
+fitted5 = fitted(fm5)
+)
+ggplot(data, aes(x = x, y = y)) +
+geom_point() +
+geom_line(aes(y = fitted3), color = "red") +
+geom_line(aes(y = fitted4), color = "blue") +
+geom_line(aes(y = fitted5), color = "green")
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-w0E2gi.png]]
+
+** 例 2 (poly() を使う例)
+
+- 多項式回帰入門。線形回帰に飽きたらない人へ
+http://funyakofunyao.click/2017/07/08/%e5%a4%9a%e9%a0%85%e5%bc%8f%e5%9b%9e%e5%b8%b0%e5%85%a5%e9%96%80%e3%80%82%e7%b7%9a%e5%bd%a2%e5%9b%9e%e5%b8%b0%e3%81%ab%e9%a3%bd%e3%81%8d%e3%81%9f%e3%82%89%e3%81%aa%e3%81%84%e4%ba%ba%e3%81%b8/
+
+* mgcv::gam() 一般化加法モデル(GAM)
+** Reference
+
+- 平滑化スプラインと加法モデル
+  https://logics-of-blue.com/%E5%B9%B3%E6%BB%91%E5%8C%96%E3%82%B9%E3%83%97%E3%83%A9%E3%82%A4%E3%83%B3%E3%81%A8%E5%8A%A0%E6%B3%95%E3%83%A2%E3%83%87%E3%83%AB/
+
+** Overview
+
+- GAM = Generalized Additive Model
+- 単回帰 = スプライン
+- 重回帰 = 加法モデル
+
+1. なるべくデータ点を通る曲線を書く
+2. 外れ値に影響されすぎてグニャグニャな線は引きたくない
+=> この 2 つのトレードオフを勘案して、平滑化パラメター(グネグネ度) を決める
+
+- GCV (一般化クロスバリデーション) を使ってグネグネ度を推定する
+
+ モデル式
+- 説明変数に関数を噛ませる
+- 平滑化スプラインを噛ませると非線形で当てはめができる
+
+$y = a + f_1(x_1) + f_2(x_2) + \dots + f_n(x_n) + \epsilon$
+
+** Logics of Blue の例
+*** Data (mgcv::airquality)
+
+#+begin_src R :results graphics :file (get-babel-file)
+data(airquality)
+ggplot(airquality, aes(x = Temp, y = Ozone)) + geom_point()
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-WA7QMT.png]]
+
+*** mgcv::gam()
+
+#+begin_src R
+gam(
+  formula, # Smooth term (s(), te(), ti(), t2()) を含めた式
+  family=gaussian(), # family.mgcv で選択可能な family
+  data=list(),
+  weights=NULL,
+  subset=NULL,
+  na.action,
+  offset=NULL,
+  method="GCV.Cp",
+  optimizer=c("outer","newton"),
+  control=list(),
+  scale=0,
+  select=FALSE,
+  knots=NULL,
+  sp=NULL, # 平滑化パラメタ
+  min.sp=NULL,
+  H=NULL,
+  gamma=1,
+  fit=TRUE,
+  paraPen=NULL,
+  G=NULL,
+  in.out,
+  drop.unused.levels=TRUE,
+  drop.intercept=NULL,
+  ...)
+#+end_src
+
+#+RESULTS:
+: 
+: Error: '...' used in an incorrect context
+
+*** Model
+
+- 通常の線形回帰
+#+begin_src R
+lm_fit <- gam(Ozone ~ Temp, data = airquality)
+summary(lm_fit)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+Family: gaussian 
+Link function: identity 
+
+Formula:
+Ozone ~ Temp
+
+Parametric coefficients:
+             Estimate Std. Error t value Pr(>|t|)    
+(Intercept) -146.9955    18.2872  -8.038 9.37e-13 ***
+Temp           2.4287     0.2331  10.418  < 2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+
+R-sq.(adj) =  0.483   Deviance explained = 48.8%
+GCV = 572.23  Scale est. = 562.37    n = 116
+#+end_example
+
+- 平滑化回帰 s() 関数
+#+begin_src R
+gam_fit <- gam(Ozone ~ s(Temp), data = airquality)
+summary(glm_fit)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+Family: gaussian 
+Link function: identity 
+
+Formula:
+Ozone ~ s(Temp)
+
+Parametric coefficients:
+            Estimate Std. Error t value Pr(>|t|)    
+(Intercept)   42.129      2.044   20.61   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Approximate significance of smooth terms:
+          edf Ref.df     F p-value    
+s(Temp) 3.771  4.689 30.75  <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+R-sq.(adj) =  0.554   Deviance explained = 56.9%
+GCV = 505.64  Scale est. = 484.84    n = 116
+#+end_example
+
+*** Plot
+
+#+begin_src R :results graphics :file (get-babel-file)
+plot(gam_fit, residuals = TRUE, se = TRUE, pch="。", main="Smooth Spline", cex.main=2)
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-M5UIT0.png]]
+
+*** Model Selection
+
+- 分散分析によるモデル選択
+- 当てはまり精度の向上は、誤差といえるか？
+- H0: 精度の向上はこの誤差
+
+- gam モデルの精度向上は誤差とは言えない
+#+begin_src R
+anova(lm_fit, gam_fit, test = "F")
+#+end_src
+
+#+RESULTS:
+: Analysis of Deviance Table
+: 
+: Model 1: Ozone ~ Temp
+: Model 2: Ozone ~ s(Temp)
+:   Resid. Df Resid. Dev     Df Deviance     F    Pr(>F)    
+: 1    114.00      64110                                    
+: 2    110.31      53929 3.6886    10181 5.693 0.0004874 ***
+: ---
+: Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+*** GCV
+
+- 最も GCV が小さくなる sp (平滑化パラメタ) を選択する
+#+begin_src R
+gam_fit$gcv.ubre
+#+end_src
+
+#+RESULTS:
+:   GCV.Cp 
+: 505.6391
+
+*** Model Check
+
+- オゾンのデータが正規分布ではないので、当てはめはあまりよくない
+#+begin_src R :results graphics :file (get-babel-file)
+gam.check(gam_fit)
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-KaPcCn.png]]
+
+*** Thin-Plate Spline (薄板平滑化スプライン)
+***** Model
+
+- オゾンへの影響を風と気温の交互作用を調べる
+#+begin_src R
+gam_fit2 <- gam(Ozone ~ s(Wind, Temp), data=airquality)
+summary(gam_fit2)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+Family: gaussian 
+Link function: identity 
+
+Formula:
+Ozone ~ s(Wind, Temp)
+
+Parametric coefficients:
+            Estimate Std. Error t value Pr(>|t|)    
+(Intercept)   42.129      1.436   29.35   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Approximate significance of smooth terms:
+               edf Ref.df     F p-value    
+s(Wind,Temp) 23.25  27.15 15.36  <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+R-sq.(adj) =   0.78   Deviance explained = 82.5%
+GCV = 302.27  Scale est. = 239.07    n = 116
+#+end_example
+
+***** Plot (3D)
+
+#+begin_src R :results graphics :file (get-babel-file)
+vis.gam(gam_fit2, color="cm", theta=45)
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-EWuYTB.png]]
+
+***** Plot (等高線)
+
+#+begin_src R :results graphics :file (get-babel-file)
+vis.gam(gam_fit2, color="cm", plot.type = "contour")
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-FMcYrS.png]]
+
+***** Model2
+
+- s() で囲んだものが、交互作用項になる
+- c() で囲んで、特定の変数だけ抜き出してプロットできる
+#+begin_src R
+gam_fit3 <- gam(Ozone ~ s(Solar.R) + s(Wind, Temp), data=airquality)
+vis.gam(gam_fit3, view=c("Wind", "Temp"), color="cm", theta=45)
+#+end_src
+
+#+RESULTS:
+
+** Hoge の例
+*** Data
+
+#+begin_src R :results graphics :file (get-babel-file)
+x1 <- seq(-10, 10, 0.1)
+y1 <- 50 * sin(x1) + x1^2 + 10 * rnorm(length(x1), 0, 1)
+plot(x1, y1)
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-BYCXyB.png]]
+
+*** Plots
+
+#+begin_src R :results graphics :file (get-babel-file)
+par(mfrow=c(2,2),oma=c(2,2,2,2),mar=c(2,2,2,2))
+
+## スプライン関数
+plot(x1, y1, main="smooth.spline")
+lines(smooth.spline(x1, y1), col=2, lwd=2)
+
+## 核関数
+plot(x1, y1, main="ksmooth")
+lines(ksmooth(x1, y1), col=4, lwd=2)
+
+## Friedman の Super Smoother
+plot(x1, y1, main="supsmu")
+lines(supsmu(x1, y1), col=3, lwd=2)
+
+## Lowess 平滑化
+plot(x1, y1,main="lowess")
+lines(lowess(x1, y1, f=0.1), col=5,lwd=2)
+
+## Loess 平滑化
+## plot(x1, y1, main="loess")
+## lines(loess(y1 ~ x1), col=5,lwd=2)
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-jsBzBC.png]]
+

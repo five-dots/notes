@@ -1,0 +1,249 @@
+#+STARTUP: folded indent inlineimages latexpreview
+#+PROPERTY: header-args:R :results output :session *R:tree* :width 640 :height 480 :colnames yes
+
+* ライブラリの読み込み
+
+#+begin_src R :results silent
+library(tidyverse)
+library(tidymodels)
+library(rpart)
+library(partykit)
+library(ranger)
+library(kernlab)
+#+end_src
+
+* 木構造のモデル
+  
+- 決定木 (CART アルゴリズム, Classification and Regression Tree)
+- 回帰木
+- ランダムフォレスト
+- 勾配ブースティング木 (XGBoost, LightGBM)
+
+* 決定木 (けっていぎ, Decision Tree)
+** 概要
+
+- 木構造のアルゴリズム
+- 変数を木に見立て、木の分岐で変数毎の閾値を設定し分類していく
+
+- 分類問題・回帰問題の両対応
+- アルゴリズム
+  - CART ={rpart}=
+  - CHAID
+  - ID3 / C4.5 / C5.0
+
+- 過学習対策
+  - 最小データ数の設定を大きくする
+  - 木の深さを浅くする等
+
+** kyphosis (脊柱後弯症) データの例
+*** データ
+
+- [[https://toukeier.hatenablog.com/entry/2018/09/03/080713][統計ソフトRで決定木分析を行うには？@統計ER]]
+
+_Kyphosis データ_
+- Kyphosis 変形が見られるか
+- Age      年齢(月)
+- Number
+- Start
+
+#+begin_src R :results value
+data(kyphosis)
+head(kyphosis)
+#+end_src
+
+#+RESULTS:
+| Kyphosis | Age | Number | Start |
+|----------+-----+--------+-------|
+| absent   |  71 |      3 |     5 |
+| absent   | 158 |      3 |    14 |
+| present  | 128 |      4 |     5 |
+| absent   |   2 |      5 |     1 |
+| absent   |   1 |      4 |    15 |
+| absent   |   1 |      2 |    16 |
+
+*** 当てはめ
+
+#+begin_src R
+fit <- rpart(Kyphosis ~ Age + Number + Start, data = kyphosis)
+fit
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+n= 81 
+
+node), split, n, loss, yval, (yprob)
+      ,* denotes terminal node
+
+ 1) root 81 17 absent (0.79012346 0.20987654)  
+   2) Start>=8.5 62  6 absent (0.90322581 0.09677419)  
+     4) Start>=14.5 29  0 absent (1.00000000 0.00000000) *
+     5) Start< 14.5 33  6 absent (0.81818182 0.18181818)  
+      10) Age< 55 12  0 absent (1.00000000 0.00000000) *
+      11) Age>=55 21  6 absent (0.71428571 0.28571429)  
+        22) Age>=111 14  2 absent (0.85714286 0.14285714) *
+        23) Age< 111 7  3 present (0.42857143 0.57142857) *
+   3) Start< 8.5 19  8 present (0.42105263 0.57894737) *
+#+end_example
+
+*** プロット by {partykit}
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+plot(as.party(fit))
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-iruXdW.png]]
+
+*** CP を利用した剪定
+
+- CP (Complex Parameter) を確認して、剪定 (Pruning) を行うかを検討する
+- エラーが収束した分岐を CP として採用する
+- CP=0.019608 を採用してみる
+
+#+begin_src R
+printcp(fit)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+Classification tree:
+rpart(formula = Kyphosis ~ Age + Number + Start, data = kyphosis)
+
+Variables actually used in tree construction:
+[1] Age   Start
+
+Root node error: 17/81 = 0.20988
+
+n= 81 
+
+        CP nsplit rel error xerror    xstd
+1 0.176471      0   1.00000      1 0.21559
+2 0.019608      1   0.82353      1 0.21559
+3 0.010000      4   0.76471      1 0.21559
+#+end_example
+
+- よりシンプルな木構造になる
+- Start が 8.5 かどうかだけでかなり分類できるようになる
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+fit2 <- rpart(Kyphosis ~ Age + Number + Start, data = kyphosis, cp=0.019608)
+plot(as.party(fit2))
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-Z7ugog.png]]
+
+* ランダムフォレスト
+** 概要
+
+- アルゴリズム
+  1. 訓練データからブートストラップ法で多数のデータを生成
+  2. 複数の決定木を構築
+  3. テストデータに対して、決定木で予測
+  4. 複数の決定木の多数決で予測を作成
+
+※ ブートストラップ法
+  - リサンプリング (再標本化) の手法
+  - データ (サンプル) から重複ありでサブサンプルを取り出すことを繰り返す
+
+** データ
+
+- spam データ
+- type = spam or nonspam
+- 57 の変数
+#+begin_src R
+data(spam)
+dim(spam)
+#+end_src
+
+#+RESULTS:
+: 
+: [1] 4601   58
+
+** =ranger::ranger()= 関数
+
+#+begin_src R :results silent
+ranger(
+  formula = NULL,
+  data = NULL,
+  num.trees = 500,      # 決定木の数
+  mtry = NULL,          # サンプリングする特徴量数 (default = sqrt(num of vars))
+  importance = "none",
+  write.forest = TRUE,
+  probability = FALSE,
+  min.node.size = NULL, # 末端の枝が最低限もつサンプル数. Default (分類=1, 回帰=5, Survival=3, Probability=10)
+  replace = TRUE,
+  sample.fraction = ifelse(replace, 1, 0.632),
+  case.weights = NULL,
+  class.weights = NULL,
+  splitrule = NULL,
+  num.random.splits = 1,
+  alpha = 0.5,
+  minprop = 0.1,
+  split.select.weights = NULL,
+  always.split.variables = NULL,
+  respect.unordered.factors = NULL,
+  scale.permutation.importance = FALSE,
+  keep.inbag = FALSE,
+  holdout = FALSE,
+  quantreg = FALSE,
+  num.threads = NULL,
+  save.memory = FALSE,
+  verbose = TRUE,
+  seed = NULL,
+  dependent.variable.name = NULL,
+  status.variable.name = NULL,
+  classification = NULL
+)
+#+end_src
+
+** 当てはめ
+
+#+begin_src R
+fit <- ranger(type ~ ., data = spam, num.trees = 1000, seed = 123)
+fit
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+Ranger result
+
+Call:
+ ranger(type ~ ., data = spam, num.trees = 1000, seed = 123) 
+
+Type:                             Classification 
+Number of trees:                  1000 
+Sample size:                      4601 
+Number of independent variables:  57 
+Mtry:                             7 
+Target node size:                 1 
+Variable importance mode:         none 
+Splitrule:                        gini 
+OOB prediction error:             4.54 %
+#+end_example
+
+* 勾配ブースティング木 (Gradient Boosting)
+** 概要
+
+- *アルゴリズム*
+  - 大量の決定木の結果を集計して予測
+  - 決定木を逐次的に増やし、生成済みの決定木が誤ったケースを更新し、新たな決定木を生成
+  - 損失関数の最小化に勾配降下法を用いる
+  - _Gradient Boosting(重み付きアンサンブル学習) + ランダムフォレスト_
+
+- *ブースティング (Boosting)*
+  - 複数の弱学習器を 1 つずつ順番に構築して、予測モデルを生成する手法
+
+- *ライブラリ*
+  - XGBoost という高速なライブラリが人気
+  - eXtreme Gradient Boosting
+
+* 参考
+
+- [[https://qiita.com/tomomoto/items/b3fd1ec7f9b68ab6dfe2][代表的な機械学習手法一覧@Qiita]]
+- [[https://qiita.com/3000manJPY/items/ef7495960f472ec14377][(入門)初心者の初心者による初心者のための決定木分析@Qiita]]
+- [[https://www.slideshare.net/sfchaos/r-rangerrborist][最近のRのランダムフォレストパッケージ -ranger/Rborist-@SlideShare]]
+- [[https://qiita.com/woody_egg/items/232e982094cd3c80b3ee][Kaggle Masterが勾配ブースティングを解説する@Qiita]]

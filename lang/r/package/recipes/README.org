@@ -273,22 +273,22 @@ pacman::p_funs(recipes) %>% stringr::str_subset("^step_")
 ** 欠損値の補完 (Imputation)
 
 - ~step_meanimpute(recipe, ..., role = NA, trained = FALSE, means = NULL, trim = 0, skip = FALSE, id = rand_id("meanimpute"))~
-  平均値で欠損補完
+  - 平均値で欠損補完
 
 - ~step_modeimpute(recipe, ..., role = NA, trained = FALSE, modes = NULL, skip = FALSE, id = rand_id("modeimpute"))~
-  最頻値で欠損補完
+  - 最頻値で欠損補完
   
 - ~step_medianimpute(recipe, ..., role = NA, trained = FALSE, medians = NULL, skip = FALSE, id = rand_id("medianimpute"))~
-  中央値で欠損補完
+  - 中央値で欠損補完
   
 - ~step_rollimpute(recipe, ..., role = NA, trained = FALSE, columns = NULL, statistic = median, window = 5, skip = FALSE, id = rand_id("rollimpute"))~
-  スライド窓を利用した欠損値補完. デフォルトは中央値
+  - スライド窓を利用した欠損値補完. デフォルトは中央値
 
 - ~step_knnimpute(recipe, ..., role = NA, trained = FALSE, neighbors = 5, impute_with = imp_vars(all_predictors()), options = list(nthread = 1, eps = 1e-08), ref_data = NULL, columns = NULL, skip = FALSE, id = rand_id("knnimpute"))~
-  K 近傍法で欠損処理
+  - K 近傍法で欠損処理
 
 - ~step_bagimpute(recipe, ..., role = NA, trained = FALSE, impute_with = imp_vars(all_predictors()), trees = 25, models = NULL, options = list(keepX = FALSE), seed_val = sample.int(10^4, 1), skip = FALSE, id = rand_id("bagimpute"))~
-  決定木のバギングで欠損補完
+  - 決定木のバギングで欠損補完
 
 - ~step_lowerimpute(recipe, ..., role = NA, trained = FALSE, threshold = NULL, skip = FALSE, id = rand_id("lowerimpute"))~
 
@@ -312,99 +312,107 @@ pacman::p_funs(recipes) %>% stringr::str_subset("^step_")
 ** 基本的な変換 (Basic)
 
 - ~step_log(recipe, ..., role = NA, trained = FALSE, base = exp(1), offset = 0, columns = NULL, skip = FALSE, signed = FALSE, id = rand_id("log"))~
-  対数変換
+  - 対数変換
 
 - ~step_sqrt(recipe, ..., role = NA, trained = FALSE, columns = NULL, skip = FALSE, id = rand_id("sqrt"))~
-  平方根
+  - 平方根
 
 - ~step_inverse(recipe, ..., role = NA, offset = 0, trained = FALSE, columns = NULL, skip = FALSE, id = rand_id("inverse"))~
-  逆変換
+  - 逆変換
 
 - ~step_poly(recipe, ..., role = "predictor", trained = FALSE, objects = NULL, degree = 2, options = list(), skip = FALSE, id = rand_id("poly"))~
-  直交多項式
+  - 直交多項式
 
 - ~step_logit(recipe, ..., role = NA, trained = FALSE, columns = NULL, skip = FALSE, id = rand_id("logit"))~
-  ロジット変換
+  - ロジット変換
+  - 0 ~ 1 を取る値を入力し、log(p/(1-p)) で変換する
+  - 確率をオッズの対数に変換する
 
 - ~step_invlogit(recipe, ..., role = NA, trained = FALSE, columns = NULL, skip = FALSE, id = rand_id("invlogit"))~
-  逆ロジット変換
+  - 逆ロジット変換 = ロジスティック関数 = 1/(1+exp(-x))
+  - 0 ~ 1 に変換する
 
 - ~step_relu(recipe, ..., role = "predictor", trained = FALSE, shift = 0, reverse = FALSE, smooth = FALSE, prefix = "right_relu_", columns = NULL, skip = FALSE, id = rand_id("relu"))~
-  Relu (発火関数)
+  - Relu (発火関数)
   
 - ~step_hyperbolic(recipe, ..., role = NA, trained = FALSE, func = "sin", inverse = TRUE, columns = NULL, skip = FALSE, id = rand_id("hyperbolic"))~
-  ハイパボリック変換
+  - ハイパボリック変換
 
 ** 標準化 (Normalization)
 
 - ~step_normalize(recipe, ..., role = NA, trained = FALSE, means = NULL, sds = NULL, na_rm = TRUE, skip = FALSE, id = rand_id("normalize"))~
-  平均 0、標準偏差 1 に標準化する
-
-- ~step_scale(recipe, ..., role = NA, trained = FALSE, sds = NULL, na_rm = TRUE, skip = FALSE, id = rand_id("scale"))~
-  SD = 1 に正規化する
- 
-- ~step_range(recipe, ..., role = NA, trained = FALSE, min = 0, max = 1, ranges = NULL, skip = FALSE, id = rand_id("range"))~
-  数値データを指定した範囲に変換する (0 ~ 1 など)
+  - 平均 = 0、SD = 1 に標準化する
+  - =step_center()= + =step_scale()=
 
 - ~step_center(recipe, ..., role = NA, trained = FALSE, means = NULL, na_rm = TRUE, skip = FALSE, id = rand_id("center"))~
-  中心化 (平均 = 0 に変換する)
-  データの中心からの距離を算出
+  - 中心化 (平均 = 0 に変換する)
+  - データの中心からの距離を算出
+
+- ~step_scale(recipe, ..., role = NA, trained = FALSE, sds = NULL, na_rm = TRUE, skip = FALSE, id = rand_id("scale"))~
+  - SD = 1 に正規化する
+ 
+- ~step_range(recipe, ..., role = NA, trained = FALSE, min = 0, max = 1, ranges = NULL, skip = FALSE, id = rand_id("range"))~
+  - 数値データを指定した範囲に変換する (0 ~ 1 など)
 
 - ~step_depth(recipe, ..., class, role = "predictor", trained = FALSE, metric = "halfspace", options = list(), data = NULL, skip = FALSE, id = rand_id("depth"))~
-  データの中心からの近さを算出 (近いほど大きい)
+  - データの中心からの近さを算出 (近いほど大きい)
+  - =class= にクラスとして利用するカテゴリカル変数を文字列で指定する
   
 - ~step_classdist(recipe, ..., class, role = "predictor", trained = FALSE, mean_func = mean, cov_func = cov, pool = FALSE, log = TRUE, objects = NULL, skip = FALSE, id = rand_id("classdist"))~
 
 - ~step_BoxCox(recipe, ..., role = NA, trained = FALSE, lambdas = NULL, limits = c(-5, 5), num_unique = 5, skip = FALSE, id = rand_id("BoxCox"))~
-  Box-Cox 変換 
+  - Box-Cox 変換 
  
 - ~step_YeoJohnson(recipe, ..., role = NA, trained = FALSE, lambdas = NULL, limits = c(-5, 5), num_unique = 5, na_rm = TRUE, skip = FALSE, id = rand_id("YeoJohnson"))~
-  Yeo-Johnson 変換 
+  - Yeo-Johnson 変換 
 
 ** 型の変換 (Type Conversion)
 
 - ~step_num2factor(recipe, ..., role = NA, transform = function(x) x, trained = FALSE, levels = NULL, ordered = FALSE, skip = FALSE, id = rand_id("num2factor"))~
-  数値をファクターに変換
+  - 数値をファクターに変換
 
 - ~step_string2factor(recipe, ..., role = NA, trained = FALSE, levels = NULL, ordered = FALSE, skip = FALSE, id = rand_id("string2factor"))~
-  文字列をファクターに変換
+  - 文字列をファクターに変換
 
 - ~step_factor2string(recipe, ..., role = NA, trained = FALSE, columns = FALSE, skip = FALSE, id = rand_id("factor2string"))~
-  ファクターを文字列に変換
+  - ファクターを文字列に変換
 
 - ~step_bin2factor(recipe, ..., role = NA, trained = FALSE, levels = c("yes", "no"), ref_first = TRUE, columns = NULL, skip = FALSE, id = rand_id("bin2factor"))~
-  2 値データをファクターに変換
+  - 2 値のダミーデータ (1,0) をファクターに変換
+  - デフォルトでは、(yes, no) に変換する
 
 ** エンコーディング (Encoding)
 
 - ~step_dummy(recipe, ..., role = "predictor", trained = FALSE, one_hot = FALSE, preserve = FALSE, naming = dummy_names, levels = NULL, skip = FALSE, id = rand_id("dummy"))~
-  文字列やファクター (nominal data) を 0/1 データに変換する. 2 値でない場合、複数列が作成される
+  - 文字列やファクター (nominal data) を 0/1 データに変換する
+  - 2 値でない場合、複数列が作成される
 
 - ~step_regex(recipe, ..., role = "predictor", trained = FALSE, pattern = ".", options = list(), result = make.names(pattern), input = NULL, skip = FALSE, id = rand_id("regex"))~ 
   正規表現に基づいてダミー変数を作成 (文字列処理に便利)
 
 - ~step_ordinalscore(recipe, ..., role = NA, trained = FALSE, columns = NULL, convert = as.numeric, skip = FALSE, id = rand_id("ordinalscore"))~
-  順序カテゴリを数値に変換
+  - 順序尺度を数値に変換
+  - 順序尺度 = =factor(hoge, levels = hoge, ordered = TRUE)= で作成した因子データ
 
 - ~step_discretize(recipe, ..., role = NA, trained = FALSE, num_breaks = 4, min_unique = 10, objects = NULL, options = list(), skip = FALSE, id = rand_id("discretize"))~
-  数値データを離散化する
-  同じデータ量のファクターに変換できるように bins を決定する
+  - 数値データを離散化する (=ファクター型になる)
+  - 同じデータ量のファクターに変換できるように bins を決定する
 
 - ~step_integer(recipe, ..., role = "predictor", trained = FALSE, strict = FALSE, zero_based = FALSE, key = NULL, skip = FALSE, id = rand_id("integer"))~
-  convert new data into a set of integers based on the original data values
+  - convert new data into a set of integers based on the original data values
   
 - ~step_nnmf(recipe, ..., role = "predictor", trained = FALSE, num_comp = 2, num_run = 30, options = list(), res = NULL, prefix = "NNMF", seed = sample.int(10^5, 1), skip = FALSE, id = rand_id("nnmf"))~
-  convert numeric data into one or more non-negative components
+  - convert numeric data into one or more non-negative components
   
 - ~step_ratio(recipe, ..., role = "predictor", trained = FALSE, denom = denom_vars(), naming = function(numer, denom) make.names(paste(numer, denom, sep = "_o_")), columns = NULL, skip = FALSE, id = rand_id("ratio"))~
-  create one or more ratios out of numeric variables
+  - create one or more ratios out of numeric variables
  
 - ~step_spatialsign(recipe, ..., role = "predictor", na_rm = TRUE, trained = FALSE, columns = NULL, skip = FALSE, id = rand_id("spatialsign"))~
-  convert numeric data into a projection on to a unit sphere
-
-- 
+  - convert numeric data into a projection on to a unit sphere
 
 ** 主成分分析 (PCA)
+
+- 次元を削減するために利用
 
 - ~step_pca(recipe, ..., role = "predictor", trained = FALSE, num_comp = 5, threshold = NA, options = list(), res = NULL, prefix = "PC", skip = FALSE, id = rand_id("pca"))~
   principal components
@@ -428,9 +436,9 @@ pacman::p_funs(recipes) %>% stringr::str_subset("^step_")
 
 - ~step_holiday(recipe, ..., role = "predictor", trained = FALSE, holidays = c("LaborDay", "NewYearsDay", "ChristmasDay"), columns = NULL, skip = FALSE, id = rand_id("holiday"))~
   休日を示す 2 値データへ変換する
-
-- 
+ 
 ** TODO 次元の削減
+
 Dimension Reduction: PCA, kernel PCA, ICA, Isomap, data depth features, class distances
 
 ** その他
@@ -510,7 +518,6 @@ Dimension Reduction: PCA, kernel PCA, ICA, Isomap, data depth features, class di
       
 - ~step_sample(recipe, ..., role = NA, trained = FALSE, size = NULL, replace = FALSE, skip = FALSE, id = rand_id("sample"))~
 
-- 
 * TODO tunable.step functions
 
 #+begin_src R :results output :exports both

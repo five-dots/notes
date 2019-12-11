@@ -587,7 +587,8 @@ plot(gd, which = 4, window = 12)
   - =n.roll= >= =out.sample=
   - data は fit したデータと、新データを結合して渡す
   - 新データ分だけ、out.sample を指定する
-  - 例 =ugarchforecast(spec, n.ahead = 1 n.roll = 10, out.sample = 10, data = data)=
+  - 例) 10 期分の 新データを渡す (予測としては 11 期分生成される)
+    - =ugarchforecast(spec, n.ahead = 1 n.roll = 10, out.sample = 10, data = data)=
 
 #+begin_src R
 ugarchforecast(

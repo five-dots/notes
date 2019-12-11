@@ -18,10 +18,23 @@
   - [[https://www.amazon.co.jp/Stan%E3%81%A8R%E3%81%A7%E3%83%99%E3%82%A4%E3%82%BA%E7%B5%B1%E8%A8%88%E3%83%A2%E3%83%87%E3%83%AA%E3%83%B3%E3%82%B0-Wonderful-R-%E6%9D%BE%E6%B5%A6-%E5%81%A5%E5%A4%AA%E9%83%8E/dp/4320112423/ref=pd_sbs_14_6/358-7945696-6160824?_encoding=UTF8&pd_rd_i=4320112423&pd_rd_r=108af845-02a0-471e-9ddc-6d7f59527485&pd_rd_w=tFsDX&pd_rd_wg=6s2vu&pf_rd_p=1585d594-d9d0-474b-8a4e-69eca1566911&pf_rd_r=BCJVNCBWB5Z13M8S5XZ3&psc=1&refRID=BCJVNCBWB5Z13M8S5XZ3][松浦 健太郎  (著), 石田 基広  (監修), StanとRでベイズ統計モデリング]]
   - [[https://www.amazon.co.jp/%E9%81%93%E5%85%B7%E3%81%A8%E3%81%97%E3%81%A6%E3%81%AE%E3%83%95%E3%82%A1%E3%82%A4%E3%83%8A%E3%83%B3%E3%82%B9-%E7%9F%B3%E9%87%8E-%E9%9B%84%E4%B8%80/dp/4534039484/ref=sr_1_4?__mk_ja_JP=%E3%82%AB%E3%82%BF%E3%82%AB%E3%83%8A&keywords=%E3%83%95%E3%82%A1%E3%82%A4%E3%83%8A%E3%83%B3%E3%82%B9&qid=1573433956&s=books&sr=1-4][石野 雄一  (著), 道具としてのファイナンス]]
 
-- ウェブサイト
+- ウェブサイト・シリーズ記事
   - [[https://otexts.com/fpp3/][Forecasting: Principles and Practice]]
   - [[https://tidyverts.github.io/tidy-forecasting-principles/][Tidy time series forecasting with fable by ={tidyverts}= ]]
   - [[https://www.quantopian.com/lectures][Quantopian Lectures]]
+  - [[https://bookdown.org/wfoote01/faur/][Financial Engineering Analytics: A Practice Manual Using R]]
+  - [[https://genes.bibli.fr/doc_num.php?explnum_id=17689][Basic R for Finance (PDF)]]
+
+- オンラインコース
+  - DataCamp
+    - [[https://www.datacamp.com/courses/introduction-to-portfolio-analysis-in-r][Introduction to Portfolio Analysis in R]]
+    - [[https://www.datacamp.com/courses/introduction-to-time-series-analysis][Time Series Analysis in R]]
+    - [[https://www.datacamp.com/courses/financial-trading-in-r][Financial Trading in R]]
+    - [[https://www.datacamp.com/courses/intermediate-portfolio-analysis-in-r][Intermediate Portfolio Analysis in R]]
+    - [[https://www.datacamp.com/courses/arima-modeling-with-r][ARIMA Modeling with R]]
+    - [[https://www.datacamp.com/courses/introduction-to-r-for-finance][Introduction to R for Finance]]
+    - [[https://www.datacamp.com/courses/intermediate-r-for-finance][Intermediate R for Finance]]
+    - [[https://www.datacamp.com/courses/quantitative-risk-management-in-r][Quantitative Risk Management in R]]
 
 - ブログ
   - [[http://osashimix.hatenablog.com/entry/2019/02/17/201742][【仕事関連】Asset Allocation Model を R で組んでみた。@東京の投資顧問会社で働く社会人が研究に没頭するブログ]]

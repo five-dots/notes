@@ -11,7 +11,7 @@
 - [[#ライブラリの読み込みとバージョンの確認][ライブラリの読み込みとバージョンの確認]]
 - [[#関数リスト][関数リスト]]
   - [[#overview][Overview]]
-  - [[#generic-funcstions][Generic funcstions]]
+  - [[#generic-functions][Generic functions]]
     - [[#-metricsdata-truth-estimate--options--list-na_rm--true][★★☆ ~metrics(data, truth, estimate, ..., options = list(), na_rm = TRUE)~.]]
   - [[#class-metrics][Class metrics]]
     - [[#-accuracydata-truth-estimate-na_rm--true-][★★★ ~accuracy(data, truth, estimate, na_rm = TRUE, ...)~.]]
@@ -85,7 +85,7 @@ packageVersion("yardstick")
   - truth - ~numeric~
   - estimate - ~numeric~
 
-** Generic funcstions
+** Generic functions
 *** ★★☆ ~metrics(data, truth, estimate, ..., options = list(), na_rm = TRUE)~.
 
 - truth の型によって、算出される指標が自動的に選ばれる

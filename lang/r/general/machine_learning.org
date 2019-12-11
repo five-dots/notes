@@ -1,0 +1,73 @@
+#+STARTUP: folded indent inlineimages latexpreview
+#+PROPERTY: header-args:R :session *R:ml* :width 640 :height 480 :colnames yes
+
+* 手法一覧
+
+- [[https://qiita.com/tomomoto/items/b3fd1ec7f9b68ab6dfe2][代表的な機械学習手法一覧@Qiita]]
+- [[https://tidymodels.github.io/parsnip/articles/articles/Models.html][parsnip List of Models]]
+- このファイルは、索引・整理のために利用する
+
+_教師データあり_
+
+- [[file:linear_model.org][回帰]]
+  - (一般化)線形回帰
+  - ロジスティックス回帰 / 多項ロジスティック回帰
+  - サポートベクターマシン (SVM)
+  - [[file:non_linear_model.org][非線形回帰]]
+
+- [[file:tree_models.org][木]]
+  - 決定木 (CART アルゴリズム, Classification and Regression Tree)
+  - 回帰木
+  - ランダムフォレスト
+  - 勾配ブースティング木 (GBDT, Gradient Boosting Decision Tree)
+
+- ニューラルネットワーク (NN)
+  - パーセプトロン
+  - 畳み込みニューラルネットワーク (CNN, Convolutional Neural Network)
+  - 再起型ニューラルネットワーク (RNN, Recurrent Neural Network)
+  - 残差ネットワーク (ResNet)
+
+- ベイズ
+  - 単純ベイズ (ナイーブベイズ)
+
+- [[file:time_series.org][時系列]]
+  - SARIMAX, VAR
+  - ボラティリティ変動モデル
+  - マルコフ転換モデル
+  - 状態空間モデル
+
+- クラスタリング
+  - k 近傍法 (KNN, K-Nearest Neighbor)
+
+- アンサンブル学習
+  - ブースティング
+  - バギング
+
+_教師データなし_
+
+- クラスタリング
+  - 階層型クラスタリング (ユークリッド距離 * ウォード法など)
+  - 非階層型クラスタリング (k-means など)
+  - トピックモデル (LDA など)
+
+- ニューラルネットワーク
+  - 自己組織化マップ (SOM, Self-Organize Map, 自己組織化写像とも)
+
+- その他
+  - アソシエーション分析
+  - 強調フィルタリング (アイテムベース・ユーザーベースなど)
+
+* タスク 
+
+- 回帰: 数値を予測する
+- 分類
+  1. 2 値分類: (0, 1) を予測する or 1 となる確率を予測する
+  2. 他クラス分類
+     1. マルチクラス分類: どのクラスに属しているかを予測する
+     2. マルチラベル分類: どのクラス(複数)に属しているかを予測する (2 値分類を複数回実施する)
+- レコメンデーション: 複数の商品や広告を推薦する (2 値分類の確率を使って推薦する)
+- 物体検出: 画像の属するクラスを予測する or 矩形領域を指定する
+
+* 参考
+
+- [[https://qiita.com/tomomoto/items/b3fd1ec7f9b68ab6dfe2][代表的な機械学習手法一覧@Qiita]]
