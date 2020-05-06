@@ -35,7 +35,7 @@ Babel の実行には適切な ~org-babel-load-language~ の設定が必要で�
 * Programming Language
 ** R
 
-#+begin_src R :results value :exports none
+#+begin_src R :results value :exports results
 dir <- "~/Dropbox/repos/github/five-dots/notes/lang/r/general"
 files <- fs::dir_ls(dir, recurse = TRUE, regexp = ".org$")
 ## file <- files[1]
