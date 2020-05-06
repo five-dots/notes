@@ -1,5 +1,470 @@
 #+STARTUP: showall indent
+#+PROPERTY: header-args:sql :engine mysql :dbhost 127.0.0.1 :dbuser root :dbpassword test
 
+* Docker instance
+
+- [[file:~/Dropbox/repos/github/five-dots/notes/env/tool/docker.org][docker]]
+
+#+begin_src shell :results output
+docker ps
+#+end_src
+
+#+RESULTS:
+: CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS              PORTS                               NAMES
+: 1f63d7706cca        mysql:latest        "docker-entrypoint.s…"   29 minutes ago      Up 29 minutes       0.0.0.0:3306->3306/tcp, 33060/tcp   mysqd
+: efe988933021        postgres:latest     "docker-entrypoint.s…"   About an hour ago   Up About an hour    0.0.0.0:54320->5432/tcp             postgres-example
+
+- MySQL を起動
+#+begin_src shell
+docker run --name mysql -e MYSQL_ROOT_PASSWORD=test -p 3306:3306 -d mysql:latest
+#+end_src
+
+- PostgreSQL を起動
+#+begin_src shell
+docker run --name postgres -e POSTGRES_PASSWORD=test -p 54320:5432 -d postgres:latest
+#+end_src
+
+* Reference
+
+- [[https://qiita.com/okamuuu/items/c4efb7dc606d9efe4282][MySQL 入門@Qiita]]
+
+* DATABASES
+
+#+begin_src sql
+show databases;
+#+end_src
+
+#+RESULTS:
+| Database           |
+|--------------------|
+| information_schema |
+| mysql              |
+| performance_schema |
+| sys                |
+
+- テスト用のデータベースを作成
+#+begin_src sql
+create database testdb;
+show databases;
+#+end_src
+
+#+RESULTS:
+| Database           |
+|--------------------|
+| information_schema |
+| mysql              |
+| performance_schema |
+| sys                |
+| testdb             |
+
+* TABLES
+** SHOW TABLES
+
+#+begin_src sql
+use mysql;
+show tables;
+#+end_src
+
+#+RESULTS:
+| Tables_in_mysql           |
+|---------------------------|
+| columns_priv              |
+| component                 |
+| db                        |
+| default_roles             |
+| engine_cost               |
+| func                      |
+| general_log               |
+| global_grants             |
+| gtid_executed             |
+| help_category             |
+| help_keyword              |
+| help_relation             |
+| help_topic                |
+| innodb_index_stats        |
+| innodb_table_stats        |
+| password_history          |
+| plugin                    |
+| procs_priv                |
+| proxies_priv              |
+| role_edges                |
+| server_cost               |
+| servers                   |
+| slave_master_info         |
+| slave_relay_log_info      |
+| slave_worker_info         |
+| slow_log                  |
+| tables_priv               |
+| time_zone                 |
+| time_zone_leap_second     |
+| time_zone_name            |
+| time_zone_transition      |
+| time_zone_transition_type |
+| user                      |
+
+** CREATE TABLE
+
+#+begin_src sql :database testdb
+drop table if exists todos;
+create table `todos` (
+  `id` INT(10) NOT NULL AUTO_INCREMENT,
+  `title` VARCHAR(100) NOT NULL,
+  `status` INT(1) DEFAULT '0',
+  `created` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+#+end_src
+
+#+begin_src sql :database testdb
+SELECT * FROM todos;
+#+end_src
+
+* INSERT
+
+#+begin_src sql :database testdb
+INSERT INTO todos (title, status) VALUES ("買い物", 1);
+INSERT INTO todos (title, status) VALUES ("料理", 0);
+INSERT INTO todos (title, status) VALUES ("粗大ゴミ", 0);
+#+end_src
+
+* SELECT
+** testdb.todos table
+
+#+begin_src sql :database testdb
+SELECT * FROM todos;
+#+end_src
+
+#+RESULTS:
+| id | title    | status | created             | updated             |
+|----+----------+--------+---------------------+---------------------|
+|  1 | 買い物   |      1 | 2020-05-06 14:52:33 | 2020-05-06 14:52:33 |
+|  2 | 買い物   |      1 | 2020-05-06 14:53:09 | 2020-05-06 14:53:09 |
+|  3 | 料理     |      0 | 2020-05-06 14:53:09 | 2020-05-06 14:53:09 |
+|  4 | 粗大ゴミ |      0 | 2020-05-06 14:53:09 | 2020-05-06 14:53:09 |
+
+- 完了していないタスク
+#+begin_src sql :database testdb
+SELECT * FROM todos WHERE status = 0;
+#+end_src
+
+#+RESULTS:
+| id | title    | status | created             | updated             |
+|----+----------+--------+---------------------+---------------------|
+|  3 | 料理     |      0 | 2020-05-06 14:53:09 | 2020-05-06 14:53:09 |
+|  4 | 粗大ゴミ |      0 | 2020-05-06 14:53:09 | 2020-05-06 14:53:09 |
+
+** mysql.user database
+
+- mysql.user table から抽出
+#+begin_src sql :database mysql
+select Host, User from user;
+#+end_src
+
+#+RESULTS:
+| Host      | User             |
+|-----------+------------------|
+| %         | root             |
+| localhost | mysql.infoschema |
+| localhost | mysql.session    |
+| localhost | mysql.sys        |
+| localhost | root             |
+
+- =\G= を末尾に付けると見易くなる
+#+begin_src sql :database mysql
+select * from user\G
+#+end_src
+
+#+RESULTS:
+| *************************** 1. row ***************************                                          |
+|-----------------------------------------------------------------------------------------------------|
+| Host: %                                                                                             |
+| User: root                                                                                          |
+| Select_priv: Y                                                                                      |
+| Insert_priv: Y                                                                                      |
+| Update_priv: Y                                                                                      |
+| Delete_priv: Y                                                                                      |
+| Create_priv: Y                                                                                      |
+| Drop_priv: Y                                                                                        |
+| Reload_priv: Y                                                                                      |
+| Shutdown_priv: Y                                                                                    |
+| Process_priv: Y                                                                                     |
+| File_priv: Y                                                                                        |
+| Grant_priv: Y                                                                                       |
+| References_priv: Y                                                                                  |
+| Index_priv: Y                                                                                       |
+| Alter_priv: Y                                                                                       |
+| Show_db_priv: Y                                                                                     |
+| Super_priv: Y                                                                                       |
+| Create_tmp_table_priv: Y                                                                            |
+| Lock_tables_priv: Y                                                                                 |
+| Execute_priv: Y                                                                                     |
+| Repl_slave_priv: Y                                                                                  |
+| Repl_client_priv: Y                                                                                 |
+| Create_view_priv: Y                                                                                 |
+| Show_view_priv: Y                                                                                   |
+| Create_routine_priv: Y                                                                              |
+| Alter_routine_priv: Y                                                                               |
+| Create_user_priv: Y                                                                                 |
+| Event_priv: Y                                                                                       |
+| Trigger_priv: Y                                                                                     |
+| Create_tablespace_priv: Y                                                                           |
+| ssl_type:                                                                                           |
+| ssl_cipher:                                                                                         |
+| x509_issuer:                                                                                        |
+| x509_subject:                                                                                       |
+| max_questions: 0                                                                                    |
+| max_updates: 0                                                                                      |
+| max_connections: 0                                                                                  |
+| max_user_connections: 0                                                                             |
+| plugin: caching_sha2_password                                                                       |
+| authentication_string: $A$005$:d`.CGTmIQx:f*9BdrjpnzGIbHw5NdeoXB3RILdVTYE7Agu4VJ3x0HPO5 |
+| password_expired: N                                                                                 |
+| password_last_changed: 2020-05-06 13:59:08                                                          |
+| password_lifetime: NULL                                                                             |
+| account_locked: N                                                                                   |
+| Create_role_priv: Y                                                                                 |
+| Drop_role_priv: Y                                                                                   |
+| Password_reuse_history: NULL                                                                        |
+| Password_reuse_time: NULL                                                                           |
+| Password_require_current: NULL                                                                      |
+| User_attributes: NULL                                                                               |
+| *************************** 2. row ***************************                                          |
+| Host: localhost                                                                                     |
+| User: mysql.infoschema                                                                              |
+| Select_priv: Y                                                                                      |
+| Insert_priv: N                                                                                      |
+| Update_priv: N                                                                                      |
+| Delete_priv: N                                                                                      |
+| Create_priv: N                                                                                      |
+| Drop_priv: N                                                                                        |
+| Reload_priv: N                                                                                      |
+| Shutdown_priv: N                                                                                    |
+| Process_priv: N                                                                                     |
+| File_priv: N                                                                                        |
+| Grant_priv: N                                                                                       |
+| References_priv: N                                                                                  |
+| Index_priv: N                                                                                       |
+| Alter_priv: N                                                                                       |
+| Show_db_priv: N                                                                                     |
+| Super_priv: N                                                                                       |
+| Create_tmp_table_priv: N                                                                            |
+| Lock_tables_priv: N                                                                                 |
+| Execute_priv: N                                                                                     |
+| Repl_slave_priv: N                                                                                  |
+| Repl_client_priv: N                                                                                 |
+| Create_view_priv: N                                                                                 |
+| Show_view_priv: N                                                                                   |
+| Create_routine_priv: N                                                                              |
+| Alter_routine_priv: N                                                                               |
+| Create_user_priv: N                                                                                 |
+| Event_priv: N                                                                                       |
+| Trigger_priv: N                                                                                     |
+| Create_tablespace_priv: N                                                                           |
+| ssl_type:                                                                                           |
+| ssl_cipher:                                                                                         |
+| x509_issuer:                                                                                        |
+| x509_subject:                                                                                       |
+| max_questions: 0                                                                                    |
+| max_updates: 0                                                                                      |
+| max_connections: 0                                                                                  |
+| max_user_connections: 0                                                                             |
+| plugin: caching_sha2_password                                                                       |
+| authentication_string: $A$005$THISISACOMBINATIONOFINVALIDSALTANDPASSWORDTHATMUSTNEVERBRBEUSED       |
+| password_expired: N                                                                                 |
+| password_last_changed: 2020-05-06 13:59:04                                                          |
+| password_lifetime: NULL                                                                             |
+| account_locked: Y                                                                                   |
+| Create_role_priv: N                                                                                 |
+| Drop_role_priv: N                                                                                   |
+| Password_reuse_history: NULL                                                                        |
+| Password_reuse_time: NULL                                                                           |
+| Password_require_current: NULL                                                                      |
+| User_attributes: NULL                                                                               |
+| *************************** 3. row ***************************                                          |
+| Host: localhost                                                                                     |
+| User: mysql.session                                                                                 |
+| Select_priv: N                                                                                      |
+| Insert_priv: N                                                                                      |
+| Update_priv: N                                                                                      |
+| Delete_priv: N                                                                                      |
+| Create_priv: N                                                                                      |
+| Drop_priv: N                                                                                        |
+| Reload_priv: N                                                                                      |
+| Shutdown_priv: Y                                                                                    |
+| Process_priv: N                                                                                     |
+| File_priv: N                                                                                        |
+| Grant_priv: N                                                                                       |
+| References_priv: N                                                                                  |
+| Index_priv: N                                                                                       |
+| Alter_priv: N                                                                                       |
+| Show_db_priv: N                                                                                     |
+| Super_priv: Y                                                                                       |
+| Create_tmp_table_priv: N                                                                            |
+| Lock_tables_priv: N                                                                                 |
+| Execute_priv: N                                                                                     |
+| Repl_slave_priv: N                                                                                  |
+| Repl_client_priv: N                                                                                 |
+| Create_view_priv: N                                                                                 |
+| Show_view_priv: N                                                                                   |
+| Create_routine_priv: N                                                                              |
+| Alter_routine_priv: N                                                                               |
+| Create_user_priv: N                                                                                 |
+| Event_priv: N                                                                                       |
+| Trigger_priv: N                                                                                     |
+| Create_tablespace_priv: N                                                                           |
+| ssl_type:                                                                                           |
+| ssl_cipher:                                                                                         |
+| x509_issuer:                                                                                        |
+| x509_subject:                                                                                       |
+| max_questions: 0                                                                                    |
+| max_updates: 0                                                                                      |
+| max_connections: 0                                                                                  |
+| max_user_connections: 0                                                                             |
+| plugin: caching_sha2_password                                                                       |
+| authentication_string: $A$005$THISISACOMBINATIONOFINVALIDSALTANDPASSWORDTHATMUSTNEVERBRBEUSED       |
+| password_expired: N                                                                                 |
+| password_last_changed: 2020-05-06 13:59:04                                                          |
+| password_lifetime: NULL                                                                             |
+| account_locked: Y                                                                                   |
+| Create_role_priv: N                                                                                 |
+| Drop_role_priv: N                                                                                   |
+| Password_reuse_history: NULL                                                                        |
+| Password_reuse_time: NULL                                                                           |
+| Password_require_current: NULL                                                                      |
+| User_attributes: NULL                                                                               |
+| *************************** 4. row ***************************                                          |
+| Host: localhost                                                                                     |
+| User: mysql.sys                                                                                     |
+| Select_priv: N                                                                                      |
+| Insert_priv: N                                                                                      |
+| Update_priv: N                                                                                      |
+| Delete_priv: N                                                                                      |
+| Create_priv: N                                                                                      |
+| Drop_priv: N                                                                                        |
+| Reload_priv: N                                                                                      |
+| Shutdown_priv: N                                                                                    |
+| Process_priv: N                                                                                     |
+| File_priv: N                                                                                        |
+| Grant_priv: N                                                                                       |
+| References_priv: N                                                                                  |
+| Index_priv: N                                                                                       |
+| Alter_priv: N                                                                                       |
+| Show_db_priv: N                                                                                     |
+| Super_priv: N                                                                                       |
+| Create_tmp_table_priv: N                                                                            |
+| Lock_tables_priv: N                                                                                 |
+| Execute_priv: N                                                                                     |
+| Repl_slave_priv: N                                                                                  |
+| Repl_client_priv: N                                                                                 |
+| Create_view_priv: N                                                                                 |
+| Show_view_priv: N                                                                                   |
+| Create_routine_priv: N                                                                              |
+| Alter_routine_priv: N                                                                               |
+| Create_user_priv: N                                                                                 |
+| Event_priv: N                                                                                       |
+| Trigger_priv: N                                                                                     |
+| Create_tablespace_priv: N                                                                           |
+| ssl_type:                                                                                           |
+| ssl_cipher:                                                                                         |
+| x509_issuer:                                                                                        |
+| x509_subject:                                                                                       |
+| max_questions: 0                                                                                    |
+| max_updates: 0                                                                                      |
+| max_connections: 0                                                                                  |
+| max_user_connections: 0                                                                             |
+| plugin: caching_sha2_password                                                                       |
+| authentication_string: $A$005$THISISACOMBINATIONOFINVALIDSALTANDPASSWORDTHATMUSTNEVERBRBEUSED       |
+| password_expired: N                                                                                 |
+| password_last_changed: 2020-05-06 13:59:04                                                          |
+| password_lifetime: NULL                                                                             |
+| account_locked: Y                                                                                   |
+| Create_role_priv: N                                                                                 |
+| Drop_role_priv: N                                                                                   |
+| Password_reuse_history: NULL                                                                        |
+| Password_reuse_time: NULL                                                                           |
+| Password_require_current: NULL                                                                      |
+| User_attributes: NULL                                                                               |
+| *************************** 5. row ***************************                                          |
+| Host: localhost                                                                                     |
+| User: root                                                                                          |
+| Select_priv: Y                                                                                      |
+| Insert_priv: Y                                                                                      |
+| Update_priv: Y                                                                                      |
+| Delete_priv: Y                                                                                      |
+| Create_priv: Y                                                                                      |
+| Drop_priv: Y                                                                                        |
+| Reload_priv: Y                                                                                      |
+| Shutdown_priv: Y                                                                                    |
+| Process_priv: Y                                                                                     |
+| File_priv: Y                                                                                        |
+| Grant_priv: Y                                                                                       |
+| References_priv: Y                                                                                  |
+| Index_priv: Y                                                                                       |
+| Alter_priv: Y                                                                                       |
+| Show_db_priv: Y                                                                                     |
+| Super_priv: Y                                                                                       |
+| Create_tmp_table_priv: Y                                                                            |
+| Lock_tables_priv: Y                                                                                 |
+| Execute_priv: Y                                                                                     |
+| Repl_slave_priv: Y                                                                                  |
+| Repl_client_priv: Y                                                                                 |
+| Create_view_priv: Y                                                                                 |
+| Show_view_priv: Y                                                                                   |
+| Create_routine_priv: Y                                                                              |
+| Alter_routine_priv: Y                                                                               |
+| Create_user_priv: Y                                                                                 |
+| Event_priv: Y                                                                                       |
+| Trigger_priv: Y                                                                                     |
+| Create_tablespace_priv: Y                                                                           |
+| ssl_type:                                                                                           |
+| ssl_cipher:                                                                                         |
+| x509_issuer:                                                                                        |
+| x509_subject:                                                                                       |
+| max_questions: 0                                                                                    |
+| max_updates: 0                                                                                      |
+| max_connections: 0                                                                                  |
+| max_user_connections: 0                                                                             |
+| plugin: caching_sha2_password                                                                       |
+| authentication_string: $A$005$2Ya^75 %A                                               |
+| S=}VxbGQ55ZN0wD8ekPDwPlZ06r3g2QpYNY0RIHbz2oPFA                                                      |
+| password_expired: N                                                                                 |
+| password_last_changed: 2020-05-06 13:59:08                                                          |
+| password_lifetime: NULL                                                                             |
+| account_locked: N                                                                                   |
+| Create_role_priv: Y                                                                                 |
+| Drop_role_priv: Y                                                                                   |
+| Password_reuse_history: NULL                                                                        |
+| Password_reuse_time: NULL                                                                           |
+| Password_require_current: NULL                                                                      |
+| User_attributes: NULL                                                                               |
 * UPDATE
 
-UPDATE table_name SET column1 = value1, column2 = value2 WHERE conditions;
+- 列を選択して更新
+#+begin_src sql :database testdb
+UPDATE todos SET status = 1 WHERE id = 2;
+SELECT * FROM todos;
+#+end_src
+
+#+RESULTS:
+| id | title    | status | created             | updated             |
+|----+----------+--------+---------------------+---------------------|
+|  1 | 買い物   |      1 | 2020-05-06 14:52:33 | 2020-05-06 14:52:33 |
+|  2 | 買い物   |      1 | 2020-05-06 14:53:09 | 2020-05-06 14:53:09 |
+|  3 | 料理     |      0 | 2020-05-06 14:53:09 | 2020-05-06 14:53:09 |
+|  4 | 粗大ゴミ |      0 | 2020-05-06 14:53:09 | 2020-05-06 14:53:09 |
+* DELETE
+
+- =WHERE id = 2= を忘れてしまうと全行が削除されてしまう。
+- 最初に SELECT で WHERE 句に間違いがないか確認してからの方が吉
+#+begin_src sql :database testdb
+DELETE FROM todos WHERE id = 2;
+SELECT * FROM todos;
+#+end_src
+
+#+RESULTS:
+| id | title    | status | created             | updated             |
+|----+----------+--------+---------------------+---------------------|
+|  1 | 買い物   |      1 | 2020-05-06 14:52:33 | 2020-05-06 14:52:33 |
+|  3 | 料理     |      0 | 2020-05-06 14:53:09 | 2020-05-06 14:53:09 |
+|  4 | 粗大ゴミ |      0 | 2020-05-06 14:53:09 | 2020-05-06 14:53:09 |

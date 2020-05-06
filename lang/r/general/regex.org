@@ -117,7 +117,6 @@ stringr::str_extract("Hello, my name is Michael Jordan.", "(?<=^Hello, ).*")
 
 #+RESULTS:
 : [1] "my name is Michael Jordan."
-\\
 
 - 先読み (以前にマッチ)
 #+begin_src R :exports both
@@ -126,7 +125,6 @@ stringr::str_extract("Hello, my name is Michael Jordan.", ".*(?=Michael Jordan)"
 
 #+RESULTS:
 : [1] "Hello, my name is "
-\\
 
 ** 最長マッチと最短マッチ
 
@@ -139,7 +137,6 @@ stringr::str_extract(address, "h.*e")
 #+RESULTS:
 : 
 : [1] "hoge@hoge"
-\\
 
 - 最短マッチ (?)
 #+begin_src R :exports both
@@ -150,7 +147,6 @@ stringr::str_extract(address, "h.*?e")
 #+RESULTS:
 : 
 : [1] "hoge"
-\\
 
 * 参考リンク
 - [[https://github.com/rstudio/cheatsheets/raw/master/strings.pdf][{stringr} Cheatsheets(PDF)]]

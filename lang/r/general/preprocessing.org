@@ -178,7 +178,6 @@ hist(bcPower(Wool$cycles, p1$roundlam))
     - そのための特徴量を別途作成することも検討
     - 日付を 0 ~ 1 のレンジに変換するなど (月初=0, 月末=1 になる)
   - 特定のイベントとの時間差を特徴量にする (不動産の築年数など)
-
 * 新たな特徴量の作成
 ** 変数の組み合わせ
 
@@ -209,7 +208,6 @@ hist(bcPower(Wool$cycles, p1$roundlam))
 - リード特徴量
   - 将来の値 (の予測) が特徴量になりえる
   - たとえば、明日の天気 (予報) や将来のイベントの有無など
-
 * 次元の削減
 
 - *相関係数*
@@ -278,6 +276,13 @@ hist(bcPower(Wool$cycles, p1$roundlam))
     - Agglomerative Clustering (凝集型階層クラスタリング)
 
 - *Isomap*
+
+- *Negative Down Sampling*
+  - 判別で目的変数が不均衡な場合、多い方のデータを捨てる
+
+- *Boruta*
+  - [[https://aotamasaki.hatenablog.com/entry/2019/01/05/195813][ランダムフォレストと検定を用いた特徴量選択手法 Boruta]]
+  - Python の実装あり
 
 * モデルごとの前処理手法
 ** GBDT

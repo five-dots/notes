@@ -43,11 +43,11 @@ _教師データあり_
 - [[file:clustering.org][クラスタリング]]
   - k 近傍法 (kNN, k-Nearest Neighbor)
 
-- アンサンブル学習
+- アンサンブル学習 ([[https://mlwave.com/kaggle-ensembling-guide/][Kaggel Ensemble Guide]])
   - バギング (並列化, ランダムフォレストで利用)
   - ブースティング (直列化, GBDT で利用)
   - スタッキング (各モデルの予測値を特徴量にして、予測値に対して二層目のモデル作成)
-  - ブレンディング (複数の予測値の加重平均) / ボーティング
+  - ブレンディング (複数の予測値の加重平均) / ボーティング / Random Seed Averaging
 
 _教師データなし_
 
@@ -79,3 +79,4 @@ _教師データなし_
 * 参考
 
 - [[https://qiita.com/tomomoto/items/b3fd1ec7f9b68ab6dfe2][代表的な機械学習手法一覧@Qiita]]
+- [[https://tidymodels.github.io/parsnip/articles/articles/Models.html][parsnip List of Models]]

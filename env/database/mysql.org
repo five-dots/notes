@@ -1,6 +1,6 @@
 #+STARTUP: showall indent
 
-*  Install
+* Install
 
 - [[https://www.yokoweb.net/2018/05/13/ubuntu-18_04-server-mysql/][【Ubuntu 18.04 LTS Server】MySQLサーバを動かす]]
 
@@ -11,4 +11,3 @@ mysql_secure_installation
 GRANT ALL PRIVILEGES ON *.* TO shun@localhost IDENTIFIED BY 'Bc395ad1453@' WITH GRANT OPTION;
 FLUSH PRIVILEGES;
 
-* TODO MySQL + Docker での開発環境の構築

@@ -7,6 +7,8 @@ lang/r/temp.R
 lang/python/other/DLFS/
 # lang/python/temp.py
 
+lang/emacs-lisp/temp.el
+
 private/
 corp/
 work/
