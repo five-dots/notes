@@ -1,0 +1,197 @@
+#+STARTUP: folded indent inlineimages latexpreview
+#+PROPERTY: header-args:R :results output :session *R:unit_test* :width 640 :height 480 :colnames yes
+
+* ライブラリの読み込み
+
+#+begin_src R :results silent
+library(testthat)
+library(devtools)
+library(tidyverse)
+#+end_src
+
+* ={testthat}= package
+** Run tests
+
+- context => test_that => expect_that の順に粒度が細かくなる
+  - testthat 2.1.0 から =context()= は 必要ない
+  - R/ ディレクトリと同じ構造で tests/testthat にファイルを配置する
+- ファイル名 "test-", "test_" というプレフィックスをつける
+
+#+begin_src R
+# ファイルごと
+test_file(path, reporter = default_reporter(), env = test_env(), start_end_reporter = TRUE,
+          load_helpers = TRUE, encoding = "unknown", wrap = TRUE)
+
+# ディレクトリごと
+test_dir(path, filter = NULL, reporter = default_reporter(),
+         env = test_env(), ..., encoding = "unknown", load_helpers = TRUE,
+         stop_on_failure = FALSE, stop_on_warning = FALSE, wrap = TRUE)
+
+test_package(package, filter = NULL, reporter = check_repoter(), ...,
+             stop_on_failure = TRUE, stop_on_warning = FALSE)
+
+# R CMD Check
+test_check(package, filter = NULL, reporter = check_repoter(), ...,
+           stop_on_failure = TRUE, stop_on_warning = FALSE, wrap = TRUE)
+
+# Predicate           
+is_testing()
+
+# 自動テスト
+auto_test(code_path, test_path, reporter = default_reporter(), env = test_env(), hash = TRUE)
+#+end_src
+
+** expect
+*** Equality
+
+- =...= に =all.equal()= の追加引数を指定可能
+- nearly equal で比較したい場合は =tolerance = 1e-8= のように指定する
+
+#+begin_src R
+# by all.equal()
+expect_equal(object, expected, ..., info = NULL, label = NULL, expected.label = NULL)
+
+# by all.equal() check.attributes = FALSE
+expect_equivalent(object, expected, ..., info = NULL, label = NULL, expected.label = NULL)
+
+# 順番・重複を無視した同値性
+expect_setequal(object, expected)
+
+# 名前もチェックできる
+expect_mapequal(object, expected)
+
+# by identical()
+expect_identical(object, expected, info = NULL, label = NULL, expected.label = NULL)
+
+# Check if the same object int memoery (needs rlang)
+expect_reference(object, expected, info = NULL, label = NULL, expected.label = NULL)
+#+end_src
+
+*** Type
+
+#+begin_src R
+# NULL Check
+expect_null(object, info = NULL, label = NULL)
+
+# by typeof()
+expect_type(object, type)
+
+# character vector of class
+expect_is(object, class, info = NULL, label = NULL)
+
+# S3 & S4
+expect_s3_class(object, class)
+expect_s4_class(object, class)
+#+end_src
+
+*** Numeric value
+
+#+begin_src R
+expect_lt(object, expected, label = NULL, expected.label = NULL)
+expect_lte(object, expected, label = NULL, expected.label = NULL)
+expect_gt(object, expected, label = NULL, expected.label = NULL)
+expect_gte(object, expected, label = NULL, expected.label = NULL)
+#+end_src
+
+*** Boolean value
+
+#+begin_src R
+expect_true(object, info = NULL, label = NULL)
+expect_false(object, info = NULL, label = NULL)
+#+end_src
+
+*** Dimension
+
+#+begin_src R
+expect_length(object, n)
+#+end_src
+
+*** Regex
+
+#+begin_src R
+expect_match(object, regexp, perl = FALSE, fixed = FALSE, ..., all = TRUE, info = NULL, label = NULL)
+#+end_src
+
+*** Name
+
+#+begin_src R
+expect_named(object, expected, ignore.order = FALSE, ignore.case = FALSE, info = NULL, label = NULL)
+#+end_src
+
+*** Condition
+
+#+begin_src R
+expect_output(object, regexp = NULL, ..., info = NULL, label = NULL)
+expect_error(object, regexp = NULL, class = NULL, ..., info = NULL, label = NULL)
+expect_condition(object, regexp = NULL, class = NULL, ..., info = NULL, label = NULL)
+expect_message(object, regexp = NULL, ..., all = FALSE, info = NULL, label = NULL)
+expect_warning(object, regexp = NULL, ..., all = FALSE, info = NULL, label = NULL)
+expect_silent(object)
+#+end_src
+
+*** Other
+
+#+begin_src R
+expect_success(expr)
+expect_failure(expr, message = NULL, ...)
+show_failure(expr)
+expect_known_failure(path, expr)
+#+end_src
+
+- 複雑な output の場合： 前回実行時と出力が同じかを確認
+#+begin_src R
+expect_known_output(object, file, update = TRUE, ..., info = NULL, label = NULL, print = FALSE, width = 80)
+expect_known_value(object, file, update = TRUE, ..., info = NULL, label = NULL)
+expect_known_hash(object, hash = NULL)
+expect_output_file()
+expect_equal_to_reference()
+#+end_src
+
+*** Obsolatd
+
+#+begin_src R
+expect_that(object, condition, info = NULL, label = NULL)
+#+end_src
+
+** Skip Tests
+
+- test_that() 関数の冒頭に書く
+- 例) skip_if_not(Sys.info()["nodename"] == "DESK1")
+
+#+begin_src R
+skip(message)
+skip_if(condition, message = deparse(substitute(condition)))     # True => skip
+skip_if_not(condition, message = deparse(substitute(condition))) # False => skip
+skip_if_not_installed(pkg, minimum_version = NULL)
+skip_if_translated()
+skip_on_appveyor()
+skip_on_bioc()
+skip_on_cran()
+skip_on_os(os) # "windows", "mac", "linux" and "solaris"
+skip_on_travis()
+#+end_src
+
+** mock
+
+testthat::with_mock()
+testthat::local_mock()
+
+* ={devtools}= package
+
+#+begin_src R
+# testthat::test_dir() のショートカット
+test(pkg = ".", filter = NULL, ...)
+
+# covr::package_coverage() => covr::report() のショートカット
+test_coverage(pkg = ".", show_report = interactive(), ...)
+
+uses_testthat(pkg = ".")
+
+test_file(file = find_active_file(), ...)
+
+test_coverage_file(file = find_active_file(), filter = TRUE,
+  show_report = interactive(), ...)
+#+end_src
+
+* TODO httptest package
+* TODO r-lib/mockery package

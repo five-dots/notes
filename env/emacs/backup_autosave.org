@@ -1,0 +1,22 @@
+#+STARTUP: overview indent
+
+* backup, auto-save and auto-save-list files
+
+- http://yohshiy.blog.fc2.com/blog-entry-319.html
+
+| foo.txt~   | バックアップファイル               | 特定のディレクトリにまとめておく |
+| #foo.txt#  | 自動保存ファイル. 異常終了時に利用 | 復元後に自動削除される           |
+| .saves-xxx | 自動保存ファイルリスト             | 終了時に自動削除される           |
+| .#foo.txt  | ロックファイル                     | 終了時に自動削除される           |
+
+- ~recover-this-file~ で自動保存ファイルから復旧が可能
+- 1 つのディレクトリにまとめて保存
+#+begin_src emacs-lisp :results silent
+
+(add-to-list 'backup-directory-alist
+             (cons ".*" (expand-file-name ".cache/backup" user-emacs-directory)))
+             
+(setq auto-save-list-file-prefix
+      (expand-file-name ".cache/auto-save-list/.saves-" user-emacs-directory))
+
+#+end_src

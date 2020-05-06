@@ -1,5 +1,5 @@
 #+STARTUP: folded indent inlineimages latexpreview
-#+PROPERTY: header-args:R :session *R:ic* :width 560 :height 420 :results output
+#+PROPERTY: header-args:R :session *R:ic* :width 640 :height 480 :results output
 
 * ライブラリの読み込み
 
@@ -167,20 +167,75 @@ $\beta = \frac{1}{log{n}}$
 - この時、自由エネルギーと WBIC は logn のオーダーで同じ漸近挙動を持つ
 
 ** LOOCV (Leave One Out Cross-Validation)
+* 正則化 (Regularization)
+
+*目的*
+- 統計モデルの変数選択に利用する
+- 重要でない変数を取り除くことができる
+- モデルの過学習を抑制して、汎化性能を高める
+
+*コンセプト*
+- モデルの 2 乗残差と f(b) を最小化する
+- 通常の最小二乗法に加えて、f(b)も最小化するということ
+  - *誤差だけでなく、パラメタの大きさも最小化する*
+  - lambda に大きさによって、誤差を小さくするほうが良いか・
+    パラメタを小さくするほうが良いかの重みが変わる
+  - f(b)には、Lasso, Ridge などが入る
+- lambda が正則化パラメタ (Complexity Parameter とも呼ばれる)
+  - lambda 大きいほどモデルはシンプル (ペナルティが大きいため)
+  - lambda=0 で最小二乗法と一致
+
+$Min \Sigma u_i^2 + f(\beta)$
+
+*正則化*
+- *L1 正則化* (L1 ノルム)
+  - 係数 (重みとも言う) の *絶対値* にペナルティを課す
+    - 大きすぎる係数は過学習である、というコンセプト
+  - _重みをゼロにして変数削減を行うことができる_
+    - 相関の強い変数では、片方のみを選んでしまう危険性がある:
+  - _データ数以上に多い変数の選択はできない_
+  - 係数ベクトル B の推定を以下の式で行う
+
+$\hat{\beta} = argmin_\beta(|| \bf{y} - \bf{X} \beta ||_2^2 + \lambda ||\beta||_1)$
+
+$Lasso = \Sigma_{i=1}^n(y_i - \hat{y}_i)^2 + \lambda \Sigma_{j=1}^m |w_j|$
+
+
+- *L2 正則化* (L2 ノルム)
+  - 係数の *2 乗* にペナルティを課す
+  - _L2 正則化では、係数は完全には 0 にならない_
+    - 小さなパラメタ (0 に近い) を小さくするよりも、大きなパラメタを小さくするほうがよい点があるから
+
+$\hat{\beta} = argmin_\beta(|| \bf{y} - \bf{X} \beta ||_2^2 + \lambda ||\beta||_2^2)$
+
+$Ridge = \Sigma_{i=1}^n(y_i - \hat{y}_i)^2 + \lambda \Sigma_{j=1}^m w_j^2$
+
+
+- *Elastic Net*
+  - L1, L2 正則化を混合したもの
+  - Lasso の変数数の限界を克服するために考案された
+
+$\hat{\beta} = argmin_\beta(|| \bf{y} - \bf{X} \beta ||_2^2 + \lambda (\alpha|| \beta||_1 + (1 - \alpha) ||\beta||_2^2))$
+
+$ElasticNet = \Sigma_{i=1}^n(y_i - \hat{y}_i)^2 + \lambda_1 \Sigma_{j=1}^m w_j^2 - \lambda_2 \Sigma_{j=1}^m |w_j|$
+
 * 参考 
 
-- [[http://ushi-goroshi.hatenablog.com/entry/2017/12/24/225748][WAICを計算してみる@統計コンサルの議事メモ]]
-- [[http://statmodeling.hatenablog.com/entry/calc-waic-wbic][WAICとWBICを事後分布から計算する@StatModeling Memorandum]]
-- [[http://statmodeling.hatenablog.com/entry/watanabe-bayes-book][「ベイズ統計の理論と方法」渡辺澄夫のメモ@StatModeling Memorandum]]
-- [[https://rpubs.com/siero5335/92987][loo package動かしてみた: WAIC比較@RPubs]]
-
-- [[https://www.slideshare.net/motivic/r-28993607][RでWAIC@SlideShare]]
-- [[http://motivic.hateblo.jp/entry/2013/12/13/195527][RでWAICを強引に計算させてみた@motivicのチラ裏]]
-- [[http://motivic.hateblo.jp/entry/2013/12/15/232856][RStanでWAICの計算をしてみた@motivicのチラ裏]]
-
-- [[https://www.slideshare.net/tomokimatsumoto37/waicwbic][WAICとWBICのご紹介@SlideShare]]
+- WAIC
+  - [[http://ushi-goroshi.hatenablog.com/entry/2017/12/24/225748][WAICを計算してみる@統計コンサルの議事メモ]]
+  - [[http://statmodeling.hatenablog.com/entry/calc-waic-wbic][WAICとWBICを事後分布から計算する@StatModeling Memorandum]]
+  - [[http://statmodeling.hatenablog.com/entry/watanabe-bayes-book][「ベイズ統計の理論と方法」渡辺澄夫のメモ@StatModeling Memorandum]]
+  - [[https://rpubs.com/siero5335/92987][loo package動かしてみた: WAIC比較@RPubs]]
+  - [[https://www.slideshare.net/motivic/r-28993607][RでWAIC@SlideShare]]
+  - [[http://motivic.hateblo.jp/entry/2013/12/13/195527][RでWAICを強引に計算させてみた@motivicのチラ裏]]
+  - [[http://motivic.hateblo.jp/entry/2013/12/15/232856][RStanでWAICの計算をしてみた@motivicのチラ裏]]
+  - [[https://www.slideshare.net/tomokimatsumoto37/waicwbic][WAICとWBICのご紹介@SlideShare]]
 
 - [[https://logics-of-blue.com/information-theory-basic/][情報理論の基礎～情報量の定義から相対エントロピー、相互情報量まで～@Logics of Blue]]
+
+- 正則化 
+  - [[https://stats.biopapyrus.jp/sparse-modeling/glmnet.html][R の glmnet パッケージを利用した LASSO 推定と Elastic Net 推定@biostatistics]]
+  - [[http://www.housecat442.com/?p=646][正則化についてとLassoとRidge。@分析のおはなし]]
 
 - 渡辺澄夫
   - [[http://watanabe-www.math.dis.titech.ac.jp/users/swatanab/waic2011.html][広く使える情報量規準(WAIC)@渡辺澄夫のウェブサイト]]

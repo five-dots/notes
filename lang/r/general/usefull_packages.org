@@ -208,8 +208,29 @@ https://tjo.hatenablog.com/entry/2013/07/04/190139
 - MSBVAR   # 多変量時系列のマルコフ状態転換モデル推定 (現在は開発停止)
 
 * Machine Learning
+
+- [[file:./ml_model.org][ml_model]]
+
+* Machine Learning Wrappers
+
 - caret
-- keras
+
+- tidymodels
+  - リサンプリング       ={rsample}=
+  - 前処理               ={recipes}=
+  - パラメタチューニング ={dials}= + ={tune}=
+  - モデル               ={parsnip}=
+  - 評価                 ={yardstick}=
+  - ワークフロー         ={workflows}=
+
+- mlr3
+  - リサンプリング       ={mlr3}=
+  - 前処理               ={mlr3pipelines}= + ={mlr3filters}=
+  - パラメタチューニング ={mlr3tuning}= + ={paradox}=
+  - モデル               ={mlr3}=
+  - 評価                 ={mlr3}=
+  - ワークフロー         ={mlr3pipelines}=
+  - 可視化               ={mlr3viz}=
 
 * Finance
 

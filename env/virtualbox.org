@@ -1,0 +1,24 @@
+#+STARTUP: showall indent
+
+* Install
+
+- [[https://www.virtualbox.org/wiki/Linux_Downloads][公式サイトの手順]]
+
+- 上記 repo では 64bit しか提供されていないため、以下の内容に修正
+  - [[https://kledgeb.blogspot.com/2018/05/virtualbox-83-ubuntu.html][Ubuntu 18.04向けVirtualBoxリポジトリー]]
+  - sources.list には以下のように記述する
+
+#+begin_quote
+deb [arch=amd64] https://download.virtualbox.org/virtualbox/debian bionic contrib
+#+end_quote
+
+- BIOS で Intenl Virtualization Technology を Enable にする
+
+* Windows 10 on Ubuntu
+
+- [[https://webnetforce.net/virtualboxdeubuntuno-shangdewindows10wo-chao-gao-s/][VirtualBoxでUbuntuの上でWindows10を超高速に動かす]]
+
+- Host only adapter が Windows 側で認識されない件
+  - [[https://blog.goo.ne.jp/rxn10223/e/3b79ae1a809177cf6a8fbb735dfd98fe][Virtualboxにおけるネットワークの不具合について]]
+
+- Multicharts.NET が異常終了する問題あり

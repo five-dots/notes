@@ -1,0 +1,143 @@
+#+STARTUP: folded indent
+#+PROPERTY: header-args:R :results output :colnames yes :session *R:renv*
+
+* ~{renv}~: Project environments for R                               :noexport:
+* 目次                                                            :quote:toc:
+#+BEGIN_QUOTE
+- [[#ライブラリの読み込みとバージョンの確認][ライブラリの読み込みとバージョンの確認]]
+- [[#全関数リスト][全関数リスト]]
+- [[#ワークフロー][ワークフロー]]
+  - [[#init---snapshot][=init()= -> =snapshot()=]]
+  - [[#renv_pahts_root--global-cache][=RENV_PAHTS_ROOT= / Global cache]]
+  - [[#shims][shims]]
+  - [[#install-remove-update][=install()=, =remove()=, =update()=]]
+- [[#実行環境][実行環境]]
+- [[#参考リンク][参考リンク]]
+#+END_QUOTE
+
+* ライブラリの読み込みとバージョンの確認
+
+#+begin_src R :results silent
+library(renv)
+#+end_src
+
+- バージョン
+#+begin_src R :exports both
+packageVersion("renv")
+#+end_src
+
+#+RESULTS:
+: [1] ‘0.7.1.20’
+
+* 全関数リスト
+
+#+begin_src R :exports both
+pacman::p_funs(renv)
+#+end_src
+
+#+RESULTS:
+: Error in loadNamespace(name) : there is no package called ‘pacman’
+
+* ワークフロー
+** =init()= -> =snapshot()=
+
+- =renv::init()=
+  - プロジェクトの初回に実施
+  - =renv.lock=, =renv/=, =.Rprofile= が作成される
+  - 以後、.libPaths() が強制的に =renv/= に変更される
+
+- =renv::snapshot()=
+  - 現在のコード内で利用しているパッケージを =renv.lock= に記録
+  - =renv/= に Global Cache からリンクを貼る
+
+- =renv::clean()=
+  - 不要になったパッケージのリンクを =renv/= から削除する
+
+- =renv::status()=
+  - 変更分との差分を表示
+
+- =renv::history()=
+  - =renv.lock= を git 管理している場合、履歴を確認できる
+
+** =RENV_PAHTS_ROOT= / Global cache
+
+#+begin_src R
+renv::paths$root() # RENV_PATHS_ROOT
+renv::paths$cache() # Global Cache
+renv::paths$library() # 現在のプロジェクトのパス
+#+end_src
+
+#+RESULTS:
+: [1] "/home/shun/Dropbox/R/renv"
+:
+: [1] "/home/shun/Dropbox/R/renv/cache/v4/R-3.6/x86_64-pc-linux-gnu"
+:
+: [1] "/home/shun/Dropbox/repos/github/five-dots/notes/lang/r/package/renv/renv/library/R-3.6/x86_64-pc-linux-gnu"
+
+** shims
+** =install()=, =remove()=, =update()=
+
+- ~{base}~ の機能に対して Shims が設定されている
+
+- CRAN 以外からのインストール・バージョン指定などが可能
+  - install the latest version of 'digest'
+    ~renv::install("digest")~
+
+    - install an old version of 'digest' (using archives)
+    ~renv::install("digest@0.6.18")~
+
+    - install 'digest' from GitHub (latest dev. version)
+    ~renv::install("eddelbuettel/digest")~
+
+    - install a package from local sources
+    ~renv::install("~/path/to/package")~
+
+* 実行環境
+
+#+begin_src R :results output :exports both
+sessionInfo()
+#+end_src
+
+#+RESULTS:
+#+begin_example
+R version 3.6.1 (2019-07-05)
+Platform: x86_64-pc-linux-gnu (64-bit)
+Running under: Ubuntu 18.04.3 LTS
+
+Matrix products: default
+BLAS:   /usr/lib/x86_64-linux-gnu/blas/libblas.so.3.7.1
+LAPACK: /usr/lib/x86_64-linux-gnu/lapack/liblapack.so.3.7.1
+
+locale:
+ [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C              
+ [3] LC_TIME=en_US.UTF-8        LC_COLLATE=en_US.UTF-8    
+ [5] LC_MONETARY=en_US.UTF-8    LC_MESSAGES=en_US.UTF-8   
+ [7] LC_PAPER=en_US.UTF-8       LC_NAME=C                 
+ [9] LC_ADDRESS=C               LC_TELEPHONE=C            
+[11] LC_MEASUREMENT=en_US.UTF-8 LC_IDENTIFICATION=C       
+
+attached base packages:
+[1] stats     graphics  grDevices utils     datasets  methods   base     
+
+other attached packages:
+[1] stringr_1.4.0
+
+loaded via a namespace (and not attached):
+[1] compiler_3.6.1 magrittr_1.5   tools_3.6.1    stringi_1.4.3
+#+end_example
+
+* 参考リンク
+
+- [[https://rstudio.github.io/renv/][公式サイト]]
+- [[https://github.com/rstudio/renv][Github Repo]]
+- Vignette
+  - [[https://rstudio.github.io/renv/articles/renv.html][Introduction to renv]]
+  - [[https://cran.r-project.org/web/packages/renv/vignettes/packages.html][Package Development with renv]]
+  - [[https://cran.r-project.org/web/packages/renv/vignettes/python.html][Using Python with renv]]
+  - [[https://cran.r-project.org/web/packages/renv/vignettes/collaborating.html][Collaborating with renv]]
+  - 他多数
+
+- Blog
+  - [[https://qiita.com/okiyuki99/items/688a00ca9a58e42e3bfa][Rのパッケージ管理のためのrenvを使ってみた@Qiita]]
+  - [[https://speakerdeck.com/black_tank_top/renv-version-control][renvによるパッケージ管理@speakerdeck]]
+    

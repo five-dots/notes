@@ -1,0 +1,108 @@
+#+STARTUP: folded indent inlineimages latexpreview
+#+PROPERTY: header-args:R :results output :session *R:package_dev* :width 640 :height 480 :colnames yes
+
+* ライブラリの読み込み
+
+#+begin_src R :results silent
+library(usethis)
+library(devtools)
+#+end_src
+
+* パッケージの雛形
+** R/, DESCRIPTION, NAMESPACE を作成
+
+#+begin_src R
+## fileds で DESCRIPTION に追加する項目を指定できる
+create_package("~/test", fields = NULL, rstudio = rstudioapi::isAvailable(), open = interactive())
+setwd("~/test")
+#+end_src
+
+#+RESULTS:
+#+begin_example
+✔ Creating './'
+✔ Creating 'R/'
+✔ Writing 'DESCRIPTION'
+Package: test
+Title: What the Package Does (One Line, Title Case)
+Version: 0.0.0.9000
+Authors@R (parsed):
+    ,* First Last <first.last@
+[aut, cre] (<https://orcid.org/YOUR-ORCID-ID>)
+Description: What the package does (one paragraph).
+License: What license it uses
+Encoding: UTF-8
+LazyData: true
+✔ Writing 'NAMESPACE'
+✔ Changing working directory to '/home/shun/test/'
+#+end_example
+
+** ライセンス
+
+- mit_license
+- gpl3_license
+- lgpl_license
+- apl2_license
+- cc0_license
+- ccby_license
+
+#+begin_src R
+usethis::use_mit_license()
+#+end_src
+
+#+RESULTS:
+: ✔ Setting License field in DESCRIPTION to 'MIT
+: file LICENSE'
+: ✔ Writing 'LICENSE.md'
+: ✔ Adding '^LICENSE\\.md$' to '.Rbuildignore'
+: ✔ Writing 'LICENSE'
+
+** パッケージ
+
+- DESCRIPTION の Imports に追加される
+- 手動で追加してもよい
+#+begin_src R
+usethis::use_package("dplyr")
+#+end_src
+
+#+RESULTS:
+: ✔ Adding 'dplyr' to Imports field in DESCRIPTION
+: ● Refer to functions with `dplyr::fun()`
+
+** Pipe 等
+
+- 以下を追加しておくと便利
+#+begin_src R
+## dplyr pronoun
+#' .data variable
+#'
+#' @keywords internal
+#' @export
+#' @importFrom rlang .data
+NULL
+
+## magrittr pipe (usethis::use_pipe())
+#' Pipe operator
+#'
+#' See \code{magrittr::\link[magrittr]{\%>\%}} for details.
+#'
+#' @name %>%
+#' @rdname pipe
+#' @keywords internal
+#' @export
+#' @importFrom magrittr %>%
+#' @usage lhs \%>\% rhs
+NULL
+#+end_src
+
+* 開発フロー
+
+#+begin_src R
+devtools::document()
+devtools::test()
+devtools::check()
+devtools::install()
+#+end_src
+
+* 参考
+
+- [[https://qiita.com/Masutani/items/405d6473aff6d2b82bfd][R tools for Visual StudioでRライブラリ開発]]

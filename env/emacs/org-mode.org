@@ -1,0 +1,781 @@
+#+STARTUP: folded indent latexpreview
+#+ATTR_ORG: :width 480
+
+- [[https://orgmode.org/manual/][The Org Manual]]
+
+* Header
+
+|---------------+-------------------------------------------------------------------|
+| Topic         | Settings                                                          |
+|---------------+-------------------------------------------------------------------|
+| Visibility    | folded, children, content, all, overview, showall, showeverything |
+| Inline image  | inlineimages, nolinlineimages                                     |
+| Latex preview | latexpreview, nolatexpreview                                      |
+| Indent        | indent, noindent                                                  |
+|---------------+-------------------------------------------------------------------|
+
+* Text appearance
+
+|-----------+--------------------+-----------------+-----------|
+| Style     | Code               | View            | Note      |
+|-----------+--------------------+-----------------+-----------|
+| Bold      | `*Bold*`           | *Bold*            |           |
+| Italic    | `/Italic/`         | /Italic/          |           |
+| underline | `_Underline_`      | _Underline_       |           |
+| Strike    | `+Strike through+` | +Strigke thruogh+ |           |
+| Code      | `~Code~`           | ~Code~            | var/func  |
+| Verbatim  | `=Verbatim=`       | =Verbatim=        | path/file |
+|-----------+--------------------+-----------------+-----------|
+
+* Inline image
+* agenda
+* table.el
+
+- [[http://akisute3.hatenablog.com/entry/2014/01/14/012717][table.el の使い方と org-mode 連携]]
+
+- =table-insert=
++-----+-----+-----+
+|     |     |     |
++-----+-----+-----+
+|     |     |     |
++-----+-----+-----+
+|     |     |     |
++-----+-----+-----+
+
+- =org-table-convert= (, t c)
+| hoge | hoge |
+| fuga | fuga |
+
++------+------+
+| hoge | hoge |
+|      |------+
+| fuga | fuga |
++------+------+
+
+* Latex Fragment
+** Reference
+
+- [[http://www1.kiy.jp/~yoka/LaTeX/latex.html][LaTex コマンド一覧]]
+
+** 数式を書く
+
+- =$y=f(x)$=
+$y=f(x)$
+
+- =$$ y=f(x) $$=
+$$ y=f(x) $$
+
+- =\[ y=f(x) \]=
+\[ y=f(x) \]
+
+- =\(y=f(x) \)=
+\( y=f(x) \)
+
+** 数式を番号付きで書く
+
+=\begin{equation}=
+=y=x^2-2x+1=
+=\end{equation}=
+
+\begin{equation}
+y=x^2-2x+1
+\end{equation}
+
+** 分数
+
+=$\frac{x^3+1}{x+1}$=
+
+$\frac{x^3+1}{x+1}$
+
+** ギリシャ文字
+
+- alpha   $\alpha$
+- beta    $\beta$
+- gamma   $\gamma$ Gamma $\Gamma$
+- delta   $\delta$ Delta $\Delta$
+- epsilon $\epsilon$
+- zeta    $\zeta$
+- eta     $\eta$
+- theta   $\theta$ Theta $\Theta$
+- iota    $\iota$
+- kappa   $\kappa$
+- lambda  $\lambda$ Lambda $\Lambda$
+- mu      $\mu$
+- nu      $\nu$
+- xi      $\xi$ Xi $\Xi$
+- o       $o$
+- pi      $\pi$ Pi $\Pi$
+- rho     $\rho$
+- sigma   $\sigma$ Sigma $\Sigma$
+- tau     $\tau$
+- upsilon $\upsilon$ Upsilon $\Upsilon$
+- phi     $\phi$ Phi $\Phi$
+- chi     $\chi$
+- psi     $\psi$ Psi $\Psi$
+- omega   $\omega$ Omega $\Omega$
+
+** 複数行で番号をつけない
+
+- アスタリスクをつける
+
+\begin{equation*}
+\end{equation*}
+
+** = でインデントする
+
+- begin{split} を使う
+- &= でインデント
+
+\begin{equation*}
+\begin{split}
+  \ \gamma_1
+  &=
+  \ Cov(y_t, y_{t-1})
+  \\&=
+  \ Cov(\mu + \epsilon_t + \theta_1\epsilon_{t-1}, \mu + \epsilon_{t-1} + \theta_1\epsilon_{t-2})
+  \\&=
+  \ Cov(\epsilon_t, \epsilon_{t-1}) + Cov(\epsilon_t, \theta_1 \epsilon_{t-2}) + Cov(\theta_1 \epsilon_{t-1}, \epsilon_{t-1}) + Cov(\theta_1 \epsilon_{t-1}, \theta_1 \epsilon_{t-2}) 
+  \\&=
+  \ \theta_1 Cov(\epsilon_{t-1}, \epsilon_{t-1})
+  \\&=
+  \ \theta_1 \sigma^2
+\end{split}
+\end{equation*}
+
+** Github の github/markup 環境で数式を書く
+
+- [[http://idken.net/posts/2017-02-28-math_github/][GithubのREADMEとかwikiで数式を書く]]
+
+[[https://www.codecogs.com/latex/eqneditor.php][CODECOGS]] を使って数式を web 上に作成し HTML リンクを作成する 
+
+#+html: <img src="https://latex.codecogs.com/gif.latex?\int_a^bf(x)dx" />
+
+* org-babel
+** Reference
+
+- [[https://orgmode.org/manual/Working-with-Source-Code.html#Working-with-Source-Code][Working with Source Code]]
+- [[http://misohena.jp/blog/2017-10-26-how-to-use-code-block-of-emacs-org-mode.html][org-mode のコードブロック(Babel)の使い方]]
+ 
+** 基本構文
+
+#+NAME: <name>
+#+HEADER: <header>...
+#+HEADER: <header>...
+#+BEGIN_SRC <language> <swithc>... <header>...
+<body>
+#+END_SRC
+
+=,,=  でコードを実行
+=,'=  でコード編集 (別バッファが開く)
+=,ee= で export-dispatch
+
+** コードブロックに名前を付ける
+
+#+NAME: mul
+#+BEGIN_SRC emacs-lisp :var x=2 :var y=4
+(* x y)
+#+END_SRC
+
+#+RESULTS: mul
+: 8
+
+名前を付けたブロックを変数を変更して呼び出す
+#+CALL: mul(x=3, y=10)
+
+#+RESULTS:
+: 30
+
+noweb 参照の例 <<>> で参照できる
+#+BEGIN_SRC emacs-lisp :noweb yes
+(defun mul (x y)
+  <<mul>>
+)
+(mul 2 3)
+#+END_SRC
+
+#+RESULTS:
+: 6
+
+** 行内でもコードブロックが書ける
+
+=src_<language>[<header>..]{<body>}=
+
+2 * 3 の答えは src_emacs-lisp[:var x=2 :var y=3]{(* x y)} {{{results(=6=)}}}
+2 * 3 の答えは src_R[:var x=3 :var y=4]{x * y} {{{results(=12=)}}}
+
+** ヘッダ引数
+
+- [[https://www.gnu.org/software/emacs/manual/html_node/org/results.html][Org manual]]
+- Org Babel reference card (Header aruguments)
+  https://github.com/fniessen/refcard-org-babel/blob/master/docs/header-args.org
+  https://org-babel.readthedocs.io/en/latest/header-args/
+  
+  _ヘッダ引数の値が、上から順に引き継がれていく(下の値で上書きされる)_
+  1. Default header arguments shipped with Org mode
+  2. Default languages-specific header arguments shipped with Org mode
+  3. Buffer (or file) level header arguments
+  4. Subtreeheader arguments
+  5. Code block header arguments
+  6. Call line header arguments 
+  
+- 言語毎に結果が異なるので、その都度確認が必要
+
+- :exports
+  エクスポートの際に何を出力するか =code/results/both/none=
+   
+- :results
+  どこから結果を得るか =output/value=
+  結果の種類 =table/list/scalar/file=
+  結果の出力形式 =raw/org/html/latex/code/pp/drawer=
+  結果の挿入方法 =silent/replace/append/prepend=
+
+- :eval
+  Export 時にコードブロックを評価しない =never-export=
+
+- emacs-lisp  
+#+begin_src emacs-lisp :results list
+org-babel-default-header-args
+#+end_src
+
+#+RESULTS:
+: - (:session . "none")
+: - (:results . "replace")
+: - (:exports . "code")
+: - (:cache . "no")
+: - (:noweb . "no")
+: - (:hlines . "no")
+: - (:tangle . "no")
+
+** 言語毎の書き方
+*** emacs-lisp
+
+#+begin_src emacs-lisp
+(emacs-version)
+#+end_src
+
+#+RESULTS:
+: GNU Emacs 26.3 (build 2, x86_64-pc-linux-gnu, GTK+ Version 3.22.30)
+:  of 2019-09-17
+
+*** shell
+
+#+begin_src sh
+echo $SHELL
+#+end_src
+
+#+RESULTS:
+: /usr/bin/zsh
+
+#+begin_src shell :results output
+ls ~/
+#+end_src
+
+#+RESULTS:
+#+begin_example
+bin
+Desktop
+Documents
+Downloads
+Dropbox
+Jts
+market_data
+Music
+Pictures
+Public
+scripts
+snap
+Templates
+venv
+Videos
+#+end_example
+
+*** R
+**** Reference
+
+- [[https://orgmode.org/worg/org-contrib/babel/languages/ob-doc-R.html][R Source Code Blocks in Org Mode]]
+  
+**** session
+
+- =:session hoge= でセッションを作成
+#+begin_src R :session *hoge*
+a <- 30
+b <- 40
+a + b
+#+end_src
+
+#+RESULTS:
+: 70
+
+- 変数を参照できる
+#+begin_src R :session *hoge*
+a + 20
+#+end_src
+
+#+RESULTS:
+: 50
+
+**** data.frame
+
+#+begin_src R :colnames yes :rownames yes
+head(iris)
+#+end_src
+
+#+RESULTS:
+|   | Sepal.Length | Sepal.Width | Petal.Length | Petal.Width | Species |
+|---+--------------+-------------+--------------+-------------+---------|
+| 1 |          5.1 |         3.5 |          1.4 |         0.2 | setosa  |
+| 2 |          4.9 |           3 |          1.4 |         0.2 | setosa  |
+| 3 |          4.7 |         3.2 |          1.3 |         0.2 | setosa  |
+| 4 |          4.6 |         3.1 |          1.5 |         0.2 | setosa  |
+| 5 |            5 |         3.6 |          1.4 |         0.2 | setosa  |
+| 6 |          5.4 |         3.9 |          1.7 |         0.4 | setosa  |
+
+**** plot (graphics)
+
+- ~:results graphics :file hoge.png~ でプロット作成
+- doom-emacs では ~:results graphics file~ にする必要あり
+- ~:width 640~ ~:height 480~ のようにサイズを指定できる (数字を文字列にしては NG)
+
+#+begin_src R :results graphics file :file babel-img/R-test-1.png
+plot(1:100)
+#+end_src
+
+#+RESULTS:
+[[file:babel-img/R-test-1.png]]
+
+**** plot (grid)
+
+- ggplot2 では ~:results output graphics~ を使う
+- doom-emacs では ~:results output graphics file~ にする必要あり
+
+#+begin_src R :results output graphics file :file babel-img/R-test-2.png
+library(tidyverse)
+ggplot(iris, aes(x = Sepal.Length, y = Sepal.Width)) + geom_point()
+#+end_src
+
+#+RESULTS:
+[[file:babel-img/R-test-2.png]]
+
+- もしくは、:session を使う
+#+begin_src R :results graphics file :session :file babel-img/R-test-3.png
+library(tidyverse)
+ggplot(iris, aes(x = Sepal.Length, y = Sepal.Width)) + geom_point()
+#+end_src
+
+#+RESULTS:
+[[file:babel-img/R-test-3.png]]
+
+- 毎回ファイル名を指定しない方法
+  https://stackoverflow.com/questions/8327939/r-org-mode-how-to-avoid-naming-plot-files
+
+- 自作の (my/get-babel-file) 関数を使うと、~/Dropbox/memo/img/babel/ 配下に作成
+
+**** LaTex 出力
+
+xtable package を使って LaTex 出力
+
+#+begin_src R :results output latex
+library(xtable)
+x <- rnorm(100)
+y <- x + rnorm(100)
+xtable(summary(lm(y ~ x)))
+#+end_src
+
+#+RESULTS:
+#+begin_export latex
+% latex table generated in R 3.6.3 by xtable 1.8-3 package
+% Thu Apr 16 15:23:32 2020
+\begin{table}[ht]
+\centering
+\begin{tabular}{rrrrr}
+  \hline
+ & Estimate & Std. Error & t value & Pr($>$$|$t$|$) \\ 
+  \hline
+(Intercept) & -0.1605 & 0.1004 & -1.60 & 0.1131 \\ 
+  x & 1.0127 & 0.1023 & 9.90 & 0.0000 \\ 
+   \hline
+\end{tabular}
+\end{table}
+#+end_export
+
+- 上記の結果をコピペして latex として表示すると以下のようになる
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{rrrrr}
+  \hline
+ & Estimate & Std. Error & t value & Pr($>$$|$t$|$) \\
+  \hline
+(Intercept) & -0.0249 & 0.1009 & -0.25 & 0.8057 \\
+  x & 1.0704 & 0.1032 & 10.37 & 0.0000 \\
+   \hline
+\end{tabular}
+\end{table}
+
+*** python
+**** check version
+
+#+begin_src python :session
+import sys
+sys.version
+#+end_src
+
+#+RESULTS:
+: 3.6.9 (default, Nov  7 2019, 10:44:02) 
+: [GCC 8.3.0]
+
+**** session
+
+- ~:results~
+  - value  session モードでの "_" が出力される
+  - output 標準出力への出力内容
+
+- session モードでは、空白行は、インデントの終了として扱われるので注意
+#+begin_src python :session "*Python:hoge*"
+def foo(x):
+    if x>0:
+        return x+1
+    else:
+        return x-1
+
+foo(1)
+#+end_src
+
+#+RESULTS:
+
+**** non-session
+
+- non-session モードでは、コードブロックが関数でラップされる
+- ~:results value~ で出力を表示するには、return 文を使う必要がある
+
+#+BEGIN_SRC python
+1 + 2
+#+END_SRC
+
+#+RESULTS:
+: None
+
+#+BEGIN_SRC python
+return(1 + 2)
+#+END_SRC
+
+#+RESULTS:
+: 3
+
+**** matplotlib
+
+#+begin_src python :session :results file
+import matplotlib
+import matplotlib.pyplot as plt
+matplotlib.use("Agg")
+
+fig=plt.figure(figsize=(3,2))
+plt.plot([1,3,2])
+fig.tight_layout()
+plt.savefig("babel-img/Python-test-1.pdf")
+"babel-img/Python-test-1.pdf" # return this to org-mode
+#+end_src
+
+#+RESULTS:
+[[file:babel-img/Python-test-1.pdf]]
+
+#+begin_src python :results file
+import matplotlib, numpy
+import matplotlib.pyplot as plt
+matplotlib.use("Agg")
+
+fig=plt.figure(figsize=(4,2))
+x=numpy.linspace(-15,15)
+plt.plot(numpy.sin(x)/x)
+fig.tight_layout()
+plt.savefig("babel-img/Python-test-2.png")
+return "babel-img/Python-test-2.png" # return filename to org-mode
+#+end_src
+
+#+RESULTS:
+[[file:babel-img/Python-test-2.png]]
+
+**** Jupyter
+***** 概要
+
+Jupyter を org-babel から利用するためのプラグイン
+- ob-jupyter from =jupyter= (269 stars) <- _org-mode からは最も使いやすい_
+- ipython from =ob-ipython= (641 stars)
+- ob-ein from =ein= (932 stars)
+- ob-ipython が必要
+
+***** =jupyter=
+
+- :session は必須
+- python3 を利用する場合は、pyenv で version を指定する
+#+begin_src jupyter-python :session py
+import sys
+sys.version
+#+end_src
+
+#+RESULTS:
+: 2.7.17 (default, Apr 15 2020, 17:20:14) \n[GCC 7.5.0]
+
+***** =ob-ipython=
+
+- doom-emacs では =ob-ipython= は DEPRECATED
+- =:session :results raw drawer=
+#+begin_src ipython :session :results raw drawer :kernel python3
+import sys
+sys.version
+#+end_src
+
+#+RESULTS:
+: # Out[6]:
+: : '3.6.8 (default, Aug 20 2019, 17:12:48) \n[GCC 8.3.0]'
+
+#+begin_src ipython :session :results raw drawer
+%matplotlib inline
+import matplotlib.pyplot as plt
+import numpy as np
+plt.hist(np.random.randn(20000), bins=200)
+#+end_src
+
+***** =ein=
+
+- Test
+#+NAME: 0b501ee1-bcee-48b3-b8c3-912c0d150754
+#+begin_src ein :session localhost :results raw drawer
+import numpy, math, matplotlib.pyplot as plt
+%matplotlib inline
+x = numpy.linspace(0, 2*math.pi)
+plt.plot(x, numpy.sin(x))
+#+end_src
+
+:results:
+[<matplotlib.lines.Line2D at 0x7fdc91e8f080>]
+[[file:/home/shun/Dropbox/memo/img/babel-ein//ob-ein-2c9ad5929050da5b1d26b499f8ad43cc.png]]
+
+#+NAME: 1cbb4663-0c3d-46b2-95a7-ef792f247d2b
+#+begin_src ein :session localhost :results raw drawer
+import sys
+sys.version
+#+end_src
+
+*** inline code
+
+src_python{return(1+2)} {{{results(=3=)}}}
+
+*** extract value from org-table
+
+#+tblname: data_table
+| a | 1 |
+| b | 2 |
+| c | 3 |
+
+#+begin_src python :var val=1 :var data=data_table
+# Return row specified by val.
+# In non-session mode, use return to return results.
+return(data[val])
+#+end_src
+
+#+RESULTS:
+| b | 2 |
+
+*** c++
+
+#+header: :includes <iostream>
+#+begin_src C++
+std::cout << "Hello world!!" << std::endl;
+#+end_src
+
+#+RESULTS:
+: Hello world!!
+
+*** Stan
+
+- モデルをファイル名付きで定義
+#+begin_src stan :file babel-test.stan
+data {
+  int<lower=1> N;
+  vector[N] x;
+}
+
+parameters {
+  real mu;
+  real<lower=0> sigma;
+}
+
+model {
+  x ~ normal(mu, sigma);
+}
+#+end_src
+
+#+RESULTS:
+[[file:babel-test.stan]]
+
+
+- データを用意して rstan から stan file を利用
+#+begin_src R :session *R* :results output
+set.seed(33)
+N <- 50
+x <- rnorm(N, 20, 3)
+
+library(rstan)
+fit <- stan(file="babel-test.stan", data=list(N=N, x=x), chains=1)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+Loading required package: StanHeaders
+Loading required package: ggplot2
+rstan (Version 2.19.2, GitRev: 2e1f913d3ca3)
+For execution on a local, multicore CPU with excess RAM we recommend calling
+options(mc.cores = parallel::detectCores()).
+To avoid recompilation of unchanged Stan programs, we recommend calling
+rstan_options(auto_write = TRUE)
+
+SAMPLING FOR MODEL 'model' NOW (CHAIN 1).
+Chain 1: 
+Chain 1: Gradient evaluation took 6e-06 seconds
+Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 0.06 seconds.
+Chain 1: Adjust your expectations accordingly!
+Chain 1: 
+Chain 1: 
+Chain 1: Iteration:    1 / 2000 [  0%]  (Warmup)
+Chain 1: Iteration:  200 / 2000 [ 10%]  (Warmup)
+Chain 1: Iteration:  400 / 2000 [ 20%]  (Warmup)
+Chain 1: Iteration:  600 / 2000 [ 30%]  (Warmup)
+Chain 1: Iteration:  800 / 2000 [ 40%]  (Warmup)
+Chain 1: Iteration: 1000 / 2000 [ 50%]  (Warmup)
+Chain 1: Iteration: 1001 / 2000 [ 50%]  (Sampling)
+Chain 1: Iteration: 1200 / 2000 [ 60%]  (Sampling)
+Chain 1: Iteration: 1400 / 2000 [ 70%]  (Sampling)
+Chain 1: Iteration: 1600 / 2000 [ 80%]  (Sampling)
+Chain 1: Iteration: 1800 / 2000 [ 90%]  (Sampling)
+Chain 1: Iteration: 2000 / 2000 [100%]  (Sampling)
+Chain 1: 
+Chain 1:  Elapsed Time: 0.008179 seconds (Warm-up)
+Chain 1:                0.0156 seconds (Sampling)
+Chain 1:                0.023779 seconds (Total)
+Chain 1: 
+Warning message:
+In readLines(file, warn = TRUE) :
+  incomplete final line found on '/home/shun/Dropbox/memo/dev/emacs/model.stan'
+#+end_example
+
+*** haskell
+* Exporter
+** Hooks & Filter
+
+- [[https://orgmode.org/manual/Advanced-Export-Configuration.html][12.17 Advanced Export Configuration]]
+
+- Hooks
+  - =org-export-before-processing-hook=
+  - =org-export-before-parsing-hook=
+
+#+begin_src emacs-lisp :results list
+org-export-before-processing-hook
+#+end_src
+
+#+RESULTS:
+- org-blackfriday--reset-org-blackfriday--code-block-num-backticks
+
+#+begin_src emacs-lisp :results list
+org-export-before-parsing-hook
+#+end_src
+
+#+RESULTS:
+- org-attach-expand-links
+
+- Filters
+  - =org-export-filter-TYPE-functions=
+  - 様々な TYPE が定義されている
+
+** ox-hugo
+*** Reference
+
+- [[https://ox-hugo.scripter.co/][Official Manual]]
+- [[https://ox-hugo.scripter.co/doc/org-meta-data-to-hugo-front-matter/][Official Manual: Org のメタデータと Front Matter のマッピング]]
+- [[https://sfus.net/blog/2018/12/org-mode-with-ox-hugo/][Org-mode で記事を書いて Hugo 向け markdown を ox-hugo で自動生成する]]
+  
+*** 特徴
+
+- Blackfriday 形式のマークダウンを出力する org exporter
+- 1 markdown 1 記事の形式ではなく、1 Org で複数記事を出力できる
+ 
+** blog
+
+Hatena/Qiita 向けに org-mode から共通の Markdown を出力するためのメモ
+
+*** ox-hatena
+
+- [[https://github.com/yynozk/ox-hatena][ox-hatena]]
+- 対応していない記法が多く、使えない
+
+*** ox-qmd
+*** ソースコードのハイライト
+
+- Hatena
+  - ox-gfm では ```R``` で出力されるが、```r``` でないとハイライトが効かない
+  - ox-qmd では 言語のタグを ~ox-qmd-language-keyword-alist~ で R -> r へ変換できる
+
+- Qiita
+  - 普通に ```R``` でハイライトされる
+
+*** org-babel の画像を Markdown に貼り付ける
+
+- まずは普通に画像を出力
+- nautilas で右クリック -> Copy Dropbox Link
+- 得られる Link は画像への直リンクではないので、以下のように修正
+  [変更前] https://www.dropbox.com/s/p13uj7dxfx9xyo0/first-post_iris.png?dl=0
+  [変更後] [[https://dl.dropboxusercontent.com/s/p13uj7dxfx9xyo0/first-post_iris.png]]
+
+- 以下のようにリンクに #+ATTR_HTML を追加する
+- ox-gfm などで Markdown へ変換
+   
+#+begin_src org
+,#+ATTR_HTML:
+[[https://dl.dropboxusercontent.com/s/p13uj7dxfx9xyo0/first-post_iris.png]]
+#+end_src
+
+- 参考
+  - [[http://ijmp320.hatenablog.jp/entry/2015/01/18/171807][【備忘録】Dropboxの画像のURL（直リンク）の取得]]
+  - [[https://orgmode.org/worg/org-tutorials/images-and-xhtml-export.html][Images and XHTML export]]
+
+*** 数式
+**** はてなブログ
+
+- mathjax をはてなブログの 設定 -> 詳細設定 -> head 要素に追加 に設定
+- エスケープが必要になる
+  - ~\_~ , ~\^~ , ~\(~ , ~\)~ , ~\[~ , ~\]~ , ~\|~ , ~\\~
+- インライン 
+  - $y=f(x)$
+  - org-mode から export すると \(y=f(x) \) になるが正しく表示されない
+
+- ブロック
+  - $$
+    y=f(x)
+    $$
+  
+  - もしくは
+    \begin{equation}
+    y=f(x)
+    \end{equation}
+
+- 参考
+  - [[https://cartman0.hatenablog.com/entry/2019/04/27/%E3%81%AF%E3%81%A6%E3%81%AA%E3%83%96%E3%83%AD%E3%82%B0%28markdown%E8%A8%98%E6%B3%95%29%E3%81%A7%E6%95%B0%E5%BC%8F%E3%82%92%E6%9B%B8%E3%81%8F%E3%83%A1%E3%83%A2][はてなブログ(markdown記法)で数式を書くメモ]]
+  - [[https://cartman0.hatenablog.com/entry/2016/11/13/034412][hatenaブログにmathjax を埋め込む]]
+
+**** Qiita
+
+- インライン $y=f(x)$
+- ブロック $$y=f(x)$$
+- \begin{equation} \end{equation} は正しく表示されない
+
+** ox-ravel
+
+- [[https://cwcode.wordpress.com/2013/05/21/vignette/][Writing R vignettes in emacs org mode using ox-ravel]]
+- [[https://github.com/chasberry/orgmode-accessories/blob/org-9-plus/ox-ravel.org][ox-ravel]]
+- org から knitr を出力する
+
+* TODOs
+
+- [[https://github.com/Kungsgeten/org-brain][org-brain]]
+- [[https://github.com/theodorewiles/org-mind-map][org-mind-map]]

@@ -1,0 +1,106 @@
+#+STARTUP: content indent
+
+* Trades and Quote(TAQ), Trade only, Full depth
+* Bid and Ask
+* Level1, Level2
+* NBBO
+* Consolidated quote, Consolidated tape trades
+
+#? 2 types of market data specs
+# 1. Consolidated Tape Association (CTA) Plan
+# 2. the Unlisted Trading Privileges (UTP) Plan
+# https://medium.com/automation-generation/exploring-the-differences-between-u-s-stock-market-data-feeds-3da26946cbd6
+
+## CTS (Consolidated Tape System) ----
+
+# https://www.dir.co.jp/report/research/capital-mkt/securities/20140728_008797.pdf
+## 全米証券市場システム （NMS）
+# NMS とは 「アメリカの主要株式市場を緩やかに連結し、各市場間での競争を喚起して、
+# より効率的な株式市場を目指すというコンセプト 、あるいはこの仕組みの総称」12である。
+#? 具体的には、各市場の取引情報を統合する CTS(Consolidated Tape System)、
+#? 各市場の最良気配を統合する CQS(Consolidated Quote System)、
+#? より良い気配を表示している市場へ注文を回送する ITS (Intermarket Trading System)により、
+# 複数の市場が提示している気配の中で、より良い気配を表示している市場に注文を回送する仕組みである。
+
+# CTS/CQS の技術詳細
+# https://www.ctaplan.com/tech-specs
+
+# Exchange => SIP (Security Information Processor) => CTS
+# OTC/Dark pools => TRF => SIP => CTS
+
+#? CTS の問題点
+# 1. SIP の処理に時間がかかるため、Consolidated data は HFT には適さない
+# 2. Top of Book (NBBO) しか対応していない (板の厚さなどはわからない)
+# 3. Odd lot は NBBO の対象にならない (将来的に変更される可能性)
+
+#? Tape
+# 1. Tape A = NYSE listed
+# 2. Tape C = NASDAQ listed
+# 3. Tape B = other than A or C: mainly listed on ARCA
+
+## IQFeed ----
+# 2 digit hex number
+tc <- QuantTools:::.get_iqfeed_trade_conditions_info()
+tc
+
+## IB ----
+# https://www.interactivebrokers.co.jp/jp/index.php?f=7235
+* Last qualified trade (C) and extended trade
+* NMS, FINRA
+* Trade Conditions
+** IQFeed Trade Conditions
+*** http://forums.iqfeed.net/index.cfm?page=topic&topicID=4206
+*** API で List 取得可能
+http://www.iqfeed.net/dev/api/docs/SymbolLookupviaTCPIP.cfm
+  
+Hex 
+1  = 1 REGULAR Normal Trade @ @
+17 = 23 FORMT Form-T Trade T T
+3D = 61 INTRMRK_SWEEP Intramaket Sweep F F
+87 = 135 ODDLOT Odd Lot Trade I I
+3E = 62 DERIVPRI Derivately Priced 4 4
+
+39 = 57 MC_OFCLOPEN Market Center Official Opening Price Q Q
+2E = 46 MC_OFCLCLOSE Market Center Official Closing Price M M
+
+_42 = 66 CROSS_TRADE Cross Trade X X_
+_40 = 64 CLSING Closing Prints 6 6_
+_8A = 138 Opening_
+
+DTN VALUE DEFINE DESCRIPTION NASDAQ NYSE/Amex
+1 REGULAR Normal Trade @ @
+2 ACQ Acquisition A N/A
+3 CASHM Cash Only Market C N/A
+4 BUNCHED Bunched Trade B N/A
+5 AVGPRI Average Price Trade W B
+6 CASH Cash Trade (same day clearing) C C
+7 DIST Distribution D N/A
+10 BUNCHEDSOLD Bunched Sold Trade G N/A
+15 RULE155 Rule – 155 Trade AMEX K K
+16 SOLDLAST Sold Last (late reporting) L L
+17 NEXTDAYCLR Next Day Clearing N N
+18 LATEREP Opened - Late Report of Opening Trade (in or out of sequence) O N/A
+19 PRP Prior Reference Price P P
+20 SELLER Seller R R
+21 SPLIT Split Trade S N/A
+23 FORMT Form-T Trade T T
+25 SOLDOSEQ Sold Out of Sequence Z Z
+30 OPEN Late Report of Opening Trade - out of sequence O O
+31 OPNL Late Report of Opening Trade – in correct sequence O N/A
+32 AUTO Transaction Executed Electronically N/A E
+46 MC_OFCLCLOSE Market Center Official Closing Price M M
+47 STPD_REGULAR Stopped Stock - Regular Trade 1 N/A
+48 STPD_SOLDLAST Stopped Stock - Sold Last 2 N/A
+49 STPD_SOLDOSEQ Stopped Stock - Sold out of sequence 3 N/A
+57 MC_OFCLOPEN Market Center Official Opening Price Q Q
+58 FORMTSOLDOSEQ Form-T Sold Out of Sequence U U
+59 YELLOWFLAG Yellow Flag Y N/A
+61 INTRMRK_SWEEP Intramaket Sweep F F
+62 DERIVPRI Derivately Priced 4 4
+63 REOPNING Re-Opening Prints 5 5
+64 CLSING Closing Prints 6 6
+66 CROSS_TRADE Cross Trade X X
+67 PRICE_VAR Price Variation H H
+68 STKOPT_TRADE Stock-Option Trade V V
+135 ODDLOT Odd Lot Trade I I
+136 CORRCSLDLAST Corrected Consolidated last 9 9

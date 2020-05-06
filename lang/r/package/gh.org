@@ -1,0 +1,129 @@
+#+STARTUP: folded indent inlineimages latexpreview
+#+PROPERTY: header-args:R :results output :colnames yes :session *R:gh*
+
+* ={gh}=
+* Library & PAT
+
+- [[https://developer.github.com/v3/][Github API]] にアクセスするための package
+
+#+begin_src R :results silent
+library(tidyverse)
+library(gh)
+#+end_src
+
+#+begin_src R :results silent
+Sys.getenv("GITHUB_PAT")
+#+end_src
+
+* My repos
+
+#+begin_src R
+my_repos <- gh("GET /users/:username/repos", username = "five-dots")
+str(my_repos[[1]])
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+List of 74
+ $ id               : int 246497294
+ $ node_id          : chr "MDEwOlJlcG9zaXRvcnkyNDY0OTcyOTQ="
+ $ name             : chr "a4me"
+ $ full_name        : chr "five-dots/a4me"
+ $ private          : logi FALSE
+ $ owner            :List of 18
+  ..$ login              : chr "five-dots"
+  ..$ id                 : int 51394432
+  ..$ node_id            : chr "MDQ6VXNlcjUxMzk0NDMy"
+  ..$ avatar_url         : chr "https://avatars3.githubusercontent.com/u/51394432?v=4"
+  ..$ gravatar_id        : chr ""
+  ..$ url                : chr "https://api.github.com/users/five-dots"
+  ..$ html_url           : chr "https://github.com/five-dots"
+  ..$ followers_url      : chr "https://api.github.com/users/five-dots/followers"
+  ..$ following_url      : chr "https://api.github.com/users/five-dots/following{/other_user}"
+  ..$ gists_url          : chr "https://api.github.com/users/five-dots/gists{/gist_id}"
+  ..$ starred_url        : chr "https://api.github.com/users/five-dots/starred{/owner}{/repo}"
+  ..$ subscriptions_url  : chr "https://api.github.com/users/five-dots/subscriptions"
+  ..$ organizations_url  : chr "https://api.github.com/users/five-dots/orgs"
+  ..$ repos_url          : chr "https://api.github.com/users/five-dots/repos"
+  ..$ events_url         : chr "https://api.github.com/users/five-dots/events{/privacy}"
+  ..$ received_events_url: chr "https://api.github.com/users/five-dots/received_events"
+  ..$ type               : chr "User"
+  ..$ site_admin         : logi FALSE
+ $ html_url         : chr "https://github.com/five-dots/a4me"
+ $ description      : chr "A collection of assertion functions for me."
+ $ fork             : logi FALSE
+ $ url              : chr "https://api.github.com/repos/five-dots/a4me"
+ $ forks_url        : chr "https://api.github.com/repos/five-dots/a4me/forks"
+ $ keys_url         : chr "https://api.github.com/repos/five-dots/a4me/keys{/key_id}"
+ $ collaborators_url: chr "https://api.github.com/repos/five-dots/a4me/collaborators{/collaborator}"
+ $ teams_url        : chr "https://api.github.com/repos/five-dots/a4me/teams"
+ $ hooks_url        : chr "https://api.github.com/repos/five-dots/a4me/hooks"
+ $ issue_events_url : chr "https://api.github.com/repos/five-dots/a4me/issues/events{/number}"
+ $ events_url       : chr "https://api.github.com/repos/five-dots/a4me/events"
+ $ assignees_url    : chr "https://api.github.com/repos/five-dots/a4me/assignees{/user}"
+ $ branches_url     : chr "https://api.github.com/repos/five-dots/a4me/branches{/branch}"
+ $ tags_url         : chr "https://api.github.com/repos/five-dots/a4me/tags"
+ $ blobs_url        : chr "https://api.github.com/repos/five-dots/a4me/git/blobs{/sha}"
+ $ git_tags_url     : chr "https://api.github.com/repos/five-dots/a4me/git/tags{/sha}"
+ $ git_refs_url     : chr "https://api.github.com/repos/five-dots/a4me/git/refs{/sha}"
+ $ trees_url        : chr "https://api.github.com/repos/five-dots/a4me/git/trees{/sha}"
+ $ statuses_url     : chr "https://api.github.com/repos/five-dots/a4me/statuses/{sha}"
+ $ languages_url    : chr "https://api.github.com/repos/five-dots/a4me/languages"
+ $ stargazers_url   : chr "https://api.github.com/repos/five-dots/a4me/stargazers"
+ $ contributors_url : chr "https://api.github.com/repos/five-dots/a4me/contributors"
+ $ subscribers_url  : chr "https://api.github.com/repos/five-dots/a4me/subscribers"
+ $ subscription_url : chr "https://api.github.com/repos/five-dots/a4me/subscription"
+ $ commits_url      : chr "https://api.github.com/repos/five-dots/a4me/commits{/sha}"
+ $ git_commits_url  : chr "https://api.github.com/repos/five-dots/a4me/git/commits{/sha}"
+ $ comments_url     : chr "https://api.github.com/repos/five-dots/a4me/comments{/number}"
+ $ issue_comment_url: chr "https://api.github.com/repos/five-dots/a4me/issues/comments{/number}"
+ $ contents_url     : chr "https://api.github.com/repos/five-dots/a4me/contents/{+path}"
+ $ compare_url      : chr "https://api.github.com/repos/five-dots/a4me/compare/{base}...{head}"
+ $ merges_url       : chr "https://api.github.com/repos/five-dots/a4me/merges"
+ $ archive_url      : chr "https://api.github.com/repos/five-dots/a4me/{archive_format}{/ref}"
+ $ downloads_url    : chr "https://api.github.com/repos/five-dots/a4me/downloads"
+ $ issues_url       : chr "https://api.github.com/repos/five-dots/a4me/issues{/number}"
+ $ pulls_url        : chr "https://api.github.com/repos/five-dots/a4me/pulls{/number}"
+ $ milestones_url   : chr "https://api.github.com/repos/five-dots/a4me/milestones{/number}"
+ $ notifications_url: chr "https://api.github.com/repos/five-dots/a4me/notifications{?since,all,participating}"
+ $ labels_url       : chr "https://api.github.com/repos/five-dots/a4me/labels{/name}"
+ $ releases_url     : chr "https://api.github.com/repos/five-dots/a4me/releases{/id}"
+ $ deployments_url  : chr "https://api.github.com/repos/five-dots/a4me/deployments"
+ $ created_at       : chr "2020-03-11T06:55:49Z"
+ $ updated_at       : chr "2020-03-11T06:56:38Z"
+ $ pushed_at        : chr "2020-03-11T06:56:36Z"
+ $ git_url          : chr "git://github.com/five-dots/a4me.git"
+ $ ssh_url          : chr "git@github.com:five-dots/a4me.git"
+ $ clone_url        : chr "https://github.com/five-dots/a4me.git"
+ $ svn_url          : chr "https://github.com/five-dots/a4me"
+ $ homepage         : NULL
+ $ size             : int 4
+ $ stargazers_count : int 0
+ $ watchers_count   : int 0
+ $ language         : chr "R"
+ $ has_issues       : logi TRUE
+ $ has_projects     : logi TRUE
+ $ has_downloads    : logi TRUE
+ $ has_wiki         : logi TRUE
+ $ has_pages        : logi FALSE
+ $ forks_count      : int 0
+ $ mirror_url       : NULL
+ $ archived         : logi FALSE
+ $ disabled         : logi FALSE
+ $ open_issues_count: int 0
+ $ license          :List of 5
+  ..$ key    : chr "other"
+  ..$ name   : chr "Other"
+  ..$ spdx_id: chr "NOASSERTION"
+  ..$ url    : NULL
+  ..$ node_id: chr "MDc6TGljZW5zZTA="
+ $ forks            : int 0
+ $ open_issues      : int 0
+ $ watchers         : int 0
+ $ default_branch   : chr "master"
+ $ permissions      :List of 3
+  ..$ admin: logi TRUE
+  ..$ push : logi TRUE
+  ..$ pull : logi TRUE
+#+end_example

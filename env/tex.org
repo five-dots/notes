@@ -1,0 +1,29 @@
+#+TITLE: LaTex Setup
+#+STARTUP: content indent latexpreview
+#+DATE: 2019-06-17
+
+* Linxu
+
+- Tex Live
+
+#+begin_src shell
+sudo apt install texlive-lang-cjk
+sudo apt install texlive-fonts-recommended texlive-fonts-extra
+sudo apt install xdvik-ja
+sudo apt install dvipng
+#+end_src
+
+* Mac
+
+- [[https://qiita.com/Mizuto_Kadowaki/items/f8878140125ad40ac56e][LaTeX環境構築（macOS）まとめてみた]]
+
+以下のどちらも TexLive をベースにしたもの
+- MacTex
+- BasicTex
+
+#+begin_src shell
+# いずれかを選択
+brew cask install mactex
+brew cask install mactex-no-gui
+brew cask install basic-tex
+#+end_src

@@ -1,0 +1,1477 @@
+#+STARTUP: folded indent inlineimages latexpreview
+#+PROPERTY: header-args:R :results output :session *R:keras* :width 640 :height 480 :colnames yes
+
+* ライブラリの読み込み
+  
+#+begin_src R :results silent
+library(tidyverse)
+library(tidymodels)
+library(keras)
+library(reticulate)
+#+end_src
+
+* keras + TensorFlow のインストール
+
+- keras のコアライブラリと TensorFlow バックエンドのインストール
+- =~/.virtualenvs/r-reticulate= に venv の仮想環境が作成される
+#+begin_src R
+install_keras()
+#+end_src
+
+- ライブラリ一覧
+#+begin_src shell :results output
+ls ~/.virtualenvs/r-reticulate/lib/python3.6/site-packages
+#+end_src
+
+#+RESULTS:
+#+begin_example
+docs
+easy_install.py
+gast
+gast-0.2.2.dist-info
+keras
+Keras-2.3.1.dist-info
+opt_einsum
+opt_einsum-3.1.0.dist-info
+PIL
+Pillow-7.0.0.dist-info
+pip
+pip-20.0.2.dist-info
+pkg_resources
+pkg_resources-0.0.0.dist-info
+__pycache__
+PyYAML-5.3.dist-info
+scipy
+scipy-1.4.1.dist-info
+setuptools
+setuptools-45.2.0.dist-info
+tensorboard
+tensorboard-2.0.2.dist-info
+tensorflow
+tensorflow-2.0.0.dist-info
+tensorflow_core
+tensorflow_estimator
+tensorflow_estimator-2.0.1.dist-info
+tensorflow_hub
+tensorflow_hub-0.7.0.dist-info
+yaml
+#+end_example
+
+* ワークフロー
+
+1. モデルの枠組みを作成
+   - =keras_model_*()=
+
+2. モデルに層を追加
+   - =model %>% layar_*(units, activation, ...)=
+
+3. コンパイル
+   - =compile(model, loss, optimizer, metrics)=
+
+4. 学習
+   - =fit(model, train_x, train_y, epochs, batch_size, validation_split)=
+
+5. 評価
+   - =evaluate(model, test_x, test_y)=
+
+6. 予測
+   - =predict_*(model, test_x)=
+
+* 関数リスト
+** 全関数
+
+#+begin_src R
+pacman::p_funs(keras)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+  [1] "%<-%"                                    
+  [2] "%>%"                                     
+  [3] "activation_elu"                          
+  [4] "activation_exponential"                  
+  [5] "activation_hard_sigmoid"                 
+  [6] "activation_linear"                       
+  [7] "activation_relu"                         
+  [8] "activation_selu"                         
+  [9] "activation_sigmoid"                      
+ [10] "activation_softmax"                      
+ [11] "activation_softplus"                     
+ [12] "activation_softsign"                     
+ [13] "activation_tanh"                         
+ [14] "application_densenet"                    
+ [15] "application_densenet121"                 
+ [16] "application_densenet169"                 
+ [17] "application_densenet201"                 
+ [18] "application_inception_resnet_v2"         
+ [19] "application_inception_v3"                
+ [20] "application_mobilenet"                   
+ [21] "application_mobilenet_v2"                
+ [22] "application_nasnet"                      
+ [23] "application_nasnetlarge"                 
+ [24] "application_nasnetmobile"                
+ [25] "application_resnet50"                    
+ [26] "application_vgg16"                       
+ [27] "application_vgg19"                       
+ [28] "application_xception"                    
+ [29] "array_reshape"                           
+ [30] "backend"                                 
+ [31] "bidirectional"                           
+ [32] "callback_csv_logger"                     
+ [33] "callback_early_stopping"                 
+ [34] "callback_lambda"                         
+ [35] "callback_learning_rate_scheduler"        
+ [36] "callback_model_checkpoint"               
+ [37] "callback_progbar_logger"                 
+ [38] "callback_reduce_lr_on_plateau"           
+ [39] "callback_remote_monitor"                 
+ [40] "callback_tensorboard"                    
+ [41] "callback_terminate_on_naan"              
+ [42] "clone_model"                             
+ [43] "compile"                                 
+ [44] "constraint_maxnorm"                      
+ [45] "constraint_minmaxnorm"                   
+ [46] "constraint_nonneg"                       
+ [47] "constraint_unitnorm"                     
+ [48] "count_params"                            
+ [49] "create_layer"                            
+ [50] "create_wrapper"                          
+ [51] "custom_metric"                           
+ [52] "dataset_boston_housing"                  
+ [53] "dataset_cifar10"                         
+ [54] "dataset_cifar100"                        
+ [55] "dataset_fashion_mnist"                   
+ [56] "dataset_imdb"                            
+ [57] "dataset_imdb_word_index"                 
+ [58] "dataset_mnist"                           
+ [59] "dataset_reuters"                         
+ [60] "dataset_reuters_word_index"              
+ [61] "densenet_preprocess_input"               
+ [62] "evaluate"                                
+ [63] "evaluate_generator"                      
+ [64] "export_savedmodel"                       
+ [65] "fit"                                     
+ [66] "fit_generator"                           
+ [67] "fit_image_data_generator"                
+ [68] "fit_text_tokenizer"                      
+ [69] "flag_boolean"                            
+ [70] "flag_integer"                            
+ [71] "flag_numeric"                            
+ [72] "flag_string"                             
+ [73] "flags"                                   
+ [74] "flow_images_from_data"                   
+ [75] "flow_images_from_dataframe"              
+ [76] "flow_images_from_directory"              
+ [77] "freeze_weights"                          
+ [78] "from_config"                             
+ [79] "generator_next"                          
+ [80] "get_config"                              
+ [81] "get_file"                                
+ [82] "get_input_at"                            
+ [83] "get_input_mask_at"                       
+ [84] "get_input_shape_at"                      
+ [85] "get_layer"                               
+ [86] "get_output_at"                           
+ [87] "get_output_mask_at"                      
+ [88] "get_output_shape_at"                     
+ [89] "get_weights"                             
+ [90] "hdf5_matrix"                             
+ [91] "image_array_resize"                      
+ [92] "image_array_save"                        
+ [93] "image_data_generator"                    
+ [94] "image_load"                              
+ [95] "image_to_array"                          
+ [96] "imagenet_decode_predictions"             
+ [97] "imagenet_preprocess_input"               
+ [98] "implementation"                          
+ [99] "inception_resnet_v2_preprocess_input"    
+[100] "inception_v3_preprocess_input"           
+[101] "initializer_constant"                    
+[102] "initializer_glorot_normal"               
+[103] "initializer_glorot_uniform"              
+[104] "initializer_he_normal"                   
+[105] "initializer_he_uniform"                  
+[106] "initializer_identity"                    
+[107] "initializer_lecun_normal"                
+[108] "initializer_lecun_uniform"               
+[109] "initializer_ones"                        
+[110] "initializer_orthogonal"                  
+[111] "initializer_random_normal"               
+[112] "initializer_random_uniform"              
+[113] "initializer_truncated_normal"            
+[114] "initializer_variance_scaling"            
+[115] "initializer_zeros"                       
+[116] "install_keras"                           
+[117] "is_keras_available"                      
+[118] "k_abs"                                   
+[119] "k_all"                                   
+[120] "k_any"                                   
+[121] "k_arange"                                
+[122] "k_argmax"                                
+[123] "k_argmin"                                
+[124] "k_backend"                               
+[125] "k_batch_dot"                             
+[126] "k_batch_flatten"                         
+[127] "k_batch_get_value"                       
+[128] "k_batch_normalization"                   
+[129] "k_batch_set_value"                       
+[130] "k_bias_add"                              
+[131] "k_binary_crossentropy"                   
+[132] "k_cast"                                  
+[133] "k_cast_to_floatx"                        
+[134] "k_categorical_crossentropy"              
+[135] "k_clear_session"                         
+[136] "k_clip"                                  
+[137] "k_concatenate"                           
+[138] "k_constant"                              
+[139] "k_conv1d"                                
+[140] "k_conv2d"                                
+[141] "k_conv2d_transpose"                      
+[142] "k_conv3d"                                
+[143] "k_conv3d_transpose"                      
+[144] "k_cos"                                   
+[145] "k_count_params"                          
+[146] "k_ctc_batch_cost"                        
+[147] "k_ctc_decode"                            
+[148] "k_ctc_label_dense_to_sparse"             
+[149] "k_cumprod"                               
+[150] "k_cumsum"                                
+[151] "k_depthwise_conv2d"                      
+[152] "k_dot"                                   
+[153] "k_dropout"                               
+[154] "k_dtype"                                 
+[155] "k_elu"                                   
+[156] "k_epsilon"                               
+[157] "k_equal"                                 
+[158] "k_eval"                                  
+[159] "k_exp"                                   
+[160] "k_expand_dims"                           
+[161] "k_eye"                                   
+[162] "k_flatten"                               
+[163] "k_floatx"                                
+[164] "k_foldl"                                 
+[165] "k_foldr"                                 
+[166] "k_function"                              
+[167] "k_gather"                                
+[168] "k_get_session"                           
+[169] "k_get_uid"                               
+[170] "k_get_value"                             
+[171] "k_get_variable_shape"                    
+[172] "k_gradients"                             
+[173] "k_greater"                               
+[174] "k_greater_equal"                         
+[175] "k_hard_sigmoid"                          
+[176] "k_identity"                              
+[177] "k_image_data_format"                     
+[178] "k_in_test_phase"                         
+[179] "k_in_top_k"                              
+[180] "k_in_train_phase"                        
+[181] "k_int_shape"                             
+[182] "k_is_keras_tensor"                       
+[183] "k_is_placeholder"                        
+[184] "k_is_sparse"                             
+[185] "k_is_tensor"                             
+[186] "k_l2_normalize"                          
+[187] "k_learning_phase"                        
+[188] "k_less"                                  
+[189] "k_less_equal"                            
+[190] "k_local_conv1d"                          
+[191] "k_local_conv2d"                          
+[192] "k_log"                                   
+[193] "k_logsumexp"                             
+[194] "k_manual_variable_initialization"        
+[195] "k_map_fn"                                
+[196] "k_max"                                   
+[197] "k_maximum"                               
+[198] "k_mean"                                  
+[199] "k_min"                                   
+[200] "k_minimum"                               
+[201] "k_moving_average_update"                 
+[202] "k_ndim"                                  
+[203] "k_normalize_batch_in_training"           
+[204] "k_not_equal"                             
+[205] "k_one_hot"                               
+[206] "k_ones"                                  
+[207] "k_ones_like"                             
+[208] "k_permute_dimensions"                    
+[209] "k_placeholder"                           
+[210] "k_pool2d"                                
+[211] "k_pool3d"                                
+[212] "k_pow"                                   
+[213] "k_print_tensor"                          
+[214] "k_prod"                                  
+[215] "k_random_binomial"                       
+[216] "k_random_normal"                         
+[217] "k_random_normal_variable"                
+[218] "k_random_uniform"                        
+[219] "k_random_uniform_variable"               
+[220] "k_relu"                                  
+[221] "k_repeat"                                
+[222] "k_repeat_elements"                       
+[223] "k_reset_uids"                            
+[224] "k_reshape"                               
+[225] "k_resize_images"                         
+[226] "k_resize_volumes"                        
+[227] "k_reverse"                               
+[228] "k_rnn"                                   
+[229] "k_round"                                 
+[230] "k_separable_conv2d"                      
+[231] "k_set_epsilon"                           
+[232] "k_set_floatx"                            
+[233] "k_set_image_data_format"                 
+[234] "k_set_learning_phase"                    
+[235] "k_set_session"                           
+[236] "k_set_value"                             
+[237] "k_shape"                                 
+[238] "k_sigmoid"                               
+[239] "k_sign"                                  
+[240] "k_sin"                                   
+[241] "k_softmax"                               
+[242] "k_softplus"                              
+[243] "k_softsign"                              
+[244] "k_sparse_categorical_crossentropy"       
+[245] "k_spatial_2d_padding"                    
+[246] "k_spatial_3d_padding"                    
+[247] "k_sqrt"                                  
+[248] "k_square"                                
+[249] "k_squeeze"                               
+[250] "k_stack"                                 
+[251] "k_std"                                   
+[252] "k_stop_gradient"                         
+[253] "k_sum"                                   
+[254] "k_switch"                                
+[255] "k_tanh"                                  
+[256] "k_temporal_padding"                      
+[257] "k_tile"                                  
+[258] "k_to_dense"                              
+[259] "k_transpose"                             
+[260] "k_truncated_normal"                      
+[261] "k_update"                                
+[262] "k_update_add"                            
+[263] "k_update_sub"                            
+[264] "k_var"                                   
+[265] "k_variable"                              
+[266] "k_zeros"                                 
+[267] "k_zeros_like"                            
+[268] "keras_array"                             
+[269] "keras_model"                             
+[270] "keras_model_custom"                      
+[271] "keras_model_sequential"                  
+[272] "KerasCallback"                           
+[273] "KerasConstraint"                         
+[274] "KerasLayer"                              
+[275] "KerasWrapper"                            
+[276] "layer_activation"                        
+[277] "layer_activation_elu"                    
+[278] "layer_activation_leaky_relu"             
+[279] "layer_activation_parametric_relu"        
+[280] "layer_activation_relu"                   
+[281] "layer_activation_selu"                   
+[282] "layer_activation_softmax"                
+[283] "layer_activation_thresholded_relu"       
+[284] "layer_activity_regularization"           
+[285] "layer_add"                               
+[286] "layer_alpha_dropout"                     
+[287] "layer_average"                           
+[288] "layer_average_pooling_1d"                
+[289] "layer_average_pooling_2d"                
+[290] "layer_average_pooling_3d"                
+[291] "layer_batch_normalization"               
+[292] "layer_concatenate"                       
+[293] "layer_conv_1d"                           
+[294] "layer_conv_2d"                           
+[295] "layer_conv_2d_transpose"                 
+[296] "layer_conv_3d"                           
+[297] "layer_conv_3d_transpose"                 
+[298] "layer_conv_lstm_2d"                      
+[299] "layer_cropping_1d"                       
+[300] "layer_cropping_2d"                       
+[301] "layer_cropping_3d"                       
+[302] "layer_cudnn_gru"                         
+[303] "layer_cudnn_lstm"                        
+[304] "layer_dense"                             
+[305] "layer_dense_features"                    
+[306] "layer_depthwise_conv_2d"                 
+[307] "layer_dot"                               
+[308] "layer_dropout"                           
+[309] "layer_embedding"                         
+[310] "layer_flatten"                           
+[311] "layer_gaussian_dropout"                  
+[312] "layer_gaussian_noise"                    
+[313] "layer_global_average_pooling_1d"         
+[314] "layer_global_average_pooling_2d"         
+[315] "layer_global_average_pooling_3d"         
+[316] "layer_global_max_pooling_1d"             
+[317] "layer_global_max_pooling_2d"             
+[318] "layer_global_max_pooling_3d"             
+[319] "layer_gru"                               
+[320] "layer_input"                             
+[321] "layer_lambda"                            
+[322] "layer_locally_connected_1d"              
+[323] "layer_locally_connected_2d"              
+[324] "layer_lstm"                              
+[325] "layer_masking"                           
+[326] "layer_max_pooling_1d"                    
+[327] "layer_max_pooling_2d"                    
+[328] "layer_max_pooling_3d"                    
+[329] "layer_maximum"                           
+[330] "layer_minimum"                           
+[331] "layer_multiply"                          
+[332] "layer_permute"                           
+[333] "layer_repeat_vector"                     
+[334] "layer_reshape"                           
+[335] "layer_separable_conv_1d"                 
+[336] "layer_separable_conv_2d"                 
+[337] "layer_simple_rnn"                        
+[338] "layer_spatial_dropout_1d"                
+[339] "layer_spatial_dropout_2d"                
+[340] "layer_spatial_dropout_3d"                
+[341] "layer_subtract"                          
+[342] "layer_upsampling_1d"                     
+[343] "layer_upsampling_2d"                     
+[344] "layer_upsampling_3d"                     
+[345] "layer_zero_padding_1d"                   
+[346] "layer_zero_padding_2d"                   
+[347] "layer_zero_padding_3d"                   
+[348] "load_model_hdf5"                         
+[349] "load_model_tf"                           
+[350] "load_model_weights_hdf5"                 
+[351] "load_model_weights_tf"                   
+[352] "load_text_tokenizer"                     
+[353] "loss_binary_crossentropy"                
+[354] "loss_categorical_crossentropy"           
+[355] "loss_categorical_hinge"                  
+[356] "loss_cosine_proximity"                   
+[357] "loss_cosine_similarity"                  
+[358] "loss_hinge"                              
+[359] "loss_kullback_leibler_divergence"        
+[360] "loss_logcosh"                            
+[361] "loss_mean_absolute_error"                
+[362] "loss_mean_absolute_percentage_error"     
+[363] "loss_mean_squared_error"                 
+[364] "loss_mean_squared_logarithmic_error"     
+[365] "loss_poisson"                            
+[366] "loss_sparse_categorical_crossentropy"    
+[367] "loss_squared_hinge"                      
+[368] "make_sampling_table"                     
+[369] "metric_binary_accuracy"                  
+[370] "metric_binary_crossentropy"              
+[371] "metric_categorical_accuracy"             
+[372] "metric_categorical_crossentropy"         
+[373] "metric_cosine_proximity"                 
+[374] "metric_hinge"                            
+[375] "metric_kullback_leibler_divergence"      
+[376] "metric_mean_absolute_error"              
+[377] "metric_mean_absolute_percentage_error"   
+[378] "metric_mean_squared_error"               
+[379] "metric_mean_squared_logarithmic_error"   
+[380] "metric_poisson"                          
+[381] "metric_sparse_categorical_crossentropy"  
+[382] "metric_sparse_top_k_categorical_accuracy"
+[383] "metric_squared_hinge"                    
+[384] "metric_top_k_categorical_accuracy"       
+[385] "mobilenet_decode_predictions"            
+[386] "mobilenet_load_model_hdf5"               
+[387] "mobilenet_preprocess_input"              
+[388] "mobilenet_v2_decode_predictions"         
+[389] "mobilenet_v2_load_model_hdf5"            
+[390] "mobilenet_v2_preprocess_input"           
+[391] "model_from_json"                         
+[392] "model_from_saved_model"                  
+[393] "model_from_yaml"                         
+[394] "model_to_json"                           
+[395] "model_to_saved_model"                    
+[396] "model_to_yaml"                           
+[397] "multi_gpu_model"                         
+[398] "nasnet_preprocess_input"                 
+[399] "normalize"                               
+[400] "optimizer_adadelta"                      
+[401] "optimizer_adagrad"                       
+[402] "optimizer_adam"                          
+[403] "optimizer_adamax"                        
+[404] "optimizer_nadam"                         
+[405] "optimizer_rmsprop"                       
+[406] "optimizer_sgd"                           
+[407] "pad_sequences"                           
+[408] "pop_layer"                               
+[409] "predict_classes"                         
+[410] "predict_generator"                       
+[411] "predict_on_batch"                        
+[412] "predict_proba"                           
+[413] "regularizer_l1"                          
+[414] "regularizer_l1_l2"                       
+[415] "regularizer_l2"                          
+[416] "reset_states"                            
+[417] "run_dir"                                 
+[418] "save_model_hdf5"                         
+[419] "save_model_tf"                           
+[420] "save_model_weights_hdf5"                 
+[421] "save_model_weights_tf"                   
+[422] "save_text_tokenizer"                     
+[423] "sequences_to_matrix"                     
+[424] "serialize_model"                         
+[425] "set_weights"                             
+[426] "shape"                                   
+[427] "skipgrams"                               
+[428] "tensorboard"                             
+[429] "test_on_batch"                           
+[430] "text_hashing_trick"                      
+[431] "text_one_hot"                            
+[432] "text_to_word_sequence"                   
+[433] "text_tokenizer"                          
+[434] "texts_to_matrix"                         
+[435] "texts_to_sequences"                      
+[436] "texts_to_sequences_generator"            
+[437] "time_distributed"                        
+[438] "timeseries_generator"                    
+[439] "to_categorical"                          
+[440] "train_on_batch"                          
+[441] "tuple"                                   
+[442] "unfreeze_weights"                        
+[443] "unserialize_model"                       
+[444] "use_backend"                             
+[445] "use_condaenv"                            
+[446] "use_implementation"                      
+[447] "use_python"                              
+[448] "use_session_with_seed"                   
+[449] "use_virtualenv"                          
+[450] "with_custom_object_scope"                
+[451] "xception_preprocess_input"
+#+end_example
+
+** モデル =keras_model_*()=
+
+- モデルの雛形を作る
+#+begin_src R
+pacman::p_funs(keras) %>% str_subset("^keras_model")
+#+end_src
+
+#+RESULTS:
+: [1] "keras_model"            "keras_model_custom"     "keras_model_sequential"
+
+#+begin_src R :results silent
+keras_model(
+  inputs, # Input layer
+  outputs = NULL # Output layer
+)
+
+## Keras Model composed of a linear stack of layers
+keras_model_sequential(
+  layers = NULL, # List of layers to add to the model
+  name = NULL
+)
+
+keras_model_custom(
+  model_fn, # Function that returns an R custom model
+  name = NULL
+)
+#+end_src
+
+** レイヤー =layer_*()=
+*** リスト
+
+#+begin_src R
+pacman::p_funs(keras) %>% str_subset("^layer")
+#+end_src
+
+#+RESULTS:
+#+begin_example
+ [1] "layer_activation"                  "layer_activation_elu"             
+ [3] "layer_activation_leaky_relu"       "layer_activation_parametric_relu" 
+ [5] "layer_activation_relu"             "layer_activation_selu"            
+ [7] "layer_activation_softmax"          "layer_activation_thresholded_relu"
+ [9] "layer_activity_regularization"     "layer_add"                        
+[11] "layer_alpha_dropout"               "layer_average"                    
+[13] "layer_average_pooling_1d"          "layer_average_pooling_2d"         
+[15] "layer_average_pooling_3d"          "layer_batch_normalization"        
+[17] "layer_concatenate"                 "layer_conv_1d"                    
+[19] "layer_conv_2d"                     "layer_conv_2d_transpose"          
+[21] "layer_conv_3d"                     "layer_conv_3d_transpose"          
+[23] "layer_conv_lstm_2d"                "layer_cropping_1d"                
+[25] "layer_cropping_2d"                 "layer_cropping_3d"                
+[27] "layer_cudnn_gru"                   "layer_cudnn_lstm"                 
+[29] "layer_dense"                       "layer_dense_features"             
+[31] "layer_depthwise_conv_2d"           "layer_dot"                        
+[33] "layer_dropout"                     "layer_embedding"                  
+[35] "layer_flatten"                     "layer_gaussian_dropout"           
+[37] "layer_gaussian_noise"              "layer_global_average_pooling_1d"  
+[39] "layer_global_average_pooling_2d"   "layer_global_average_pooling_3d"  
+[41] "layer_global_max_pooling_1d"       "layer_global_max_pooling_2d"      
+[43] "layer_global_max_pooling_3d"       "layer_gru"                        
+[45] "layer_input"                       "layer_lambda"                     
+[47] "layer_locally_connected_1d"        "layer_locally_connected_2d"       
+[49] "layer_lstm"                        "layer_masking"                    
+[51] "layer_max_pooling_1d"              "layer_max_pooling_2d"             
+[53] "layer_max_pooling_3d"              "layer_maximum"                    
+[55] "layer_minimum"                     "layer_multiply"                   
+[57] "layer_permute"                     "layer_repeat_vector"              
+[59] "layer_reshape"                     "layer_separable_conv_1d"          
+[61] "layer_separable_conv_2d"           "layer_simple_rnn"                 
+[63] "layer_spatial_dropout_1d"          "layer_spatial_dropout_2d"         
+[65] "layer_spatial_dropout_3d"          "layer_subtract"                   
+[67] "layer_upsampling_1d"               "layer_upsampling_2d"              
+[69] "layer_upsampling_3d"               "layer_zero_padding_1d"            
+[71] "layer_zero_padding_2d"             "layer_zero_padding_3d"
+#+end_example
+
+*** 活性化関数 -> [[file:../../general/math.org][関数]]
+
+#+begin_src R
+pacman::p_funs(keras) %>% str_subset("^activation")
+#+end_src
+
+#+RESULTS:
+:  [1] "activation_elu"          "activation_exponential" 
+:  [3] "activation_hard_sigmoid" "activation_linear"      
+:  [5] "activation_relu"         "activation_selu"        
+:  [7] "activation_sigmoid"      "activation_softmax"     
+:  [9] "activation_softplus"     "activation_softsign"    
+: [11] "activation_tanh"
+
+*** イニシャライザ
+
+- =keras_mlp()= では kernal_initializer としてデフォルトで =keras::initializer_glorot_uniform()= が使われている
+  - uniform(-limit, limit) の一様分布からサンプリング
+  - limit = sqrt(6 / (fan_in + fan_out)) (in=入力の数, out=出力の数)
+
+#+begin_src R
+pacman::p_funs(keras) %>% str_subset("^initializer_")
+#+end_src
+
+#+RESULTS:
+:  [1] "initializer_constant"         "initializer_glorot_normal"   
+:  [3] "initializer_glorot_uniform"   "initializer_he_normal"       
+:  [5] "initializer_he_uniform"       "initializer_identity"        
+:  [7] "initializer_lecun_normal"     "initializer_lecun_uniform"   
+:  [9] "initializer_ones"             "initializer_orthogonal"      
+: [11] "initializer_random_normal"    "initializer_random_uniform"  
+: [13] "initializer_truncated_normal" "initializer_variance_scaling"
+: [15] "initializer_zeros"
+
+*** 正則化関数
+
+- L1, L2, L1+L2 正則化
+- デフォルトで 0.01
+
+#+begin_src R
+pacman::p_funs(keras) %>% str_subset("^regularizer_")
+#+end_src
+
+#+RESULTS:
+: [1] "regularizer_l1"    "regularizer_l1_l2" "regularizer_l2"
+
+*** 制約
+
+#+begin_src R
+pacman::p_funs(keras) %>% str_subset("^constraint_")
+#+end_src
+
+#+RESULTS:
+: [1] "constraint_maxnorm"    "constraint_minmaxnorm" "constraint_nonneg"    
+: [4] "constraint_unitnorm"
+
+*** =layer_dense()=
+
+- kernal = weights matrix
+- bias = bias vector
+- パラメタの指定は、文字列 or 関数呼び出し のどちらでも OK
+
+- 過学習対策
+  - kernel_regularizer に L2 (weight decay) or L1 の正則化を入れる
+  - もしくは、layer_dropout() を挟む
+
+#+begin_src R :results silent
+layer_dense(
+  object, # model or layer
+  units, # 出力の次元
+  input_shape = NULL, # 入力される変数の次元 (1つめのレイヤーでは必ず指定)
+  ## activation
+  activation = NULL, # 活性化関数 "relu", "sigmoid", "softmax" など
+  activity_regularizer = NULL, # fun
+  ## kernal
+  kernel_initializer = "glorot_uniform", # fun
+  kernel_regularizer = NULL, # fun
+  kernel_constraint = NULL, # fun
+  ## bias
+  use_bias = TRUE,
+  bias_initializer = "zeros", # fun
+  bias_regularizer = NULL, # fun
+  bias_constraint = NULL, # fun
+  # batch
+  batch_input_shape = NULL,
+  batch_size = NULL,
+  dtype = NULL,
+  name = NULL,
+  trainable = NULL,
+  weights = NULL)
+#+end_src
+
+*** =layer_dropout()=
+
+- rate で指定した率でリンクを切断する (出力を 0 にする)
+- モデルをよりロバストにする
+
+#+begin_src R
+layer_dropout(
+  object,
+  rate, # Drop 率 (0-1)
+  noise_shape = NULL,
+  seed = NULL,
+  input_shape = NULL,
+  batch_input_shape = NULL,
+  batch_size = NULL,
+  name = NULL,
+  trainable = NULL,
+  weights = NULL)
+#+end_src
+
+*** =layer_flatten()=
+
+- 入力データの前処理
+#+begin_src R
+layer_flatten(
+  object, # model or layer
+  data_format = NULL,
+  input_shape = NULL, # 28x28 pixel の画像であれば、c(28, 28) とする
+  dtype = NULL,
+  name = NULL,
+  trainable = NULL,
+  weights = NULL
+)
+#+end_src
+
+*** =layer_embedding()=
+
+- 入力データの前処理
+- 一番最初のレイヤーとしてのみ使える
+- インデックス (word index) を固定長 vector に変換する
+#+begin_src R
+layer_embedding(
+  object,
+  input_dim, # vocaburary size
+  output_dim, # 
+  embeddings_initializer = "uniform",
+  embeddings_regularizer = NULL,
+  activity_regularizer = NULL,
+  embeddings_constraint = NULL,
+  mask_zero = FALSE,
+  input_length = NULL,
+  batch_size = NULL,
+  name = NULL,
+  trainable = NULL,
+  weights = NULL
+)
+#+end_src
+
+#+RESULTS:
+: Error in create_layer(keras$layers$Embedding, object, list(input_dim = as.integer(input_dim),  : 
+:   object 'input_dim' not found
+
+** コンパイル =compile()=
+*** コンパイル関数
+
+- S3 generic from ={generics}=
+#+begin_src R
+compile(
+  object, # keras model
+  optimizer, # 最適化関数 "adam", "rmsprop", "sgd" など
+  metrics, # 評価指標
+  loss, # 損失関数 "binary_crossentropy", "categorical_crossentropy", "mean_squared_error" など
+  loss_weights,
+  sample_weight_mode,
+  weighted_metrics,
+  target_tensors
+)
+#+end_src
+
+*** 損失関数 ="loss"=
+
+#+begin_src R
+pacman::p_funs(keras) %>% str_subset("^loss_")
+#+end_src
+
+#+RESULTS:
+#+begin_example
+ [1] "loss_binary_crossentropy"            
+ [2] "loss_categorical_crossentropy"       
+ [3] "loss_categorical_hinge"              
+ [4] "loss_cosine_proximity"               
+ [5] "loss_cosine_similarity"              
+ [6] "loss_hinge"                          
+ [7] "loss_kullback_leibler_divergence"    
+ [8] "loss_logcosh"                        
+ [9] "loss_mean_absolute_error"            
+[10] "loss_mean_absolute_percentage_error" 
+[11] "loss_mean_squared_error"             
+[12] "loss_mean_squared_logarithmic_error" 
+[13] "loss_poisson"                        
+[14] "loss_sparse_categorical_crossentropy"
+[15] "loss_squared_hinge"
+#+end_example
+
+*** 最適化関数 ="optimizer"=
+
+- [[file:../../general/neural_net.org][勾配降下法]]
+- lr = learning_rate が主なパラメタ
+#+begin_src R
+pacman::p_funs(keras) %>% str_subset("^optimizer")
+#+end_src
+
+#+RESULTS:
+: [1] "optimizer_adadelta" "optimizer_adagrad"  "optimizer_adam"    
+: [4] "optimizer_adamax"   "optimizer_nadam"    "optimizer_rmsprop" 
+: [7] "optimizer_sgd"
+
+*** 評価指標 ="metrics"=
+
+#+begin_src R
+pacman::p_funs(keras) %>% str_subset("^metric_")
+#+end_src
+
+#+RESULTS:
+#+begin_example
+ [1] "metric_binary_accuracy"                  
+ [2] "metric_binary_crossentropy"              
+ [3] "metric_categorical_accuracy"             
+ [4] "metric_categorical_crossentropy"         
+ [5] "metric_cosine_proximity"                 
+ [6] "metric_hinge"                            
+ [7] "metric_kullback_leibler_divergence"      
+ [8] "metric_mean_absolute_error"              
+ [9] "metric_mean_absolute_percentage_error"   
+[10] "metric_mean_squared_error"               
+[11] "metric_mean_squared_logarithmic_error"   
+[12] "metric_poisson"                          
+[13] "metric_sparse_categorical_crossentropy"  
+[14] "metric_sparse_top_k_categorical_accuracy"
+[15] "metric_squared_hinge"                    
+[16] "metric_top_k_categorical_accuracy"
+#+end_example
+
+** 学習 =fit()=
+*** 学習関数
+
+- S3 method for class 'keras.engine.training.Model'
+- 正解ラベルの y
+  - 多クラス分類
+
+#+begin_src R
+fit(
+  object,
+  x = NULL, # 特徴量 vector, matrix or array
+  y = NULL, # 正解ラベル vector, matrix or array
+  batch_size = NULL, # バッチサイズ (int), デフォルト32
+  epochs = 10, 
+  verbose = getOption("keras.fit_verbose", default = 1),
+  callbacks = NULL, # コールバック関数 (list で渡す)
+  view_metrics = getOption("keras.view_metrics", default = "auto"),
+  validation_split = 0, # 訓練データのうちバリデーションに使う比率
+  validation_data = NULL, # 別途バリデーションデータを渡す場合 (validation_split は無視される)
+  shuffle = TRUE,
+  class_weight = NULL,
+  sample_weight = NULL,
+  initial_epoch = 0,
+  steps_per_epoch = NULL,
+  validation_steps = NULL,
+  ...
+)
+#+end_src
+
+*** コールバック
+
+#+begin_src R
+pacman::p_funs(keras) %>% str_subset("^callback")
+#+end_src
+
+#+RESULTS:
+:  [1] "callback_csv_logger"              "callback_early_stopping"         
+:  [3] "callback_lambda"                  "callback_learning_rate_scheduler"
+:  [5] "callback_model_checkpoint"        "callback_progbar_logger"         
+:  [7] "callback_reduce_lr_on_plateau"    "callback_remote_monitor"         
+:  [9] "callback_tensorboard"             "callback_terminate_on_naan"
+
+#+begin_src R
+## fit のコールバックに渡して、Early stopping
+callback_early_stopping(
+  monitor = "val_loss",
+  min_delta = 0,
+  patience = 0, # ループの最低数
+  verbose = 0,
+  mode = c("auto", "min", "max"),
+  baseline = NULL,
+  restore_best_weights = FALSE)
+#+end_src
+
+** 評価 =evaluate()=
+
+- 学習したモデルの精度をテストデータを使って評価する
+#+begin_src R
+evaluate(model, test_x, test_y)
+#+end_src
+
+** 予測 =predict_*()=
+
+#+begin_src R
+pacman::p_funs(keras) %>% str_subset("^predict")
+#+end_src
+
+#+RESULTS:
+: [1] "predict_classes"   "predict_generator" "predict_on_batch" 
+: [4] "predict_proba"
+
+** バックエンド関数
+
+#+begin_src R
+pacman::p_funs(keras) %>% str_subset("^k_")
+#+end_src
+
+#+RESULTS:
+#+begin_example
+  [1] "k_abs"                             "k_all"                            
+  [3] "k_any"                             "k_arange"                         
+  [5] "k_argmax"                          "k_argmin"                         
+  [7] "k_backend"                         "k_batch_dot"                      
+  [9] "k_batch_flatten"                   "k_batch_get_value"                
+ [11] "k_batch_normalization"             "k_batch_set_value"                
+ [13] "k_bias_add"                        "k_binary_crossentropy"            
+ [15] "k_cast"                            "k_cast_to_floatx"                 
+ [17] "k_categorical_crossentropy"        "k_clear_session"                  
+ [19] "k_clip"                            "k_concatenate"                    
+ [21] "k_constant"                        "k_conv1d"                         
+ [23] "k_conv2d"                          "k_conv2d_transpose"               
+ [25] "k_conv3d"                          "k_conv3d_transpose"               
+ [27] "k_cos"                             "k_count_params"                   
+ [29] "k_ctc_batch_cost"                  "k_ctc_decode"                     
+ [31] "k_ctc_label_dense_to_sparse"       "k_cumprod"                        
+ [33] "k_cumsum"                          "k_depthwise_conv2d"               
+ [35] "k_dot"                             "k_dropout"                        
+ [37] "k_dtype"                           "k_elu"                            
+ [39] "k_epsilon"                         "k_equal"                          
+ [41] "k_eval"                            "k_exp"                            
+ [43] "k_expand_dims"                     "k_eye"                            
+ [45] "k_flatten"                         "k_floatx"                         
+ [47] "k_foldl"                           "k_foldr"                          
+ [49] "k_function"                        "k_gather"                         
+ [51] "k_get_session"                     "k_get_uid"                        
+ [53] "k_get_value"                       "k_get_variable_shape"             
+ [55] "k_gradients"                       "k_greater"                        
+ [57] "k_greater_equal"                   "k_hard_sigmoid"                   
+ [59] "k_identity"                        "k_image_data_format"              
+ [61] "k_in_test_phase"                   "k_in_top_k"                       
+ [63] "k_in_train_phase"                  "k_int_shape"                      
+ [65] "k_is_keras_tensor"                 "k_is_placeholder"                 
+ [67] "k_is_sparse"                       "k_is_tensor"                      
+ [69] "k_l2_normalize"                    "k_learning_phase"                 
+ [71] "k_less"                            "k_less_equal"                     
+ [73] "k_local_conv1d"                    "k_local_conv2d"                   
+ [75] "k_log"                             "k_logsumexp"                      
+ [77] "k_manual_variable_initialization"  "k_map_fn"                         
+ [79] "k_max"                             "k_maximum"                        
+ [81] "k_mean"                            "k_min"                            
+ [83] "k_minimum"                         "k_moving_average_update"          
+ [85] "k_ndim"                            "k_normalize_batch_in_training"    
+ [87] "k_not_equal"                       "k_one_hot"                        
+ [89] "k_ones"                            "k_ones_like"                      
+ [91] "k_permute_dimensions"              "k_placeholder"                    
+ [93] "k_pool2d"                          "k_pool3d"                         
+ [95] "k_pow"                             "k_print_tensor"                   
+ [97] "k_prod"                            "k_random_binomial"                
+ [99] "k_random_normal"                   "k_random_normal_variable"         
+[101] "k_random_uniform"                  "k_random_uniform_variable"        
+[103] "k_relu"                            "k_repeat"                         
+[105] "k_repeat_elements"                 "k_reset_uids"                     
+[107] "k_reshape"                         "k_resize_images"                  
+[109] "k_resize_volumes"                  "k_reverse"                        
+[111] "k_rnn"                             "k_round"                          
+[113] "k_separable_conv2d"                "k_set_epsilon"                    
+[115] "k_set_floatx"                      "k_set_image_data_format"          
+[117] "k_set_learning_phase"              "k_set_session"                    
+[119] "k_set_value"                       "k_shape"                          
+[121] "k_sigmoid"                         "k_sign"                           
+[123] "k_sin"                             "k_softmax"                        
+[125] "k_softplus"                        "k_softsign"                       
+[127] "k_sparse_categorical_crossentropy" "k_spatial_2d_padding"             
+[129] "k_spatial_3d_padding"              "k_sqrt"                           
+[131] "k_square"                          "k_squeeze"                        
+[133] "k_stack"                           "k_std"                            
+[135] "k_stop_gradient"                   "k_sum"                            
+[137] "k_switch"                          "k_tanh"                           
+[139] "k_temporal_padding"                "k_tile"                           
+[141] "k_to_dense"                        "k_transpose"                      
+[143] "k_truncated_normal"                "k_update"                         
+[145] "k_update_add"                      "k_update_sub"                     
+[147] "k_var"                             "k_variable"                       
+[149] "k_zeros"                           "k_zeros_like"
+#+end_example
+
+** 学習済みのモデル
+
+- 重みを学習済みのモデルが提供されている
+- 主に画像認識用
+
+#+begin_src R
+pacman::p_funs(keras) %>% str_subset("^application")
+#+end_src
+
+#+RESULTS:
+:  [1] "application_densenet"            "application_densenet121"        
+:  [3] "application_densenet169"         "application_densenet201"        
+:  [5] "application_inception_resnet_v2" "application_inception_v3"       
+:  [7] "application_mobilenet"           "application_mobilenet_v2"       
+:  [9] "application_nasnet"              "application_nasnetlarge"        
+: [11] "application_nasnetmobile"        "application_resnet50"           
+: [13] "application_vgg16"               "application_vgg19"              
+: [15] "application_xception"
+
+* [[https://cloud.r-project.org/web/packages/keras/vignettes/getting_started.html][Getting Started with Keras]] (MNIST)
+** データ
+
+#+begin_src R :results silent
+mnist <- dataset_mnist()
+x_train <- mnist$train$x # 28x28 の画像が 6 万枚
+y_train <- mnist$train$y # 正解ラベル
+x_test <- mnist$test$x   # 28x28 の画像が 1 万枚
+y_test <- mnist$test$y
+
+## 28x28 の画像を 784 にフラット化する
+x_train <- reticulate::array_reshape(x_train, c(nrow(x_train), 784)) # 60,000 x 784
+x_test <- reticulate::array_reshape(x_test, c(nrow(x_test), 784)) # 10,000 x 784
+
+## rescale (0 ~ 255 の画素を 0 ~ 1 にリスケールする)
+x_train <- x_train / 255
+x_test <- x_test / 255
+
+## 正解ラベルを 1-10 の one-hot に変換
+y_train <- keras::to_categorical(y_train, 10)
+y_test <- keras::to_categorical(y_test, 10)
+#+end_src
+
+** モデル
+
+- パイプを使って、層を追加していく
+#+begin_src R
+model <- keras_model_sequential()
+model %>%
+  ## 入力層
+  layer_dense(units = 256, activation = 'relu', input_shape = c(784)) %>%
+  layer_dropout(rate = 0.4) %>%
+  layer_dense(units = 128, activation = 'relu') %>%
+  layer_dropout(rate = 0.3) %>%
+  ## 出力層
+  layer_dense(units = 10, activation = 'softmax')
+
+## モデルのコンパイル
+model %>%
+  compile(
+    loss = "categorical_crossentropy",
+    optimizer = optimizer_rmsprop(),
+    metrics = c("accuracy")
+)
+
+summary(model)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+Model: "sequential"
+________________________________________________________________________________
+Layer (type)                        Output Shape                    Param #     
+================================================================================
+dense (Dense)                       (None, 256)                     200960      
+________________________________________________________________________________
+dropout (Dropout)                   (None, 256)                     0           
+________________________________________________________________________________
+dense_1 (Dense)                     (None, 128)                     32896       
+________________________________________________________________________________
+dropout_1 (Dropout)                 (None, 128)                     0           
+________________________________________________________________________________
+dense_2 (Dense)                     (None, 10)                      1290        
+================================================================================
+Total params: 235,146
+Trainable params: 235,146
+Non-trainable params: 0
+________________________________________________________________________________
+#+end_example
+
+** 学習
+
+#+begin_src R :results silent
+history <- model %>%
+  fit(
+    x_train,
+    y_train,
+    epochs = 30, # 学習の繰り返し回数
+    batch_size = 128, # まとめて学習する単位
+    validation_split = 0.2 #  検証用データの割合
+)
+#+end_src
+
+#+begin_src R
+history
+#+end_src
+
+#+RESULTS:
+: Trained on 48,000 samples (batch_size=128, epochs=30)
+: Final epoch (plot to see history):
+:      acc: 0.9858
+:     loss: 0.04997
+:  val_acc: 0.9795
+: val_loss: 0.1298
+
+** プロット
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+plot(history)
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-AuDC9T.png]]
+
+** テストデータで評価
+
+- 評価指標
+#+begin_src R :results silent
+eval <- model %>% evaluate(x_test, y_test)
+#+end_src
+
+#+begin_src R
+eval
+#+end_src
+
+#+RESULTS:
+: $loss
+: [1] 0.1083609
+: 
+: $acc
+: [1] 0.9815
+
+- 予測値
+#+begin_src R
+model %>% predict_classes(x_test)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+   [1] 7 2 1 0 4 1 4 9 5 9 0 6 9 0 1 5 9 7 3 4 9 6 6 5 4 0 7 4 0 1 3 1 3 4 7 2 7
+  [38] 1 2 1 1 7 4 2 3 5 1 2 4 4 6 3 5 5 6 0 4 1 9 5 7 8 9 3 7 4 6 4 3 0 7 0 2 9
+  [75] 1 7 3 2 9 7 7 6 2 7 8 4 7 3 6 1 3 6 9 3 1 4 1 7 6 9 6 0 5 4 9 9 2 1 9 4 8
+ [112] 7 3 9 7 4 4 4 9 2 5 4 7 6 7 9 0 5 8 5 6 6 5 7 8 1 0 1 6 4 6 7 3 1 7 1 8 2
+ [149] 0 9 9 9 5 5 1 5 6 0 3 4 4 6 5 4 6 5 4 5 1 4 4 7 2 3 2 7 1 8 1 8 1 8 5 0 8
+ [186] 9 2 5 0 1 1 1 0 9 0 3 1 6 4 2 3 6 1 1 1 3 9 5 2 9 4 5 9 3 9 0 3 6 5 5 7 2
+ [223] 2 7 1 2 8 4 1 7 3 3 8 8 7 9 2 2 4 1 5 9 8 7 2 3 0 2 4 2 4 1 9 5 7 7 2 8 2
+ [260] 0 8 5 7 7 9 1 8 1 8 0 3 0 1 9 9 4 1 8 2 1 2 9 7 5 9 2 6 4 1 5 8 2 9 2 0 4
+ [297] 0 0 2 8 4 7 1 2 4 0 2 7 4 3 3 0 0 3 1 9 6 5 2 5 9 7 9 3 0 4 2 0 7 1 1 2 1
+ [334] 5 3 3 9 7 8 6 5 6 1 3 8 1 0 5 1 3 1 5 5 6 1 8 5 1 7 9 4 6 2 2 5 0 6 5 6 3
+ [371] 7 2 0 8 8 5 4 1 1 4 0 3 3 7 6 1 6 2 1 9 2 8 6 1 9 5 2 5 4 4 2 8 3 8 2 4 5
+ [408] 0 3 1 7 7 5 7 9 7 1 9 2 1 4 2 9 2 0 4 9 1 4 8 1 8 4 5 9 8 8 3 7 6 0 0 3 0
+ [445] 2 0 6 4 9 3 3 3 2 3 9 1 2 6 8 0 5 6 6 6 3 8 8 2 7 5 8 9 6 1 8 4 1 2 5 9 1
+ [482] 9 7 5 4 0 8 9 9 1 0 5 2 3 7 8 9 4 0 6 3 9 5 2 1 3 1 3 6 5 7 4 2 2 6 3 2 6
+ [519] 5 4 8 9 7 1 3 0 3 8 3 1 9 3 4 4 6 4 2 1 8 2 5 4 8 8 4 0 0 2 3 2 7 7 0 8 7
+ [556] 4 4 7 9 6 9 0 9 8 0 4 6 0 6 3 5 4 8 3 3 9 3 3 3 7 8 0 2 2 1 7 0 6 5 4 3 8
+ [593] 0 9 6 3 8 0 9 9 6 8 6 8 5 7 8 6 0 2 4 0 2 2 3 1 9 7 5 1 0 8 4 6 2 6 7 9 3
+ [630] 2 9 8 2 2 9 2 7 3 5 9 1 8 0 2 0 5 2 1 3 7 6 7 1 2 5 8 0 3 7 2 4 0 9 1 8 6
+ [667] 7 7 4 3 4 9 1 9 5 1 7 3 9 7 6 9 1 3 7 8 3 3 6 7 2 4 5 8 5 1 1 4 4 3 1 0 7
+ [704] 7 0 7 9 4 4 8 5 5 4 0 8 2 1 0 8 4 8 0 4 0 6 1 7 3 2 6 7 2 6 9 3 1 4 6 2 5
+ [741] 9 2 0 6 2 1 7 3 4 1 0 5 4 3 1 1 7 4 9 9 4 8 4 0 2 4 5 1 1 6 4 7 1 9 4 2 4
+ [778] 1 5 5 3 8 3 1 4 5 6 8 9 4 1 5 3 8 0 3 2 5 1 2 8 3 4 4 0 8 8 3 3 1 7 3 5 9
+ [815] 6 3 2 6 1 3 6 0 7 2 1 7 1 4 2 4 2 1 7 9 6 1 1 2 4 3 1 7 7 4 8 0 7 3 1 3 1
+ [852] 0 7 7 0 3 5 5 2 7 6 6 9 2 8 3 5 2 2 5 6 0 8 2 9 2 8 8 8 8 7 4 4 3 0 6 6 3
+ [889] 2 1 3 2 2 9 3 0 0 5 7 8 3 4 4 6 0 2 9 1 4 7 4 7 3 9 8 8 4 7 1 2 1 2 2 3 2
+ [926] 3 2 3 9 1 7 4 0 3 5 5 8 6 5 2 6 7 6 6 3 2 7 8 1 1 7 5 6 4 9 5 1 3 3 4 7 8
+ [963] 9 1 1 6 9 1 4 4 5 4 0 6 2 2 3 1 5 1 2 0 2 8 1 2 6 7 1 6 2 3 9 0 1 2 2 0 8
+[1000] 9
+ [ reached getOption("max.print") -- omitted 9000 entries ]
+#+end_example
+
+* Tutorial
+** [[https://cloud.r-project.org/web/packages/keras/vignettes/tutorial_basic_classification.html][Tutorial: Basic Classification]]
+
+- Fashion MNIST
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+fashion_mnist <- dataset_fashion_mnist()
+c(train_images, train_labels) %<-% fashion_mnist$train
+c(test_images, test_labels) %<-% fashion_mnist$test
+class_names = c(
+  'T-shirt/top',
+  'Trouser',
+  'Pullover',
+  'Dress',
+  'Coat',
+  'Sandal',
+  'Shirt',
+  'Sneaker',
+  'Bag',
+  'Ankle boot'
+)
+library(tidyr)
+library(ggplot2)
+
+image_1 <- as.data.frame(train_images[1, , ])
+colnames(image_1) <- seq_len(ncol(image_1))
+image_1$y <- seq_len(nrow(image_1))
+image_1 <- gather(image_1, "x", "value", -y)
+image_1$x <- as.integer(image_1$x)
+
+ggplot(image_1, aes(x = x, y = y, fill = value)) +
+  geom_tile() +
+  scale_fill_gradient(low = "white", high = "black", na.value = NA) +
+  scale_y_reverse() +
+  theme_minimal() +
+  theme(panel.grid = element_blank())   +
+  theme(aspect.ratio = 1) +
+  xlab("") +
+  ylab("")
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-KQFAeF.png]]
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+train_images <- train_images / 255
+test_images <- test_images / 255
+par(mfcol=c(5,5))
+par(mar=c(0, 0, 1.5, 0), xaxs='i', yaxs='i')
+for (i in 1:25) {
+  img <- train_images[i, , ]
+  img <- t(apply(img, 2, rev))
+  image(1:28, 1:28, img, col = gray((0:255)/255), xaxt = 'n', yaxt = 'n',
+        main = paste(class_names[train_labels[i] + 1]))
+}
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-AYGcfl.png]]
+
+#+begin_src R :results silent
+model <- keras_model_sequential()
+model %>%
+  layer_flatten(input_shape = c(28, 28)) %>%
+  layer_dense(units = 128, activation = "relu") %>%
+  layer_dense(units = 10, activation = "softmax")
+compile(model, optimizer = "adam", loss = "sparse_categorical_crossentropy",
+        metrics = c("accuracy"))
+fit(model, train_images, train_labels, epochs = 5)
+#+end_src
+
+#+begin_src R
+score <- evaluate(model, test_images, test_labels)
+cat('Test loss:', score$loss, "\n")
+cat('Test accuracy:', score$acc, "\n")
+#+end_src
+
+#+RESULTS:
+:    32/10000 [..............................] - ETA: 0s - loss: 0.2905 - acc: 0.8438 3712/10000 [==========>...................] - ETA: 0s - loss: 0.3427 - acc: 0.8780 6944/10000 [===================>..........] - ETA: 0s - loss: 0.3493 - acc: 0.876210000/10000 [==============================] - 0s 15us/sample - loss: 0.3390 - acc: 0.8781
+: Test loss: 0.3390255
+: Test accuracy: 0.8781
+
+#+begin_src R
+predictions <- predict(model, test_images)
+predictions[1, ]
+predictions <- predict_classes(model, test_images)
+predictions
+#+end_src
+
+#+RESULTS:
+#+begin_example
+ [1] 1.633726e-06 9.337410e-08 4.919503e-06 7.943988e-08 5.088169e-06
+ [6] 5.656679e-03 8.806010e-06 3.611035e-02 2.857869e-05 9.581838e-01
+   [1] 9 2 1 1 6 1 4 6 5 7 4 5 5 3 4 1 2 2 8 0 2 5 7 5 1 2 6 0 9 4 8 8 3 3 8 0 7
+  [38] 5 7 9 0 1 6 7 6 7 2 1 2 6 4 2 5 8 2 2 8 6 8 0 7 7 8 5 1 1 3 4 7 8 7 0 2 6
+  [75] 2 3 1 2 8 4 1 8 5 9 5 0 3 2 0 2 5 3 6 7 1 8 0 1 2 2 3 6 7 6 7 8 5 7 9 4 2
+ [112] 5 7 0 5 2 8 6 7 8 0 0 9 9 3 0 8 2 1 5 4 1 9 1 8 6 2 1 2 5 1 6 0 0 1 6 1 3
+ [149] 2 2 3 2 1 3 5 0 4 7 9 3 7 2 3 9 0 9 4 7 4 2 6 5 6 1 2 1 3 0 9 1 0 9 3 6 7
+ [186] 9 9 4 4 7 1 2 3 6 3 2 8 3 6 1 1 0 2 9 2 4 0 7 9 8 4 1 8 4 1 3 1 6 7 2 8 5
+ [223] 6 0 7 7 6 6 7 0 7 8 9 2 9 0 5 1 4 2 5 2 9 2 2 8 6 2 2 4 9 7 6 5 5 4 8 5 2
+ [260] 3 0 4 8 0 0 6 3 8 9 6 1 3 0 2 3 0 8 3 7 4 0 1 2 3 0 6 6 7 5 4 5 9 5 6 5 5
+ [297] 1 9 8 8 3 3 6 8 0 0 2 9 7 7 1 6 6 6 2 4 7 1 6 4 2 2 6 5 6 2 7 7 7 3 3 7 3
+ [334] 7 1 3 7 2 2 3 4 0 3 1 6 1 9 4 9 9 1 7 8 3 6 0 2 4 8 3 1 6 2 4 4 7 3 4 2 5
+ [371] 0 7 9 4 6 9 3 9 3 3 5 6 0 3 5 8 1 6 2 2 6 4 9 5 2 0 6 6 1 2 0 9 7 0 4 4 2
+ [408] 6 2 3 0 6 7 2 9 4 2 1 5 4 5 3 8 5 8 4 4 8 9 8 6 2 4 4 2 4 1 6 1 3 0 7 8 8
+ [445] 4 5 3 1 9 5 3 3 0 1 2 2 9 4 0 6 0 4 2 0 0 3 3 8 2 8 9 4 0 7 0 4 6 9 2 9 5
+ [482] 9 3 7 5 7 8 1 0 0 6 6 8 9 7 9 1 2 7 3 2 0 5 7 1 8 2 2 2 2 4 2 6 1 9 8 5 1
+ [519] 9 1 2 8 3 8 9 2 6 3 8 8 2 0 5 8 8 5 3 9 4 3 4 4 7 1 0 1 4 0 6 9 6 1 5 1 1
+ [556] 1 9 3 4 5 3 6 2 0 4 0 0 5 8 3 3 4 0 7 7 8 9 3 3 8 7 6 7 9 3 4 0 6 5 8 1 1
+ [593] 5 9 4 2 5 7 8 1 2 9 7 7 1 0 9 3 2 9 0 7 6 8 2 7 0 2 3 8 2 2 6 9 3 0 7 8 6
+ [630] 2 9 4 2 6 2 1 0 4 4 2 7 5 8 4 9 1 0 5 4 4 4 0 0 4 5 6 0 4 5 4 1 3 1 3 6 4
+ [667] 3 8 2 8 6 7 0 4 0 8 5 0 8 2 9 6 8 9 6 4 2 9 6 4 5 0 9 5 3 6 6 8 3 3 8 3 4
+ [704] 0 9 7 9 4 8 9 1 3 7 3 0 2 6 7 1 0 0 8 7 2 6 4 6 4 1 5 9 0 0 1 6 5 0 0 3 3
+ [741] 3 8 1 1 8 5 7 7 8 7 4 0 7 0 8 0 9 7 6 1 6 2 4 8 0 6 3 6 8 4 0 8 9 2 4 5 9
+ [778] 1 4 4 9 2 1 7 9 5 8 3 7 7 1 1 1 6 9 5 3 8 4 2 9 2 8 3 2 4 4 7 1 4 9 3 5 8
+ [815] 5 4 7 2 8 5 9 3 3 6 7 1 7 3 5 4 6 5 8 3 7 1 2 6 1 9 8 2 7 1 3 7 5 9 9 1 8
+ [852] 4 5 7 1 9 8 1 0 0 2 1 7 1 1 5 7 1 5 2 2 3 3 1 1 4 9 4 3 7 7 6 8 9 9 6 1 3
+ [889] 4 0 3 5 9 2 0 5 5 1 9 7 8 7 7 3 6 2 0 6 0 2 0 2 5 5 1 2 0 9 3 7 8 4 8 3 4
+ [926] 7 6 7 4 8 0 3 4 4 3 6 9 6 6 4 9 1 8 1 7 5 5 6 0 2 1 0 5 4 0 0 2 7 5 0 3 5
+ [963] 9 4 8 2 3 4 6 2 9 0 7 7 1 4 4 6 5 0 9 9 8 8 3 6 2 4 6 6 3 2 3 7 2 9 3 4 7
+[1000] 7
+ [ reached getOption("max.print") -- omitted 9000 entries ]
+#+end_example
+
+** [[https://cloud.r-project.org/web/packages/keras/vignettes/tutorial_basic_regression.html][Tutorial: Basic Regression]]
+
+#+begin_src R :results value
+boston_housing <- dataset_boston_housing()
+## zeallot で割当
+c(train_data, train_labels) %<-% boston_housing$train
+c(test_data, test_labels) %<-% boston_housing$test
+
+library(tibble)
+column_names <- c('CRIM', 'ZN', 'INDUS', 'CHAS', 'NOX', 'RM', 'AGE',
+                  'DIS', 'RAD', 'TAX', 'PTRATIO', 'B', 'LSTAT')
+train_df <- as_tibble(train_data)
+colnames(train_df) <- column_names
+head(train_df)
+#+end_src
+
+#+RESULTS:
+|    CRIM |   ZN | INDUS | CHAS |   NOX |    RM |  AGE |    DIS | RAD | TAX | PTRATIO |      B | LSTAT |
+|---------+------+-------+------+-------+-------+------+--------+-----+-----+---------+--------+-------|
+| 1.23247 |    0 |  8.14 |    0 | 0.538 | 6.142 | 91.7 | 3.9769 |   4 | 307 |      21 |  396.9 | 18.72 |
+| 0.02177 | 82.5 |  2.03 |    0 | 0.415 |  7.61 | 15.7 |   6.27 |   2 | 348 |    14.7 | 395.38 |  3.11 |
+| 4.89822 |    0 |  18.1 |    0 | 0.631 |  4.97 |  100 | 1.3325 |  24 | 666 |    20.2 | 375.52 |  3.26 |
+| 0.03961 |    0 |  5.19 |    0 | 0.515 | 6.037 | 34.5 | 5.9853 |   5 | 224 |    20.2 |  396.9 |  8.01 |
+| 3.69311 |    0 |  18.1 |    0 | 0.713 | 6.376 | 88.4 | 2.5671 |  24 | 666 |    20.2 | 391.43 | 14.65 |
+| 0.28392 |    0 |  7.38 |    0 | 0.493 | 5.708 | 74.3 | 4.7211 |   5 | 287 |    19.6 | 391.13 | 11.74 |
+
+
+#+begin_src R
+## Test data is *not* used when calculating the mean and std.
+## Normalize training data
+train_data <- scale(train_data)
+
+## Use means and standard deviations from training set to normalize test set
+col_means_train <- attr(train_data, "scaled:center")
+col_stddevs_train <- attr(train_data, "scaled:scale")
+test_data <- scale(test_data, center = col_means_train, scale = col_stddevs_train)
+
+train_data[1, ] # First training sample, normalized
+#+end_src
+
+#+RESULTS:
+: 
+:  [1] -0.2719092 -0.4830166 -0.4352220 -0.2565147 -0.1650220 -0.1762241
+:  [7]  0.8120550  0.1165538 -0.6254735 -0.5944330  1.1470781  0.4475222
+: [13]  0.8241983
+
+#+begin_src R
+build_model <- function() {
+  model <- keras_model_sequential() %>%
+    layer_dense(units = 64, activation = "relu", input_shape = dim(train_data)[2]) %>%
+    layer_dense(units = 64, activation = "relu") %>%
+    layer_dense(units = 1)
+
+  compile(model, loss = "mse", optimizer = optimizer_rmsprop(),
+          metrics = list("mean_absolute_error"))
+}
+
+model <- build_model()
+summary(model)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+Model: "sequential_4"
+________________________________________________________________________________
+Layer (type)                        Output Shape                    Param #     
+================================================================================
+dense_12 (Dense)                    (None, 64)                      896         
+________________________________________________________________________________
+dense_13 (Dense)                    (None, 64)                      4160        
+________________________________________________________________________________
+dense_14 (Dense)                    (None, 1)                       65          
+================================================================================
+Total params: 5,121
+Trainable params: 5,121
+Non-trainable params: 0
+________________________________________________________________________________
+#+end_example
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+print_dot_callback <- callback_lambda(
+  on_epoch_end = function(epoch, logs) {
+    if (epoch %% 80 == 0) cat("\n")
+    cat(".")
+  }
+)
+epochs <- 500
+## Fit the model and store training stats
+history <- fit(model, train_data, train_labels, epochs = epochs,
+               validation_split = 0.2, verbose = 0,
+               callbacks = list(print_dot_callback))
+library(ggplot2)
+plot(history, metrics = "mean_absolute_error", smooth = FALSE) +
+  coord_cartesian(ylim = c(0, 5))
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-e24iD3.png]]
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+## The patience parameter is the amount of epochs to check for improvement.
+## "val_loss" = Validation セットに対する損失関数の値を監視
+early_stop <- callback_early_stopping(monitor = "val_loss", patience = 20)
+
+model <- build_model()
+history <- fit(model, train_data, train_labels, epochs = epochs,
+               validation_split = 0.2, verbose = 0,
+               callbacks = list(early_stop, print_dot_callback))
+plot(history, metrics = "mean_absolute_error", smooth = FALSE) +
+  coord_cartesian(xlim = c(0, 150), ylim = c(0, 5))
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-6m1X7y.png]]
+
+#+begin_src R
+c(loss, mae) %<-% evaluate(model, test_data, test_labels, verbose = 0)
+paste0("Mean absolute error on test set: $", sprintf("%.2f", mae * 1000))
+
+test_predictions <- predict(model, test_data)
+test_predictions[ , 1]
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+[1] "Mean absolute error on test set: $3211.25"
+
+  [1]  7.730532 17.100388 20.959515 29.649410 25.064405 19.051401 26.699308
+  [8] 22.152040 18.849180 20.658251 19.110630 16.677443 13.815217 41.161568
+ [15] 18.070393 19.436529 27.662251 19.818380 17.681641 38.729355  9.502570
+ [22] 13.880931 20.310329 14.395842 21.749081 23.285707 31.901381 29.344229
+ [29]  9.964347 21.581244 18.507318 13.923395 33.421219 26.110220 16.650209
+ [36]  8.107246 14.605506 17.230057 18.632254 26.277016 29.305038 28.315628
+ [43] 13.801405 39.360825 30.391886 24.601307 25.965672 16.011959 22.401953
+ [50] 21.721617 34.749687 21.047369 10.972331 15.212947 34.509861 28.113911
+ [57] 11.920187 46.467545 34.714413 23.514147 23.797913 16.420168 13.791888
+ [64] 17.591040 23.478590 23.087748 12.362664 22.730017 13.859324  6.962955
+ [71] 38.125061 30.398317 23.254248 12.973096 25.147879 18.535128 20.439939
+ [78] 23.038130 33.456299 10.061414 19.151848 37.287075 15.189163 13.197511
+ [85] 16.886278 18.579390 19.327414 19.399530 21.919605 30.075926 20.289589
+ [92] 20.028803 24.962320 42.925644 34.172565 18.154760 35.298103 54.600502
+ [99] 27.229433 45.233803 33.070076 19.673658
+#+end_example
+
+** [[https://cloud.r-project.org/web/packages/keras/vignettes/tutorial_basic_text_classification.html][Tutorial: Text Classification]]
+** [[https://keras.rstudio.com/articles/tutorial_overfit_underfit.html][Tutorial: Overfitting and Underfitting]]
+
+#+begin_src R
+
+#+end_src
+
+* 参考
+
+- [[https://keras.rstudio.com/][公式サイト (R)]], [[https://keras.io/][keras.io (Python)]]
+- [[https://cloud.r-project.org/web/packages/keras/index.html][CRAN]]
+- [[https://github.com/rstudio/keras][Github Repo]]
+- [[https://cloud.r-project.org/web/packages/keras/keras.pdf][Reference Manual]]
+- Vignette
+  - [[https://cloud.r-project.org/web/packages/keras/vignettes/getting_started.html][Getting Started with Keras]]
+  - Tutorial
+    - [[https://cloud.r-project.org/web/packages/keras/vignettes/tutorial_basic_classification.html][Tutorial: Basic Classification]]
+    - [[https://cloud.r-project.org/web/packages/keras/vignettes/tutorial_basic_regression.html][Tutorial: Basic Regression]]
+    - [[https://cloud.r-project.org/web/packages/keras/vignettes/tutorial_basic_text_classification.html][Tutorial: Text Classification]]
+    - [[https://keras.rstudio.com/articles/tutorial_overfit_underfit.html][Tutorial: Overfitting and Underfitting]]
+  - [[https://cloud.r-project.org/web/packages/keras/vignettes/why_use_keras.html][Why Use Keras?]]
+  - 他多数
+    

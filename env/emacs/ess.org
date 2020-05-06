@@ -1,0 +1,224 @@
+#+STARTUP: folded indent
+
+* Enable ESS
+
+#+begin_src emacs-lisp
+(require 'ess-site)
+;; or
+(require 'ess-r-mode)
+#+end_src
+
+- R の機能だけで良い場合は、ess-r-mode だけで OK
+
+* Remote R process
+
+- TRAMP
+  - =(ess-switch-process)= で =/ssh:host-name:/= を指定
+  - ForwardX11 yes に設定すればプロットもローカルで確認可能
+
+- ESS-remote
+  - リモートマシンに telnet/ssh して、ESS を開始、その後
+  - =M-x ess-remote= する
+
+* Configuration
+
+- Transcript file
+#+begin_src emacs-lisp
+ess-ask-about-transfile
+#+end_src
+
+#+RESULTS:
+: t
+
+- 起動ディレクトリ
+#+begin_src emacs-lisp
+ess-ask-for-ess-directory
+#+end_src
+
+#+RESULTS:
+: t
+
+- 起動オプション
+#+begin_src emacs-lisp
+inferior-R-args ""
+#+end_src
+
+#+RESULTS:
+
+- 起動時のウィンドウ幅
+#+begin_src emacs-lisp
+ess-auto-width
+#+end_src
+
+* Window Layout
+
+- display-buffer-alist でどのバッファをどのウィンドウで開くかを指定できる 
+#+begin_src emacs-lisp :results list
+display-buffer-alist
+#+end_src
+
+#+RESULTS:
+- ("^\\*Table: " (+popup-buffer) (actions display-buffer-reuse-window display-buffer-below-selected) (side . bottom) (size) (window-width . 40) (window-height . 0.6) (slot) (vslot) (window-parameters (ttl . 5) (quit . t) (select . ignore) (modeline) (autosave)))
+- ("^\\*ess-describe" (+popup-buffer) (actions display-buffer-reuse-window display-buffer-below-selected) (side . bottom) (size) (window-width . 40) (window-height . 0.6) (slot) (vslot) (window-parameters (ttl . 5) (quit . t) (select . ignore) (modeline) (autosave) (transient . t) (no-other-window . t)))
+- ("^\\*R view\\*$" (+popup-buffer) (actions) (side . bottom) (size . +popup-shrink-to-fit) (window-width . 40) (window-height . 0.16) (slot) (vslot) (window-parameters (ttl . 5) (quit . t) (select . t) (modeline) (autosave)))
+- ("^\\*R dired" (+popup-buffer) (actions display-buffer-reuse-window display-buffer-below-selected) (side . bottom) (size) (window-width . 40) (window-height . 0.2) (slot) (vslot) (window-parameters (ttl . 5) (quit) (select . ignore) (modeline) (autosave)))
+- ("^\\*R" nil)
+- ("^\\*git-gutter" (+popup-buffer) (actions) (side . bottom) (size . +popup-shrink-to-fit) (window-width . 40) (window-height . 0.16) (slot) (vslot) (window-parameters (ttl . 5) (quit . t) (select) (modeline) (autosave)))
+- ("^\\*ivy-occur" (+popup-buffer) (actions) (side . bottom) (size . 0.35) (window-width . 40) (window-height . 0.16) (slot) (vslot) (window-parameters (ttl . 0) (quit) (select . ignore) (modeline) (autosave)))
+- ("^\\*xref\\*$" nil)
+- ("^\\*cfw:details\\*" (+popup-buffer) (actions display-buffer-reuse-window display-buffer-below-selected) (side . bottom) (size) (window-width . 40) (window-height . 0.3) (slot) (vslot) (window-parameters (ttl . 5) (quit . t) (select . ignore) (modeline) (autosave) (transient . t) (no-other-window . t)))
+- ("^\\(?:\\*magit\\|magit:\\| \\*transient\\*\\)" nil)
+- ("^\\*image-dired" (+popup-buffer) (actions) (side . bottom) (size . 0.8) (window-width . 40) (window-height . 0.16) (slot . 20) (vslot) (window-parameters (ttl . 0) (quit) (select . t) (modeline) (autosave)))
+- ("^CAPTURE-.*\\.org$" (+popup-buffer) (actions) (side . bottom) (size . 0.25) (window-width . 40) (window-height . 0.25) (slot) (vslot) (window-parameters (ttl . 5) (quit) (select . t) (modeline) (autosave . t) (transient . t) (no-other-window . t)))
+- ("^\\*Org-Babel" (+popup-buffer) (actions) (side . bottom) (size) (window-width . 40) (window-height . 0.16) (slot) (vslot) (window-parameters (ttl . 5) (quit . t) (select . ignore) (modeline) (autosave)))
+- ("^\\*Org Src" (+popup-buffer) (actions) (side . bottom) (size . 0.4) (window-width . 40) (window-height . 0.16) (slot) (vslot) (window-parameters (ttl) (quit) (select . t) (modeline . t) (autosave . t)))
+- ("^\\*Org Agenda" nil)
+- ("^\\*Org \\(?:Select\\|Attach\\)" (+popup-buffer) (actions) (side . bottom) (size . 0.25) (window-width . 40) (window-height . 0.25) (slot . -1) (vslot . -2) (window-parameters (ttl . 0) (quit . t) (select . ignore) (modeline) (autosave) (transient . t) (no-other-window . t)))
+- ("^ ?\\*\\(?:Agenda Com\\|Calendar\\|Org Export Dispatcher\\)" (+popup-buffer) (actions) (side . bottom) (size function +popup-shrink-to-fit) (window-width . 40) (window-height function +popup-shrink-to-fit) (slot . -1) (vslot . -1) (window-parameters (ttl . 0) (quit . t) (select . ignore) (modeline) (autosave) (transient . t) (no-other-window . t)))
+- ("^\\*Org Links" (+popup-buffer) (actions) (side . bottom) (size . 2) (window-width . 40) (window-height . 0.16) (slot . -1) (vslot . -1) (window-parameters (ttl . 0) (quit . t) (select . ignore) (modeline) (autosave)))
+- ("^\\*Flycheck errors" (+popup-buffer) (actions display-buffer-reuse-window display-buffer-below-selected) (side . bottom) (size) (window-width . 40) (window-height . 0.3) (slot) (vslot) (window-parameters (ttl . 5) (quit . t) (select . t) (modeline) (autosave)))
+- ("^\\*Flycheck error messages\\*" (+popup-buffer) (actions) (side . bottom) (size) (window-width . 40) (window-height . 0.16) (slot) (vslot) (window-parameters (ttl . 5) (quit . t) (select) (modeline) (autosave)))
+- ("^\\*lsp session\\*$" nil)
+- ("^\\*General Keybindings\\*$" nil)
+- ("^\\*Command Line" (+popup-buffer) (actions) (side . bottom) (size . 8) (window-width . 40) (window-height . 0.16) (slot) (vslot) (window-parameters (ttl . 5) (quit . t) (select . ignore) (modeline) (autosave)))
+- ("^\\*evil-registers" (+popup-buffer) (actions) (side . bottom) (size . 0.3) (window-width . 40) (window-height . 0.16) (slot) (vslot) (window-parameters (ttl . 5) (quit . t) (select . ignore) (modeline) (autosave)))
+- ((closure (t) (bufname _) (if (boundp (quote +eval-repl-mode)) (progn (buffer-local-value (quote +eval-repl-mode) (get-buffer bufname))))) (+popup-buffer) (actions) (side . bottom) (size . 0.25) (window-width . 40) (window-height . 0.16) (slot) (vslot) (window-parameters (ttl closure (t) (buf) (if (plist-get +eval-repl-plist :persist) nil (let* ((process (and t (get-buffer-process buf)))) (if process (progn (set-process-query-on-exit-flag process nil) (kill-process process) (kill-buffer buf)) nil)))) (quit) (select . ignore) (modeline) (autosave)))
+- ("^\\*F\\(?:d\\|ind\\)\\*$" nil)
+- ("^\\*\\(?:Proced\\|timer-list\\|Process List\\|Abbrevs\\|Output\\|Occur\\|unsent mail\\)\\*" nil)
+- ("^\\*Memory-Profiler-Report " (+popup-buffer) (actions) (side . bottom) (size) (window-width . 0.5) (window-height . 0.4) (slot . 2) (vslot . 100) (window-parameters (ttl . 5) (quit) (select . ignore) (modeline) (autosave)))
+- ("^\\*CPU-Profiler-Report " (+popup-buffer) (actions) (side . bottom) (size) (window-width . 0.5) (window-height . 0.4) (slot . 1) (vslot . 100) (window-parameters (ttl . 5) (quit) (select . ignore) (modeline) (autosave)))
+- ("^\\*Backtrace" (+popup-buffer) (actions) (side . bottom) (size . 0.4) (window-width . 40) (window-height . 0.16) (slot) (vslot . 99) (window-parameters (ttl . 5) (quit) (select . ignore) (modeline) (autosave)))
+- ("^\\*Warnings" (+popup-buffer) (actions) (side . bottom) (size . 0.25) (window-width . 40) (window-height . 0.16) (slot) (vslot . 99) (window-parameters (ttl . 5) (quit . t) (select . ignore) (modeline) (autosave)))
+- ("^\\*info\\*$" (+popup-buffer) (actions) (side . bottom) (size . 0.45) (window-width . 40) (window-height . 0.16) (slot . 2) (vslot . 2) (window-parameters (ttl . 5) (quit . t) (select . t) (modeline) (autosave)))
+- ("^\\*eww\\*" (+popup-buffer) (actions) (side . bottom) (size . 0.35) (window-width . 40) (window-height . 0.16) (slot) (vslot . -11) (window-parameters (ttl . 5) (quit . t) (select . t) (modeline) (autosave)))
+- ("^\\*[Hh]elp" (+popup-buffer) (actions) (side . bottom) (size . 0.35) (window-width . 40) (window-height . 0.16) (slot . 2) (vslot . -8) (window-parameters (ttl . 5) (quit . t) (select . t) (modeline) (autosave)))
+- ("^ \\*undo-tree\\*" (+popup-buffer) (actions) (side . left) (size . 20) (window-width . 40) (window-height . 0.16) (slot . 2) (vslot) (window-parameters (ttl . 5) (quit . t) (select . t) (modeline) (autosave)))
+- ("^\\*Customize" (+popup-buffer) (actions) (side . right) (size) (window-width . 40) (window-height . 0.16) (slot . 2) (vslot) (window-parameters (ttl . 5) (quit . t) (select . t) (modeline) (autosave)))
+- ("^\\*Calc" (+popup-buffer) (actions) (side . bottom) (size . 0.4) (window-width . 40) (window-height . 0.16) (slot) (vslot . -7) (window-parameters (ttl . 0) (quit) (select . t) (modeline) (autosave)))
+- ("^\\*\\(?:Wo\\)?Man " (+popup-buffer) (actions) (side . bottom) (size . 0.45) (window-width . 40) (window-height . 0.16) (slot) (vslot . -6) (window-parameters (ttl . 0) (quit . t) (select . t) (modeline) (autosave)))
+- ("^\\*doom:\\(?:v?term\\|e?shell\\)-popup" (+popup-buffer) (actions) (side . bottom) (size . 0.35) (window-width . 40) (window-height . 0.16) (slot) (vslot . -5) (window-parameters (ttl) (quit) (select . t) (modeline) (autosave)))
+- ("^\\*doom:" (+popup-buffer) (actions) (side . bottom) (size . 0.35) (window-width . 40) (window-height . 0.16) (slot) (vslot . -4) (window-parameters (ttl . t) (quit) (select . t) (modeline . t) (autosave . t)))
+- ("^\\*\\(?:doom \\|Pp E\\)" (+popup-buffer) (actions) (side . bottom) (size . +popup-shrink-to-fit) (window-width . 40) (window-height . 0.16) (slot) (vslot . -3) (window-parameters (ttl . 0) (quit . t) (select . ignore) (modeline) (autosave . t)))
+- ("^\\*\\(?:[Cc]ompil\\(?:ation\\|e-Log\\)\\|Messages\\)" (+popup-buffer) (actions) (side . bottom) (size . 0.3) (window-width . 40) (window-height . 0.16) (slot) (vslot . -2) (window-parameters (ttl) (quit . t) (select . ignore) (modeline) (autosave . t)))
+- ("^\\*Local variables\\*$" (+popup-buffer) (actions) (side . bottom) (size . +popup-shrink-to-fit) (window-width . 40) (window-height . 0.16) (slot . 1) (vslot . -1) (window-parameters (ttl . 5) (quit . t) (select . ignore) (modeline) (autosave)))
+- ("^\\*Completions" nil)
+
+* Inferior ESS
+
+- 履歴上で、 =RET=   コマンドの実行
+- 履歴上で、 =C-RET= コマンドの入力のみ
+- 履歴上で、 =M-r=   コマンドの検索
+
+* ESS tracebug
+
+- ブレークポイントの設定
+- 変数ウォッチ
+
+** Interactive Debugging
+
+- =ess-debug-minor-mode-map=
+|-----+----------------+-------+----------------------------------+------------------------------+-----------|
+| "c" | continue       | M-C   | ess-debug-command-continue       | 次のブレークポイントまで進む | Continue  |
+| "c" | continue multi | M-C-C | ess-debug-command-continue-multi | "c" x n                      |           |
+| "n" | next           | M-N   | ess-debug-command-next           | 次の進む                     | Step-over |
+| "n" | next multi     | M-C-N | ess-debug-command-next-multi     | "n" x n                      |           |
+| "s" | step into      | M-Q   | my/ess-debug-command-step-into   | 関数の中にも入る             | Step-in   |
+| "f" | up frame       | M-U   | ess-debug-command-up             | ひとつ上に抜ける             | Step-out  |
+| "Q" | quit           | M-Q   | ess-debug-command-quit           | デバッグ終了                 |           |
+|-----+----------------+-------+----------------------------------+------------------------------+-----------|
+
+** Breakpoints
+
+- =ess-dev-map=
+  - b   . Set BP (repeat to cycle BP type) . ess-bp-set
+  - B   . Set conditional BP               . ess-bp-set-conditional
+  - k   . Kill BP                          . ess-bp-kil
+  - K   . Kill all BPs                     . ess-bp-kill-all
+  - o   . Toggle BP state                  . ess-bp-toggle-state
+  - l   . Set logger BP                    . ess-bp-set-logger
+  - n   . Goto next BP                     . ess-bp-next
+  - p   . Goto previous BP                 . ess-bp-previous
+ 
+** Debugging
+
+- =ess-dev-map=
+  - `   . Show traceback                       . `ess-show-traceback' (also on C-c `)
+  - ~   . Show callstack                       . `ess-show-call-stack' (also on C-c ~)
+  - e   . Toggle error action (repeat to cycle). `ess-debug-toggle-error-action'
+  - d   . Flag for debugging                   . `ess-debug-flag-for-debugging'
+  - u   . Unflag for debugging                 . `ess-debug-unflag-for-debugging'
+  - w   . Watch window                         . `ess-watch'
+ 
+* Command
+** ESS のファイル構成
+
+- ess.el
+  - Versions
+  - Bug Reporting
+  - Timer
+  - Dispatch on ess-dialect
+- ess-inf.el
+  - 実行中の ESS プロセスの操作
+- ess-site.el
+  - ESS の major-mode を収録
+- ess-utils.el
+  - 様々なユーティリティ
+- ess-custom.el
+  - ess-utils.el で使う defcustom (変数) を収録
+
+- major-mode
+ | name           | file              | derived       |
+ |----------------+-------------------+---------------|
+ | ess-mode       | ess-mode.el       | prog-mode     |
+ | ess-r-mode     | ess-r-mode.el     | ess-mode      |
+ | ess-julia-mode | ess-julia.el      | julia-mode    |
+ | ess-stata-mode | ess-stata-mode.el | ess-mode      |
+ | ess-bugs-mode  | ess-bugs-d.el     | ess-mode      |
+ | ess-jags-mode  | ess-jags-d.el     | ess-bugs-mode |
+
+- Utility
+  - ess-help.el
+  - ess-s-lang.el
+  - ess-roxy.el
+  - ess-r-completion.el
+    - company-backends など
+  - ess-r-syntax.el
+  - ess-r-package.el
+  - ess-r-trns.el
+  - ess-r-xref.el
+
+** 使えるコマンド
+
+- =(ess-execute-attach DIR &optional POSN)=
+- =(ess-execute-dialect-specific COMMAND &optional PROMPT &rest ARGS)=
+- =(ess-execute-objects POSN)=
+- =(ess-execute-screen-options &optional INVISIBLY)=
+- =(ess-execute-search INVERT)=
+
+- =(ess-command CMD &optional OUT-BUFFER SLEEP NO-PROMPT-CHECK WAIT PROC FORCE-REDISPLAY)=
+#+begin_src emacs-lisp
+(ess-command)
+#+end_src
+
+- 指定したバッファに結果を表示する
+- =(ess-execute COMMAND &optional INVERT BUFF MESSAGE)=
+#+begin_src emacs-lisp
+(ess-execute (concat "cat(" obj ",sep='\n')") nil "*BUFF*" header)
+#+end_src
+
+- 文字列でコマンド実行
+- =(ess-send-string PROCESS STRING &optional VISIBLY MESSAGE TYPE)=
+#+begin_src emacs-lisp
+(ess-send-string "R" "head(iris")
+#+end_src
+
+- iESS の R プロセスを得る
+#+begin_src emacs-lisp
+(get-buffer-process (current-buffer))
+#+end_src
+
+- ess-eval-linewise
+- ess-get-words-from-vector
+- ess-boolean-command 返り値が bool のコマンドを実行
+- ess-string-command  返り値が string のコマンドを実行
+

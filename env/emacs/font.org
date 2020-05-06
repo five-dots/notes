@@ -1,0 +1,84 @@
+#+STARTUP: folded indent
+
+* reference
+
+- [[https://emacs.stackexchange.com/questions/28390/quickly-adjusting-text-to-dpi-changes][ディスプレイのサイズ (DPI) に応じて設定]]
+- [[https://qiita.com/Duct-and-rice/items/ad77ab8b41b0cd83f1ec][文芸用エディタ]]
+- [[http://extra-vision.blogspot.com/2016/07/emacs.html][Emacs のフォント設定を克服する]]
+- [[https://qiita.com/j8takagi/items/01aecdd28f87cdd3cd2c][Emacs のフォントを設定する]]
+- [[http://asukiaaa.blogspot.com/2017/11/ubuntuemacs.html][ubuntu で動かす emacs の日本語フォントを調整する方法]]
+- [[https://zzamboni.org/post/beautifying-org-mode-in-emacs/][Beautifying Org Mode in Emacs]]
+
+* Workflow
+
+- カスタムの fontset を作成する
+  - =create-fontset-from-ascii-font=
+
+- fontset の特定の character-set (文字コード) に対して、font-spec でフォントを指定
+  - =set-fontset-font=
+  
+- fontset を frame もしくは face に適応する
+  - =(add-to-list 'default-frame-alist '(font . "fontset-name"))=
+
+* font-spec
+
+- フォントの書式設定方法
+- =set-face-attriutes= と同じ書式をもつ
+- フォントを扱う関数の引数として渡す用途が多い
+  =(font-spec :family "hoge" :size 14 :weight 'bold  :slant 'italic :width 'normal)=
+
+* character-sets
+
+- 文字集合データベース
+
+- 日本語文字セット
+  - =M-x list-character-sets=
+  - japanese-jisx0208
+  - japanese-jisx0208-1978
+  - japanese-jisx0212
+  - japanese-jisx0213-1
+  - japanese-jisx0213-2
+  - japanese-jisx0213-a
+  - japanese-jisx0213.2004-1
+  - jisx0201
+  - katakana-jisx0201
+  - katakana-sjis
+  - latin-jisx0201
+  ※ Final Byte の違いで複数種類ある
+
+* fontset
+
+- 複数の character-set とフォントの対応表
+  - どの文字コードに、どのフォントを使うか
+  - =M-x list-fontsets=
+    - デフォルトでは、以下の fontset が見える
+    - fontset-default  (他で指定がない場合は、ここにフォールバックする)
+    - fontset-standard (中身は空で、fontset-default にフォールバックする)
+    - fontset-startup
+
+- 各々の fontset  の中身
+  - =M-x describe-fontset=
+
+- =set-fontset-font= で、fontset の特定の character-set に対して、font-spec を設定
+  - fontset が nil の場合は、現在の frame の fontset
+
+* face-attribute
+
+- face-attribute の :height は default face に対しての相対サイズ (1.2 など) でも指定できる
+- default face は絶対サイズ (1/10 pt) で指定する
+
+* size check
+
+|abcdef ghijkl|
+|ABCDEF GHIJKL|
+|'";:-+ =/\~`?|
+|∞≤≥∏∑∫ ×±⊆⊇|
+|αβγδεζ ηθικλμ|
+|ΑΒΓΔΕΖ ΗΘΙΚΛΜ|
+
+|abcdef ghijkl|
+|ABCDEF GHIJKL|
+|日本語 の美観|
+|あいう えおか|
+|アイウ エオカ|
+|ｱｲｳｴｵｶ ｷｸｹｺｻｼ|

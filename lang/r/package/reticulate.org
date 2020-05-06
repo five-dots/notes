@@ -1,0 +1,100 @@
+#+STARTUP: folded indent inlineimages latexpreview
+#+PROPERTY: header-args:R :results output :session *R:reticulate* :width 640 :height 480 :colnames yes
+
+* ライブラリ
+
+#+begin_src R :results silent
+library(tidyverse)
+library(reticulate)
+#+end_src
+
+* 全関数
+
+#+begin_src R
+pacman::p_funs(reticulate)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+ [1] "%as%"                               "array_reshape"                     
+ [3] "as_iterator"                        "conda_binary"                      
+ [5] "conda_create"                       "conda_install"                     
+ [7] "conda_list"                         "conda_python"                      
+ [9] "conda_remove"                       "conda_version"                     
+[11] "configure_environment"              "dict"                              
+[13] "eng_python"                         "import"                            
+[15] "import_builtins"                    "import_from_path"                  
+[17] "import_main"                        "install_miniconda"                 
+[19] "iter_next"                          "iterate"                           
+[21] "miniconda_path"                     "miniconda_update"                  
+[23] "np_array"                           "py"                                
+[25] "py_available"                       "py_call"                           
+[27] "py_capture_output"                  "py_clear_last_error"               
+[29] "py_config"                          "py_config_error_message"           
+[31] "py_del_item"                        "py_dict"                           
+[33] "py_discover_config"                 "py_eval"                           
+[35] "py_func"                            "py_function_docs"                  
+[37] "py_function_wrapper"                "py_get_attr"                       
+[39] "py_get_item"                        "py_has_attr"                       
+[41] "py_help"                            "py_id"                             
+[43] "py_install"                         "py_is_null_xptr"                   
+[45] "py_iterator"                        "py_last_error"                     
+[47] "py_len"                             "py_list_attributes"                
+[49] "py_load_object"                     "py_main_thread_func"               
+[51] "py_module_available"                "py_numpy_available"                
+[53] "py_run_file"                        "py_run_string"                     
+[55] "py_save_object"                     "py_set_attr"                       
+[57] "py_set_item"                        "py_set_seed"                       
+[59] "py_str"                             "py_suppress_warnings"              
+[61] "py_to_r"                            "py_to_r_wrapper"                   
+[63] "py_unicode"                         "py_validate_xptr"                  
+[65] "py_versions_windows"                "PyClass"                           
+[67] "r_to_py"                            "register_class_filter"             
+[69] "register_help_topics"               "register_module_help_handler"      
+[71] "register_suppress_warnings_handler" "repl_python"                       
+[73] "source_python"                      "tuple"                             
+[75] "use_condaenv"                       "use_miniconda"                     
+[77] "use_python"                         "use_virtualenv"                    
+[79] "virtualenv_create"                  "virtualenv_install"                
+[81] "virtualenv_list"                    "virtualenv_python"                 
+[83] "virtualenv_remove"                  "virtualenv_root"
+#+end_example
+
+* 概要
+
+- R から Python を利用する様々な方法を提供
+  1. R Markdown から
+  2. Python script をソースする =source_python()=
+  3. Python モジュールを読み込む =import()=
+  4. Python REPL を R からインタラクティブに使う =repl_python()=
+
+- R <-> Python のオブジェクト変換
+  - Pandas <-> data.frame
+  - NumPy <-> matrix
+
+- 複数の Pyhon 環境の切り替え (仮想環境や Conda の利用)
+  - =use_python()=
+  - =use_virtualenv()=
+  - =use_condaenv()=
+  - =use_miniconda()=
+
+#+begin_src R
+Sys.which("python")
+Sys.which("python3")
+#+end_src
+
+#+RESULTS:
+:            python 
+: "/usr/bin/python"
+: 
+:            python3 
+: "/usr/bin/python3"
+
+* 参考
+
+- [[https://rstudio.github.io/reticulate/][公式サイト]]
+- [[https://cloud.r-project.org/web/packages/reticulate/index.html][CRAN]]
+- [[https://github.com/rstudio/reticulate][Github repo]]
+- Vigette
+  - [[https://cloud.r-project.org/web/packages/reticulate/vignettes/calling_python.html][Calling Python from R]]
+  - 他多数

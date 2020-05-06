@@ -1,0 +1,157 @@
+#+STARTUP: folded indent
+#+PROPERTY: header-args:R :results output :colnames yes :session *R:vctrs* :width 640 :height 480
+
+* ~{vctrs}~: Vector types                                            :noexport:
+* ライブラリの読み込みとバージョンの確認
+
+#+begin_src R :results silent
+library(vctrs)
+library(tidyverse)
+#+end_src
+
+- バージョン
+#+begin_src R :results output :exports both
+packageVersion("vctrs")
+#+end_src
+
+#+RESULTS:
+: [1] ‘0.2.2’
+
+* 全関数リスト
+
+#+begin_src R :results output
+pacman::p_funs(vctrs)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+  [1] "%0%"                          "allow_lossy_cast"            
+  [3] "as_list_of"                   "field"                       
+  [5] "field<-"                      "fields"                      
+  [7] "is_list_of"                   "is_partial"                  
+  [9] "list_of"                      "maybe_lossy_cast"            
+ [11] "MISSING"                      "n_fields"                    
+ [13] "new_data_frame"               "new_date"                    
+ [15] "new_datetime"                 "new_duration"                
+ [17] "new_factor"                   "new_list_of"                 
+ [19] "new_ordered"                  "new_partial"                 
+ [21] "new_rcrd"                     "new_vctr"                    
+ [23] "num_as_location"              "num_as_location2"            
+ [25] "obj_print"                    "obj_print_data"              
+ [27] "obj_print_footer"             "obj_print_header"            
+ [29] "obj_str"                      "obj_str_data"                
+ [31] "obj_str_footer"               "obj_str_header"              
+ [33] "partial_factor"               "partial_frame"               
+ [35] "s3_register"                  "stop_incompatible_cast"      
+ [37] "stop_incompatible_op"         "stop_incompatible_size"      
+ [39] "stop_incompatible_type"       "unspecified"                 
+ [41] "validate_list_of"             "vec_arith"                   
+ [43] "vec_arith_base"               "vec_arith.Date"              
+ [45] "vec_arith.difftime"           "vec_arith.logical"           
+ [47] "vec_arith.numeric"            "vec_arith.POSIXct"           
+ [49] "vec_as_index"                 "vec_as_location"             
+ [51] "vec_as_location2"             "vec_as_names"                
+ [53] "vec_as_names_legacy"          "vec_as_subscript"            
+ [55] "vec_as_subscript2"            "vec_assert"                  
+ [57] "vec_assign"                   "vec_c"                       
+ [59] "vec_cast"                     "vec_cast_common"             
+ [61] "vec_cast.character"           "vec_cast.complex"            
+ [63] "vec_cast.data.frame"          "vec_cast.Date"               
+ [65] "vec_cast.difftime"            "vec_cast.double"             
+ [67] "vec_cast.factor"              "vec_cast.integer"            
+ [69] "vec_cast.integer64"           "vec_cast.list"               
+ [71] "vec_cast.logical"             "vec_cast.POSIXct"            
+ [73] "vec_cast.POSIXlt"             "vec_cast.raw"                
+ [75] "vec_cast.vctrs_list_of"       "vec_cbind"                   
+ [77] "vec_chop"                     "vec_compare"                 
+ [79] "vec_count"                    "vec_data"                    
+ [81] "vec_default_cast"             "vec_default_ptype2"          
+ [83] "vec_duplicate_any"            "vec_duplicate_detect"        
+ [85] "vec_duplicate_id"             "vec_empty"                   
+ [87] "vec_equal"                    "vec_equal_na"                
+ [89] "vec_group_id"                 "vec_group_loc"               
+ [91] "vec_group_rle"                "vec_in"                      
+ [93] "vec_init"                     "vec_init_along"              
+ [95] "vec_is"                       "vec_is_empty"                
+ [97] "vec_list_cast"                "vec_match"                   
+ [99] "vec_math"                     "vec_math_base"               
+[101] "vec_order"                    "vec_proxy"                   
+[103] "vec_proxy_compare"            "vec_proxy_equal"             
+[105] "vec_ptype"                    "vec_ptype_abbr"              
+[107] "vec_ptype_common"             "vec_ptype_finalise"          
+[109] "vec_ptype_full"               "vec_ptype_show"              
+[111] "vec_ptype2"                   "vec_ptype2.character"        
+[113] "vec_ptype2.complex"           "vec_ptype2.data.frame"       
+[115] "vec_ptype2.Date"              "vec_ptype2.difftime"         
+[117] "vec_ptype2.double"            "vec_ptype2.factor"           
+[119] "vec_ptype2.integer"           "vec_ptype2.integer64"        
+[121] "vec_ptype2.list"              "vec_ptype2.logical"          
+[123] "vec_ptype2.ordered"           "vec_ptype2.POSIXt"           
+[125] "vec_ptype2.raw"               "vec_ptype2.vctrs_list_of"    
+[127] "vec_ptype2.vctrs_unspecified" "vec_rbind"                   
+[129] "vec_recycle"                  "vec_recycle_common"          
+[131] "vec_repeat"                   "vec_restore"                 
+[133] "vec_seq_along"                "vec_size"                    
+[135] "vec_size_common"              "vec_slice"                   
+[137] "vec_slice<-"                  "vec_sort"                    
+[139] "vec_split"                    "vec_type"                    
+[141] "vec_type_common"              "vec_type2"                   
+[143] "vec_unique"                   "vec_unique_count"            
+[145] "vec_unique_loc"
+#+end_example
+
+* 関数リスト
+* 実行環境
+
+#+begin_src R :results output :exports both
+sessionInfo()
+#+end_src
+
+#+RESULTS:
+#+begin_example
+R version 3.6.2 (2019-12-12)
+Platform: x86_64-pc-linux-gnu (64-bit)
+Running under: Ubuntu 18.04.3 LTS
+
+Matrix products: default
+BLAS:   /usr/lib/x86_64-linux-gnu/blas/libblas.so.3.7.1
+LAPACK: /usr/lib/x86_64-linux-gnu/lapack/liblapack.so.3.7.1
+
+locale:
+ [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C              
+ [3] LC_TIME=en_US.UTF-8        LC_COLLATE=en_US.UTF-8    
+ [5] LC_MONETARY=en_US.UTF-8    LC_MESSAGES=en_US.UTF-8   
+ [7] LC_PAPER=en_US.UTF-8       LC_NAME=C                 
+ [9] LC_ADDRESS=C               LC_TELEPHONE=C            
+[11] LC_MEASUREMENT=en_US.UTF-8 LC_IDENTIFICATION=C       
+
+attached base packages:
+[1] stats     graphics  grDevices utils     datasets  methods   base     
+
+other attached packages:
+ [1] forcats_0.4.0   stringr_1.4.0   dplyr_0.8.3     purrr_0.3.3    
+ [5] readr_1.3.1     tidyr_1.0.2     tibble_2.1.3    ggplot2_3.2.1  
+ [9] tidyverse_1.2.1 vctrs_0.2.2    
+
+loaded via a namespace (and not attached):
+ [1] Rcpp_1.0.3       pillar_1.4.3     compiler_3.6.2   cellranger_1.1.0
+ [5] tools_3.6.2      jsonlite_1.6     lubridate_1.7.4  lifecycle_0.1.0 
+ [9] gtable_0.3.0     nlme_3.1-143     lattice_0.20-38  pkgconfig_2.0.3 
+[13] rlang_0.4.3.9000 cli_2.0.1.9000   rstudioapi_0.10  haven_2.1.1     
+[17] withr_2.1.2      xml2_1.2.2       httr_1.4.1       generics_0.0.2  
+[21] hms_0.5.1        grid_3.6.2       tidyselect_0.2.5 glue_1.3.1      
+[25] R6_2.4.1         fansi_0.4.1      readxl_1.3.1     pacman_0.5.1    
+[29] modelr_0.1.5     magrittr_1.5     backports_1.1.5  scales_1.1.0    
+[33] rvest_0.3.4      assertthat_0.2.1 colorspace_1.4-2 stringi_1.4.5   
+[37] lazyeval_0.2.2   munsell_0.5.0    broom_0.5.2      crayon_1.3.4
+#+end_example
+
+* 参考リンク
+
+- [[https://vctrs.r-lib.org/][公式サイト]]
+- [[https://cloud.r-project.org/web/packages/vctrs/index.html][CRAN]]
+- [[https://github.com/r-lib/vctrs][Github Repo]]
+- Vignette
+  - [[https://cloud.r-project.org/web/packages/vctrs/vignettes/s3-vector.html][S3 vectors]]
+  - [[https://cloud.r-project.org/web/packages/vctrs/vignettes/stability.html][Type and size stability]]
+  - [[https://cloud.r-project.org/web/packages/vctrs/vignettes/type-size.html][Prototypes and sizes]]

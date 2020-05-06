@@ -1,0 +1,24 @@
+#+STARTUP: showall indent
+
+* Interest Rate
+
+DFF			Effective Federal Funds Rate
+DGS2		2-Year Treasury Constant Maturity Rate
+DGS10		10-Year Treasury Constant Maturity Rate
+
+* Interest Rate Spread
+
+T10Y2Y		10-Year Treasury Constant Maturity Minus 2-Year Treasury Constant Maturity
+T10YFF		10-Year Treasury Constant Maturity Minus Federal Funds Rate
+
+8 Inflation
+T10YIE		10-Year Breakeven Inflation Rate
+TEDRATE		TED Spread (Spread between 3M LIBOR and 3M T-Bill)
+CPIAUCSL	Consumer Price Index for All Urban Consumers
+CPILFESL	Consumer Price Index for All Urban Consumers: All Items Less Food and Energy
+
+* Other
+
+GDP
+UNRATE		Civilian Unemployment Rate
+Misery

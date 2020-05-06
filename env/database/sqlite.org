@@ -1,0 +1,65 @@
+#+STARTUP: folded indent
+
+* SQLite tools
+
+- Linux
+#+begin_src shell
+apt install sqlite3
+#+end_src
+
+- Windows
+  - [[https://www.sqlite.org/download.html][SQLite Download Page]]
+
+* DB Browser for SQLite
+
+#+begin_src shell
+sudo add-apt-repository -y ppa:linuxgndu/sqlitebrowser
+sudo apt-get install sqlitebrowser
+#+end_src
+
+* Use from C#
+** 必要なパッケージ
+
+- [[https://qiita.com/koshian2/items/63938474001c510d0b15][C#でSQLite3を使ってみる@Qiita]]
+- System.Data.SQLite は全部入り
+- System.Data.SQLite.Core が最小限
+- その他、System.Data.SQLite.Linq, System.Data.SQLite.EF6 など
+
+* Available types
+
+- NULL
+- INTEGER
+- REAL
+- BLOB
+- TEXT
+- NUMERIC
+- 日付
+  - SQLite では、日付は TEXT, INTEGER, REAL のいずれかで保存
+  - 取り出す際に、関数で日付に変換して扱う
+  - [[http://wada811.blogspot.com/2012/10/sqlearning-sqlite-datatype-constraint.html][[SQLearning][SQLite]データ型と制約の指定]]
+  - [[https://qiita.com/TomK/items/132831ab45e2aba822a8][SQLiteで日付時刻を扱う際のポイント@Qiita]]
+    - time('now') => '12:04:12'
+    - date('now') => '2016-09-14'
+    - datetime('now') => '2016-09-14 12:04:12'
+    - Unix 時間で欲しい場合 SELECT strftime('%s', "2016-09-08");
+
+* TRUNCATE
+
+- SQLite は TRUNCATE 文をサポートしていない
+
+- 代用
+#+begin_quote
+DELETE FROM table_name
+VACUUM
+#+end_quote
+
+* BULK INSERT
+
+- =.import <csv> <table>= で行う
+- 事前に =.mode csv= を設定しておく
+  - =.show= で設定内容を確認
+
+- C# から =.import= を実行できないので、sqlite3 commandline tool を利用
+#+begin_src shell
+sqlite3 -csv /path/to/db ".import /path/to/csv db_name"
+#+end_src

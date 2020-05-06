@@ -1,0 +1,389 @@
+#+STARTUP: folded indent inlineimages latexpreview
+#+PROPERTY: header-args:R :results output :colnames yes :session *R:rlang*
+
+* ライブラリの読み込み
+
+#+begin_src R :results silent
+library(rlang)
+library(tidyverse)
+#+end_src
+
+* 全関数
+
+#+begin_src R
+pacman::p_funs(rlang)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+  [1] ":="                      "!!"                     
+  [3] "!!!"                     ".data"                  
+  [5] "%@%"                     "%@%<-"                  
+  [7] "%|%"                     "%||%"                   
+  [9] "abort"                   "are_na"                 
+ [11] "arg_match"               "as_box"                 
+ [13] "as_box_if"               "as_bytes"               
+ [15] "as_character"            "as_closure"             
+ [17] "as_complex"              "as_data_mask"           
+ [19] "as_data_pronoun"         "as_double"              
+ [21] "as_env"                  "as_environment"         
+ [23] "as_function"             "as_integer"             
+ [25] "as_label"                "as_list"                
+ [27] "as_logical"              "as_name"                
+ [29] "as_overscope"            "as_pairlist"            
+ [31] "as_quosure"              "as_quosures"            
+ [33] "as_string"               "as_utf8_character"      
+ [35] "base_env"                "bytes"                  
+ [37] "bytes_along"             "bytes_len"              
+ [39] "call_args"               "call_args_names"        
+ [41] "call_depth"              "call_fn"                
+ [43] "call_frame"              "call_inspect"           
+ [45] "call_modify"             "call_name"              
+ [47] "call_ns"                 "call_stack"             
+ [49] "call_standardise"        "call2"                  
+ [51] "caller_env"              "caller_fn"              
+ [53] "caller_frame"            "calling"                
+ [55] "catch_cnd"               "child_env"              
+ [57] "chr"                     "chr_along"              
+ [59] "chr_len"                 "chr_unserialise_unicode"
+ [61] "cnd"                     "cnd_body"               
+ [63] "cnd_entrace"             "cnd_footer"             
+ [65] "cnd_header"              "cnd_message"            
+ [67] "cnd_muffle"              "cnd_signal"             
+ [69] "cnd_type"                "coerce_class"           
+ [71] "coerce_type"             "cpl"                    
+ [73] "cpl_along"               "cpl_len"                
+ [75] "ctxt_depth"              "ctxt_frame"             
+ [77] "ctxt_stack"              "current_env"            
+ [79] "current_fn"              "current_frame"          
+ [81] "dbl"                     "dbl_along"              
+ [83] "dbl_len"                 "done"                   
+ [85] "dots_definitions"        "dots_list"              
+ [87] "dots_n"                  "dots_splice"            
+ [89] "dots_values"             "duplicate"              
+ [91] "empty_env"               "enexpr"                 
+ [93] "enexprs"                 "enquo"                  
+ [95] "enquos"                  "ensym"                  
+ [97] "ensyms"                  "entrace"                
+ [99] "env"                     "env_bind"               
+[101] "env_bind_active"         "env_bind_exprs"         
+[103] "env_bind_fns"            "env_bind_lazy"          
+[105] "env_binding_are_active"  "env_binding_are_lazy"   
+[107] "env_binding_are_locked"  "env_binding_lock"       
+[109] "env_binding_unlock"      "env_bury"               
+[111] "env_clone"               "env_depth"              
+[113] "env_get"                 "env_get_list"           
+[115] "env_has"                 "env_inherits"           
+[117] "env_is_locked"           "env_label"              
+[119] "env_length"              "env_lock"               
+[121] "env_name"                "env_names"              
+[123] "env_parent"              "env_parents"            
+[125] "env_poke"                "env_poke_parent"        
+[127] "env_print"               "env_tail"               
+[129] "env_unbind"              "env_unlock"             
+[131] "error_cnd"               "eval_bare"              
+[133] "eval_tidy"               "exec"                   
+[135] "exiting"                 "expr"                   
+[137] "expr_deparse"            "expr_interp"            
+[139] "expr_label"              "expr_name"              
+[141] "expr_print"              "expr_text"              
+[143] "exprs"                   "exprs_auto_name"        
+[145] "f_env"                   "f_env<-"                
+[147] "f_label"                 "f_lhs"                  
+[149] "f_lhs<-"                 "f_name"                 
+[151] "f_rhs"                   "f_rhs<-"                
+[153] "f_text"                  "flatten"                
+[155] "flatten_chr"             "flatten_cpl"            
+[157] "flatten_dbl"             "flatten_if"             
+[159] "flatten_int"             "flatten_lgl"            
+[161] "flatten_raw"             "fn_body"                
+[163] "fn_body<-"               "fn_env"                 
+[165] "fn_env<-"                "fn_fmls"                
+[167] "fn_fmls_names"           "fn_fmls_names<-"        
+[169] "fn_fmls_syms"            "fn_fmls<-"              
+[171] "format_error_bullets"    "frame_position"         
+[173] "friendly_type"           "get_env"                
+[175] "get_expr"                "global_env"             
+[177] "global_frame"            "has_length"             
+[179] "has_name"                "have_name"              
+[181] "inform"                  "inherits_all"           
+[183] "inherits_any"            "inherits_only"          
+[185] "int"                     "int_along"              
+[187] "int_len"                 "interrupt"              
+[189] "invoke"                  "is_atomic"              
+[191] "is_attached"             "is_bare_atomic"         
+[193] "is_bare_bytes"           "is_bare_character"      
+[195] "is_bare_double"          "is_bare_env"            
+[197] "is_bare_environment"     "is_bare_formula"        
+[199] "is_bare_integer"         "is_bare_integerish"     
+[201] "is_bare_list"            "is_bare_logical"        
+[203] "is_bare_numeric"         "is_bare_raw"            
+[205] "is_bare_string"          "is_bare_vector"         
+[207] "is_binary_lang"          "is_bool"                
+[209] "is_box"                  "is_bytes"               
+[211] "is_call"                 "is_call_stack"          
+[213] "is_callable"             "is_character"           
+[215] "is_chr_na"               "is_closure"             
+[217] "is_condition"            "is_copyable"            
+[219] "is_cpl_na"               "is_dbl_na"              
+[221] "is_definition"           "is_dictionaryish"       
+[223] "is_done_box"             "is_double"              
+[225] "is_empty"                "is_env"                 
+[227] "is_environment"          "is_eval_stack"          
+[229] "is_expr"                 "is_expression"          
+[231] "is_false"                "is_formula"             
+[233] "is_formulaish"           "is_frame"               
+[235] "is_function"             "is_installed"           
+[237] "is_int_na"               "is_integer"             
+[239] "is_integerish"           "is_interactive"         
+[241] "is_lambda"               "is_lang"                
+[243] "is_lgl_na"               "is_list"                
+[245] "is_logical"              "is_missing"             
+[247] "is_na"                   "is_named"               
+[249] "is_namespace"            "is_node"                
+[251] "is_node_list"            "is_null"                
+[253] "is_pairlist"             "is_primitive"           
+[255] "is_primitive_eager"      "is_primitive_lazy"      
+[257] "is_quosure"              "is_quosures"            
+[259] "is_raw"                  "is_reference"           
+[261] "is_scalar_atomic"        "is_scalar_bytes"        
+[263] "is_scalar_character"     "is_scalar_double"       
+[265] "is_scalar_integer"       "is_scalar_integerish"   
+[267] "is_scalar_list"          "is_scalar_logical"      
+[269] "is_scalar_raw"           "is_scalar_vector"       
+[271] "is_scoped"               "is_spliced"             
+[273] "is_spliced_bare"         "is_stack"               
+[275] "is_string"               "is_symbol"              
+[277] "is_symbolic"             "is_syntactic_literal"   
+[279] "is_true"                 "is_unary_lang"          
+[281] "is_vector"               "is_weakref"             
+[283] "is_zap"                  "lang"                   
+[285] "lang_args"               "lang_args_names"        
+[287] "lang_fn"                 "lang_head"              
+[289] "lang_modify"             "lang_name"              
+[291] "lang_standardise"        "lang_tail"              
+[293] "last_error"              "last_trace"             
+[295] "lgl"                     "lgl_along"              
+[297] "lgl_len"                 "list_along"             
+[299] "list_len"                "list2"                  
+[301] "ll"                      "local_bindings"         
+[303] "local_interactive"       "local_options"          
+[305] "locally"                 "maybe_missing"          
+[307] "message_cnd"             "missing_arg"            
+[309] "modify"                  "mut_attrs"              
+[311] "mut_node_caar"           "mut_node_cadr"          
+[313] "mut_node_car"            "mut_node_cdar"          
+[315] "mut_node_cddr"           "mut_node_cdr"           
+[317] "mut_node_tag"            "na_chr"                 
+[319] "na_cpl"                  "na_dbl"                 
+[321] "na_int"                  "na_lgl"                 
+[323] "names2"                  "new_box"                
+[325] "new_call"                "new_character"          
+[327] "new_character_along"     "new_complex"            
+[329] "new_complex_along"       "new_data_mask"          
+[331] "new_definition"          "new_double"             
+[333] "new_double_along"        "new_environment"        
+[335] "new_formula"             "new_function"           
+[337] "new_integer"             "new_integer_along"      
+[339] "new_language"            "new_list"               
+[341] "new_list_along"          "new_logical"            
+[343] "new_logical_along"       "new_node"               
+[345] "new_overscope"           "new_quosure"            
+[347] "new_quosures"            "new_raw"                
+[349] "new_raw_along"           "new_weakref"            
+[351] "node"                    "node_caar"              
+[353] "node_cadr"               "node_car"               
+[355] "node_cdar"               "node_cddr"              
+[357] "node_cdr"                "node_poke_caar"         
+[359] "node_poke_cadr"          "node_poke_car"          
+[361] "node_poke_cdar"          "node_poke_cddr"         
+[363] "node_poke_cdr"           "node_poke_tag"          
+[365] "node_tag"                "ns_env"                 
+[367] "ns_env_name"             "ns_imports_env"         
+[369] "overscope_clean"         "overscope_eval_next"    
+[371] "pairlist2"               "parse_expr"             
+[373] "parse_exprs"             "parse_quo"              
+[375] "parse_quos"              "parse_quosure"          
+[377] "parse_quosures"          "peek_option"            
+[379] "peek_options"            "pkg_env"                
+[381] "pkg_env_name"            "prepend"                
+[383] "prim_name"               "push_options"           
+[385] "qq_show"                 "quo"                    
+[387] "quo_expr"                "quo_get_env"            
+[389] "quo_get_expr"            "quo_is_call"            
+[391] "quo_is_lang"             "quo_is_missing"         
+[393] "quo_is_null"             "quo_is_symbol"          
+[395] "quo_is_symbolic"         "quo_label"              
+[397] "quo_name"                "quo_set_env"            
+[399] "quo_set_expr"            "quo_squash"             
+[401] "quo_text"                "quos"                   
+[403] "quos_auto_name"          "raw_along"              
+[405] "raw_len"                 "rep_along"              
+[407] "rep_named"               "restarting"             
+[409] "return_from"             "return_to"              
+[411] "rst_abort"               "rst_exists"             
+[413] "rst_jump"                "rst_list"               
+[415] "rst_maybe_jump"          "scoped_bindings"        
+[417] "scoped_env"              "scoped_envs"            
+[419] "scoped_interactive"      "scoped_names"           
+[421] "scoped_options"          "search_env"             
+[423] "search_envs"             "seq2"                   
+[425] "seq2_along"              "set_attrs"              
+[427] "set_env"                 "set_expr"               
+[429] "set_names"               "signal"                 
+[431] "splice"                  "squash"                 
+[433] "squash_chr"              "squash_cpl"             
+[435] "squash_dbl"              "squash_if"              
+[437] "squash_int"              "squash_lgl"             
+[439] "squash_raw"              "stack_trim"             
+[441] "string"                  "switch_class"           
+[443] "switch_type"             "sym"                    
+[445] "syms"                    "trace_back"             
+[447] "trace_length"            "type_of"                
+[449] "unbox"                   "UQ"                     
+[451] "UQS"                     "vec_poke_n"             
+[453] "vec_poke_range"          "warn"                   
+[455] "warning_cnd"             "with_abort"             
+[457] "with_bindings"           "with_env"               
+[459] "with_handlers"           "with_interactive"       
+[461] "with_options"            "with_restarts"          
+[463] "wref_key"                "wref_value"             
+[465] "zap"
+#+end_example
+
+* Environment
+
+名前がより直感的にわかりやすい
+- =env(...)= 
+  - 現在の環境が親環境になる
+- =new_environment(data = list(), parent = empty_env())=
+  - 親環境が空
+- =child_env(.parent, ...)= (Questioning State, =env()= を使う)
+
+- 新たな環境を作成
+#+begin_src R
+e <- env()
+e
+#+end_src
+
+#+RESULTS:
+: 
+: <environment: 0x55a6f6d31cc8>
+: 
+: <environment: 0x55a6f6d334d8>
+
+#+begin_src R
+search_envs()               # = search()
+search_env("package:rlang") # = as.environment()
+pkg_env("rlang")
+pkg_env_name("rlang")
+is_attached("package:rlang")
+base_env()   # = baseenv()
+global_env() # = globalenv()
+empty_env()  # = emptyenv()
+caller_env() # = parent.frame()
+#+end_src
+
+#+RESULTS:
+#+begin_example
+ [[1]] $ <env: global>
+ [[2]] $ <env: package:rlang>
+ [[3]] $ <env: package:pryr>
+ [[4]] $ <env: package:broom>
+ [[5]] $ <env: ESSR>
+ [[6]] $ <env: package:stats>
+ [[7]] $ <env: package:graphics>
+ [[8]] $ <env: package:grDevices>
+ [[9]] $ <env: package:utils>
+[[10]] $ <env: package:datasets>
+[[11]] $ <env: package:methods>
+[[12]] $ <env: Autoloads>
+[[13]] $ <env: package:base>
+
+<environment: package:rlang>
+attr(,"name")
+[1] "package:rlang"
+attr(,"path")
+[1] "/usr/lib/R/site-library/rlang"
+
+<environment: package:rlang>
+attr(,"name")
+[1] "package:rlang"
+attr(,"path")
+[1] "/usr/lib/R/site-library/rlang"
+
+[1] "package:rlang"
+
+[1] TRUE
+
+<environment: base>
+
+<environment: R_GlobalEnv>
+
+<environment: R_EmptyEnv>
+
+<environment: R_GlobalEnv>
+#+end_example
+
+* Predicates
+
+#+begin_src R
+pacman::p_funs(rlang) %>% str_subset("^is_")
+#+end_src
+
+#+RESULTS:
+#+begin_example
+ [1] "is_atomic"            "is_attached"          "is_bare_atomic"      
+ [4] "is_bare_bytes"        "is_bare_character"    "is_bare_double"      
+ [7] "is_bare_env"          "is_bare_environment"  "is_bare_formula"     
+[10] "is_bare_integer"      "is_bare_integerish"   "is_bare_list"        
+[13] "is_bare_logical"      "is_bare_numeric"      "is_bare_raw"         
+[16] "is_bare_string"       "is_bare_vector"       "is_binary_lang"      
+[19] "is_bool"              "is_box"               "is_bytes"            
+[22] "is_call"              "is_call_stack"        "is_callable"         
+[25] "is_character"         "is_chr_na"            "is_closure"          
+[28] "is_condition"         "is_copyable"          "is_cpl_na"           
+[31] "is_dbl_na"            "is_definition"        "is_dictionaryish"    
+[34] "is_done_box"          "is_double"            "is_empty"            
+[37] "is_env"               "is_environment"       "is_eval_stack"       
+[40] "is_expr"              "is_expression"        "is_false"            
+[43] "is_formula"           "is_formulaish"        "is_frame"            
+[46] "is_function"          "is_installed"         "is_int_na"           
+[49] "is_integer"           "is_integerish"        "is_interactive"      
+[52] "is_lambda"            "is_lang"              "is_lgl_na"           
+[55] "is_list"              "is_logical"           "is_missing"          
+[58] "is_na"                "is_named"             "is_namespace"        
+[61] "is_node"              "is_node_list"         "is_null"             
+[64] "is_pairlist"          "is_primitive"         "is_primitive_eager"  
+[67] "is_primitive_lazy"    "is_quosure"           "is_quosures"         
+[70] "is_raw"               "is_reference"         "is_scalar_atomic"    
+[73] "is_scalar_bytes"      "is_scalar_character"  "is_scalar_double"    
+[76] "is_scalar_integer"    "is_scalar_integerish" "is_scalar_list"      
+[79] "is_scalar_logical"    "is_scalar_raw"        "is_scalar_vector"    
+[82] "is_scoped"            "is_spliced"           "is_spliced_bare"     
+[85] "is_stack"             "is_string"            "is_symbol"           
+[88] "is_symbolic"          "is_syntactic_literal" "is_true"             
+[91] "is_unary_lang"        "is_vector"            "is_weakref"          
+[94] "is_zap"
+#+end_example
+
+#+begin_src R
+pacman::p_funs(rlang) %>% str_subset("^has_")
+#+end_src
+
+#+RESULTS:
+: [1] "has_length" "has_name"
+* list
+
+- base list を使いやすいように拡張
+#+begin_src R
+list2(...)
+
+dots_list(
+  ..., # dynamic dots
+  .ignore_empty = c("trailing", "none", "all"), # カンマのつけ忘れの挙動
+  .preserve_empty = FALSE,
+  .homonyms = c("keep", "first", "last", "error"), # 同じ名前があった場合の挙動
+  .check_assign = FALSE
+)
+#+end_src

@@ -1,0 +1,279 @@
+#+STARTUP: folded indent inlineimages latexpreview
+
+* Types
+** Overview
+
+- 論理型 bool
+- 文字型 char, wchar_t
+- 整数型 init, long long
+- 浮動小数点型 double, long double
+- 型なし void
+
+- ポインタ型 int*
+- 配列型 char[]
+- 参照型 double&
+
+- 構造体
+- クラス
+- 列挙体
+
+** bool
+
+#+header: :includes <iostream>
+#+begin_src C++
+int a {1};
+int b {1};
+
+bool c {a == b};
+bool d {2}; // 非ゼロは true
+//bool d {2}; // エラー. {} での初期化では、縮小変換はできない
+bool e {a != 0}; // int から bool への変換を縮小変換なしで行うイディオム
+
+int* f {&a};
+bool g {f};       // nullptr でないポインタは true
+bool h {nullptr}; // nullptr = false
+
+std::cout << c << std::endl;
+std::cout << d << std::endl;
+std::cout << e << std::endl;
+std::cout << (a > b) << std::endl;
+std::cout << (a != b) << std::endl;
+std::cout << c + d << std::endl; // bool の演算は int として扱われる
+std::cout << c - d << std::endl; // bool の演算は int として扱われる (true - true = 0)
+std::cout << g << std::endl;
+std::cout << h << std::endl;
+
+if (nullptr) // nullptr は false
+  std::cout << "NOT_NULL" << std::endl;
+else
+  std::cout << "NULL" << std::endl;
+  
+if (f) // ポインタの NULL Check が簡潔にかける
+  std::cout << "NOT_NULL" << std::endl;
+else
+  std::cout << "NULL" << std::endl;
+#+end_src
+
+#+RESULTS:
+|        1 |
+|        1 |
+|        1 |
+|        0 |
+|        0 |
+|        2 |
+|        0 |
+|        1 |
+|        0 |
+|     NULL |
+| NOT_NULL |
+
+** char
+
+- char          (通常 8bit)
+- signed char   (符号あり)
+- unsigned char (符号なし)
+- wchar_t       (Unicode, 大きさは処理系定義)
+- char16_t      (16bit)
+- char21_t      (32bit)
+
+- char 型は整数値
+- char が unsigned (0 ~ 255) or signed (-127 ~ 127) かは処理系依存
+
+#+header: :includes <iostream>
+#+begin_src C++
+char ch1 = 'a';
+char ch2 = 97;  // 97 = 'a'
+char ch3 = 255; // unsigned char だと有効、signed char だと無効
+
+std::cout << ch1 << std::endl;
+std::cout << ch2 << std::endl;
+
+std::cout << int{ch1} << std::endl;
+std::cout << static_cast<int>(ch1) << std::endl;
+std::cout << char{97} << std::endl;
+
+std::cout << int{ch3} << std::endl; // -1 となるので、char は signed char
+#+end_src
+
+#+RESULTS:
+|  a |
+|  a |
+| 97 |
+| 97 |
+|  a |
+| -1 |
+** int
+
+符号の有無
+- int
+- signed int (= signed)
+- unsigned int (= unsigned)
+- 
+
+サイズ
+- short int
+- int
+- long int (= long)
+- long long int (= long long)
+
+#+header: :includes <iostream>
+#+begin_src C++
+int i1 {1};
+int i2 {02};  // 8進数  (0 から始まる)
+int i3 {0xA}; // 16進数 (0x から始まる)
+int i4 {10U}; // unsigned
+//int i4 {-10U}; // Error
+int i5 {1000L}; // long
+int i6 {100000LL}; // long long
+int i7 {10UL}; // unsigned long
+
+std::cout << i1 << std::endl;
+std::cout << i2 << std::endl;
+std::cout << i3 << std::endl;
+std::cout << i4 << std::endl;
+std::cout << i5 << std::endl;
+std::cout << i6 << std::endl;
+std::cout << i7 << std::endl;
+#+end_src
+
+#+RESULTS:
+|      1 |
+|      2 |
+|     10 |
+|     10 |
+|   1000 |
+| 100000 |
+|     10 |
+** double
+
+- float 単精度
+- double 倍精度
+- long double 拡張倍精度
+
+#+header: :includes <iostream>
+#+begin_src C++
+float f1 {1.2f};
+double d1 {1.5};
+double d2 {10.0/3};
+long double d3 {10.12L};
+
+std::cout << f1 << std::endl;
+std::cout << d1 << std::endl;
+std::cout << d2 << std::endl;
+std::cout << d3 << std::endl;
+#+end_src
+
+#+RESULTS:
+|     1.2 |
+|     1.5 |
+| 3.33333 |
+|   10.12 |
+** void
+
+- 値を返さない関数の戻り値
+- _型がわからないオブジェクトへのポインタ_
+
+#+header: :includes <iostream>
+#+begin_src C++
+void f();
+void* pv;
+
+std::cout << pv << std::endl;
+#+end_src
+
+#+RESULTS:
+: 0
+** size
+
+- char = 1 としてカウントする
+
+#+header: :includes <iostream> <limits>
+#+begin_src C++
+std::cout << sizeof(char) << std::endl;
+std::cout << sizeof(bool) << std::endl;
+std::cout << sizeof(int) << std::endl;         // 32bit
+std::cout << sizeof(long) << std::endl;        // 64bit
+std::cout << sizeof(long long) << std::endl;   // 64bit
+std::cout << sizeof(float) << std::endl;       // 32bit
+std::cout << sizeof(double) << std::endl;      // 64bit
+std::cout << sizeof(long double) << std::endl; // 128bit
+
+std::cout << sizeof(int*) << std::endl;    // 64bit 
+std::cout << sizeof(double*) << std::endl; // 64bit
+
+std::cout << "bool: "   << std::numeric_limits<bool>::max() << std::endl;
+std::cout << "char: "   << std::numeric_limits<char>::max() << std::endl;
+std::cout << "int: "    << std::numeric_limits<int>::max() << std::endl;
+std::cout << "long: "   << std::numeric_limits<long>::max() << std::endl;
+std::cout << "float: "  << std::numeric_limits<float>::max() << std::endl;
+std::cout << "double: " << std::numeric_limits<double>::max() << std::endl;
+
+std::cout << "char_signed?: " << std::numeric_limits<char>::is_signed << std::endl;
+#+end_src
+
+#+RESULTS:
+|             1 |                       |
+|             1 |                       |
+|             4 |                       |
+|             8 |                       |
+|             8 |                       |
+|             4 |                       |
+|             8 |                       |
+|            16 |                       |
+|             8 |                       |
+|             8 |                       |
+|         bool: |                     1 |
+|         char: |                     |
+|          int: |            2147483647 |
+|         long: | 9.223372036854776e+18 |
+|        float: |           3.40282e+38 |
+|       double: |          1.79769e+308 |
+| char_signed?: |                     1 |
+|               |                       |
+** Declaration/Definition
+
+_宣言の構成要素_
+1. 前置の指定子 (Optional)
+  ~static, virtual~
+2. 型
+  ~int, const double, vector<char>~
+3. 宣言子 (名前を含むことが有る)
+  ~p[7], n~
+4. 後置の関数指定子
+  ~const noexcept~
+5. 初期化子と関数本体 (Optional)
+  ~= {7,4,2}, {return x;}~
+
+_3. の宣言演算子_
+| 前置 | *         | ポインタ                  |
+| 前置 | *const    | 定数ポインタ              |
+| 前置 | *volatile | 揮発ポインタ              |
+| 前置 | &         | 左辺値参照                |
+| 前置 | &&        | 右辺値参照                |
+| 前置 | auto      | 関数 (後置の返却型を利用) |
+| 後置 | []        | 配列                      |
+| 後置 | ()        | 関数                      |
+| 後置 | ->        | 関数からの返却            |
+
+- 初期化子の4つの利用法
+#+header: :includes <iostream>
+#+begin_src C++
+int a1 {1};   // 推奨 (list initialization): 縮小変換が発生しない
+int a2 = {1};
+int a3 = 1;   // auto を使うときは、= を利用する
+int a4(1);    // コンストラクタ呼び出し
+int a5 {};    // デフォルト値による初期化
+
+std::cout << a1 << std::endl;
+std::cout << a2 << std::endl;
+std::cout << a3 << std::endl;
+std::cout << a4 << std::endl;
+std::cout << a5 << std::endl;
+#+end_src
+
+#+RESULTS:
+| 1 |
+| 1 |
+| 1 |
+| 1 |
+| 0 |

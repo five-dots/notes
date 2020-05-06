@@ -1,0 +1,24 @@
+#+STARTUP: showall indent
+
+* Tools CME has approved.
+IQBroker
+MotiveWave
+TradeSharp
+AmiBroker
+Option Workshop
+Tradelink
+Wave 59
+AlphaTrader
+Agena Trader
+Market Delta
+MultiCharts
+ATRADER
+Nirvana Systems
+Sierra Chart
+Ensign Windows
+Optuma
+Investor/RT
+NeoTicker
+NinjaTrader
+QuoteTracker
+Seer Trading

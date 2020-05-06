@@ -1,0 +1,77 @@
+#+STARTUP: content indent
+
+* Emacs Lisp のデータ構造まとめ
+** まとめ
+
+- [[https://www.gnu.org/software/emacs/manual/html_node/elisp/Sequences-Arrays-Vectors.html][まとめダイアグラム]]
+
+- _sequence_
+  - _cons cell_
+    - S 式のペア
+
+    - _list_
+      - cons cell の =cdr= に cons cell を繋げたもの
+      - 可変長
+      - 扱う関数が豊富 (dash.el)
+      - n 番目の要素へのアクセスには n 回 =cdr= をするため時間がかかる
+      - =alist=, =plist= でハッシュテーブルのようなことも可能
+        - kv.el というライブラリもある
+
+  - _array_
+    - 固定長
+    - n 番目の要素へのアクセスが容易
+
+    - _vector_
+      - 汎用的に使える array
+
+- _hash table_
+  - 要素へのアクセスが高速
+  - ht.el を使うとより簡便
+
+** cons
+
+#+begin_src emacs-lisp
+(cons 1 2)
+#+end_src
+
+#+RESULTS:
+: (1 . 2)
+
+#+begin_src emacs-lisp
+'(1 . 2)
+#+end_src
+
+#+RESULTS:
+: (1 . 2)
+
+** list
+
+#+begin_src emacs-lisp
+(list 1 2 3)
+#+end_src
+
+#+RESULTS:
+| 1 | 2 | 3 |
+
+#+begin_src emacs-lisp
+'(1 2 3)
+#+end_src
+
+#+RESULTS:
+| 1 | 2 | 3 |
+
+** vector
+
+#+begin_src emacs-lisp
+(vector 1 2 3)
+#+end_src
+
+#+RESULTS:
+: [1 2 3]
+
+#+begin_src emacs-lisp
+[1 2 3]
+#+end_src
+
+#+RESULTS:
+: [1 2 3]

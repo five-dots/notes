@@ -1,0 +1,156 @@
+#+STARTUP: showall indent
+
+* Spread Trading
+- Spread Trading, Pair Trading の実践、ツールの使い方、TWS API の使い方についてのメモ
+
+* TODOs
+- [x] CFD 個別 API オーダー時に、1 件しか約定しない件の調査 => Order ID をインクリメントする, Order を使い回さない
+- [x] Callback 理解
+- [x] ListObject + orderUpdate() + execDetails()
+- [ ] VSTO でセル値を監視する
+- [x] Master Client ID でオーダー監視
+- [ ] RTD の Bid/Ask から Entry/Exit する (若干怖いか)
+- [ ] Portfolio 情報から Pair を復元できるか？ (Order Ref 利用)
+- [x] Program からグラフの軸を設定できるか？
+
+* Step
+** 方針: Excel でスクリーニング, eSignal で Alert, Chart 分析
+Excel or TWS から発注, Excel で PortFolio/History 管理
+=> もしかすると全て Excel で実装するのが一番良いか？チャートがうまく作れれば可能性あり。
+   Symbol1, Symbol2, Ratio, Diff, Correl などを一括表示 + Bollinger や エントリー情報など
+
+** データ収集
+- Excel, Database or Other ?
+- 日足データ: eSignal RTD, Yahoo Japan Scrayping
+- 日本株、米国株の両対応にしたい
+
+** スクリーニング
+- Tool: Excel
+- まずは、日足対象
+- 相関係数: 過去 n 日計算の相関係数が、過去 m 日に渡って、x 以上
+- ペアの選定基準: 同業種、個別株+Index、個別株+業種 ETF、好調銘柄+低迷銘柄
+- 日本株の場合は、最低購入金額が高すぎるものは除外
+- Spread の大きくない銘柄 (出来高でフィルタ？)
+
+** 発注
+- Entry
+	- 指値
+		- TWS から手動 (ただし、Spread のチャートには、オーダーは表示されない)
+		- Excel+API (ただし CFD は Combo ではなく個別に発注)
+			- Bid/Ask Spread を監視し、基準の Spread Ratio を満たした場合に Market Order (or その他の IB Order)
+	- 成行: TWS
+- Exit
+
+** モニタリング
+- Chart
+	- Spread Ratio Chart: eSignal, TWS(手動)
+	- Spread Diff Chart: eSignal, TWS
+- Watchlist
+- Portfolio
+
+** 記録
+   
+* IB API
+** Contract の定義
+- コンマ区切りで Contract を定義 "IBKR,MCD"
+- SecType = BAG
+- ComboLeg1, ComboLeg2 を List<ComboLeg>に入れる
+- Contract.ComboLegs にリストを入れる
+
+** 発注方法
+- US Stock: MKT, LMT (LMT 価格は、は TWS チャートでも表示される)
+- CFD で MKT, LMT 注文を出すと "LMT + MKT"と認識される。
+  LMT 価格を指定していないため、"Invalid Trigger Price"のエラー。
+  手動で MKT に変えれば、発注できる。
+  TWS API で CFD は未サポートの模様
+- Ratio: API から発注する場合、"Simplified Ratios"でしか登録できない。
+　 Invalid Leg Ratio Error
+- Combo Symbol の名前 (US Stock はアルファベット順?)
+- Stock Combo で Guarantee オーダーをすると以下のエラー
+  Missing or invalid NonGuaranteed value. REL+MKT, LMT+MKT, and REL+LMT 
+  order of two legs can only be set as non-guaranteed.
+
+** スリッページ監視
+Target, Stop を IFOCO で入れられるか？
+Target, Stop を Combo の LMT で指定できるか？
+Active order -> Cancel
+
+* Portfolio
+- TWS Portfolio を Combo 単位で見られるか？
+- 証拠金の変動
+	- 日本株 CFD は、ペアでも証拠金は減額されない
+- TWS 接続管理のシート
+		
+* eSinal Chart
+- Spread Chart の計算方法
+	- Intraday = 1 min bar の OHLC で Spread を計算して、必要な Bar (5min 等)を組み立てる = より正確 
+		Tick Chart では、Spread chart は使えない
+	- Day = Open と Close はそのまま日足の Open, Close を利用
+		High, Low は 4 本値それぞれを比較し、一番高い・安いデータを利用？
+		http://kb.esignal.com/display/2/index.aspx?c=&cpc=&cid=&cat=&catURL=&r=0.522060632705688
+- チャート設定
+	相関係数
+	Pearson, Rank, Residual, PctChange
+	長期 = 0.8?
+	短期 = 0.9?
+- ボリンジャーバンド
+	75 日以上の設定できるか？
+- スケール
+	.01 単位以上に細かくできるか - Composite Symbol として登録すれば OK
+	Spread Ratio を使ったチャートの場合、0.1 単位では荒すぎる
+- 発注関連
+	TWS へ発注は可能だが、Combo では Spread Diff への指値ができない模様 (個別の Leg への指値は可能)
+	発注するためには、Composite Symbol として登録するか、IB と同じ記述方法で Symbol を登録する必要がある
+	TWS へは、Combo ではなく、個別株として発注されているが、eSignal の Account manager では Combo として PnL を見ることができる
+	ただし、Chart では Combo として、Order を管理できない
+- Composite Symbol
+	Tick Size を細かく設定できるため、重要
+	Import できるか？ = spreads.xml がない
+
+* スクリーニング
+- 最低購入単位が高すぎるものは除外 (200 万円以上)
+- 出来高が少なすぎるものは除外
+
+* 米国株 vs 日本株
+- 米国株 = Ticker から社名がわかりやすい
+- 取引時間
+- トータルコスト (片道 100 万円/1 万ドル単位での比較)
+ 
+[日本株 CFD]
+- 手数料: 片道 0.031% = (100 万円で 310 円) x 2(ペア) x 2(往復) = 1,240
+- 金利: 片道投資額に対して、4%(買方 1.139%, 売方 1.861%, 貸株料 1%) x 20 日保有 = 2,200
+- スリッページ: 銘柄によるが、1321vs1306 で 1tick 想定 = 片道約 1,000 x 2 = 2,000
+= 5440 / 2,000,000 = 2.7% (コストが高すぎる)
+
+[米国株]
+- 手数料: 一株 0.005, 最低$1 = ほぼ往復$4
+- 支払金利: 100k  3.2% = 10k = $18
+            100k+ 2.7% = 10k = $15
+          貸株料 0.25% = 10k = $1.5 ※銘柄によって異なる
+
+- 受取金利: 100k+ 0.45% = 10k = $2.5
+	  		    1M+ 1.2%  = 10k = $6.7
+
+- スリッページ Tick Size が 0.01 なのでスリページはより小さい
+	例) 5tick = 片道$5 x 2 = $10
+- Stock Yield Enhancement Program = Long 分に金利がつく
+
+= 100k-: 4 + 18 + 1.5 + 10 = $33.5
+= 100k+: 4 + 15 + 1.5 - 2.5 + 10 = $28
+ 
+- 証拠金
+  Portfolio margin 口座は、リスクベースでマージン計算される
+  https://www.interactivebrokers.co.jp/jp/index.php?f=1232
+  IBSJ 口座は、一律 10%かかる
+
+- Tick Size Topix100 でも 0.1 - 10 vs 0.01 統一
+- 出来高
+- 最低取引単位
+  [日本株] 100 or 1000
+  [米国株] 1
+  ペアの金額が合わせやすい
+
+- 取引対象銘柄
+  IBCFD = 800 銘柄程度
+  US Stock = NYSE+NASDAQ+ARCA = 7000+
+  複数のペアが考案できる

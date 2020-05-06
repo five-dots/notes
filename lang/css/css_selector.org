@@ -1,0 +1,25 @@
+#+STARTUP: showall indent
+
+* CSS Selector
+ * (すべての要素)
+#id
+.class
+
+E F     Eの子孫関係にあるF
+E > F   Eの親子関係にあるF
+E + F   Eの隣り合わせにあるF
+E ~ F   EのあとにあるF
+
+E[foo]  foo という属性をもつE
+E[^foo]
+
+:not(selector)
+:lt(n)
+:gt(n)
+:eq(n)
+:has(selector)
+:contains(text)
+:matches(regex)
+:containsOwn(text)
+:matchesOwn(regex)
+:contaisData(data)

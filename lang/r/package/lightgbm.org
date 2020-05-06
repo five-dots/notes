@@ -1,0 +1,247 @@
+#+STARTUP: folded indent inlineimages latexpreview
+#+PROPERTY: header-args:R :results output :session *R:lgb* :width 640 :height 480 :colnames yes
+
+* ={lightgbm}=
+* ライブラリの読み込み
+
+#+begin_src R :results silent
+library(tidyverse)
+library(lightgbm)
+library(Matrix)
+#+end_src
+
+* Reference
+
+#+begin_src R
+## xgb.Dmatrix() とほぼ同じ使い方
+lgb.Dataset(
+  data, # matrix or dgCMatrix
+  params = list(),
+  reference = NULL,
+  colnames = NULL,
+  categorical_feature = NULL,
+  free_raw_data = TRUE,
+  info = list(),
+  ...)
+
+lightgbm(
+  data,
+  label = NULL,
+  weight = NULL,
+  params = list(),
+  nrounds = 10L,
+  verbose = 1L,
+  eval_freq = 1L,
+  early_stopping_rounds = NULL,
+  save_name = "lightgbm.model",
+  init_model = NULL,
+  callbacks = list(),
+  ...
+)
+
+lgb.train(
+  params = list(),
+  data, # lgb.Dataset
+  nrounds = 10L,
+  valids = list(), # list of lgb.Dataset object (バリデーション用)
+  obj = NULL, # 目的関数 regression, regression_l1, huber, binary, lambdarank, multiclass
+  eval = NULL, # 評価関数
+  verbose = 1L,
+  record = TRUE,
+  eval_freq = 1L,
+  init_model = NULL,
+  colnames = NULL,
+  categorical_feature = NULL,
+  early_stopping_rounds = NULL, # valids と eval を指定
+  callbacks = list(),
+  reset_data = FALSE,
+  ...
+)
+
+lgb.cv(
+  params = list(),
+  data,
+  nrounds = 10L,
+  nfold = 3L,
+  label = NULL,
+  weight = NULL,
+  obj = NULL,
+  eval = NULL,
+  verbose = 1L,
+  record = TRUE,
+  eval_freq = 1L,
+  showsd = TRUE,
+  stratified = TRUE,
+  folds = NULL,
+  init_model = NULL,
+  colnames = NULL,
+  categorical_feature = NULL,
+  early_stopping_rounds = NULL,
+  callbacks = list(),
+  reset_data = FALSE,
+  ...
+)
+
+lgb.importance(
+  model,
+  percentage = TRUE
+)
+
+lgb.plot.importance(
+  tree_imp,
+  top_n = 10L,
+  measure = "Gain", # "Gain", "Cover" or "Frequency"
+  left_margin = 10L,
+  cex = NULL
+)
+#+end_src
+
+* Manual の例
+** 当てはめ
+
+#+begin_src R
+## dgCMatrix features and numeric label
+data(agaricus.train, package = "lightgbm")
+data(agaricus.test, package = "lightgbm")
+
+train <- agaricus.train
+## lgb.Dataset + R6 class
+dtrain <- lgb.Dataset(train$data, label = train$label)
+
+test <- agaricus.test
+dtest <- lgb.Dataset.create.valid(dtrain, test$data, label = test$label)
+
+params <- list(objective = "regression", metric = "l2") # l2=square loss
+valids <- list(test = dtest)
+model <- lgb.train(
+  params = params,
+  data = dtrain,
+  nrounds = 10L,
+  valids = valids,
+  min_data = 1L,
+  learning_rate = 1.0,
+  early_stopping_rounds = 5L)
+
+model
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+[LightGBM] [Info] Total Bins 232
+[LightGBM] [Info] Number of data points in the train set: 6513, number of used features: 116
+[LightGBM] [Info] Start training from score 0.482113
+[LightGBM] [Warning] No further splits with positive gain, best gain: -inf
+[1]:	test's l2:6.44165e-17 
+[LightGBM] [Warning] No further splits with positive gain, best gain: -inf
+[LightGBM] [Warning] Stopped training because there are no more leaves that meet the split requirements
+[2]:	test's l2:6.44165e-17 
+[LightGBM] [Warning] No further splits with positive gain, best gain: -inf
+[LightGBM] [Warning] Stopped training because there are no more leaves that meet the split requirements
+[3]:	test's l2:6.44165e-17 
+[LightGBM] [Warning] No further splits with positive gain, best gain: -inf
+[LightGBM] [Warning] Stopped training because there are no more leaves that meet the split requirements
+[4]:	test's l2:6.44165e-17 
+[LightGBM] [Warning] No further splits with positive gain, best gain: -inf
+[LightGBM] [Warning] Stopped training because there are no more leaves that meet the split requirements
+[5]:	test's l2:6.44165e-17 
+[LightGBM] [Warning] No further splits with positive gain, best gain: -inf
+[LightGBM] [Warning] Stopped training because there are no more leaves that meet the split requirements
+[6]:	test's l2:6.44165e-17
+
+<lgb.Booster>
+  Public:
+    add_valid: function (data, name) 
+    best_iter: 1
+    best_score: 6.44165170032538e-17
+    current_iter: function () 
+    dump_model: function (num_iteration = NULL) 
+    eval: function (data, name, feval = NULL) 
+    eval_train: function (feval = NULL) 
+    eval_valid: function (feval = NULL) 
+    finalize: function () 
+    initialize: function (params = list(), train_set = NULL, modelfile = NULL, 
+    predict: function (data, num_iteration = NULL, rawscore = FALSE, predleaf = FALSE, 
+    raw: NA
+    record_evals: list
+    reset_parameter: function (params, ...) 
+    rollback_one_iter: function () 
+    save: function () 
+    save_model: function (filename, num_iteration = NULL) 
+    save_model_to_string: function (num_iteration = NULL) 
+    set_train_data_name: function (name) 
+    to_predictor: function () 
+    update: function (train_set = NULL, fobj = NULL) 
+  Private:
+    eval_names: l2
+    get_eval_info: function () 
+    handle: 4.6514171740324e-310
+    higher_better_inner_eval: FALSE
+    init_predictor: NULL
+    inner_eval: function (data_name, data_idx, feval = NULL) 
+    inner_predict: function (idx) 
+    is_predicted_cur_iter: list
+    name_train_set: training
+    name_valid_sets: list
+    num_class: 1
+    num_dataset: 2
+    predict_buffer: list
+    set_objective_to_none: FALSE
+    train_set: lgb.Dataset, R6
+    valid_sets: list
+#+end_example
+
+** Feature importance
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+importance <- lgb.importance(model)
+lgb.plot.importance(importance)
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-HGaeiP.png]]
+
+* タスクと評価指標
+
+- [[https://qiita.com/shnchr/items/22868bea27a3a8bf0977][scikit-learnとLightGBMの評価関数比較]]
+- 回帰タスク + 評価指標
+
+|----------------------+-----------------------------------+---------------------------------------------|
+| objective            | metric                            | note                                        |
+|----------------------+-----------------------------------+---------------------------------------------|
+| regression           | mse, rmse                         | 誤差の二乗を最適化. 平均値に最適化.         |
+| regression_1         | mae                               | 誤差の絶対値に最適化. 中央値に最適化.       |
+| huber                | huber                             | 外れ値に強いロバスト回帰. mse+mae           |
+| fair                 | fair                              |                                             |
+| poisson              | poison                            | ポアソン回帰. neg-log-likelihood が損失関数 |
+| quantile             | quantile                          |                                             |
+| mape                 | mape                              | パーセント誤差                              |
+| gamma                | gamma, gamma_deviance             | ガンマ回帰                                  |
+| tweedie              | tweedie                           | Tweedie 回帰 (Gamma + Poisson)              |
+|----------------------+-----------------------------------+---------------------------------------------|
+| binary               | binary_logloss, binary_error, auc | 二値分類                                    |
+| multiclass           | multi_logloss, multi_error        | 多クラス分類                                |
+| multiclassova        |                                   |                                             |
+|----------------------+-----------------------------------+---------------------------------------------|
+| cross_entropy        | cross_entropy                     |                                             |
+| cross_entropy_lambda | cross_entropy_lambda              |                                             |
+|----------------------+-----------------------------------+---------------------------------------------|
+| lambdarank           |                                   |                                             |
+| rank_xendcg          |                                   |                                             |
+|----------------------+-----------------------------------+---------------------------------------------|
+
+* 参考
+
+- [[https://github.com/microsoft/LightGBM/tree/master/R-package][Github repo]]
+
+- Parameters
+  - [[https://lightgbm.readthedocs.io/en/latest/Parameters.html][LightGBM Parameters]]
+  - [[https://sites.google.com/view/lauraepp/parameters][Laurae++: xgboost / LightGBM]]
+  - [[https://towardsdatascience.com/catboost-vs-light-gbm-vs-xgboost-5f93620723db][CatBoost vs. Light GBM vs. XGBoost]]
+
+- [[https://www.kaggle.com/floser/r-starter-lightgbm-regression][R-starter lightgbm regression@kaggle]]
+
+- github issues
+  - [[https://github.com/Microsoft/LightGBM/issues/547][Cannot get good regression result on small trivial data #547@github]]
+  - [[https://github.com/microsoft/LightGBM/issues/380][small dataset - poor performance #380@github]]
+

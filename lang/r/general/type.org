@@ -1,0 +1,928 @@
+#+STARTUP: folded indent
+#+PROPERTY: header-args:R :session *R:types* :results output
+
+* Load libraries
+
+#+begin_src R :results silent
+library(tidyverse)
+library(bit64)
+#+end_src
+
+* Types in official document
+
+R の公式ドキュメント *The R language definition* の [[https://cran.r-project.org/doc/manuals/r-release/R-lang.html#Objects][Objects]] の項目には ~typeof()~ 関数の結果として 出力される可能性のある 24 の型が列挙されている。 ~integer~ や ~logical~ などのおなじみの型から、 ~externalptr~ などこれまで R を使ってきて、一度もお目にかかったことがないものまで様々。
+
+24 種類のオブジェクト型
+| Type        | Description                                                              |
+|-------------+--------------------------------------------------------------------------|
+| NULL        | NULL                                                                     |
+| symbol      | a variable name                                                          |
+| pairlist    | a pairlist object (mainly internal)                                      |
+| closure     | a function                                                               |
+| environment | an environment                                                           |
+| promise     | an object used to implement lazy evaluation                              |
+| language    | an R language construct                                                  |
+| special     | an internal function that does not evaluate its arguments                |
+| builtin     | an internal function that evaluates its arguments                        |
+| char        | a ‘scalar’ string object (internal only)                                 |
+| logical     | a vector containing logical values                                       |
+| integer     | a vector containing integer values                                       |
+| double      | a vector containing real values                                          |
+| complex     | a vector containing complex values                                       |
+| character   | a vector containing character values                                     |
+| ...         | the special variable length argument                                     |
+| any         | a special type that matches all types: there are no objects of this type |
+| expression  | an expression object                                                     |
+| list        | a list                                                                   |
+| bytecode    | byte code (internal only)                                                |
+| externalptr | an external pointer object                                               |
+| weakref     | a weak reference object                                                  |
+| raw         | a vector containing bytes                                                |
+| S4          | an S4 object which is not a simple object                                |
+
+記載順がなぞ。何かルールがあるのか？
+
+* Type summary
+
+オブジェクトの型を調査する関数
+- typeof()
+- mode()
+- storage.type()
+- class()
+- pryr::sexp_type() C 言語の型名
+- sloop::otype() - for S3
+
+_それぞれの出力の違い、その理由をまとめる_
+- mode = S 言語との互換性維持
+
+- Object Oriented -> S3, S4, RC, R6
+
+- 基本的なデータ型 (Atomi vector types)
+  データ型であり、配列を表現するデータ構造でもある
+- vector types と書かれているものが、他の言語で言う基本型 (Basic Types)
+- vector types -> vector, matrix, array
+- おなじみ data.frame は list を拡張したもの
+
+|----------------------+----------------------------+-------------+-------------+----------------+--------------+-------------|
+| Type                 | Value                      | typeof()    | mode()      | storage.mode() | class()      | sexp_type() |
+|----------------------+----------------------------+-------------+-------------+----------------+--------------+-------------|
+| 論理値               | ~TRUE~, ~FALSE~                | logical     | logical     | logical        | logical      | LGLSXP      |
+| 整数                 | ~100L~                       | integer     | _numeric_     | integer        | integer      | INTSXP      |
+| 実数                 | ~123.4~, ~1e-8~                | double      | _numeric_     | double         | numeric      | REALSXP     |
+| 文字列               | ~"hoge"~                     | character   | character   | character      | character    | STRSXP      |
+| 複素数               | ~1 + 3.3i~                   | complex     | complex     | complex        | complex      | CPLXSXP     |
+| バイト               | ~as.raw(10)~, ~charToRaw("a")~ | raw         | raw         | raw            | raw          | RAWSXP      |
+| NULL                 | ~NULL~                       | NULL        | NULL        | NULL           | NULL         | NILSXP      |
+|----------------------+----------------------------+-------------+-------------+----------------+--------------+-------------|
+| リスト               | ~list()~                     | list        | list        | list           | list         | VECSXP      |
+| 環境                 | ~environment()~              | environment | environment | environment    | environment  | ENVSXP      |
+| S4 オブジェクト      |                            | S4          | S4          | S4             | "class name" | S4SXP       |
+|----------------------+----------------------------+-------------+-------------+----------------+--------------+-------------|
+| 関数                 | ~function(x) x^2~            | closure     | function    | function       | function     | CLOSXP      |
+| 組み込み関数         | ~sum~                        | builtin     | function    | function       | function     | BUILTINSXP  |
+| 組み込み関数         | ~return~                     | special     |             |                |              |             |
+|                      |                            | pairlist    | pairlist    | pairlist       | parilist     | LISTSXP     |
+|                      |                            | promise     |             |                |              |             |
+|                      |                            | ...         |             |                |              |             |
+|----------------------+----------------------------+-------------+-------------+----------------+--------------+-------------|
+| オブジェクトのラベル | ~as.name("hoge")~            | symbol      | name        | symbol         | name         | SYMSXP      |
+|                      |                            | language    | call        | language       | call         | LANGSXP     |
+|                      |                            | expression  | expression  | expression     | expression   | EXPRSXP     |
+|----------------------+----------------------------+-------------+-------------+----------------+--------------+-------------|
+
+- initializer
+- parse (as.-)
+- predicate (is.-)
+
+* Types
+** 6 vector types
+
+#+begin_src R
+# 4 basic types
+class(1L)
+class(1.0)
+class(TRUE)
+class("A")
+
+# 2 rare types
+class(1 + 1i)
+class(as.raw(1))
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+[1] "integer"
+
+[1] "numeric"
+
+[1] "logical"
+
+[1] "character"
+
+[1] "complex"
+
+[1] "raw"
+#+end_example
+
+** List of types
+*** typeof()
+
+- R's Object list
+https://cran.r-project.org/doc/manuals/r-release/R-lang.html#Basic-types
+
+- vector types
+| NULL      | NULL                                 |
+| logical   | a vector containing logical values   |
+| integer   | a vector containing integer values   |
+| double    | a vector containing real values      |
+| character | a vector containing character values |
+| complex   | a vector containing complex values   |
+| raw       | a vector containing bytes            |
+
+- object types
+| list        | a list                                    |
+| environment | an environment                            |
+| S4          | an S4 object which is not a simple object |
+
+- language types
+| symbol (name)      | a variable name                                                           |
+| closure (function) | a function                                                                |
+| language (call)    | an R language construct                                                   |
+| pairlist           | a pairlist object(mainly internal)                                        |
+| builtin            | an internal function that evaluates its arguments (= Primitive functions) |
+| special            | an internal function that does not evaluate its arguments                 |
+| promise            | an object used to implement lazy evaluation                               |
+| expression         | an expression object                                                      |
+| ...                | the special variable length argument                                      |
+
+- internal
+| char        | a ‘scalar’ string object(internal only)                                   |
+| any         | a special type that matches all types:there are no objects of this type   |
+| bytecode    | byte code(internal only)                                                  |
+| externalptr | an external pointer object                                                |
+| weakref     | a weak reference object                                                   |
+
+*** mode()
+
+Modes have the same set of names as types(see typeof) except that
+- types "integer" and "double" are returned as "numeric"
+- types "special" and "builtin" are returned as "function"
+- type "symbol" is called mode "name"
+- type "language" is returned as "(" or "call"
+
+*** class()
+
+attribute によって定義されたもの
+matrix, array, factor, data.frame など
+
+** NA/NaN/Inf/NULL
+
+- 【R 言語】いい加減 NA と NaN と NULL（ついでに Inf）の違いをはっきりさせておく
+https://qiita.com/fujit33/items/5950889b983f93250998
+
+- *NA* (欠損値 = 本来、値が存在するはずだが、何らかの理由で存在しない)
+#+begin_src R
+NA            # logical (だが、他の型の中で使われると coerce される)
+NA_real_      # numeric
+NA_integer_   # integer
+NA_character_ # character
+#+end_src
+
+#+RESULTS:
+: [1] NA
+: 
+: [1] NA
+: 
+: [1] NA
+: 
+: [1] NA
+
+- *NaN* (計算不可能な式の結果, numeric 型)
+#+begin_src R
+nan_num <- 0/0
+is.numeric(nan_num)
+#+end_src
+
+#+RESULTS:
+: 
+: [1] TRUE
+
+- *Inf* (無限に発散する計算結果, numeric 型)
+#+begin_src R
+inf_num <- 1/0
+is.numeric(inf_num)
+#+end_src
+
+#+RESULTS:
+: 
+: [1] TRUE
+
+- NULL (もともと値が存在していないこと)
+#+begin_src R
+class(NULL)
+is.null(NULL)
+#+end_src
+
+#+RESULTS:
+: [1] "NULL"
+: 
+: [1] TRUE
+
+** Coercion
+
+- vector/matrix/array は同じ型でなければならないので、混在している場合は、強制変換される
+- 最悪のケースでも character への変換が可能
+
+#+begin_src R
+c("hoge", 1, TRUE)
+c(10, TRUE, FALSE) # logical => 1/0
+#+end_src
+
+#+RESULTS:
+: [1] "hoge" "1"    "TRUE"
+: 
+: [1] 10  1  0
+
+** Max value
+*** .Machine list 変数
+
+#+begin_src R
+.Machine
+#+end_src
+
+#+RESULTS:
+#+begin_example
+$double.eps
+[1] 2.220446e-16
+
+$double.neg.eps
+[1] 1.110223e-16
+
+$double.xmin
+[1] 2.225074e-308
+
+$double.xmax
+[1] 1.797693e+308
+
+$double.base
+[1] 2
+
+$double.digits
+[1] 53
+
+$double.rounding
+[1] 5
+
+$double.guard
+[1] 0
+
+$double.ulp.digits
+[1] -52
+
+$double.neg.ulp.digits
+[1] -53
+
+$double.exponent
+[1] 11
+
+$double.min.exp
+[1] -1022
+
+$double.max.exp
+[1] 1024
+
+$integer.max
+[1] 2147483647
+
+$sizeof.long
+[1] 8
+
+$sizeof.longlong
+[1] 8
+
+$sizeof.longdouble
+[1] 16
+
+$sizeof.pointer
+[1] 8
+#+end_example
+
+*** integer
+
+- 最大値 (約 21 億)
+#+begin_src R
+.Machine$integer.max
+#+end_src
+
+#+RESULTS:
+: [1] 2147483647
+
+#+begin_src R
+as.integer(2147483647)
+as.integer(2147483648)
+#+end_src
+
+#+RESULTS:
+: [1] 2147483647
+: 
+: [1] NA
+: Warning message:
+: NAs introduced by coercion to integer range
+
+*** numeric (double)
+
+- https://stat.ethz.ch/pipermail/r-help/2012-January/300250.html
+#+begin_src R
+.Machine$double.digits
+
+# コンソールの表示桁数
+options(digits = 22)
+
+# 有効範囲
+-(2 ^ .Machine$double.digits) # 最小
++(2 ^ .Machine$double.digits) # 最大
+#+end_src
+
+#+RESULTS:
+: [1] 53
+: 
+: [1] -9007199254740992
+: 
+: [1] 9007199254740992
+
+*** integer64
+
+#+begin_src R
+as.integer64(2147483648)
+as.integer64(+2 ^ 62)
+#+end_src
+
+#+RESULTS:
+: 
+: integer64
+: [1] 2147483648
+: 
+: integer64
+: [1] 4611686018427387904
+
+** Type Parser
+*** base
+
+- その他多数
+#+begin_src R
+as.numeric("1")
+as.double("123.4")
+as.integer("1")
+as.logical(c("TRUE", "T", "true", "FALSE", "F", "false"))
+as.character("123")
+as.Date("2019-07-08")
+#+end_src
+
+#+RESULTS:
+#+begin_example
+[1] 1
+
+[1] 123.4000000000000056843
+
+[1] 1
+
+[1]  TRUE  TRUE  TRUE FALSE FALSE FALSE
+
+[1] "123"
+
+[1] "2019-07-08"
+#+end_example
+
+*** readr package
+
+- 文字列で最初に登場する数値を抜き出す
+parse_number(x, na=c("", "NA"), locale=default_locale())
+
+#+begin_src R
+parse_number("この人参は、￥123です。")
+#+end_src
+
+#+RESULTS:
+: 
+: [1] 123
+
+- 文字列を double/int の数値として解釈して返す
+parse_double(x, ...)
+parse_integer(x, ...)
+
+- 1/0/T/F/TRUE/FALSE を大文字小文字問わず logical に変換。
+parse_logical(x, ...)
+parse_factor(x, levels, ordered=FALSE, ...)
+
+parse_date(x, format = "", ...)
+parse_datetime(x, format = "", ...)
+parse_time(x, format="", ...)
+
+* [[file:assertion.org][Assertion Type Predicates]]
+* Data Structure
+
+|               | 1D     | 2D         | ND    |
+|---------------+--------+------------+-------|
+| Homogeneous   | vector | matrix     | array |
+| Heterogeneous | list   | data.frame | -     |
+
+- vector
+  - integer, double, logical, character
+  - raw, complex
+- matrix, array (vector + dim)
+- list
+- S3 (vector + class)
+  - factor (integer + levels)
+  - Date
+  - POSIXct (double + tzone)
+  - Durations
+  - data.frame (list + class = "data.frame", col.names, row.names)
+
+- attribute attr()
+  - dim
+  - class
+
+* vector     (1D Homogeneous Object)
+
+#+begin_src R
+c(1L, 2L, 3L)  # integer
+c(1, 2.4, 3.5) # numeric
+c(TRUE, FALSE) # logical
+c("a", "b")    # character
+#+end_src
+
+#+RESULTS:
+: [1] 1 2 3
+: 
+: [1] 1.000000000000000000000 2.399999999999999911182 3.500000000000000000000
+: 
+: [1]  TRUE FALSE
+: 
+: [1] "a" "b"
+
+* matrix     (2D Homogeneous Object)
+
+#+begin_src R
+matrix(1:10, nrow = 2, ncol = 5)
+#+end_src
+
+#+RESULTS:
+:      [,1] [,2] [,3] [,4] [,5]
+: [1,]    1    3    5    7    9
+: [2,]    2    4    6    8   10
+
+* array      (ND Homogeneous Object)
+
+array(data = NA, dim = length(data), dimnames = NULL)
+
+- dim = 行・列・次元の順に指定
+#+begin_src R
+a <- array(data = 1:20, dim = c(2, 3, 4))
+a
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+, , 1
+
+     [,1] [,2] [,3]
+[1,]    1    3    5
+[2,]    2    4    6
+
+, , 2
+
+     [,1] [,2] [,3]
+[1,]    7    9   11
+[2,]    8   10   12
+
+, , 3
+
+     [,1] [,2] [,3]
+[1,]   13   15   17
+[2,]   14   16   18
+
+, , 4
+
+     [,1] [,2] [,3]
+[1,]   19    1    3
+[2,]   20    2    4
+#+end_example
+
+- Check dimension
+#+begin_src R
+str(a)
+dim(a)
+length(a)
+nrow(a)
+ncol(a)
+#+end_src
+
+#+RESULTS:
+:  int [1:2, 1:3, 1:4] 1 2 3 4 5 6 7 8 9 10 ...
+: 
+: [1] 2 3 4
+: 
+: [1] 24
+: 
+: [1] 2
+: 
+: [1] 3
+
+- 各次元目の 1 行目を取得 (matrix) ※行が列になる
+#+begin_src R
+a[1,, ]
+#+end_src
+
+#+RESULTS:
+:      [,1] [,2] [,3] [,4]
+: [1,]    1    7   13   19
+: [2,]    3    9   15    1
+: [3,]    5   11   17    3
+
+- 各次元目の 1 列目を取得 (matrix)
+#+begin_src R
+a[, 1, ]
+#+end_src
+
+#+RESULTS:
+:      [,1] [,2] [,3] [,4]
+: [1,]    1    7   13   19
+: [2,]    2    8   14   20
+
+- 1 つ目の次元の行列を取得
+#+begin_src R
+a[,, 1]
+#+end_src
+
+#+RESULTS:
+:      [,1] [,2] [,3]
+: [1,]    1    3    5
+: [2,]    2    4    6
+
+* list       (1D Heterogeneous Object)
+
+#+begin_src R
+x <- list(1:3, "a", c(TRUE, FALSE, TRUE), c(2.3, 5.9))
+str(x)
+#+end_src
+
+#+RESULTS:
+: 
+: List of 4
+:  $ : int [1:3] 1 2 3
+:  $ : chr "a"
+:  $ : logi [1:3] TRUE FALSE TRUE
+:  $ : num [1:2] 2.3 5.9
+
+#+begin_src R
+x <- list(list(list(list())))
+str(x)
+is.list(x)
+#+end_src
+
+#+RESULTS:
+: 
+: List of 1
+:  $ :List of 1
+:   ..$ :List of 1
+:   .. ..$ : list()
+: 
+: [1] TRUE
+
+- vector <=> list の変換
+#+begin_src R
+x2 <- as.list(1:10)
+unlist(x2)
+#+end_src
+
+#+RESULTS:
+: 
+:  [1]  1  2  3  4  5  6  7  8  9 10
+
+- list = recursive vector とも呼ばれる
+#+begin_src R
+is.recursive(x)
+#+end_src
+
+#+RESULTS:
+: [1] TRUE
+
+- c() はリストをベクターにまとめてしまう
+#+begin_src R
+x <- list(list(1, 2), c(3, 4))
+str(x)
+y <- c(list(1, 2), c(3, 4))
+str(y)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+List of 2
+ $ :List of 2
+  ..$ : num 1
+  ..$ : num 2
+ $ : num [1:2] 3 4
+
+List of 4
+ $ : num 1
+ $ : num 2
+ $ : num 3
+ $ : num 4
+#+end_example
+
+- data.frame や lm object も list
+#+begin_src R
+is.list(iris)
+is.list(lm(mpg ~ wt, data = mtcars))
+#+end_src
+
+#+RESULTS:
+: [1] TRUE
+: 
+: [1] TRUE
+
+* data.frame (2D Heterogeneous Object)
+
+実態は、同じ長さの list が集まったもの
+
+data.frame()
+typeof(iris)
+class(iris)
+
+- 同じ長さの list から作成可能
+#+begin_src R :results value :colnames yes
+x <- list(a = 1:3, b = 4:6, c = 7:9)
+data.frame(x)
+#+end_src
+
+#+RESULTS:
+| a | b | c |
+|---+---+---|
+| 1 | 4 | 7 |
+| 2 | 5 | 8 |
+| 3 | 6 | 9 |
+
+- Matrix からは、同じ dim の df を作成可能
+#+begin_src R :results value :colnames yes
+x2 <- matrix(1:9, ncol = 3)
+data.frame(x2)
+#+end_src
+
+#+RESULTS:
+| X1 | X2 | X3 |
+|----+----+----|
+|  1 |  4 |  7 |
+|  2 |  5 |  8 |
+|  3 |  6 |  9 |
+
+- 列が list でも OK
+#+begin_src R
+df <- data.frame(x = 1:3)
+df$y <- list(1:2, 1:3, 1:4)
+df
+#+end_src
+
+#+RESULTS:
+: 
+:   x          y
+: 1 1       1, 2
+: 2 2    1, 2, 3
+: 3 3 1, 2, 3, 4
+
+- でも data.frame 関数では NG
+#+begin_src R
+data.frame(x = 1:3, y = list(1:2, 1:3, 1:4))
+#+end_src
+
+#+RESULTS:
+: Error in (function (..., row.names = NULL, check.rows = FALSE, check.names = TRUE,  : 
+:   arguments imply differing number of rows: 2, 3, 4
+
+- I() (= AsIs) でくくると Ok
+#+begin_src R
+dfl <- data.frame(x = 1:3, y = I(list(1:2, 1:3, 1:4)))
+str(dfl)
+#+end_src
+
+#+RESULTS:
+: 
+: 'data.frame':	3 obs. of  2 variables:
+:  $ x: int  1 2 3
+:  $ y:List of 3
+:   ..$ : int  1 2
+:   ..$ : int  1 2 3
+:   ..$ : int  1 2 3 4
+:   ..- attr(*, "class")= chr "AsIs"
+
+- I() は AsIs class を作る
+#+begin_src R
+I(list(1:2, 1:3, 1:4)) %>% class() # AsIs class
+#+end_src
+
+#+RESULTS:
+: [1] "AsIs"
+
+- data.frame attributes = names, class, row.names
+#+begin_src R
+attributes(iris)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+$names
+[1] "Sepal.Length" "Sepal.Width"  "Petal.Length" "Petal.Width"  "Species"     
+
+$class
+[1] "data.frame"
+
+$row.names
+  [1]   1   2   3   4   5   6   7   8   9  10  11  12  13  14  15  16  17  18
+ [19]  19  20  21  22  23  24  25  26  27  28  29  30  31  32  33  34  35  36
+ [37]  37  38  39  40  41  42  43  44  45  46  47  48  49  50  51  52  53  54
+ [55]  55  56  57  58  59  60  61  62  63  64  65  66  67  68  69  70  71  72
+ [73]  73  74  75  76  77  78  79  80  81  82  83  84  85  86  87  88  89  90
+ [91]  91  92  93  94  95  96  97  98  99 100 101 102 103 104 105 106 107 108
+[109] 109 110 111 112 113 114 115 116 117 118 119 120 121 122 123 124 125 126
+[127] 127 128 129 130 131 132 133 134 135 136 137 138 139 140 141 142 143 144
+[145] 145 146 147 148 149 150
+#+end_example
+
+* Properties
+** 3 properties
+
+1. type
+2. length
+3. attributes
+
+#+begin_src R
+typeof(iris)
+length(iris)
+attributes(iris)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+[1] "list"
+
+[1] 5
+
+$names
+[1] "Sepal.Length" "Sepal.Width"  "Petal.Length" "Petal.Width"  "Species"     
+
+$class
+[1] "data.frame"
+
+$row.names
+  [1]   1   2   3   4   5   6   7   8   9  10  11  12  13  14  15  16  17  18
+ [19]  19  20  21  22  23  24  25  26  27  28  29  30  31  32  33  34  35  36
+ [37]  37  38  39  40  41  42  43  44  45  46  47  48  49  50  51  52  53  54
+ [55]  55  56  57  58  59  60  61  62  63  64  65  66  67  68  69  70  71  72
+ [73]  73  74  75  76  77  78  79  80  81  82  83  84  85  86  87  88  89  90
+ [91]  91  92  93  94  95  96  97  98  99 100 101 102 103 104 105 106 107 108
+[109] 109 110 111 112 113 114 115 116 117 118 119 120 121 122 123 124 125 126
+[127] 127 128 129 130 131 132 133 134 135 136 137 138 139 140 141 142 143 144
+[145] 145 146 147 148 149 150
+#+end_example
+
+** 3 attributes not lost
+
+変換したりすると属性情報が失われるが、以下の 3 つは、失われない
+#+begin_src R
+names(iris)
+dim(iris)
+class(iris)
+#+end_src
+
+#+RESULTS:
+: [1] "Sepal.Length" "Sepal.Width"  "Petal.Length" "Petal.Width"  "Species"
+: 
+: [1] 150   5
+: 
+: [1] "data.frame"
+
+** Set attributes
+
+#+begin_src R
+attr(x1, "hoge") <- "hoge"
+attr(x1, "hoge")
+attributes(x1)
+str(attributes(x1))
+is.vector(x1) # 属性を設定すると FALSE
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+[1] "hoge"
+
+$hoge
+[1] "hoge"
+
+List of 1
+ $ hoge: chr "hoge"
+
+[1] FALSE
+#+end_example
+
+- attribute をセットして object 作成
+#+begin_src R
+structure(1:10, my_attribute = "This is a vector")
+#+end_src
+
+#+RESULTS:
+:  [1]  1  2  3  4  5  6  7  8  9 10
+: attr(,"my_attribute")
+: [1] "This is a vector"
+
+- object をいじると attribute は失われる
+#+begin_src R
+x_chr <- as.character(x1)
+attributes(x_chr)
+#+end_src
+
+#+RESULTS:
+: 
+: NULL
+
+** name
+
+- 方法 1: 名前付き引数
+#+begin_src R
+c(a = 1, b = 2, c = 3)
+#+end_src
+
+#+RESULTS:
+: a b c 
+: 1 2 3
+
+- 方法 2: names()
+#+begin_src R
+x <- 1:3
+names(x) <- c("a", "b", "c")
+x
+#+end_src
+
+#+RESULTS:
+: 
+: a b c 
+: 1 2 3
+
+- 方法 3: setNames()
+#+begin_src R
+setNames(1:3, c("a", "b", "c"))
+#+end_src
+
+#+RESULTS:
+: a b c 
+: 1 2 3
+
+- 名前付き引数のケース: 一部欠けると、空白文字
+#+begin_src R
+y <- c(a = 1, 2, 3)
+names(y)
+#+end_src
+
+#+RESULTS:
+: 
+: [1] "a" ""  ""
+
+- names() のケース: 一部欠けると、NA
+#+begin_src R
+v <- c(1, 2, 3)
+names(v) <- c("a")
+names(v) 
+#+end_src
+
+#+RESULTS:
+: 
+: [1] "a" NA  NA
+
+- 名前の削除
+#+begin_src R
+unname(x)
+names(x) <- NULL
+#+end_src
+
+#+RESULTS:
+: [1] 1 2 3
+
+* View data
+
+summary(iris)
+str(iris)
+
+# 型の確認
+typeof(iris)
+class(iris)
+* Reference 
+
+- [[https://cran.r-project.org/doc/manuals/r-release/R-lang.html#Basic-types][R Language Definition]]
+- [[https://cran.r-project.org/doc/manuals/r-release/R-ints.html#SEXPTYPEs][R Internals]]
+- [[https://adv-r.hadley.nz/][Advanced R]]
+- [[https://qiita.com/maruman029/items/365a2abcdaaf99b720be][R の型について理解する@Qiita]]
+- [[https://www.slideshare.net/dritoshi/r-14844056][R のオブジェクト@SlideShare]]
+- [[https://qiita.com/kohske/items/660eac769fa1a82fbf42][（Rの）プロミス問題　その１。@Qiita]]
+  

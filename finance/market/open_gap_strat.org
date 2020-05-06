@@ -1,0 +1,1373 @@
+#+STARTUP: content indent
+
+* TODOs
+** Right Now
+*** 銘柄ごとの予測モデル by Ret ~ Gap (線形？非線形？）
+*** OGP part2 の検討
+*** 業種ごとの売買ロジック
+*** Pre-Market の出来高と成績との関係
+*** zscore ではなく、変化率の絶対値でエントリー
+*** パラメタを絶対値ではなく、ランキングに変更
+*** TODO [#B] 実際のトレードとシミュレーション結果の比較スクリプト [66%]
+DEADLINE: <2019-01-25 金>
+**** DONE FlexQuery Bug
+CLOSED: [2019-01-28 Mon 09:51]
+Retrieving trades...
+119579282694009160925184 261706 Success
+996552307476632531998400 270790 Success
+Error in `$<-.data.frame`(`*tmp*`, IBOrderID, value = character(0)) :
+  replacement has 0 rows, data has 4
+Calls: $<- -> $<-.data.frame
+Execution halted
+**** DONE Order log は FlexQuery ではなく、API から取る
+CLOSED: [2019-01-25 Fri 18:55]
+**** DONE Dialy Performance Report Mail の形式にできれば尚良い
+CLOSED: [2019-01-25 Fri 18:55]
+**** DONE 実際の Slippage 履歴 (特に stop order)
+CLOSED: [2019-01-25 Fri 18:55]
+**** TODO Backtest 結果と実際のトレード結果を join
+**** TODO Slippage 履歴を手動修正
+** Done
+*** DONE [#B] IB 発注方法の研究 [0/3]
+CLOSED: [2019-03-08 金 16:50] DEADLINE: <2019-01-25 金>
+**** TODO IBALGO のパフォーマンス比較
+**** TODO その他に成行の約定価格を向上させる手段は？
+Scale trade → ただし、約定スピード重視すべき
+**** TODO Shortable の閾値正しいか
+現状 100k
+NASDAQ の対象銘柄を小さくするならより緩和すべき
+*** DONE [#B] Scanner App 改良 3
+CLOSED: [2019-03-08 金 16:51]
+**** DONE チューニング
+CLOSED: [2019-03-08 金 16:51]
+**** DONE コンソール出力を整理
+CLOSED: [2019-03-08 金 16:51]
+PreMarket 発注割合 (できるだけ多くして、スリッページを抑えたい)
+Event 発注割合
+Scan 時間
+**** TODO +Open -> Close が離れすぎた場合は発注しない機能+
+次のチャンスに賭ける
+ベストは Level2 を見て発注を指値で入れる
+**** TODO +LOO で発注+
+約定しない場合に備える必要あり
+TWS Event で約定を捉える必要あり
+**** DONE 約定後に OCA 変更オーダーをいれる
+CLOSED: [2019-03-08 金 16:50]
+pre-market の予想 open では不正確
+数量・ストッププライスを調整するため
+
+Error. Id: 22, Code: 201, Msg: Order rejected - reason:The parent order is being canceled.
+transimit が parent order = true のせい？
+headging order にすべき？
+
+一部でも Entry が約定したら、oca を入れる
+cancel 対応
+全オーダー数量を管理する
+
+=> OCA 自体は最初にいれておいて、約定するたびに STP price を更新する
+   初めの stop price は広めに入れておく
+   
+Stop price was changed. ConId=197272994, OrderId=15, ParentOrderId=13, StopPrice=35.5, Quantity=27
+Error. Id: 15, Code: 105, Msg: Order being modified does not match original order
+
+
+Error. Id: 6, Code: 321, Msg: Error validating request:-'bI' : cause - Invalid openClose value was entered
+preMarket で発注が終ったのちに、reqOpenOrder で order list を作る
+修正は、auxPrice and OpenClose = ""
+
+OCA を変更するシナリオはうまく行かない？　原因不明
+Entry 約定後に、OCA を追加する方法を試す
+
+**** DONE OCA 変更のバグ
+CLOSED: [2019-01-29 火 03:48]
+Next Valid Id: 1
+Stop price was changed. ConId=144463724, OrderId=6, ParentOrderId=4, StopPrice=17.9, Quantity=55
+Error. Id: 5, Code: 105, Msg: Order being modified does not match original order
+
+Error. Id: 6, Code: 105, Msg: Order being modified does not match original order
+
+Stop price was changed. ConId=4728759, OrderId=27, ParentOrderId=25, StopPrice=70.97, Quantity=14
+Error. Id: 26, Code: 105, Msg: Order being modified does not match original order
+
+Error. Id: 27, Code: 105, Msg: Order being modified does not match original order
+
+Stop price was changed. ConId=270639, OrderId=3, ParentOrderId=1, StopPrice=46.3, Quantity=21
+Error. Id: 2, Code: 105, Msg: Order being modified does not match original order
+
+Error. Id: 3, Code: 105, Msg: Order being modified does not match original order
+
+Stop price was changed. ConId=13681, OrderId=18, ParentOrderId=16, StopPrice=46.26, Quantity=22
+Error. Id: 17, Code: 105, Msg: Order being modified does not match original order
+
+Error. Id: 18, Code: 105, Msg: Order being modified does not match original order
+
+Stop price was changed. ConId=76915240, OrderId=24, ParentOrderId=22, StopPrice=44.31, Quantity=23
+Error. Id: 23, Code: 105, Msg: Order being modified does not match original order
+
+Error. Id: 24, Code: 105, Msg: Order being modified does not match original order
+
+Stop price was changed. ConId=6608523, OrderId=15, ParentOrderId=13, StopPrice=12.78, Quantity=77
+Error. Id: 14, Code: 105, Msg: Order being modified does not match original order
+
+Error. Id: 15, Code: 105, Msg: Order being modified does not match original order
+
+Stop price was changed. ConId=9063285, OrderId=12, ParentOrderId=10, StopPrice=508.4, Quantity=1
+Error. Id: 11, Code: 105, Msg: Order being modified does not match original order
+
+Error. Id: 12, Code: 105, Msg: Order being modified does not match original order
+
+Stop price was changed. ConId=75961319, OrderId=9, ParentOrderId=7, StopPrice=47.43, Quantity=20
+Error. Id: 8, Code: 105, Msg: Order being modified does not match original order
+
+Error. Id: 9, Code: 105, Msg: Order being modified does not match original order
+
+Stop price was changed. ConId=274105, OrderId=21, ParentOrderId=19, StopPrice=67.67, Quantity=14
+Error. Id: 20, Code: 105, Msg: Order being modified does not match original order
+
+Error. Id: 21, Code: 105, Msg: Order being modified does not match original order
+
+Stop price was changed. ConId=210918190, OrderId=30, ParentOrderId=28, StopPrice=71.46, Quantity=14
+Error. Id: 29, Code: 105, Msg: Order being modified does not match original order
+
+Error. Id: 30, Code: 105, Msg: Order being modified does not match original order
+*** DONE [#C] Num trades 3 - 10 あたりのレンジでテスト
+CLOSED: [2019-03-08 金 16:51]
+*** DONE [#C] Splippage 関数化
+CLOSED: [2019-01-28 Mon 10:02]
+- 実際のスリッページの履歴（平均）を利用する
+- MOO/MOC であれば、スリッページを考慮しなくてよい
++Input = lot, Tover, volatility, order type+
++MOO slippage, STP slippage and MOC slippage で分けて考える必要あり+
+*** DONE [#A] Live 口座での確認
+CLOSED: [2019-01-24 木 11:42] DEADLINE: <2019-01-25 金>
+**** DONE MOO/MOC は必ず約定するか or 一定時間後にキャンセルされるのか
+CLOSED: [2019-01-24 木 11:42]
+**** DONE +Delete IB email notification+
+CLOSED: [2019-01-24 木 11:42]
+*** DONE [#A] Tick Data for Backtest [4/4]
+CLOSED: [2019-01-24 木 10:41]
+**** DONE Fix bugs
+CLOSED: [2019-01-21 月 10:02]
+System.IO.DirectoryNotFoundException: Could not find a part of the path '\\.\PRN'.
+at System.IO.FileSystem.CreateDirectory(String fullPath)
+at System.IO.Directory.CreateDirectory(String path)
+at TradeTools.IQFeedScanner.Scanners.TickScanner.Save(String symbol, DateTime date, IEnumerable`1 ticks) in C:\Users\shun\Dropbox\repos\TradeTools\TradeTools.IQFeedScanner\Scanners\TickScanner.cs:line 104
+at TradeTools.IQFeedScanner.Scanners.TickScanner.ProcessAsync() in C:\Users\shun\Dropbox\repos\TradeTools\TradeTools.IQFeedScanner\Scanners\TickScanner.cs:line 58
+
+以下の名前を Windows 上で使用することはできない
+AUX
+CON
+NUL
+PRN
+CLOCK$
+COM0 ～ COM9
+LPT0 ～ LPT9
+**** DONE Data 取得
+CLOSED: [2019-01-21 月 10:19]
+Tick data を保存してしまうか +or 分析データを作ってしまうか+
+NDAQ only (data 取得は NYSE もやっておく)
+1 日毎のファイルに分けて保存する
+**** DONE Daily Script
+CLOSED: [2019-01-24 木 10:11]
+**** DONE Backtest 用のデータ作成
+CLOSED: [2019-01-24 木 09:53]
+*** DONE [#A] First Tick Scan 結果分析
+CLOSED: [2019-01-18 金 17:01] DEADLINE: <2019-01-25 金>
+勝っている銘柄の open の時間は何時か
++IQFeed では、tick は 180 日までしか取れないので、どうするか？+
++最低、1 分足で 9:31 までに取れているかを調査+
+
+*** DONE 一日の最大損失額・最大利益をまとめておく
+CLOSED: [2019-01-18 金 12:56]
+*** DONE [#B] Slippage 分析 [3/3]
+CLOSED: [2019-01-18 金 15:30] DEADLINE: <2019-01-18 金>
+**** DONE Slippage の損益分岐点
+CLOSED: [2019-01-16 水 23:12]
+**** DONE [#A] OPG は Open Price で買えているのか
+CLOSED: [2019-01-18 金 15:28]
+NYSE vs. NASDAQ
+Exchange vs. ECN (NMS)
+EFII@NASDAQ 40k vol@9:30 だが、9:30 で約定していない
+Demo 口座で確認する限りでは買えていない
+
+
+**** DONE MOC はスリッページなしか？
+CLOSED: [2019-01-18 金 15:30]
++- 1,2 tick のズレが生じる模様
+
+*** DONE [#A] Daily Universe Available NA => 0 に変更する
+CLOSED: [2019-01-17 木 23:56]
+*** DONE [#B] 日次ワークフロー用スクリプトを完成させる [5/5]
+CLOSED: [2019-01-17 木 22:31] DEADLINE: <2019-01-18 金>
+**** DONE +Daily parameter sweep distribution and selected parameters+
+CLOSED: [2019-01-17 木 22:31]
+IB Flex Query で OrderRef は取れないのか
+**** DONE シンボル名の整理 (File に書き出す)
+CLOSED: [2019-01-17 木 09:57]
+IB Symbol(+ConID), Sharadar Sybmol, IQFeed Symbol
+fill IQFeed Fundamentals script
+_Universe は IQFeed Symbol + IB ConID の組み合わせで管理することにする_
+
+**** DONE [#A] DailyUniverse script bug
+CLOSED: [2019-01-16 水 23:10]
+**** DONE DailyUniverse Gmail でサマリー送る
+CLOSED: [2019-01-17 木 11:20]
+**** DONE [#B] IB Trade Confirmation で Order Ref 取ることができるか確認
+CLOSED: [2019-01-17 木 15:52]
+Demo アカウントはいずれにしても取得できない
+*** DONE [#B] Scanner App 改良 2
+CLOSED: [2019-01-17 木 14:49]
+**** DONE Task scheduler で自動起動
+CLOSED: [2019-01-16 水 15:50]
+PreMarket Scan が終了できるぎりぎりの時間に開始させる
+**** DONE 新ユニバース対応
+CLOSED: [2019-01-17 木 14:37]
+***** DONE Symbol の管理ではなく、ConID で管理する
+CLOSED: [2019-01-17 木 14:34]
+***** DONE Shortable Info を使って発注を出す
+CLOSED: [2019-01-17 木 14:37]
+**** DONE Order Ref の記述見直し (TIF, Action 入れるか)
+CLOSED: [2019-01-17 木 14:48]
+**** DONE Scan Time 変更
+CLOSED: [2019-01-17 木 13:58]
+*** DONE [#B] WFA から期待パフォーマンスを計算
+CLOSED: [2019-01-16 Wed 16:29] DEADLINE: <2019-01-18 金>
+**** DONE 想定される EquityCurve
+CLOSED: [2019-01-16 Wed 16:29]
+**** DONE PF その他、以前まとめた資料を再度見返してスタッツをまとめる
+CLOSED: [2019-01-16 Wed 16:29]
+**** DONE 年単位のパフォーマンス表示(直近を重視)
+CLOSED: [2019-01-16 Wed 16:29]
+**** DONE Plot/Trans 保存しておく
+CLOSED: [2019-01-16 Wed 16:29]
+*** DONE [#A] パラメーター分析を完了させる [5/5]
+CLOSED: [2019-01-16 水 13:53] DEADLINE: <2019-01-11 金>
+**** DONE Data error が無いかバックテストしてトランザクションを確認
+CLOSED: [2019-01-14 Mon 11:31]
+**** DONE 最適なパラメタ範囲を絞り込み完了
+CLOSED: [2019-01-15 Tue 17:21]
+**** DONE +Long/Short それぞれで+ できるだけ long/short 統合する
+CLOSED: [2019-01-15 Tue 17:21]
+**** DONE lot & num_trade 変更しバックテスト
+CLOSED: [2019-01-15 Tue 17:21]
+細かくエントリーを分割しスリッページを抑える？
+or
+エントリーを少なくし、利益を拡大する？
+**** DONE Zscore 分析
+CLOSED: [2019-01-16 水 13:52]
+スキャン完了前にオーダーするため
++バックテストから zscore のレンジを見極める+
+*** DONE [#A] Scanner app 改良 [4/4]
+CLOSED: [2019-01-16 水 13:57]
+**** DONE [#A] Min_thres 追加
+CLOSED: [2019-01-16 水 13:56]
+**** DONE [#A] Pre Scan の結果からオーダー対象を抜き出すロジックを整理
+CLOSED: [2019-01-16 水 13:49]
+スキャン結果の分析が終了した後
+**** DONE TWS 発注関連の重複を整理
+CLOSED: [2019-01-16 水 13:49]
+**** DONE PreMarket のスキャン結果から Zscore の閾値を設定する
+CLOSED: [2019-01-16 水 13:49]
+*** DONE [#A] Scan 結果の分析
+CLOSED: [2019-01-16 水 13:53]
+**** PreMarket の上位・下位は何パーセントくらいオーダーすればよいか
+**** +これ以上あれば、必ず発注されているという zscore の閾値+
+その日によって、zscore の大きさは異なるので、絶対値ではなく、
+上位何パーセントかで考えた方が良い
+*** DONE [#A] IQFeed API Scanner [12/12]
+CLOSED: [2019-01-15 火 16:12] DEADLINE: <2019-01-11 金>
+詳細な設計は、パラメタ分析が終了してからの方がよい
+
+**** DONE IQFeed.CsharpApiClient を試す
+CLOSED: [2019-01-09 水 11:58]
+**** DONE 全てのシンボルを取得するのに要する時間計測
+CLOSED: [2019-01-09 水 12:51]
+NYSE 3138 symbols 二日分 70 秒
+NASDAQ 3408 symbols 二日分 82 秒
+0.02 秒/symbol
+
+当日の実測
+2000 symbol 94 sec (= 0.05 sec / symbol)
+**** DONE IQFeed Symbol List を得る方法
+CLOSED: [2019-01-09 水 11:58]
+**** DONE 当日のクローズ前に当日の日足を得られるか
+CLOSED: [2019-01-09 水 23:39]
+不可
+ReqHistoryIntervalDaysAsync では 4:00 が米株のスタートになっている
+ReqHistoryIntervalTimeframeAsync を利用し、
+かつ start = 9:30, end = null が良さそう
+**** DONE IntervalData 2 回スキャンでのテスト
+CLOSED: [2019-01-09 水 23:39]
+**** DONE Level1 Data で一度にたくさんサブスクライブする
+CLOSED: [2019-01-09 水 23:52]
+**** DONE Universe csv の読み込み
+CLOSED: [2019-01-11 金 12:11]
+**** DONE Symbol provider by CsvHelper
+CLOSED: [2019-01-11 金 12:12]
+**** DONE Pre Market Scan 機能
+CLOSED: [2019-01-15 火 16:12]
+***** スキャンの終了時刻をいつにするか？9:28?
+***** MOO の発注期限はいつか？
+**** DONE 一定以上の zscore の場合には、すぐに発注する機能
+CLOSED: [2019-01-15 火 16:12]
+**** DONE IQFeed API の日付が未来になっている件
+CLOSED: [2019-01-15 火 16:12]
+***** DateTime => TimeSpan
+**** DONE Timer helper class
+CLOSED: [2019-01-14 月 14:59]
+Disposable
+*** DONE [#A] sharadar_plus update
+CLOSED: [2019-01-14 Mon 10:38]
+**** DONE Task failed 1
+CLOSED: [2019-01-13 Sun 23:03]
+Error in { : task 952 failed - "replacement has 1 row, data has 0y"
+[1] "CHKP 950"
+[1] "CHL 951"
+[1] "CHLE 952"
+[1] "CHLN 953"
+[1] "CHMG 954"
+[1] "CHMO 955"
+全てのデータが 0 であったため
+**** DONE Task filed 2
+CLOSED: [2019-01-14 Mon 00:01]
+Error in { : task 1079 failed - "0 (non-NA) cases"
+Calls: %dopar% -> <Anonymous>
+Execution halted
+
+全てが NA のデータを渡すとエラーになる
+
+**** DONE omit data error
+CLOSED: [2019-01-14 Mon 10:38]
+2016/12/2	EVHC open 22.58->66.25, low 22.58->64.38
+2013/7/5	WEB  open 14.9->26.12,	low 14.9->25.91
+**** No data rows
+[1] "CHLE"
+[1] "CNST1"
+[1] "DELL"
+[1] "DFCLQ"
+[1] "FIMG"
+[1] "GNLB"
+[1] "ITRA"
+[1] "LUCY"
+[1] "MEMY"
+[1] "UST1"
+[1] "VTEX"
+[1] "VYYO"
+[1] "LOLI"
+[1] "VEC.W"
+[1] "QTETR"
+[1] "ACM.W"
+[1] "KMB.W"
+[1] "SNR.W"
+[1] "SAN.W"
+[1] "UBS.W"
+[1] "KMI.W"
+[1] "QSR.W"
+[1] "KEN.W"
+[1] "NHF.W"
+[1] "SSP.W"
+[1] "GHC.W"
+[1] "MAS.W"
+[1] "GCI.W"
+[1] "HZN.W"
+[1] "BKS.W"
+[1] "VTR.W"
+[1] "CCP.W"
+[1] "PJT.W"
+[1] "JAX.W"
+[1] "OLN.W"
+[1] "NRE.W"
+[1] "DRI.W"
+[1] "CSC.W"
+[1] "NOK.W"
+[1] "GCP.W"
+[1] "GRA.W"
+[1] "CYH.W"
+[1] "QHC.W"
+[1] "IDT.W"
+[1] "HRI.W"
+[1] "HTZ.W"
+[1] "WNR.W"
+[1] "EBS.W"
+[1] "APD.W"
+[1] "RRD.W"
+[1] "PKY.W"
+[1] "CUZ.W"
+[1] "HCP.W"
+[1] "QCP.W"
+[1] "CAG.W"
+[1] "BTU.W"
+[1] "ASH.W"
+[1] "VVV.W"
+[1] "MET.W"
+[1] "HBB.W"
+[1] "FOR.W"
+[1] "TWO.W"
+[1] "ASX.W"
+[1] "APY.W"
+[1] "DOV.W"
+[1] "RVI.W"
+[1] "CVI.W"
+[1] "HON.W"
+[1] "ACA.W"
+[1] "TRN.W"
+[1] "EQT.W"
+[1] "ETRN.W"
+[1] "ARYAW"
+[1] "DELL.W"
+[1] "SXTC"
+[1] "TAK.W"
+[1] "MDJH"
+[1] "MTC"
+[1] "BCOW"
+[1] "SAMAW"
+**** Recalculate
+GMTA
+KIDBQ
+LINE
+TSRTQ
+*** DONE [#A] Universe を Long/Short で分けるのを止める
+CLOSED: [2019-01-12 Sat 11:09]
+**** 並列でスキャンできないため
+*** DONE [#A] CalcIndicator 関数のバグ対応
+CLOSED: [2019-01-12 Sat 11:09]
+*** DONE [#B] 2016 年末の異常なパフォーマンスの原因追求
+CLOSED: [2019-01-08 火 17:42]
+2016/12/2	EVHC open 22.58->66.25, low 22.58->64.38
+2013/7/5	WEB  open 14.9->26.12,	low 14.9->25.91
+*** DONE [#C] DB に start_date, end_date 入れたい
+CLOSED: [2019-01-08 火 01:47]
+getStrategyResults 関数の結果セットに含めることで解決
+*** DONE [#B] calcOpenGapCoefParallel の修正
+CLOSED: [2018-12-25 火 14:40]
+**** Bug
+merge.xts の指定ミス？
+simpleError in error(x, ...): improper length of one or more arguments to merge.xts>
+
+008-01-02 以前の日付をしているのが悪い？
+ogc.len = 0 の場合は、NULL を返す必要がある
+subset 時に range も最小値にあわせる
+**** 並列化
+*** DONE getMonthlyRanges() method
+CLOSED: [2018-12-25 火 12:58]
+*** DONE [#A] Daily Parameter Sweep Script
+CLOSED: [2018-12-25 火 14:38]
+**** できるだけ範囲を絞らないときつい
+**** どの程度の時間が必要か 長くて 14:00-18:00 ?
+*** DONE [#A] gapStrategy bug fix
+CLOSED: [2018-12-25 火 12:16]
+Retrieving Open Gap Coeficient... Done
+ { でエラー: 
+  task 256 failed - " 'arrange_' をクラス "list" のオブジェクトに適用できるようなメソッドがあり V ません "
+  
+ogc_len > 210 で ogc_thres -1 にするとシグナルが発生していなかった。
+
+*** DONE [#A] Flex query bug fix
+CLOSED: [2018-12-25 火 12:16]
+Retrieving trades...
+Error in `$<-.data.frame`(`*tmp*`, IBOrderID, value = character(0)) :
+  replacement has 0 rows, data has 4
+Calls: $<- -> $<-.data.frame
+Execution halted
+*** DONE 各パラメーターの分布をまとめる
+CLOSED: [2018-12-21 金 21:32]
+**** TODO SD, ATO, OGC by len & year
+*** DONE table_name やめる
+CLOSED: [2018-12-21 金 17:14]
+*** DONE [#C] +R.NET with R3.4 で最適パラメーターを取得する+
+CLOSED: [2018-12-20 木 14:42]
+**** あるいはもっと簡単な方法は？
+**** DONE Rprofile で R_LIBS_USER をバージョンごとに切り替える
+CLOSED: [2018-12-20 木 11:00]
+*** DONE [#C] IB TWS 起動チェック for pipe server
+CLOSED: [2018-12-21 金 11:59]
+*** DONE [#A] getDbSetdiff が Bug ってそうな件
+CLOSED: [2018-12-21 金 10:43]
+**** DONE データの重複がないか念の為確認
+CLOSED: [2018-12-21 金 10:43]
+sd_h_thres = 0.07/0.070 => 11700 (5850x2)
+0.085
+0.09
+
+Total 403,650
+reduced to 386,100
+
+731,250 = 327,600(s) + 403,650(l)
+=> 713,700
+**** DONE 丸め誤差を考慮した param setdiff
+CLOSED: [2018-12-21 金 10:43]
+sd_hl_thres, ogc_thres, stop_thres, slippage
+*** DONE [#A] getActiveTickers の last_price_date が最新でない場合の対応
+CLOSED: [2018-12-20 木 00:03]
+*** DONE [#B] DailyUniverse で Short の場合は、IBShortable でサブセット
+*** DONE [#B] IB Shortable Stock Info
+CLOSED: [2018-12-19 水 16:41]
+*** DONE [#B] Walkforward Analysis で戦略の期待値・基本統計量を整理する
+CLOSED: [2018-12-19 水 16:41]
+*** DONE WFA の Test
+CLOSED: [2018-12-19 水 13:17]
+*** DONE OGC の最適化範囲
+CLOSED: [2018-12-19 水 13:17]
+*** DONE [#B] Flex Query を利用して成績まとめ
+CLOSED: [2018-12-19 水 09:19]
+*** DONE [#A] Flex Query 完成させる
+CLOSED: [2018-12-19 水 00:43]
+*** DONE Sharadar Update Bug fix
+CLOSED: [2018-12-19 水 09:11]
+Error in na_row
+*** DONE [#A] gapStrategy の正常化
+CLOSED: [2018-12-18 火 09:44]
+**** DONE Use new sharadara DB
+CLOSED: [2018-12-18 火 09:44]
+**** DONE Complete tests
+CLOSED: [2018-12-18 火 09:44]
+*** DONE [#A] sd_l/h_thres 導入
+CLOSED: [2018-12-18 火 11:41]
+**** +ogc_hl も？+
+**** param combination の条件付け l<=h となるように
+**** パラメタを追加・削除時の手順をまとめておく
+DB Scheme 変更
+calcGapStrategy.R param 名 追加・削除・変更、ロジック変更
+
+**** p_, r_ prefix support
+
+*** DONE [#C] +Cron job で日次処理実行+ Windows Task scheduler
+CLOSED: [2018-12-18 火 12:20]
+*** DONE [#B] IQFeed シンボル数契約増加
+CLOSED: [2018-12-18 火 12:20]
+*** DONE [#C] LMT entry version
+CLOSED: [2018-12-18 火 12:21]
+**** 非常に成績が悪い
+**** Open 後すぐに上昇を始める銘柄に成績が依存しているため
+*** DONE [#C] getSlicedData のドット名を変更し convertColumnName を削除
+CLOSED: [2018-12-18 火 12:22]
+
+*** DONE [#A] sharadar equity_price で空白文字""が登録されている => NA にしたい
+CLOSED: [2018-12-17 Mon 13:29]
+**** DONE Update sharadra のプログラムのバグ
+CLOSED: [2018-12-17 Mon 13:29]
+Not bug
+Registered as empty char
+**** DONE 欠損値を修正するプログラム
+CLOSED: [2018-12-17 Mon 13:29]
+fillEmptyCharInSharadarDb.R
+**** DONE plusDB の手動修正
+CLOSED: [2018-12-05 Wed 22:12]
+AEDC 2011/10/11
+NCFT 2013/11/07
+*** DONE [#C] Sharadar Error
+CLOSED: [2018-12-14 Fri 17:26]
+Maybe problem by Dropbox sync...
+
+Unhandled Exception: System.IO.IOException: 要求された操作はユーザー マップ セクションで開いたファイルでは実行できません。 : 'C:\Users\shun\Dropbox\repos\Sharadar\Sharadar.Updater\tmp.csv'
+   at System.IO.FileStream.ValidateFileHandle(SafeFileHandle fileHandle)
+   at System.IO.FileStream.CreateFileOpenHandle(FileMode mode, FileShare share, FileOptions options)
+   at System.IO.FileStream..ctor(String path, FileMode mode, FileAccess access, FileShare share, Int32 bufferSize, FileOptions options)
+   at System.IO.StreamWriter..ctor(String path, Boolean append, Encoding encoding, Int32 bufferSize)
+   at System.IO.StreamWriter..ctor(String path)
+   at System.IO.File.WriteAllLines(String path, IEnumerable`1 contents)
+   at Sharadar.Updater.Utils.TickerBulkUpdater.ParseCsv() in C:\Users\shun\Dropbox\repos\Sharadar\Sharadar.Updater\Utils\TickerBulkUpdater.cs:line 39
+   at Sharadar.Updater.Utils.TickerBulkUpdater.RunAsync() in C:\Users\shun\Dropbox\repos\Sharadar\Sharadar.Updater\Utils\TickerBulkUpdater.cs:line 82
+   at Sharadar.Updater.Program.Main(String[] args) in C:\Users\shun\Dropbox\repos\Sharadar\Sharadar.Updater\Program.cs:line 11
+   at Sharadar.Updater.Program.<Main>(String[] args)
+*** DONE [#A] Indicator 再計算
+CLOSED: [2018-12-18 火 09:22]
+**** DONE [#A] パラメーターの欠損を考慮
+CLOSED: [2018-12-14 Fri 17:26]
+getTradingDays の日付と Join した上で、再計算すべき
+**** DONE [#B] ATO 計算ロジックを (high + low ) / 2 * volume に変更
+CLOSED: [2018-12-14 Fri 17:26]
+**** DONE 計算値と DB の終了日が合致しているかチェック
+CLOSED: [2018-12-17 月 15:42]
+**** DONE ogc の計算結果のみ少ない理由は？ 
+CLOSED: [2018-12-18 火 09:20]
+sma, sd, ato, ogc, Symbol setdiff
+
+Total 7983
+SMA 
+SD
+ATO AEDC
+OGC AEDC, CNST1, LOLI
+
+AEDC 価格情報に空白を含んでいた
+LOLI 価格変動がないため、LM 計算不可
+CNST1 何故かファイルが出力されない(どこかに bug あり)
+
+**** DONE CSV ファイルの読み込み処理の並列化
+CLOSED: [2018-12-17 月 15:51]
+**** DONE スクリプト化
+CLOSED: [2018-12-18 火 09:22]
+*** DONE [#B] Clean IB API message
+CLOSED: [2018-12-14 Fri 17:48]
+TWS API との接続をすぐに切断すればよい
+
+ExecDetails. -1 - KO, STK, USD - 00018037.5c2b5c7c.01.01, 577, 202, Removed Liquidity
+CommissionReport. 00018037.5c2b5c7c.01.01 - 1.35392 USD RPNL 1.79769313486232E+308
+ExecDetails. -1 - MDLZ, STK, USD - 00018037.5c2b5c87.01.01, 583, 226, Removed Liquidity
+ExecDetails. -1 - MNST, STK, USD - 00018037.5c2b5c88.01.01, 571, 182, Removed Liquidity
+ExecDetails. -1 - CMA, STK, USD - 00018037.5c2b5c89.01.01, 592, 100, Removed Liquidity
+CommissionReport. 00018037.5c2b5c87.01.01 - 1.514781 USD RPNL 1.79769313486232E+308
+CommissionReport. 00018037.5c2b5c88.01.01 - 1.219868 USD RPNL 1.79769313486232E+308
+CommissionReport. 00018037.5c2b5c89.01.01 - 0.670257 USD RPNL 1.79769313486232E+308
+ExecDetails. -1 - CMA, STK, USD - 00018037.5c2b5ca1.01.01, 592, 41, Removed Liquidity
+CommissionReport. 00018037.5c2b5ca1.01.01 - 0.147705 USD RPNL 1.79769313486232E+308
+ExecDetails. -1 - SNY, STK, USD - 00012bb1.5c12468c.01.01, 574, 200, Added Liquidity
+CommissionReport. 00012bb1.5c12468c.01.01 - 0.320515 USD RPNL 1.79769313486232E+308
+ExecDetails. -1 - SNY, STK, USD - 00012bb1.5c12468d.01.01, 574, 24, Removed Liquidity
+CommissionReport. 00012bb1.5c12468d.01.01 - 0.160862 USD RPNL 1.79769313486232E+308
+ExecDetails. -1 - PCAR, STK, USD - 00012bb1.5c124695.01.01, 568, 100, Added Liquidity
+CommissionReport. 00012bb1.5c124695.01.01 - 0.160257 USD RPNL 1.79769313486232E+308
+ExecDetails. -1 - PCAR, STK, USD - 00012bb1.5c124696.01.01, 568, 74, Removed Liquidity
+CommissionReport. 00012bb1.5c124696.01.01 - 0.09639 USD RPNL 1.79769313486232E+308
+ExecDetails. -1 - CCI, STK, USD - 00018037.5c2b5cf1.01.01, 589, 86, Added Liquidity
+CommissionReport. 00018037.5c2b5cf1.01.01 - 0.264257 USD RPNL 1.79769313486232E+308
+ExecDetails. -1 - MNST, STK, USD - 00018037.5c2b5d06.01.01, 573, 100, Removed Liquidity
+CommissionReport. 00018037.5c2b5d06.01.01 - 0.753371 USD RPNL -4.423628
+ExecDetails. -1 - MNST, STK, USD - 00018037.5c2b5d0a.01.01, 573, 82, Removed Liquidity
+CommissionReport. 00018037.5c2b5d0a.01.01 - 0.617764 USD RPNL -3.627375
+Error. Id: 572, Code: 202, Msg: Order Canceled - reason:
+
+ExecDetails. -1 - GRMN, STK, USD - 00018037.5c2b5d39.01.01, 595, 100, Removed Liquidity
+ExecDetails. -1 - GRMN, STK, USD - 00018037.5c2b5d3a.01.01, 595, 51, Removed Liquidity
+CommissionReport. 00018037.5c2b5d39.01.01 - 0.360257 USD RPNL 1.79769313486232E+308
+CommissionReport. 00018037.5c2b5d3a.01.01 - 0.341831 USD RPNL 1.79769313486232E+308
+ExecDetails. -1 - CMA, STK, USD - 00018037.5c2b5d66.01.01, 594, 100, Removed Liquidity
+ExecDetails. -1 - CMA, STK, USD - 00018037.5c2b5d67.01.01, 594, 41, Removed Liquidity
+CommissionReport. 00018037.5c2b5d66.01.01 - 0.773729 USD RPNL -14.353845
+CommissionReport. 00018037.5c2b5d67.01.01 - 0.317229 USD RPNL -5.885076
+Error. Id: 593, Code: 202, Msg: Order Canceled - reason:
+
+ExecDetails. -1 - PSA, STK, USD - 00012bb1.5c124729.01.01, 580, 49, Added Liquidity
+CommissionReport. 00012bb1.5c124729.01.01 - 0.301257 USD RPNL 1.79769313486232E+308
+ExecDetails. -1 - EXR, STK, USD - 00018037.5c2b5d8c.01.01, 586, 100, Removed Liquidity
+ExecDetails. -1 - EXR, STK, USD - 00018037.5c2b5d8d.01.01, 586, 2, Removed Liquidity
+CommissionReport. 00018037.5c2b5d8c.01.01 - 0.130257 USD RPNL 1.79769313486232E+308
+CommissionReport. 00018037.5c2b5d8d.01.01 - 0.013405 USD RPNL 1.79769313486232E+308
+
+*** DONE [#A] MC's scanner indicator [7/7]
+CLOSED: [2018-12-14 Fri 01:02]
+**** DONE Scanner と PipeClient 機能の統合
+CLOSED: [2018-11-29 Thu 12:25]
+**** DONE Title に Input パラメーターを表示できないか
+CLOSED: [2018-11-29 Thu 11:21]
+Indicator の Name が Readonly のため NG
+Plot 名を変更して対応する
+
+**** DONE +SQLite アクセス(できれば MySQL にしてしまいたい)+
+CLOSED: [2018-11-29 Thu 11:20]
+取得する情報 Side, SMA_len, SD_len, Min_thres
+マニュアルで毎回入力する
+DB から取得するとしても、MC で Create()でしか表示を変更できないため
+
+**** DONE Long/Short で Scannner を分けた場合、銘柄数は制限にかかるか
+CLOSED: [2018-11-30 Fri 00:02]
+かからない　 IQFeed client をブリッジにしているため
+**** DONE PipeServer に送る情報の整理
+CLOSED: [2018-11-29 Thu 12:26]
+Symbol,DateTime,Open,Close,SD,Zscore
+
+**** DONE 色分けのロジック Long/Short それぞれで
+CLOSED: [2018-11-29 Thu 12:26]
+**** DONE SD, SMA などは、ファイルから読み込む
+CLOSED: [2018-12-14 Fri 01:02]
+***** Daily setup csv から
+*** DONE [#A] data.table => data.frame (gapStrategy)
+CLOSED: [2018-12-12 水 23:34]
+**** 古い関数の削除
+**** data.table import 削除
+*** DONE [#A] DB の成績と同じ結果か？
+CLOSED: [2018-12-13 木 11:29]
+*** DONE [#B] PipeOrderServer [12/12]
+CLOSED: [2018-12-13 木 12:52]
+**** DONE [#A] R と MC での na.rm の違い(SD 等)
+CLOSED: [2018-11-30 Fri 16:58]
++.NET で na.rm する方法+
+計算した内容を MC 側に読み込むことで対応
+**** DONE [#B] コード整理
+CLOSED: [2018-11-30 Fri 23:57]
+**** DONE [#B] CancellationToken のバグ
+CLOSED: [2018-11-30 Fri 23:58]
+実際の動作には影響なし
+
+サンプルコード
+https://csharp.hotexamples.com/examples/System.IO.Pipes/NamedPipeServerStream/WaitForConnectionAsync/php-namedpipeserverstream-waitforconnectionasync-method-examples.html
+
+Stack overflow
+https://stackoverflow.com/questions/32511714/hanging-with-waitforconnectionasync-on-pipe
+
+NamedPipeServerStream のコンストラクタで PipeOption を
+Asnychronous に変更することで解決
+
+***** async Main (C# 7.1)
+static async Task Main(string[] args) {}
+
+<Project>
+  <PropertyGroup>
+    ...
+    <LangVersion>7.1</LangVersion>
+    ...
+  </PropertyGroup>
+</Project>
+
+**** DONE +Server が Linux の場合、ネットワーク越しの PipeServer+
+CLOSED: [2018-12-13 木 12:52]
+**** DONE OrderInfo クラスを引き続き使うか
+CLOSED: [2018-11-29 Thu 16:41]
+できるだけ、zscore でランク付けしてオーダーするだけにしたい
+**** DONE +Open2Last のしきい値を検討+ 当面利用しない
+CLOSED: [2018-11-29 Thu 13:53]
+**** DONE +SQLite Access+ コマンドライン引数で対応
+CLOSED: [2018-11-29 Thu 23:58]
+取得する情報 num_trades, lot, StopCoef
+**** DONE OrderRef に記載する内容の整理
+CLOSED: [2018-11-29 Thu 23:58]
+**** DONE 並列化
+CLOSED: [2018-11-29 Thu 16:41]
+**** DONE .NET Core 化
+CLOSED: [2018-11-29 Thu 16:41]
+**** DONE 例外の内容を見る　タイムアウトが発生しないギリギリのタイマー
+CLOSED: [2018-11-29 Thu 23:41]
+400 symbols, 8 servers => 50 msec 程度でも例外は発生しない
+**** DONE +IBConId を使う+
+CLOSED: [2018-11-30 Fri 00:00]
+ドットをスペースに変更するだけでもほぼ問題ない？
+IQFeed - IB のマッピングを維持するのが、面倒
+*** DONE [#A] Indicator 事前計算 DB [6/6]
+CLOSED: [2018-12-04 Tue 12:37]
+**** DONE NA, Inf/-Inf, NaN, NULL, 0 など不正な値の除去
+CLOSED: [2018-12-04 Tue 12:37]
+***** SD=0 は戦略ロジックの中で修正
+SD=0 は通常のケースとしてありえるため
+**** DONE 検討
+CLOSED: [2018-12-03 Mon 15:01]
+- メリット
+バックテストの時間短縮。ローリングもできるかも。
+OGC のバグ回避
+バックテスト結果の再現性確保
+
+- デメリット
+ある時点でデータを固定するため、最新のデータに対応できない
+データの肥大
+
+**** DONE Error 対応
+CLOSED: [2018-12-03 Mon 15:01]
+3990 PVSA
+3986 PVG1
+3982 PVG1
+3930 PTILY
+
+task 318 failed - "Check that is.data.table(DT) == TRUE. Otherwise, := and `:=`(...) are defined for use in j, once only and in particular ways. See help(":=")."
+そもそも利用可能なデータが Len を満たしていない
+
+16/7974 => Total 7958
+[1] "APCFY"  9
+[1] "ASPV" 2
+[1] "CNE" 8
+[1] "COLY" 3
+[1] "FCGI" 8
+[1] "FINB" 1
+[1] "PTNX" 5
+[1] "UNBH" 1
+[1] "BCSF" 9
+[1] "WEI" 9
+[1] "AMCI" 8
+[1] "BWMC" 8
+[1] "FTAC" 8
+[1] "TC" 6
+[1] "TLSA" 6
+[1] "TLC" 5
+
+Error in { : 
+  task 3923 failed - "object 'lens' of mode 'function' was not found"
+=> lm のデータ内に Inf が含まれていたことが原因
+  
+Error in { : task 6021 failed - "non-conformable arrays"
+
+**** DONE インディケーターの最終日と ticker lastupdated の比較
+CLOSED: [2018-12-03 Mon 17:38]
+Error in fread(paste0("~/tmp/sma/", symbol, ".csv")) : 
+  (converted from warning) File '~/tmp/sma/GAS.csv' has size 0. Returning a NULL data.table.
+  
+**** DONE DB 容量の確認と DB スキーマの決定、スキーマ毎の読み込み速度の比較
+CLOSED: [2018-12-04 Tue 12:37]
+- SMA=3.1 億件 (315,337,629) insert 6min
+- data 読み込み 10min
+- dcast 1300(13,542,348) 万件 3min
+
+- SD=315,337,629, dcat=13,542,348
+- ATO=315,337,629, dcst=13,542,348
+- OGC=314,289,102, dcast=13,527,292
+**** DONE CSV import
+CLOSED: [2018-12-04 Tue 12:37]
+- .separator ,
+- .import hoge.csv table
+*** DONE [#A] getSlicedData の事前計算インディケーター対応
+CLOSED: [2018-12-04 Tue 22:08]
+**** DONE SMA=0 のときの SubsetError 対応
+CLOSED: [2018-12-04 Tue 22:08]
+*** DONE [#A] Run parameters sweep (w/o Open Gap Coef)
+CLOSED: [2018-12-04 Tue 22:39]
+**** on GCE 　プロセスを切り替えて利用する
+malloc(): memory corruption
+Error in unserialize(socklist[[n]]) : error reading from connection
+
+GCE の highcpu ではメモリ不足となっている模様
+standard 以上を利用する
+
+- Error in makePSOCKcluster(names = spec, ...) : 
+  numeric 'names' must be >= 1
+
+- task 2 failed - "attempt to select less than one element in get1index"
+*** DONE [#A] calcGapStrategy の Trans 修正
+CLOSED: [2018-12-04 Tue 15:20]
+**** DONE 指値注文の検討
+CLOSED: [2018-12-04 Tue 15:16]
+entry_type = MKT or LMT or それともテーブル分ける
+Open に対して指値を入れるしきい値を決める pct_below_open
+pct_below_open < stop_coef の制約
+指値戦略は非常に成績が悪い。以下に MKT の Slippage を抑えるか
+*** DONE [#A] calcGapStrategyAllParams の DB を arg にする
+CLOSED: [2018-12-04 Tue 22:39]
+*** DONE [#A] Walk Forward Analysis
+CLOSED: [2018-11-30 Fri 11:08]
+引数名の更新漏れ
+
+*** DONE [#A] setdiff のバグ修正
+CLOSED: [2018-11-29 Thu 00:26]
+*** DONE [#A] DB Scheme change [2/2]
+CLOSED: [2018-11-29 Thu 00:06]
+**** DONE delete z_thres
+CLOSED: [2018-11-28 Wed 23:22]
+**** DONE Migrate current DB
+CLOSED: [2018-11-29 Thu 00:06]
+*** DONE [#A] Run parameters sweep (w/o Open Gap Coef)
+CLOSED: [2018-11-28 Wed 10:26]
+**** on GCE 　プロセスを切り替えて利用する
+malloc(): memory corruption
+Error in unserialize(socklist[[n]]) : error reading from connection
+
+GCE の highcpu ではメモリ不足となっている模様
+standard 以上を利用する
+*** DONE [#B] Long/Short を合算する方法
+CLOSED: [2018-11-28 Wed 16:43]
+check => signal => trans => perf => plot に関数を分割する
+Long/Short 個別に trans を計算し rbindlist => perf/plot 計算
+
+*** DONE [#A] Complete GenerateDailyInfo
+CLOSED: [2018-11-27 Tue 23:43]
+**** DONE DB から当該日の最適パラメーターを取得する
+CLOSED: [2018-11-27 Tue 23:42]
+***** Long/Short それぞれについて以下のパラメーターを取得
+range, sma_len, sd_len, ato_len, ogc_len,
+sd_thres, ato_l/h_thres, ogc_thres, min_thres
+
+**** DONE Symbol mapping from Sharadar to IQFeed (BRKB => BRK.B)
+CLOSED: [2018-11-27 Tue 14:36]
+
+**** DONE File Output パスを決める
+CLOSED: [2018-11-27 Tue 23:42]
+Dropbox ? DB?
+
+**** DONE 1000 以下に抑えるには
+CLOSED: [2018-11-27 Tue 23:43]
+***** DONE SD Thres 加える
+CLOSED: [2018-11-27 Tue 23:43]
+***** DONE Open Gap Coef 加える
+CLOSED: [2018-11-27 Tue 23:43]
+***** DONE Min entry を大きくする(ただし、15 くらいが Max か)
+CLOSED: [2018-11-27 Tue 23:43]
+***** DONE tover.low.thres/tover.high.thres を狭める
+CLOSED: [2018-11-27 Tue 23:43]
+
+
+*** DONE [#A] RWorkspace を移行する from Windows
+CLOSED: [2018-11-27 Tue 23:20]
+runGapStrategy
+analyzeGapStrategy
+findBestParam, scoring
+*** DONE [#C] getDailyOHLCV が遅い件
+CLOSED: [2018-11-27 Tue 13:49]
+入力チェックの中で、不正な銘柄を入力する部分で、時間がかかっていた
+*** DONE Setup GCE VM for parameter sweep
+CLOSED: [2018-11-27 Tue 11:46]
+**** DONE File copy shell script
+CLOSED: [2018-11-27 Tue 11:46]
+**** DONE リンクを使ってローカルマシンと同じ Path でデータを扱う
+CLOSED: [2018-11-27 Tue 11:46]
+/home/shun/sqlite/
+*** DONE Don't use pforeach
+CLOSED: [2018-11-27 Tue 12:41]
+*** DONE [#A] getSlicedData SMA=0, OGC=0(NULL) case debug
+CLOSED: [2018-11-26 Mon 11:05]
+SMA = 0 の場合は、calcIndicatorParallel が NULL を返す
+そのため、lapply で NULL は Skip され Subset でバグは起きない
+*** DONE [#A] Consider parameters value
+CLOSED: [2018-11-26 Mon 15:56]
+*** DONE [#A] Rewrite parameters value
+CLOSED: [2018-11-26 Mon 15:56]
+*** DONE [#A] Debug short selling logic
+CLOSED: [2018-11-26 Mon 15:56]
+*** DONE [#A] Change DB Scheme / Using SQlite DB for strategy result
+CLOSED: [2018-11-26 Mon 18:17]
+*** DONE Indicator windows を 2 以上に制限する
+LOSED: [2018-11-26 Mon 09:24]
+*** DONE Use SQlite DB
+LOSED: [2018-11-22 Thu 13:15]
+*** DONE Convert Quotemedia DB to SQLite3
+LOSED: [2018-11-21 Wed 17:51]
+*** DONE Convert current code to github
+LOSED: [2018-11-20 Tue 18:43]
+*** DONE Sharadar DB adj_volume, dividend TEXT に変換されている問題
+LOSED: [2018-11-20 Tue 18:34]
+SQLite を Github の最新バージョンへ Upgrade し解
+*** DONE DB のソートを Date,Ticker に入れ替えた上で、Index 性能を試す
+CLOSED: [2018-11-21 Wed 00:34]
+select column by date
+  no index: 4sec
+  date index: 2.5sec
+
+*** DONE エントリー後に最大損失額を表示する
+CLOSED: [2019-02-15 金 11:42]
+*** DONE +entry 直後にはストップをいれない+
+CLOSED: [2019-02-15 金 12:25]
+Conditional Order (time setting)
+*** DONE Performance 整理
+CLOSED: [2019-02-15 金 14:20]
+**** DONE Return hist by ggplot2
+CLOSED: [2019-02-15 金 13:43]
+**** DONE Skew, Kurt をメトリックに含める
+CLOSED: [2019-02-15 金 13:52]
+**** VaR and others var sensitivity
+**** DONE 外れ値を除去したパフォーマンス指標 boudt_clean
+CLOSED: [2019-02-15 金 13:54]
+**** DONE APR
+CLOSED: [2019-02-15 金 13:52]
+**** DONE Kelly Ratio
+CLOSED: [2019-02-15 金 13:54]
+**** DONE 幾何平均 vs ．算術平均
+CLOSED: [2019-02-15 金 13:54]
+**** DONE Downside risk chart.Downside
+CLOSED: [2019-02-15 金 14:20]
+*** DONE Tick analysis data を日次で作る
+CLOSED: [2019-02-14 木 22:21]
+*** DONE NASDAQ の業種を調べる
+CLOSED: [2019-03-07 木 23:34]
+- 1 entry per industry
+- どの業種がメインが Tech, Bio, Fin, Service
+*** DONE PreMarket の特徴整理
+CLOSED: [2019-02-14 木 22:21]
+- PreMarket での取引有無の閾値 (by volume, ato..)
+- PreMarket での zscore と実際の zscore との乖離
+- 結局何トレードが正しいか？5 or 10 ?
+- rmd でまとめる
+*** DONE [#B] Backtest by Tick Data
+CLOSED: [2019-02-14 木 22:21]
+**** DONE Flow
+CLOSED: [2019-01-23 水 21:51]
+Subset only symbols that has pre market data
+join by sd, prev_close, ato
+Signal by Zscore
+Take n signal
+Generate transaction
+Equity Curve
+
+**** DONE 戦略パターンの整理
+CLOSED: [2019-01-24 木 16:31]
+1. Open/Close cross のみを狙う (MOO, MOC)
+   - PreMarket でのスキャン結果を利用 (9:27 時点の open/zscore)
+   - その場合の最適な ato_l, stop, min, num_trades
+2. Cross とこれまでの entry の併用
+   - 1. だけでは信頼性で劣る？
+**** DONE パラメタの決定
+CLOSED: [2019-01-24 木 16:31]
+stop
+num_trades
+**** 留意事項
+PreMarket で zscore を付けているが、Open cross が無い
+→ OPG で買えないケース.
+  Open + Slippage
+  実際はキャンセルされるだけなので、問題なし
+
+OPG で買えたが、MOC で Close cross が無い
+→ OPG で売れないケース. Close + Slippage
+
+Ticker は、Survivorship bias
+Open Cross で買えていたとしても、Market Open との乖離が大きかったら、
+成績は悪いかもしれない => NYSE の場合
+
+*そのそも 180 日のデータしかない*
+
+"8A42" = OpenCross
+"4042" = CloseCross
+NASDAQ=5, NYSE=7
+* Strategy Description
+** Overview
+*** 前日の終値と当日の始値との変化率で、売られすぎ・買われすぎを判断
+*** 売られ過ぎな銘柄を買い、買われ過ぎの銘柄を売る
+** Universe 
+*** US Stock
+**** *NASDAQ*
+比較的小型の銘柄が多い
+MOO/MOC であれば、スリページがほぼ無し
+**** NYSE 
+取引量が豊富な銘柄が多数
+Open/Close Cross の方式が NASDAQ とは異なり、スリッページが大きい
+** Indicators
+*** Filters
+**** SMA 　大きな下げ相場・上げ相場での損失を避けるため
+**** SD 　 Volatility の大きい銘柄に絞る
+**** ATO 　流動性の低い銘柄を除外する
+**** OGC   Gap Up/Down とリターンの関連の高い銘柄に絞る 
+**** Min   価格が小さすぎるものは避ける
+*** Signals 
+**** Zscore = ROC/SD
+***** SD
+***** ROC (prior close to today open)
+**** Num Trades 
+ list
+|-------------+------------------+------------------------+--------------------------------|
+| name        | description      | values                 | memo                           |
+|-------------+------------------+------------------------+--------------------------------|
+| range       | Backtest period  | yyyy-mm-dd::yyyy-mm-dd | Use 1Y as start                |
+| sma_len     | SMA length       | seq(0, 250, 10)        | 0 = No SMA (use Inf)           |
+| sd_len      | SD length        | seq(10, 250, 10)       |                                |
+| ato_len     | Avg Tover length | seq(10, 250, 10)       |                                |
+| ogc_len     | lm(ogc) length   | seq(0, 250, 10)        | 0 = No OGC (use -Inf)          |
+|-------------+------------------+------------------------+--------------------------------|
+| side        | order side       | Long, Short (+Both?)   |                                |
+| sd_l_thres  | SD Low thres     | seq(0, 0.02, 0.005)    | No negative value              |
+| sd__h_thres | SD High thres    | seq(0.02, 0.05, 0.005) | No negative value              |
+| ato_l_thres | ATO low thres    | 10M => 10M+?           | 0 = No thres                   |
+| ato_h_thres | ATO high thres   |                        | Inf = No thres                 |
+|             |                  |                        |                                |
+| *ogc_thres  | OGC thres        | seq(0, -0.5, -0.1)     | if ogc_len = 0, then no thres  |
+|             |                  |                        | ogc = if len=10, then -5 ~ +5  |
+|             |                  |                        | ogc = if len=250, then -1 ~ +1 |
+|             |                  |                        |                                |
+| *stop_thres | Stop thres       | seq(0.1, 2, 0.1)       | Inf = No thres                 |
+| min_thres   | Min entry thres  | c(10, 15)              | 0 = No thres                   |
+| slippage    | Slippage pct     | c(0.001)               |                                |
+| num_trades  | Number of trades | 10                     |                                |
+| lot         | Order lot        | 10000                  |                                |
+|-------------+------------------+------------------------+--------------------------------|
+**** ATO = (high + low) / 2 * volume
+**** SQLite で Inf を入力するには、9e999 とする
+**** Target thres 対象外 (日中、Target/Stop どちらが先に触れるか不明なため)
+** Parameters
+*** Parameters 考察
+**** SMA Length
+***** len=0 が好成績で、その後 len=200+で山となっている
+***** Return/DD で見ても、2014, 2017 年以外は、明確に SMA=0 のパフォマンスが良い。
+***** SMA=0 では、下げ相場でのリスクが大きくなる => 最適な Stop Thres を検討する 
+***** トレード回数は、SMA=0 で最も多く、SMA=10 で最も少ない。その後、SMA=240 にかけて増えていく。
+***** SMA=0 以外では、明確なパフォーマンス傾向は読み取れない。
+***** SMA=0 では、事前のフィルタがなくなるので、当日のスキャン対象銘柄が増加することが懸念である。
+**** SD Length & Thres (Long/Short)
+***** SD len の違いによって、SD の値はそれほど変わらない
+***** SD length が小さい = 直近のボラティリティを反映できる、と考えることもできる
+***** つまり直近で荒れすぎている銘柄は zscore が高くなりにくい
+***** _SD は Zscore の計算のもとになるだけなので、単体で最適化しても効果は少ないかもしれない_
+***** SD len が長いほどボラが大きくなる傾向の年がある(近年はあまり差はない）
+***** len=10 が Best のケースと 50~100 で Best のケースがある
+***** 分布は、1% ~ 4% が多い 1.5%~2.5% が中央値であることが多い
+***** 2009 年はボラティリティが大きく、中央値が 5% ほど => だから好成績？
+***** Low Thres
+****** sd_thres = 0 から増やしていくとパフォーマンスダウンの傾向
+****** ただし、sd_thres = 0 ~ 0.01 は大きな差はない
+****** sd = 0~0.002 の銘柄はそれなりにあるため、フィルタして役立つ
+****** 0.0/0.5%/1.0% あたりで Best score となっている
+****** Short の場合、例外的に sd_l_thres が大きいほうが、好成績
+***** High Thres
+****** low=1%, high = 2%~10%+Inf でテスト
+****** 2%~5%は低成績、5%以上は、フラットの傾向
+***** 結論
+****** SD Thres はいずれにしても使用しない方が成績は良い
+****** SD Len はどの数値を使ってもそれほど差はない
+****** 最適化するなら 10~100, 固定なら 50
+****** フィルタとして追加してもパフォーマンスが落ちないというだけ (0 - 1%)
+****** 対象銘柄数を絞る効果があるときのみ利用する
+**** ATO Length & Thres
+***** Tover len 10-250 で検証
+***** Return, PF, WinRatio などどれもフラットで明確な成績の差はなし
+***** すべての面で、ato_l_thres が小さいほうが好成績
+***** ato_l_thres = 0 では、圧倒的に高パフォーマンス
+***** Buy on gap 戦略においては、小型株が有利 <-> いかにスリッページを抑えるかが重要
+***** もしくは、小型株は、指値エントリーを狙う方法もあり
+***** Score で比較した場合、10M と 20M では倍程度の差になる場合もある
+***** ato_l_thres == 5M の場合、len=10~30 あたりが好成績
+***** len が短いほうが短期的な盛り上がりのある株を追えるかもしれない
+**** OGC Length & Thres
+***** OGC len が長くなるに従ってばらつきは小さくなる
+***** len=10 で -5 ~ +5, len=250 -1 ~ +1
+***** 全体的にマイナス寄り
+***** 概ね len=0 が好成績だが、len が長期になるに従って成績復活の基調
+***** len=200 あたりが好成績になっている (Long)
+***** つまり長期的に Gap に対して反発傾向があるということか
+***** len=0 + 150~250 あたりのレンジで最適化
+***** thres なし(len=0)のケースが好成績だが、-0.2 ~ 0 付近がピークのケースもある (Long)
+**** Zscore
+***** Zscore が小さいと、トレード回数、Net Profit, DD すべてが増大傾向にある。
+  -> num.trades が有限の場合は、昇順でソートするため、Zscore が小さい(0.5 等)でも実際のエントリーは、Zscore が大きい場合がある
+  -> ただの n-rank システムのほうがよい？ => 正解？
+***** num.trades = Inf にして、Zscore の最適解を探る必要がある。
+***** Zscore 1 以下で高パフォーマンスの年と、1 - 2 のレンジで高パフォーマンスの年の 2 パターンがある。
+***** Zscore 2 以上で高パフォーマンスの年は見当たらない。
+***** (旧) Zscore 1.25 - 1.75 あたりのレンジ。トレード回数を増やしすぎるとリスクが増大。
+***** (AI) レンジは、0.5 - 2 で num.trades = Inf で再度調査
+***** トレード回数への影響を検討 (num.trades == Inf, sma.len == 0 のケース、つまりシグナル発生が多い場合)
+****** 目的=トレード回数の中央値が 10 回程度になる Zscore 最適値を探る
+****** シグナル発生が多いほど、Zscore のしきい値を厳しくする必要がある
+  <min.entry == 10>
+  tover.low == 10M:  1.5  - 2.5
+  tover.low == 20M:  1.5  - 2.0
+  tover.low == 30M:  1.25 - 2.0
+  tover.low == 50M:  1.25 - 1.5
+  tover.low == 100M: 1.0  - 1.25
+
+  <min.entry == 20>
+  tover.low == 10M:  1.25 - 2.2.5
+  tover.low == 20M:  1.25 - 2.0
+  tover.low == 30M:  1.25 - 1.75
+  tover.low == 50M:  1.0  - 1.5
+  tover.low == 100M: 0.75 - 1.25
+- tover.low の設定値は、tover.low 毎のパフォーマンスを見て決定
+- 中央値でよいかは疑問あり
+**** Stop
+***** 当然 stop を広くとれば勝率と net profit は向上する
+***** Stop thres が大きくなるにつれて、DD も増大。
+***** Stop = 0.1 - 0.5 が明確に好成績(Score, PF)。タイトな損切りが吉ということか。
+***** Stop = 1.25 以上になると、成績への影響はほぼ影響なし。
+***** Stop なし(=Inf) は、Stop=1.25 以上よりも好成績のケースがあるが、Stop=0.5 よりも好成績なケースはない。
+***** 絞り込むとしたら、0.2 - 0.4
+**** Min Entry
+***** Min.entry 10, 20 で比較
+***** トレード回数は、10->20 にすることで、減少するが、20 のほうが PF, Ret/DD ともに改善
+***** 手数料減少の効果もあると思われる
+***** Min.Entry seq(10, 30 ,5) で比較
+***** 10 -> 30 でパフォーマンスは反比例
+***** 稀に 10 が最高値でない年もあるが、概ね、10 がベスト
+***** Long/Short を合わせると、以外にも、10+でも成績が落ちない
+***** min=10 でスリッページがあまりにも大きいようだと 10+も検討できる
+
+*** 最適パラメタレンジ
+**** 目的
+***** 不要なパラメーターを削除する
+***** パラメーターの範囲を絞る
+***** リスク調整済みの指標とトレード回数を重視する
+***** 指標間で相関が高くないものを scoring 項目として選択する
+- Ret, Ret/DD, PF は相関が高い (0.8 - 0.9)
+- 候補 ret, ret/dd, pf, avg.trades の 4 つ
+  -> PF + Return + Return/DD
+**** レンジ (NYSE + NASDAQ)
+***** +sma_len     = 0 + seq(200, 250, 10)+
+***** sd_len      = 50 or seq(10, 100, 10) (Long/Short)
+***** ato_len     = 20(1month) or seq(10, 50, 10) (Long/Short) ほぼ変動なし
+***** +ogc_len     = 0 and seq(150, 250, 10)+
+***** +sd_l_thres  = 0 - 0.01 (0.005)+
+***** +sd_h_thres  = Inf+
+***** ato_l_thres = 10M+ (Long/Short) 大きくするとかなり成績が落ちる
+***** +ato_h_trehs = Inf+
+***** +ogc_thres   = seq(-0.5, 0.5, 0.1) もしくは、len=0+
+***** stop_thres  = 0.2 - 0.4 (Long/Short)
+***** min_entry   = 10 (スリッページが大きい場合、10+を検討する)
+***** num_trades  = 5 > 10 > 20 で高パフォーマンス (Long)
+***** slippage    = 0.001 (関数化すること！)
+***** lot         = 10k (バックテストでは差異ないが、スリッページ影響あり)
+***** amount      = 100k
+**** レンジ (NASDAQ) => min_thres は大きく、num_trades は小さく
+***** +sma_len     = 0 + seq(200, 250, 10)+
+***** sd_len      = 50 or seq(10, 100, 10) (Long/Short)
+***** ato_len     = 20(1month) or seq(10, 50, 10) (Long/Short) ほぼ変動なし
+***** +ogc_len     = 0 and seq(150, 250, 10)+
+***** +sd_l_thres  = 0 - 0.01 (0.005)+
+***** +sd_h_thres  = Inf+
+***** ato_l_thres = 5M - 10M (Long/Short) 小さければ小さいほどよい
+***** +ato_h_trehs = Inf+
+***** +ogc_thres   = seq(-0.5, 0.5, 0.1) もしくは、len=0+
+***** stop_thres  = 0.2 - 0.5 (Long/Short) 小さい方が良い傾向(特に 0.2)
+***** min_entry   = 10 5->10 ではリニアに成績向上, Short では成績にあまりばらつきなし
+***** num_trades  = 5 少なければ少ないほどよい, Short では成績にあまりばらつきなし
+***** slippage    = 0.001 (関数化すること！)
+***** lot         = lot,num_trades に合わせて変更
+***** amount      = 100k
+** Backtest Performance
+*** サマリー (2010 - 2018) (NYSE+NASDAQ)
+SMA=0, SD=50, ATO=20, OGC=0
+SD_Thres = 0, OGC_Thres = 0
+ATO_Low = 10M, ATO_High = Inf
+
+                                 NYSE+NASDAQ(s=0.1%)  NASDAQ(s=0.1%)        NASDAQ(s=0.01)
+|-----+-------+------+---------+------+-------+------+------+-------+------+------+-------+------|
+| No. | Side  | Stop | #Trades | $(k) | DD(k) |   PF | $(k) | DD(k) |   PF | $(k) | DD(k) |   PF |
+|-----+-------+------+---------+------+-------+------+------+-------+------+------+-------+------|
+|   1 | Long  |  0.2 |      10 |  285 |   -10 | 1.76 |      |       |      |      |       |      |
+|     | Short |      |         |  346 |   -12 | 1.95 |      |       |      |      |       |      |
+|     | Both  |      |         |  631 |   -16 | 2.34 |      |       |      |      |       |      |
+|-----+-------+------+---------+------+-------+------+------+-------+------+------+-------+------|
+|   2 | Long  |  0.3 |      10 |  309 |    -7 | 1.71 |  235 |    -9 | 1.47 |  667 |    -6 | 3.02 |
+|     | Short |      |         |  352 |   -14 | 1.80 |  295 |   -18 | 1.59 |  721 |    -5 | 3.17 |
+|     | Both  |      |         |  *660* |   *-15* | *2.21* |  529 |   -10 | 1.88 | 1388 |    -4 | 5.52 |
+|-----+-------+------+---------+------+-------+------+------+-------+------+------+-------+------|
+|   3 | Long  |  0.4 |      10 |  314 |   -14 | 1.64 |      |       |      |      |       |      |
+|     | Short |      |         |  325 |   -22 | 1.64 |      |       |      |      |       |      |
+|     | Both  |      |         |  639 |   -28 | 2.04 |      |       |      |      |       |      |
+|-----+-------+------+---------+------+-------+------+------+-------+------+------+-------+------|
+|   4 | Long  |  0.2 |       5 |  440 |   -14 | 1.83 |      |       |      |      |       |      |
+|     | Short |      |         |  485 |   -12 | 1.92 |      |       |      |      |       |      |
+|     | Both  |      |         |  924 |   -20 | 2.35 |      |       |      |      |       |      |
+|-----+-------+------+---------+------+-------+------+------+-------+------+------+-------+------|
+|   5 | Long  |  0.3 |       5 |  500 |   -11 | 1.81 |  447 |   -10 | 1.69 |  885 |    -8 | 2.87 |
+|     | Short |      |         |  499 |   -15 | 1.81 |  421 |   -17 | 1.62 |  841 |    -7 | 2.69 |
+|     | Both  |      |         |  *999* |   *-14* | *2.27* |  868 |   -17 | 2.02 | 1727 |    -7 | 4.23 |
+|-----+-------+------+---------+------+-------+------+------+-------+------+------+-------+------|
+|   6 | Long  |  0.4 |       5 |  509 |   -15 | 1.74 |      |       |      |      |       |      |
+|     | Short |      |         |  479 |   -19 | 1.68 |      |       |      |      |       |      |
+|     |       |      |         |  988 |   -27 | 2.12 |      |       |      |      |       |      |
+|-----+-------+------+---------+------+-------+------+------+-------+------+------+-------+------|
+
+**** 日次分析
+1 日の最大損失額 = -$2000
+1 日の最大利益 = +$7500 (外れ値として +$28,000 という日もある)
+$1000 以内の負けが 4 ・ 5 日続くことは結構ある
+2 週間ずっと負けも稀にある
+
+**** 月次分析
+年間の負け月数は、2 〜 4 月程度
+月間最大損失 = -$6,600 (通常 -$3,000 - -$4,000)
+
+*** Slippage 損益分岐点 (Stop=0.3, #Trades=10)
+0.0017 = 0.17%
+$100.00 の株であれば、0.17 (17 ticks)
+
+*** Net profit vs. Drawdown
+$660k for 9 years
+$73k/year vs. -15k max drawdown
+
+*** 直近 180 日の比較
+2018-07-23 - 2019-01-11
+Net 41k, DD -5k, PF 2.21, WinRatio 58.82%
+
+** Execution
+*** Total の発注数量を以下のタイミングで分散して発注する
+Long/Short の数量を合わせる → マーケットニュートラル戦略
+**** PreMarket
+MOO/LOO で発注
+→ LOO の場合、約定しなかった際に逆サイドのオーダー数量を合わせる必要あり
+
+_スキャン結果をフィルターし、上位・下位の指定パーセント(50%等)を発注する_
+Scan 条件 = Priod Volume, Tick count, Total volume など
+
+**** Market Open 9:30
+Adaptive ALGO で発注
+**** Market Open xx 秒経過後
+**** Zscore Outlier Event での発注
+_PreMarket のスキャン結果をフィルターし、その平均値を Zscore Thres に利用する_
+
+
+
+** Daily workflow
+*** (共通) 前日株価の更新
+**** UpdateSharadar.bat
+***** C# Sharadar.Updater
+***** R fixErrorsInSharadarDb.R
+***** SQL initializeSharadar.sql
+***** R gmailSharadarDbState.R
+*** +最適パラメタ範囲・最適 Lookback period でバックテスト+
+**** RunGapStrategyDailyParameterSweep.bat
+***** R runGapStrategyDailyParameterSweep.R
+***** [未完了] パラメタの分布をプロット
+*** Universe の抽出
+**** GenerateGapStrategyDailyUniverse.bat
+***** 複数の情報を統合する?
+****** Sharadar => R generateGapStrategyDailyUniverse.R Long/Short
+****** IB Shortable => R downloadIBShortableInfo.R
+****** IB contract details
+****** IQFeed fundamentals
+*** MC.NET Scanner 登録(手動) 
+*** Order Server 起動 w/Best params & Commandline args
+**** StartGapStrategyOrderServer.bat
+***** R saveGapStrategyBestParamsAsFile.R
+***** C# GapStrategyOrderServer
+*** 成績の振り返り
+**** hoge.bat
+***** [未完了] 実際の成績 vs. シミュレーションの成績
+***** [未完了] リアルタイムの EquityCurve Plot
+***** [未完了] サマリーをメール
+* Misc
+** Ticker 除外リスト, データエラー
+TRUE, DRYS
+2016/12/2	EVHC open 22.58->66.25, low 22.58->64.38
+2013/7/5	WEB  open 14.9->26.12,	low 14.9->25.91
+
+** Market Open のスキャン結果
+*** PreMarket
+-2019/1/15
+9:25:00 655/1730 (38%)
+9:29:59 745/1730 (43%)
+
+-2019/1/16
+9:28:41 988/1821 (54%)
+
+PreMarket のトップ 10 のうち、実際のトップ 10 は 4 銘柄
+TickCount >= 20 以上でフィルターすれば、ほぼ正確に抽出できる
+
+-180 日分の tick data で調査
+PreMarket@9:27 でのデータの有無
+ATO >= 10M  50%
+ATO >= 50M  70%
+ATO >= 100M 80%
+ATO >= 500M 99%
+
+*** Market Open
+-2019/1/15
+9:30:00 1100/1730 (64%)
+9:30:10 1336/1730 (73%)
+9:30:20 1351/1730
+9:30:30 1356/1730
+9:38 頃にスキャン → 2 件のみ取得できない
+
+-2019/1/16
+9:30:30 1327/1821
+
+*** Historical Tick 調査
+**** PreMarket でのトレードがない
+9:27 分のスキャンあり / 全数 = 34%
+9:27 分のスキャンあり / ATO >= $10M = 52% 
+9:27 分のスキャンあり / ATO >= $50M = 72% 
+9:27 分のスキャンあり / ATO >= $100M = 80% 
+9:27 分のスキャンあり / ATO >= $500M = 99% 
+
+**** そもそも tick data が存在しない
+140/2,240
+=> つまり有効なトレード数 = 2102
+
+NYSE = 1333
+NDAQ = 760
+
+**** First Tick = 9:30
+1660/2102 (78%)
+
+**** 最初のトレードが open cross
+918/2102
+内 NDAQ=642, NYSE=276
+
+ NDAQ = 642/760 (85%) (vol >= 1000, 491)
+NYSE = 276/1333 (21%)
+
+**** NDAQ
+ほぼ 9:30 でスタートしており、Open Cross が行われる
+但し、9:30 時点の volume が少ないケースはある
+Slippage はほぼゼロと考えてよい
+
+**** NYSE
+9:30 にトレードがスタートするケースは 7 割程度
+First tick != Open Cross のケースが多いため、
+平均 0.1% 程のスリッページが発生する
+大きな利益のトレードなどはかなり大きなスリッページが発生している
+
+
+
+
+
+
+

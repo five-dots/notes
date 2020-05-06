@@ -1,0 +1,29 @@
+#+STARTUP: showall indent
+
+* Pivots についての考察
+
+- https://futures.io/articles/trading/Pivots
+- https://futures.io/emini-index-futures-trading/30368-proper-data-caluculate-pivot-points-daily-weekly-momthly-yearly.html
+
+- Close price or Settlement price
+	- 海外の掲示板では、Settlment price を使うべきとの意見
+
+- RTH の HLC で計算すべきか？or ETH か？
+	- フルのセッションでやってみる
+	- ES は 9:30-16:15 にすべきという意見もあり
+	- 8:30 - 15:15 という意見もあり
+
+- 計算方法は？Classic? Traditional? Fibonnaci? Woodie?
+	- Investing.com には、Classic, Fib, Camarilla, Woodie's, DeMark's がリスト
+		- ただし、Classic と記載されているものは、計算方法が Traditional
+
+* Tool / Site 毎の計算方法
+
+- NinjaTrader Build-in Indicator
+	- Close or Settle は指定できる
+	- 計算方法は Classic
+	- 日足の Close が Settle を利用
+
+- TradingView
+	- 組み込みも Chirs Moody も Close price を利用
+	- そもそも日足の Close が Close(Last)

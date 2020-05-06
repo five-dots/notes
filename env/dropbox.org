@@ -1,0 +1,39 @@
+#+STARTUP: folded indent inlineimages latexpreview
+
+- Google Drive は同期が遅いので、Ubuntu で使うのであれば、Dropbox が良さそう
+
+* GUI
+
+nautilas-dropbox をインストールする
+
+* CLI
+** reference
+
+- [[https://www.dropbox.com/ja/install-linux][Dropbox をインストールしてアカウントを最大限に活用]]
+- [[http://d.hatena.ne.jp/kk_Ataka/20170430/1493953059][Dropboxをコマンドラインで使用する方法]]
+- [[http://tm.root-n.com/server:dropbox:etc:dropbox_on_linux][Dropbox を Linux (CUI環境)で利用する]]
+
+** コマンドラインを使った Dropbox のヘッドレスインストール
+
+#+begin_src shell
+cd ~ && wget -O - "https://www.dropbox.com/download?plat=lnx.x86_64" | tar xzf -
+~/.dropbox-dist/dropboxd
+#+end_src
+- ブラウザでアクセスし認証
+
+#+begin_src shell
+wget -O dropbox.py https://www.dropbox.com/download?dl=packages/dropbox.py
+chmod a+x dropbox.py
+./dropbox.py start
+./dropbox.py status
+./dropbox.py stop
+
+./dropbox.py exclude add ~/Dropbox/hoge
+./dropbox.py exclude list
+#+end_src
+
+- cron で自動起動
+#+begin_src shell
+crontab -u shun -e
+@reboot ${HOME}/dropbox-dist/dropboxd
+#+end_src

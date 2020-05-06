@@ -1,0 +1,69 @@
+#+STARTUP: showall indent
+
+* S# Product Lineup
+[旧?]
+- S#.Studio = S#.Terminal ? Strategy Test (すべに obsolete の模様)
+- S#.API
+- S#.Data = Market Data Collection, Download historical market data
+- S#.Shell = Trading Robot (GUI and Algorithm) = 有償プロダクト
+- S#.Terminal 
+- S#.Notify = SMS and Email online service
+- S#.MatLab
+- S#.WealthLab = Fidelity の Wealth Lab Intergration
+
+* Broker connection
+- ITrader interface(旧?) = IConnector Interface を実装
+- IConnector を利用するため、実装には感知しない （実際には、Connector クラスを利用)
+- Connector によって実装方法が異なる
+	- DDE 利用, COM 利用など
+
+- IQFeedTrader
+	- 接続エラー関連
+		- Lookup 接続だけでも接続できれば、ConnectionStatus は Connected になる
+		- Lookup 接続(9100)は、ConnectionError イベントで検知、その他(5009,9200,9300)は Error イベントで検知
+			- Lookup 接続が最重視されている模様　それ以外は、Connection ではなく通常エラー
+		- 基本いろんなパターンでエラーが飛んでくるので、ConnectionError, Error 両方を見ないといけない
+		- Admin port は接続できなくてもエラーはでない
+		- port 9400 (Derivative port)も接続されている模様
+		- 切断は、Dispose() ではなく、Disconnect() を利用する (ただし、Dispose でも Disconnect されている模様)
+	- Level1
+		- Best Bid/Ask Volume の変更, 新規の Tick Data (Trade), HV などの統計データ
+		- Total 86 の L1 Column のうち、IQFeed でとれるのは、22 個 (Regsiter する Security によって変動するか?)
+		- Trader.RegisterSecurity() => Trader.ValuesChanged event でリアルタイムの Level1 変更にアクセスできる
+			- event 内で Level1ChangeMessage に変換すると扱いやすい (その後で Tick = ExecutionMessage への変換も可)
+	- Candle
+		- CandleSeries 作成 => Trader.SubscribeCandles(series) => Trader.CandleSeriesProcessing event で入手
+		- リアルタイムの足は、終了時間を定めなければ OK
+		- 時間足の組み合わせは、各 Trader ごとに Enum が用意されている
+		- [Q] CandleManager が動かない！
+
+* Chart
+- GUI の Toolkit は、StockSharp.Xaml, StockSharp.Xaml.Charting, StockSharp.Xaml.Diagram + Wpf.Toolkit (Xceed)
+
+* References
+- EcngCommon, EcngComponentModel, EcngSerialization, EncgXaml を利用
+	- 便利なツール集として StockSharp 内で利用されている
+	- EcngCommon = Ecng Library の共有部分
+	- EcngComponentModel = Distributed architecture
+	- EcngSerialization = Save and restore
+	- EcngXaml
+
+- StockSharp.Algo = Trading strategy
+- StockSharp.BusinessEntities = Order, Instrument and Gateway etc
+- StockSharp.Logging = Event, operations logging
+
+* Tranining
+** Lesson 1
+** Lesson 2
+- Connection 用のベースクラス (template)
+	- IB, IQFeed 両対応の Wrapper クラスを作成できるか
+	- NewException Event の書き方を変更する
+	- [Q] ReConnectionSetting がなぜコメントアウトされているか？ExportSettings が使えない
+
+- Wpf UserControl を定義し、Security, Portfolio を使い回せるように
+	- ボタンの変更通知が原始的なので、Prism, Rx などを使って改善する
+	- 接続・切断時のイベント購読・解除にもっとよい書き方がないか？
+	- viewModel を使った場合のコレクションの操作 => Dispatcher をどう入手するか？
+
+- Market Depth, Trades(Tick Data) の扱い
+	- Console App で単純な動作を確認する

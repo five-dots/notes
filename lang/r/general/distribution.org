@@ -515,6 +515,17 @@ plot(t_copula, type="contour")
 |------------+-------------------+-------------------------+----------------------------------|
 
 * 確率分布の詳細
+** 離散値・連続値の確率分布
+*** 一様分布
+**** ={base}= funs
+
+#+begin_src R :results silent
+dunif(x, min = 0, max = 1, log = FALSE)
+punif(q, min = 0, max = 1, lower.tail = TRUE, log.p = FALSE)
+qunif(p, min = 0, max = 1, lower.tail = TRUE, log.p = FALSE)
+runif(n, min = 0, max = 1)
+#+end_src
+
 ** 連続値の確率分布
 *** 正規分布 (ガウス分布) - Normal (Gaussian)
 **** 基本
@@ -892,7 +903,7 @@ ggplot(data = tibble(x = 0:5), aes(x = x)) +
 #+RESULTS:
 [[file:/home/shun/Dropbox/memo/img/babel/fig-pyBUew.png]]
 
-*** TODO Cauthy
+*** TODO コーシー分布
 *** Double Exponential (Biexponential) / Laplae
 
 - ={nimble}=, ={rmutil}= package
@@ -1324,7 +1335,7 @@ ggplot(data = tibble(rand = rand), aes(x = rand)) +
 #+RESULTS:
 [[file:~/Dropbox/memo/img/babel/fig-JeeHZG.png]]
 
-** 離散値の確率分布 (カウントデータ)
+** 離散値の確率分布
 *** TODO Geometric
 *** Negative Binormal
 
@@ -1436,12 +1447,54 @@ rbinom(n = 10, size = 4, prob = 0.3)
 **** 基本
 
 - フェルマー (1601 - 1665)
+- ={base}= funs
+  - x vector of length K of integers in 0:size.
+  - n	number of random vectors to draw.
+  - size integer, say N, specifying the total number of objects that are put into K boxes in the typical multinomial experiment. For dmultinom, it defaults to sum(x).
+  - prob	numeric non-negative vector of length K, specifying the probability for the K classes; is internally normalized to sum 1. Infinite and missing values are not allowed.
+  - log	logical; if TRUE, log probabilities are computed.
+#+begin_src R :results silent
+rmultinom(n, size, prob)
+dmultinom(x, size = NULL, prob, log = FALSE)
+#+end_src
 
-*** TODO Multi-Normal
-*** Poisson
+**** 多項分布に従う多クラス分類データを生成
+
+- [[https://stats.stackexchange.com/questions/103728/simulating-multinomial-logit-data-with-r][Simulating Multinomial Logit Data with R@CrossValidated]]
+#+begin_src R
+
+## 200 x 5 の説明変数
+mX = matrix(rnorm(1000), 200, 5)
+
+## クラス数 x 説明変数の回帰係数
+vCoef1 = rep(0, 5)
+vCoef2 = rnorm(5)
+vCoef3 = rnorm(5)
+
+## vector of probabilities
+## 各行の数値に係数を掛けたもの. exp で非負に変換
+## rmultinom に渡す prob は合計1 でなくての自動で変換される
+vProb = cbind(exp(mX%*%vCoef1), exp(mX%*%vCoef2), exp(mX%*%vCoef3))
+
+## multinomial draws
+mChoices = t(apply(vProb, 1, rmultinom, n = 1, size = 1))
+dfM = cbind.data.frame(y = apply(mChoices, 1, function(x) which(x==1)), mX)
+head(dfM)
+#+end_src
+
+#+RESULTS:
+: 
+:   y          1           2            3          4          5
+: 1 1  0.3273556  0.65612306 1.595340e-01  0.7513877  0.4719894
+: 2 1 -0.2151083  0.40224258 6.658928e-01  0.1878464  1.0283855
+: 3 3 -0.3746305  0.02723291 5.259443e-01 -0.3192083 -0.8933724
+: 4 3  1.9231558  0.91892192 2.545842e-01 -0.2624944  0.3615318
+: 5 3 -0.7169176 -0.52431066 1.152287e-01 -0.9068612  0.1053305
+: 6 1  0.4420791 -0.73696128 5.062173e-06 -1.1127225 -0.7239967
+
+*** ポアソン分布
 **** Overview
 
-- ポアソン分布
 - カウントデータ (非負の整数, 0 ~ Inf)
 - パラメータは、 lamda (=平均=分散) のみ, λ = E(x) = Var(x)
   => つまり平均が大きいデータは分散もおおきくなる
@@ -1449,17 +1502,23 @@ rbinom(n = 10, size = 4, prob = 0.3)
 **** PMF
 
 - 確率分布
+$P(y) = \frac{\lambda^y}{y!} e^-\lambda$
+
+- 期待値 = 分散 = lambda
+$E[Y] = Var[Y] = \lambda$
+
 #+begin_src R
-# p(y|λ) = λ ^ y * exp(-λ) / y! (!は階乗)
-f <- function(x, lambda) {
-  (lambda ^ x * exp(-lambda)) / factorial(x)
+f <- function(y, lambda) {
+  lambda^y / factorial(y) * exp(-lambda)
 }
-f(5, 3.5)
+f(5, 3.5) # 平均 3.5 のとき 5になる確率 = 13%
 dpois(5, 3.5)
 #+end_src
 
 #+RESULTS:
+: 
 : [1] 0.1321686
+: 
 : [1] 0.1321686
 
 - base R
@@ -1473,7 +1532,7 @@ rpois(n, lambda)
 - 最大対数尤度
 #+begin_src R
 data <- rpois(50, lambda = 3.5)
-sum(dpois(data, mean(data), log = TRUE)) #? 対数尤度の和
+sum(dpois(data, mean(data), log = TRUE)) # 対数尤度の和
 #+end_src
 
 #+RESULTS:
@@ -1492,7 +1551,6 @@ plot(x, prob, type = "b", lty = 2)
 [[file:~/Dropbox/memo/img/babel/fig-ZZO9vp.png]]
 
 ** Distributions for Probability (Continous)
-*** TODO Uniform
 *** TODO Beta
 *** TODO Dirichlet
 *** TODO Categorical

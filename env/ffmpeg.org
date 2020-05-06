@@ -1,0 +1,35 @@
+#+STARTUP: indent
+
+* ffmpeg
+
+- syntax
+
+  ffmpeg
+  -t 28             切り取り時間
+  -ss 00:00:43      開始時間
+  -an               音声を利用しない
+  -r                frame rate (fps で指定)
+  -s                サイズ -s 1920x1080 などと指定する
+  -i hoge.mp4       入力ファイル
+  -vf scale=800:-1  横幅指定で縦横比を維持する設定
+  output.mp4
+
+- [[https://linuxfan.info/ffmpeg-gif-anime][ffmpeg で動画をキレイな GIF アニメーションに変換する方法]]
+  - 最大 256 色しか使えない GIF アニメーションをキレイに作成するには、
+    あらかじめ「パレット画像」を作っておき、それを用いて変換する必要がある
+
+#+begin_src shell
+ffmpeg -i sampled.mp4 -vf palettegen palette.png
+ffmpeg -i sampled.mp4 -i platte.png -filter_complex paletteuse output.gif
+#+end_src
+
+#+begin_src shell
+ffmpeg -t 28 -ss 00:00:43 -an -r 10 -i
+
+ffmpeg -i sampled.mp4 -an -r 10 input/%04d.png
+convert input/*.png -resize 40% output/output_%04d.png
+
+ffmpeg -t 12 -ss 00:00:30 -an -i
+
+ffmpeg -i sampled.mp4 -filter_complex "[0:v] fps=10,scale=w=800:h=-1,split [a][b];[a] palettegen=stats_mode=single [p];[b][p] paletteuse=new=1" output.gif
+#+end_src

@@ -1,0 +1,40 @@
+#+STARTUP: showall indent
+
+* System Trade Idea
+** サンチャゴ
+- [ ] サンチャゴ VCA 1.0 を実現する Strategy
+	- [ ] HVN, LVN を自動で引くインジケーター by Volume Profile
+- [ ] サンチャゴ モメンタムの法則・収縮と拡散の法則を利用した Strategy
+- [ ] 板読みスキャルピング戦略
+- [ ] 出来高を計測するインジケーターの開発
+- [ ] CME COT をベースにしたトレード戦略
+- [ ] マルチタイムフレームのインジケーター
+
+** Break out Strategy
+- [ ] ドンチャン
+- [ ] Last Swing
+
+** Spread, Pair (株、先物、FX, オプション)
+- [ ] 相関係数
+- [ ] Current Bid,Ask から Spread 計算するスキャルピング
+	
+** その他、ヘッジファンドの手法
+- [ ] 平均足
+- [ ] Order Flow
+- [ ] 米株 50SMA の戻りで優良株の購入 => スイングトレード戦略
+- [ ] London Fixing, Tokyo Nakane
+- [ ] Price Action, Swing Volume
+
+** Moving Average 関連
+- [ ] グランビルルール
+- [ ] 移動平均をサポートにしたデイトレ (2MA の幅が広がっているときに戻り指値でエントリー)
+- [ ] 移動平均の傾き (ドテン)
+- [ ] 単純な 2 本のクロス戦略
+- [ ] PerfectOrder (移動平均大循環)
+- [ ] PerfectOrder + Santiago
+- [ ] PerfectOrdre + MACD
+
+** Price Action
+** OVS (Optimal Volatility Strategy)
+** Time series analysis
+*** Volatility forecast by GARCH model

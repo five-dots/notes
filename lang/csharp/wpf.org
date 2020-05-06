@@ -1,0 +1,102 @@
+#+STARTUP: content indent
+
+* Controls
+- Total x 56
+
+** Derive
+- http://image.itmedia.co.jp/l/im/ait/articles/1101/06/l_ap-introwpf_08_01.gif
+- [FrameworkElement]
+	- [Control]
+		- [ContentContorl]
+			- [HeaderedContentControl]
+		- [ItemsContorl]
+			- [HeaderedItemsControl]
+	- [Decorator]
+	- [Panel]
+
+** layout (x18)
+- [x] Border
+- [ ] BulletDocorator
+- [ ] Canvas
+- [ ] Expander
+- [x] Grid
+- [ ] GridSplitter
+- [ ] GroupBox
+- [ ] Panel
+- [ ] ResizeGrip
+- [ ] Separator
+- [ ] ScrollBar
+- [ ] ScrollViewer
+- [ ] StackPanel
+- [ ] Thumb
+- [ ] Viewbox
+- [ ] VirtualizingStackPanel
+- [x] Window
+- [ ] WrapPanel
+
+** Button (x2)
+- [x] Button
+- [ ] RepeatButton
+
+** Data Display (x3)
+- [x] DataGrid
+- [ ] ListView
+- [ ] TreeView
+
+** Date Display and Selection (x2)
+- [ ] Calender
+- [ ] DatePicker
+
+** Menus (x3)
+- [ ] ContextMenu
+- [ ] Menu
+- [ ] ToolBar
+
+** Selection (x5)
+- [ ] CheckBox
+- [ ] ComboBox
+- [ ] ListBox
+- [ ] RadioButton
+- [ ] Slider
+
+** Navigation (x5)
+- [ ] Frame
+- [ ] Hyperlink
+- [ ] Page
+- [ ] NavigationWindow
+- [x] TabControl
+
+** Dialog Boxes (x3)
+- [ ] OpenFileDialog
+- [ ] PrintDialog
+- [ ] SaveFileDialog
+
+** User Information (x7)
+- [ ] AccessText
+- [ ] Label
+- [ ] Popup
+- [ ] ProgressBar
+- [ ] StatusBar
+- [ ] TextBlock
+- [ ] ToolTip
+
+** Documents (x5)
+- [ ] DocumentViewer
+- [ ] FlowDocumentPageViewer
+- [ ] FlowDocumentReader
+- [ ] FlowDocumentScrollViewer
+- [ ] StickyNoteControl
+
+** Input (x3)
+- [ ] TextBox
+- [ ] RichTextBox
+- [ ] PasswordBox
+
+** Media (x3)
+- [ ] Image
+- [ ] MediaElement
+- [ ] SoundPlayerAction
+
+** Digital Ink (x2)
+- [ ] InkCanvas
+- [ ] InkPresenter

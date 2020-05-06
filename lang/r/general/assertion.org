@@ -1,0 +1,64 @@
+#+STARTUP: folded indent inlineimages latexpreview
+#+PROPERTY: header-args:R :results output :session *R:assertion* :width 640 :height 480 :colnames yes
+
+* ライブラリの読み込み
+
+#+begin_src R :results silent
+library(tidyverse)
+library(rlang)
+library(assertthat)
+library(assertr)
+#+end_src
+
+* アサーションのパターン
+
+- =if= + =stop()=
+#+begin_src R
+if (is.null(NULL)) stop("NULL!!")
+#+end_src
+
+#+RESULTS:
+: Error: NULL!!
+
+- =stopifnot()=
+- base で使うことができる。簡易的。メッセージがわかりにくい。
+#+begin_src R
+stopifnot(!is.null(NULL))
+#+end_src
+
+#+RESULTS:
+: Error: !is.null(NULL) is not TRUE
+
+- =assertthat::assert_that()=
+- メッセージがわかりやすい
+#+begin_src R
+assert_that(!is.null(NULL))
+assert_that(!is.null(NULL), msg = "NULL はだめよ")
+#+end_src
+
+#+RESULTS:
+: Error: !is.null(NULL) is not TRUE
+: 
+: Error: NULL はだめよ
+
+- =assertr::assert_that()=
+- data.frame の内容検査。パイプと組み合わせて使う。問題なければ、そのまま df を返す。
+#+begin_src R
+mtcars %>% verify(nrow(.) > 100)
+## mtcars %>% verify(nrow(.) > 10)
+#+end_src
+
+#+RESULTS:
+: verification [nrow(.)
+: 100] failed! (1 failure)
+: 
+:     verb redux_fn     predicate column index value
+: 1 verify       NA nrow(.)
+: 100     NA     1    NA
+: 
+: Error: assertr stopped execution
+
+* [[file:../package/assertthat.org][ ={assertthat}= ]]
+* [[file:../package/assertr.org][ ={assertr}= ]]
+* [[file:../package/r-lib/rlang.org][ ={rlang}= ]]
+* 参考

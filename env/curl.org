@@ -1,0 +1,52 @@
+#+STARTUP: content indent
+
+* Reference
+
+- [[https://gist.github.com/fideloper/f72997d2e2c9fbe66459][Update curl on Ubuntu 14.04@Gist]]
+
+* Current version
+
+#+begin_src sh :results output
+curl -V
+#+end_src
+
+#+RESULTS:
+: curl 7.65.1 (x86_64-pc-linux-gnu) libcurl/7.65.1 OpenSSL/1.1.1 zlib/1.2.11 libidn2/2.0.4 libpsl/0.19.1 (+libidn2/2.0.4) nghttp2/1.30.0 librtmp/2.3
+: Release-Date: 2019-06-05
+: Protocols: dict file ftp ftps gopher http https imap imaps ldap ldaps pop3 pop3s rtmp rtsp smb smbs smtp smtps telnet tftp 
+: Features: AsynchDNS HTTP2 HTTPS-proxy IDN IPv6 Largefile libz NTLM NTLM_WB PSL SSL TLS-SRP UnixSockets
+
+* Install from source
+
+- Install any build dependencies needed for curl
+#+begin_src shell
+sudo apt build-dep curl
+#+end_src
+
+build-dep が失敗する場合は /etc/apt/sources.list の deb-src のコメントを外す
+https://qiita.com/tetsu_koba/items/904b03e908b040ed447d
+
+- Get latest libcurl
+#+begin_src shell
+download latest from https://curl.haxx.se/download.html
+tar -xvjf curl-7.xxx.tar.bz2
+cd curl-7.xxx
+#+end_src
+
+- The usual steps for building an app from source
+- [[https://askubuntu.com/questions/1128780/how-to-build-the-latest-curl-from-sources-to-allow-downloading-files-via-sftp][How to build the latest curl from sources to allow downloading files via sftp?]]
+#+begin_src shell
+./configure
+./configure --disable-libcurl-option --disable-shared (<- これを指定しないとエラーになる)
+make
+sudo make install
+#+end_src
+
+- Resolve any issues of C-level lib
+- location caches ("shared library cache")
+#+begin_src shell
+sudo ldconfig
+#+end_src
+
+R パッケージの =curl=, =RCurl= は一度削除してから、ソースから再インストールすること
+=> 実際は、他パッケージの依存関係でインストールされてしまうので、そのままにする

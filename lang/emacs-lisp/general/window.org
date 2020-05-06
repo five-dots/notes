@@ -1,0 +1,233 @@
+#+STARTUP: folded indent inlineimages latexpreview
+
+* =display-buffer=
+** 概要
+
+- バッファの内容を読ませる目的
+- _ウィンドウは分割するが、選択はしない_
+  - =pop-to-buffer= は window を 選択する
+
+- 事前に検証用に doom-emacs の =popup= ルールから外しておく
+#+begin_src emacs-lisp :results silent
+(set-popup-rules! '(("^\\*Messages\\*$" :ignore t)))
+#+end_src
+
+- [[https://www.gnu.org/software/emacs/manual/html_node/elisp/Choosing-Window.html#Choosing-Window][28.13.1 Choosing a Window for Displaying a Buffer]]
+
+** =ACTION=
+*** Overview
+
+- '=(FUNCTIONS . ALIST)= の形式で =ACTION= を指定
+
+- display-buffer builds a list of action functions and an action
+  alist by combining any action functions and alists specified by
+  - =display-buffer-overriding-action=
+  - =display-buffer-alist=
+  - =ACTION= argument
+  - =display-buffer-base-action=
+  - =display-buffer-fallback-action=
+
+- Then it calls each function in the combined function list in turn, passing the buffer as the first argument and the combined action alist as the second argument, until one of the functions returns non-nil.
+
+*** Functions
+
+- =FUNCTIONS= (=BUFFER= と =ALIST= の 2 つを引数として取る関数)
+  - =display-buffer-same-window=
+    - 現在と同じウィンドウを使う
+  - =display-buffer-reuse-window=
+    - 既にそのバッファを表示しているウィンドウを利用する
+  - =display-buffer-reuse-mode-window=
+    - そのバッファと同じモードのウィンドウを再利用する
+  - =display-buffer-use-some-window=
+    - どこか使えそうなウィンドウを探して表示する
+  - =display-buffer-pop-up-window=
+    - 新たにウィンドウをポップアップする
+
+  - =display-buffer-below-selected=
+    - _現在のウィンドウの下に分割して表示する_
+  - =display-buffer-at-bottom=
+    - 現在のフレームの下に表示する (フレーム幅一杯に)
+
+  - =display-buffer-in-previous-window=
+    - 以前にそのバッファを表示していたウィンドウを利用する
+  - =display-buffer-in-child-frame=
+    - _child-frame を作成して表示する_
+  - =display-buffer-in-side-window=
+    - =ALIST= を指定して好きな場所に制御できる
+  - =display-buffer-in-atomic-window=
+    - 現在のウィンドウを分割して atomic window を作成する
+    - atomic window = 複数のウィンドウで 1 つのウィンドウとなる (一方を削除すると全て消える)
+
+  - =display-buffer-pop-up-frame=
+    - 新しいフレームに表示する
+  - =display-buffer-no-window=
+    - Do not display the buffer and have display-buffer return nil immediately.
+
+*** Alist
+
+- =inhibit-same-window=
+  non-nil の場合、現在のウィンドウを再利用することを禁止する
+
+- =inhibit-switch-frame=
+  A non-nil value prevents any frame used for showing the buffer from being raised or selected.
+
+- =reusable-frames=
+  The value specifies the set of frames to search for a window that already displays the buffer. Possible values are nil (the selected frame), t (any live frame), visible (any visible frame), 0 (any visible or iconified frame) or an existing live frame.
+
+- =pop-up-frame-parameters=
+  The value specifies an alist of frame parameters to give a new frame, if one is created.
+
+- =window-height=
+  The value specifies the desired height of the window chosen and is either an integer (the total height of the window), a floating point number (the fraction of its total height with respect to the total height of the frame's root window) or a function to be called with one argument - the chosen window.  The function is supposed to adjust the height of the window; its return value is ignored.  Suitable functions are shrink-window-if-larger-than-buffer and fit-window-to-buffer.
+
+- =window-width=
+  The value specifies the desired width of the window chosen and is either an integer (the total width of the window), a floating point number (the fraction of its total width with respect to the width of the frame's root window) or a function to be called with one argument - the chosen window.  The function is supposed to adjust the width of the window; its return value is ignored.
+
+- =preserve-size=
+  The value should be either (t . nil) to preserve the width of the chosen window, (nil . t) to preserve its height or (t . t) to preserve its height and width in future changes of the window configuration. `window-parameters' -- The value specifies an alist of window parameters to give the chosen window.
+
+- =allow-no-window=
+    A non-nil value means that display-buffer may not display the buffer and return nil immediately.
+
+** =display-buffer-overriding-action=
+
+#+begin_src emacs-lisp
+display-buffer-overriding-action
+#+end_src
+
+#+RESULTS:
+
+** =display-buffer-alist=
+
+- =display-buffer= を制御するための alist
+- key がバッファ名の正規表現になっている
+
+#+begin_src emacs-lisp :results list
+display-buffer-alist
+#+end_src
+
+#+RESULTS:
+- ("^\\*Table: " (+popup-buffer) (actions display-buffer-reuse-window display-buffer-below-selected) (side . bottom) (size) (window-width . 40) (window-height . 0.7) (slot) (vslot) (window-parameters (ttl . 5) (quit . t) (select . ignore) (modeline) (autosave)))
+- ("^\\*ess-describe" (+popup-buffer) (actions display-buffer-reuse-window display-buffer-below-selected) (side . bottom) (size) (window-width . 40) (window-height . 0.5) (slot) (vslot) (window-parameters (ttl . 5) (quit . t) (select . ignore) (modeline) (autosave)))
+- ("^\\*R view\\*$" (+popup-buffer) (actions) (side . bottom) (size . 0.5) (window-width . 40) (window-height . 0.16) (slot) (vslot) (window-parameters (ttl . 5) (quit . t) (select . ignore) (modeline) (autosave)))
+- ("^\\*R dired" (+popup-buffer) (actions display-buffer-reuse-window display-buffer-below-selected) (side . bottom) (size) (window-width . 40) (window-height . 0.3) (slot) (vslot) (window-parameters (ttl . 5) (quit . t) (select) (modeline . t) (autosave) (transient . t) (no-other-window . t)))
+- ("^\\*R" nil)
+- ("^\\*ivy-occur" (+popup-buffer) (actions) (side . bottom) (size . 0.35) (window-width . 40) (window-height . 0.16) (slot) (vslot) (window-parameters (ttl . 0) (quit) (select . ignore) (modeline) (autosave)))
+- ("^\\*xref\\*$" nil)
+- ("^\\(?:\\*magit\\|magit:\\| \\*transient\\*\\)" nil)
+- ("^\\*image-dired" (+popup-buffer) (actions) (side . bottom) (size . 0.8) (window-width . 40) (window-height . 0.16) (slot . 20) (vslot) (window-parameters (ttl . 0) (quit) (select . t) (modeline) (autosave)))
+- ("^CAPTURE-.*\\.org$" (+popup-buffer) (actions) (side . bottom) (size . 0.25) (window-width . 40) (window-height . 0.16) (slot) (vslot) (window-parameters (ttl . 5) (quit) (select . t) (modeline) (autosave . t)))
+- ("^\\*Org-Babel" (+popup-buffer) (actions) (side . bottom) (size) (window-width . 40) (window-height . 0.16) (slot) (vslot) (window-parameters (ttl . 5) (quit . t) (select . ignore) (modeline) (autosave)))
+- ("^\\*Org Src" (+popup-buffer) (actions) (side . bottom) (size . 0.4) (window-width . 40) (window-height . 0.16) (slot) (vslot) (window-parameters (ttl) (quit) (select . t) (modeline . t) (autosave . t)))
+- ("^\\*Org Agenda" nil)
+- ("^\\*Org \\(?:Select\\|Attach\\)" (+popup-buffer) (actions) (side . bottom) (size . 0.25) (window-width . 40) (window-height . 0.16) (slot . -1) (vslot . -2) (window-parameters (ttl . 0) (quit . t) (select . ignore) (modeline) (autosave)))
+- ("^ ?\\*\\(?:Agenda Com\\|Calendar\\|Org Export Dispatcher\\)" (+popup-buffer) (actions) (side . bottom) (size function +popup-shrink-to-fit) (window-width . 40) (window-height . 0.16) (slot . -1) (vslot . -1) (window-parameters (ttl . 0) (quit . t) (select . ignore) (modeline) (autosave)))
+- ("^\\*Org Links" (+popup-buffer) (actions) (side . bottom) (size . 2) (window-width . 40) (window-height . 0.16) (slot . -1) (vslot . -1) (window-parameters (ttl . 0) (quit . t) (select . ignore) (modeline) (autosave)))
+- ("^\\*Flycheck error messages\\*" (+popup-buffer) (actions) (side . bottom) (size) (window-width . 40) (window-height . 0.16) (slot) (vslot) (window-parameters (ttl . 5) (quit . t) (select) (modeline) (autosave)))
+- ("^\\*lsp session\\*$" nil)
+- ("^\\*General Keybindings\\*$" nil)
+- ("^\\*Command Line" (+popup-buffer) (actions) (side . bottom) (size . 8) (window-width . 40) (window-height . 0.16) (slot) (vslot) (window-parameters (ttl . 5) (quit . t) (select . ignore) (modeline) (autosave)))
+- ("^\\*evil-registers" (+popup-buffer) (actions) (side . bottom) (size . 0.3) (window-width . 40) (window-height . 0.16) (slot) (vslot) (window-parameters (ttl . 5) (quit . t) (select . ignore) (modeline) (autosave)))
+- ((closure (t) (bufname _) (if (boundp (quote +eval-repl-mode)) (progn (buffer-local-value (quote +eval-repl-mode) (get-buffer bufname))))) (+popup-buffer) (actions) (side . bottom) (size . 0.25) (window-width . 40) (window-height . 0.16) (slot) (vslot) (window-parameters (ttl closure (t) (buf) (if (plist-get +eval-repl-plist :persist) nil (let* ((process (and t (get-buffer-process buf)))) (if process (progn (set-process-query-on-exit-flag process nil) (kill-process process) (kill-buffer buf)) nil)))) (quit) (select . ignore) (modeline) (autosave)))
+- ("^\\*F\\(?:d\\|ind\\)\\*$" nil)
+- ("^\\*\\(?:Proced\\|timer-list\\|Process List\\|Abbrevs\\|Output\\|Occur\\|unsent mail\\)\\*" nil)
+- ("^\\*Memory-Profiler-Report " (+popup-buffer) (actions) (side . bottom) (size) (window-width . 0.5) (window-height . 0.4) (slot . 2) (vslot . 100) (window-parameters (ttl . 5) (quit) (select . ignore) (modeline) (autosave)))
+- ("^\\*CPU-Profiler-Report " (+popup-buffer) (actions) (side . bottom) (size) (window-width . 0.5) (window-height . 0.4) (slot . 1) (vslot . 100) (window-parameters (ttl . 5) (quit) (select . ignore) (modeline) (autosave)))
+- ("^\\*Backtrace" (+popup-buffer) (actions) (side . bottom) (size . 0.4) (window-width . 40) (window-height . 0.16) (slot) (vslot . 99) (window-parameters (ttl . 5) (quit) (select . ignore) (modeline) (autosave)))
+- ("^\\*Warnings" (+popup-buffer) (actions) (side . bottom) (size . 0.25) (window-width . 40) (window-height . 0.16) (slot) (vslot . 99) (window-parameters (ttl . 5) (quit . t) (select . ignore) (modeline) (autosave)))
+- ("^\\*info\\*$" (+popup-buffer) (actions) (side . bottom) (size . 0.45) (window-width . 40) (window-height . 0.16) (slot . 2) (vslot . 2) (window-parameters (ttl . 5) (quit . t) (select . t) (modeline) (autosave)))
+- ("^\\*eww\\*" (+popup-buffer) (actions) (side . bottom) (size . 0.35) (window-width . 40) (window-height . 0.16) (slot) (vslot . -11) (window-parameters (ttl . 5) (quit . t) (select . t) (modeline) (autosave)))
+- ("^\\*[Hh]elp" (+popup-buffer) (actions) (side . bottom) (size . 0.35) (window-width . 40) (window-height . 0.16) (slot . 2) (vslot . -8) (window-parameters (ttl . 5) (quit . t) (select . t) (modeline) (autosave)))
+- ("^ \\*undo-tree\\*" (+popup-buffer) (actions) (side . left) (size . 20) (window-width . 40) (window-height . 0.16) (slot . 2) (vslot) (window-parameters (ttl . 5) (quit . t) (select . t) (modeline) (autosave)))
+- ("^\\*Customize" (+popup-buffer) (actions) (side . right) (size) (window-width . 40) (window-height . 0.16) (slot . 2) (vslot) (window-parameters (ttl . 5) (quit . t) (select . t) (modeline) (autosave)))
+- ("^\\*Calc" (+popup-buffer) (actions) (side . bottom) (size . 0.4) (window-width . 40) (window-height . 0.16) (slot) (vslot . -7) (window-parameters (ttl . 0) (quit) (select . t) (modeline) (autosave)))
+- ("^\\*\\(?:Wo\\)?Man " (+popup-buffer) (actions) (side . bottom) (size . 0.45) (window-width . 40) (window-height . 0.16) (slot) (vslot . -6) (window-parameters (ttl . 0) (quit . t) (select . t) (modeline) (autosave)))
+- ("^\\*doom:\\(?:v?term\\|e?shell\\)-popup" (+popup-buffer) (actions) (side . bottom) (size . 0.35) (window-width . 40) (window-height . 0.16) (slot) (vslot . -5) (window-parameters (ttl) (quit) (select . t) (modeline) (autosave)))
+- ("^\\*doom:" (+popup-buffer) (actions) (side . bottom) (size . 0.35) (window-width . 40) (window-height . 0.16) (slot) (vslot . -4) (window-parameters (ttl . t) (quit) (select . t) (modeline . t) (autosave . t)))
+- ("^\\*\\(?:doom \\|Pp E\\)" (+popup-buffer) (actions) (side . bottom) (size . +popup-shrink-to-fit) (window-width . 40) (window-height . 0.16) (slot) (vslot . -3) (window-parameters (ttl . 0) (quit . t) (select . ignore) (modeline) (autosave . t)))
+- ("^\\*\\(?:[Cc]ompil\\(?:ation\\|e-Log\\)\\|Messages\\)" (+popup-buffer) (actions) (side . bottom) (size . 0.3) (window-width . 40) (window-height . 0.16) (slot) (vslot . -2) (window-parameters (ttl) (quit . t) (select . ignore) (modeline) (autosave . t)))
+- ("^\\*Local variables\\*$" (+popup-buffer) (actions) (side . bottom) (size . +popup-shrink-to-fit) (window-width . 40) (window-height . 0.16) (slot . 1) (vslot . -1) (window-parameters (ttl . 5) (quit . t) (select . ignore) (modeline) (autosave)))
+- ("^\\*Completions" nil)
+
+** =display-buffer-base-action=
+
+#+begin_src emacs-lisp
+display-buffer-base-action
+#+end_src
+
+#+RESULTS:
+
+** =display-buffer-fallback-action=
+
+#+begin_src emacs-lisp :results list
+display-buffer-fallback-action
+#+end_src
+
+#+RESULTS:
+- (display-buffer--maybe-same-window display-buffer-reuse-window display-buffer--maybe-pop-up-frame-or-window display-buffer-in-previous-window display-buffer-use-some-window display-buffer-pop-up-frame)
+
+* =pop-to-buffer=
+
+- 別のウィンドウへバッファを表示させる
+- 表示方法のカスタマイズ可能
+- 内部で `display-buffer' を呼び出している
+
+#+begin_src emacs-lisp
+(pop-to-buffer "*Message*")
+#+end_src
+
+* =+popup= from doom-emacs
+
+- =+popup-display-buffer-stacked-side-window-fn=
+  - =display-buffer-in-side-window= に =vslot= を指定する機能を追加している
+
+#+begin_src emacs-lisp :results list
++popup-defaults
+#+end_src
+
+#+RESULTS:
+- :side
+- bottom
+- :height
+- 0.16
+- :width
+- 40
+- :quit
+- t
+- :select
+- ignore
+- :ttl
+- 5
+
+- default の =ACTION=
+#+begin_src emacs-lisp :results list
++popup-default-display-buffer-actions
+#+end_src
+
+#+RESULTS:
+- +popup-display-buffer-stacked-side-window-fn
+
+#+begin_src emacs-lisp
++popup-default-alist
+#+end_src
+
+#+RESULTS:
+: ((window-height . 0.16) (reusable-frames . visible))
+
+#+begin_src emacs-lisp
++popup-default-parameters
+#+end_src
+
+#+RESULTS:
+: ((transient . t) (quit . t) (select . ignore) (no-other-window . t))
+
+#+begin_src emacs-lisp :results list
++popup-window-parameters
+#+end_src
+
+#+RESULTS:
+- ttl
+- quit
+- select
+- modeline
+- popup

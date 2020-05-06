@@ -1,0 +1,136 @@
+#+STARTUP: folded indent inlineimages latexpreview
+
+* Install
+
+- Add repository
+#+begin_src shell
+sudo apt update
+sudo apt install apt-transport-https ca-certificates curl software-properties-common
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu bionic stable"
+#+end_src
+
+- Install
+#+begin_src shell
+sudo apt update
+sudo apt install docker-ce
+#+end_src
+
+- [[https://qiita.com/yanoshi/items/dcecbf117d9cbd14af87][WSL上でDocker Engineが動くようになっていたっぽいという話@Qiita]]
+- docker deamon is not running ?
+
+* docker グループに追加する (以後、docker コマンドを sudo なしで実行可能)
+
+#+begin_src shell
+sudo groupadd docker
+sudo usermod -aG docker shun
+#+end_src
+
+* Hello world
+
+#+begin_src shell
+docker run --rm hello-world
+docker images # 確認
+#+end_src
+
+* Command
+
+- イメージ取得
+#+begin_src shell
+docker pull ubuntu:18.04
+#+end_src
+
+- 確認
+#+begin_src shell
+docker images
+docker ps
+docker ps -a # -a 停止したコンテナ含む
+#+end_src
+
+- 起動 (コンテナに入る)
+#+begin_src shell
+docker run -i -t ubuntu:18.04 /bin/bash # -it interactive, tty
+#+end_src
+
+- バックグラウンドで起動
+#+begin_src shell
+docker run -i -t -d ubuntu:18.04 /bin/bash # -d バックグラウンド
+#+end_src
+
+- 起動済みに接続
+#+begin_src shell
+docker exec -it <Container ID> /bin/bash
+docker attach <Container ID>
+# コンテナを停止させずに抜ける => Ctrl-P -> Ctrl-Q
+#+end_src
+
+- 再起動
+#+begin_src shell
+docker restart <Container ID>
+#+end_src
+
+- 削除
+#+begin_src shell
+docker rm <Container ID>
+docker rmi <Image name>
+#+end_src
+
+- 停止
+#+begin_src shell
+docker stop <Container ID>
+#+end_src
+
+* [[https://github.com/jaikumarm/docker-iqfeed][jaikumarm/docker-iqfeed]]
+
+#+begin_src shell
+docker run \
+    -e IQFEED_PRODUCT_ID=SHUN_ASAI_42454 \
+    -e IQFEED_LOGIN=LOGIN_ID \
+    -e IQFEED_PASSWORD=PASSWORD \
+    -p 5009:5010 -p 5901:5901 -p 9100:9101 -p 9300:9301 \
+    -v /var/log/iqfeed:/home/wine/DTN/IQFeed \
+    -d jaikumarm/iqfeed:v6011
+
+# 自動的に起動
+docker run --restart=always \
+    -e IQFEED_PRODUCT_ID=SHUN_ASAI_42454 \
+    -e IQFEED_LOGIN=LOGIN_ID \
+    -e IQFEED_PASSWORD=PASSWORD \
+    -p 5009:5010 -p 5901:5901 -p 9100:9101 -p 9300:9301 \
+    -v /var/log/iqfeed:/home/wine/DTN/IQFeed \
+    -d jaikumarm/iqfeed:v6011
+#+end_src
+
+* [[https://hub.docker.com/r/rocker/tidyverse/][rocker/tidyverse]]
+** Reference
+
+- rocker/tidyverse をベースに sshd を追加し、TRAMP で接続する
+
+- ベースとなる ssh docker を選ぶ
+  - [[https://bitbucket.org/itscaro/docker/src/04207e3e4402e42f82bae15f4d676f6978d514f1/debian-ssh/Dockerfile?at=master&fileviewer=file-view-default][Docker File]]
+
+- Dockerfile の FROM を rocker/tidyverse に変更
+
+- イメージ作成
+#+begin_src shell
+docker build -t rocker/ssh .
+#+end_src
+
+- 起動
+#+begin_src shell
+docker run --rm -d -P --name rocker_ssh rocker/ssh
+#+end_src
+
+- ポート確認
+#+begin_src shell
+docker port rocker_ssh
+#+end_src
+
+- *ssh を使わない方法もある模様*
+  - [[https://stat.ethz.ch/pipermail/ess-help/2017-April/011170.html][[ESS] interacting with Docker]]
+
+** tidyverse を起動 = 通常利用 (バックグラウンド、Dropbox をマウント)
+
+#+begin_src shell
+docker run --rm -e PASSWORD=pass -p 8787:8787 -d -v /home/shun/Dropbox/:/home/rstudio/Dropbox rocker/tidyverse
+#+end_src

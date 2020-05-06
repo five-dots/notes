@@ -1,6 +1,14 @@
+
 .drake/
 lang/r/package/renv/renv
+lang/r/package/drake/main/
+lang/r/temp.R
+
+lang/python/other/DLFS/
+# lang/python/temp.py
 
 private/
-corporate/
-lang/r/package/drake/main/
+corp/
+work/
+org/
+kaggle/

@@ -1,0 +1,493 @@
+#+STARTUP: content fold indent
+#+PROPERTY: header-args:emacs-lisp
+
+- https://github.com/magnars/dash.el
+
+(map '関数 'list) が基本形式
+
+* Basics
+
+#+begin_src emacs-lisp
+(defun square (num) (* num num))
+(square 2)
+#+end_src
+
+#+RESULTS:
+: 4
+
+- 通常版
+#+begin_src emacs-lisp
+(-map 'square '(1 2 3 4))
+#+end_src
+
+#+RESULTS:
+| 1 | 4 | 9 | 16 |
+
+- アナフォリック版
+#+begin_src emacs-lisp
+(--map (* it it) '(1 2 3 4))
+#+end_src
+
+#+RESULTS:
+| 1 | 4 | 9 | 16 |
+
+* Maps [0/2]
+** _-map_
+
+#+begin_src emacs-lisp
+(-map 'square '(1 2 3 4))
+#+end_src
+
+#+RESULTS:
+| 1 | 4 | 9 | 16 |
+
+** -map-when
+
+#+begin_src emacs-lisp
+(-map-when 'evenp 'square '(1 2 3 4))
+#+end_src
+
+#+RESULTS:
+| 1 | (2 2) | 3 | (4 4) |
+
+** -map-first
+
+#+begin_src emacs-lisp
+(-map-first 'evenp 'square '(1 2 3 4))
+#+end_src
+
+#+RESULTS:
+| 1 | 4 | 3 | 4 |
+
+** -map-last
+
+#+begin_src emacs-lisp
+(-map-last 'evenp 'square '(1 2 3 4))
+#+end_src
+
+#+RESULTS:
+| 1 | 2 | 3 | 16 |
+
+** _-map-indexed_
+
+- リストの要素とインデックスが関数に渡る (purrr::imap)
+- インデックスは、0 から
+#+begin_src emacs-lisp
+(-map-indexed (lambda (index item) (- item index)) '(1 2 3 4))
+#+end_src
+
+#+RESULTS:
+| 1 | 1 | 1 | 1 |
+
+** TODO -annotate
+
+#+begin_src emacs-lisp
+(-annotate '1+ '(1 2 3))
+#+end_src
+
+#+RESULTS:
+: ((2 . 1) (3 . 2) (4 . 3))
+
+** -splice
+
+- PRED にマッチする要素に関数を適応
+#+begin_src emacs-lisp
+(-splice 'evenp (lambda (x) (list x x)) '(1 2 3 4))
+#+end_src
+
+#+RESULTS:
+| 1 | 2 | 2 | 3 | 4 | 4 |
+
+- -map-when と似ているが list に flatten されない
+#+begin_src emacs-lisp
+(-map-when 'evenp (lambda (x) (list x x)) '(1 2 3 4))
+#+end_src
+
+#+RESULTS:
+| 1 | (2 2) | 3 | (4 4) |
+
+** -splice-list
+
+- list のマッチした箇所を new-list で置き換える
+#+begin_src emacs-lisp
+(-splice-list 'keywordp '(a b c) '(1 :foo 2))
+#+end_src
+
+#+RESULTS:
+| 1 | a | b | c | 2 |
+
+** TODO -mapcat
+
+#+begin_src emacs-lisp
+(-mapcat 'list '(1 2 3))
+#+end_src
+
+#+RESULTS:
+| 1 | 2 | 3 |
+
+** -copy
+
+- Shadow コピーを作成
+#+begin_src emacs-lisp
+(-copy '(1 2 3))
+#+end_src
+
+#+RESULTS:
+| 1 | 2 | 3 |
+
+* Sublist selection [0/6]
+** _-filter_
+
+- PRED でフィルタする
+#+begin_src emacs-lisp
+(-filter 'evenp '(1 2 3 4))
+#+end_src
+
+#+RESULTS:
+| 2 | 4 |
+
+** -remove
+
+#+begin_src emacs-lisp
+(-remove 'evenp '(1 2 3 4))
+#+end_src
+
+#+RESULTS:
+| 1 | 3 |
+
+** -remove-first
+
+#+begin_src emacs-lisp
+(-remove-first 'stringp '(1 2 "first" "second" "third"))
+#+end_src
+
+#+RESULTS:
+| 1 | 2 | second | third |
+
+** -remove-last
+
+#+begin_src emacs-lisp
+(-remove-last 'stringp '(1 2 "last" "second" "third"))
+#+end_src
+
+#+RESULTS:
+| 1 | 2 | last | second |
+
+** -remove-item
+
+- list から ITEM を削除
+#+begin_src emacs-lisp
+(-remove-item 3 '(1 2 3 2 3 4 5 3))
+#+end_src
+
+#+RESULTS:
+| 1 | 2 | 2 | 4 | 5 |
+
+** -non-nil
+
+#+begin_src emacs-lisp
+(-non-nil '(1 nil 2 nil nil 3 4 nil 5 nil))
+#+end_src
+
+#+RESULTS:
+| 1 | 2 | 3 | 4 | 5 |
+
+** -slice
+
+- FROM - TO で slice
+#+begin_src emacs-lisp
+(-slice '(1 2 3 4 5) 0 3)
+#+end_src
+
+#+RESULTS:
+| 1 | 2 | 3 |
+
+** _-take_
+
+#+begin_src emacs-lisp
+(-take 3 '(1 2 3 4 5))
+#+end_src
+
+#+RESULTS:
+| 1 | 2 | 3 |
+
+** -take-last
+
+#+begin_src emacs-lisp
+(-take-last 3 '(1 2 3 4 5))
+#+end_src
+
+#+RESULTS:
+| 3 | 4 | 5 |
+
+** -drop
+
+- 最初の N 個を削除
+#+begin_src emacs-lisp
+(-drop 3 '(1 2 3 4 5))
+#+end_src
+
+#+RESULTS:
+| 4 | 5 |
+
+** TODO -drop-last
+** TODO -take-while
+** TODO -drop-while
+** TODO -select-by-indices
+** TODO -select-columns
+** TODO -select-column
+* List to list [0/9]
+** -keep
+
+- map との違い不明
+#+begin_src emacs-lisp
+(-keep 'cdr '((1 2 3) (4 5) (6)))
+#+end_src
+
+#+RESULTS:
+| 2 | 3 |
+| 5 |   |
+
+** TODO -concat
+** -flatten
+
+#+begin_src emacs-lisp
+(-flatten '((1 (2 3) (((4 (5)))))))
+#+end_src
+
+#+RESULTS:
+| 1 | 2 | 3 | ((4 (5))) |
+
+** -flatten-n
+
+#+begin_src emacs-lisp
+(-flatten-n 2 '((1 (2 3) (((4 (5)))))))
+#+end_src
+
+#+RESULTS:
+| 1 | 2 | 3 | ((4 (5))) |
+
+** TODO -replace
+** TODO -replace-first
+** TODO -replace-last
+** TODO -insert-at
+** TODO -replace-at
+** TODO -update-at
+** TODO -remove-at
+** TODO -remove-at-indices
+* Reductions [0/16]
+** TODO -reduce-from
+** TODO -reduce-r-from
+** -reduce
+
+#+begin_src emacs-lisp
+(-reduce '- '(1 2 3 4))
+#+end_src
+
+#+RESULTS:
+: -8
+
+** TODO -reduce-r
+** TODO -reductions-from
+** TODO -reductions-r-from
+** -reductions
+
+- 計算途中経過を含めて返す (= accumulate)
+#+begin_src emacs-lisp
+(-reductions '- '(1 2 3 4))
+#+end_src
+
+#+RESULTS:
+| 1 | -1 | -4 | -8 |
+
+** TODO -reductions-r
+** -count
+
+- PRED にマッチする要素数をカウント
+#+begin_src emacs-lisp
+(-count 'evenp '(1 2 3 4 5))
+#+end_src
+
+#+RESULTS:
+: 2
+
+** -sum
+
+#+begin_src emacs-lisp
+(-sum '(1 2 3 4))
+#+end_src
+
+#+RESULTS:
+: 10
+
+** TODO -running-sum
+** -product
+
+- 総乗
+#+begin_src emacs-lisp
+(-product '(1 2 3 4))
+#+end_src
+
+#+RESULTS:
+: 24
+
+** TODO -running-product
+** TODO -inits
+** TODO -tails
+** TODO -common-prefix
+** TODO -common-suffix
+** TODO -min
+** TODO -min-by
+** TODO -max
+** TODO -max-by
+* Unfolding [0/2]
+** TODO -iterate
+** TODO -unfold
+* Predicates [0/5]
+** -any?
+
+#+begin_src emacs-lisp
+(-any? 'evenp '(1 2 3 4))
+#+end_src
+
+#+RESULTS:
+: t
+
+** -all?
+
+#+begin_src emacs-lisp
+(-all? 'evenp '(2 4 6 8))
+#+end_src
+
+#+RESULTS:
+: t
+
+** -none?
+
+#+begin_src emacs-lisp
+(-none? 'evenp '(1 3 5 7))
+#+end_src
+
+#+RESULTS:
+: t
+
+** TODO -only-some?
+** -contains?
+
+#+begin_src emacs-lisp
+(-contains? '(1 2 3 4) 1)
+#+end_src
+
+#+RESULTS:
+: t
+
+** TODO -same-items?
+** TODO -is-prefix?
+** TODO -is-suffix?
+** TODO -is-infix?
+* Partitioning [0/16]
+** TODO -split-at
+** TODO -split-with
+** TODO -split-on
+** TODO -split-when
+** TODO -separate
+** TODO -partition
+** TODO -partition-all
+** TODO -partition-in-steps
+** TODO -partition-all-in-steps
+** TODO -partition-by
+** TODO -partition-by-header
+** TODO -partition-after-pred
+** TODO -partition-before-pred
+** TODO -partition-before-item
+** TODO -partition-after-item
+** TODO -group-by
+* Indexing [0/7]
+** TODO -elem-index
+** TODO -elem-indices
+** TODO -find-index
+** TODO -find-last-index
+** TODO -find-indices
+** TODO -grade-up
+** TODO -grade-down
+* Set operations [0/6]
+** TODO -union
+** TODO -difference
+** TODO -intersection
+** TODO -powerset
+** TODO -permutations
+** TODO -distinct
+* Other list operations [0/27]
+** TODO -rotate
+** TODO -repeat
+** TODO -cons*
+** TODO -snoc
+** TODO -interpose
+** TODO -interleave
+** TODO -zip-with
+** TODO -zip
+** TODO -zip-fill
+** TODO -unzip
+** TODO -cycle
+** TODO -pad
+** TODO -table
+** TODO -table-flat
+** TODO -first
+** TODO -some
+** TODO -last
+** TODO -first-item
+** TODO -second-item
+** TODO -third-item
+** TODO -forth-item
+** TODO -fifth-item
+** TODO -last-item
+** TODO -butlast
+** TODO -sort
+** TODO -list
+** TODO -fix
+* Tree operations [0/7]
+** TODO ->
+** TODO ->>
+** TODO -->
+** TODO -as->
+** TODO -some->
+** TODO -some->>
+** TODO -some-->
+* Binding [0/8]
+** TODO -when-let
+** TODO -when-let*
+** TODO -if-let
+** TODO -if-let*
+** TODO -let
+** TODO -let*
+** TODO -lambda
+** TODO -setq
+* Side-effects [0/8]
+** TODO -each
+** TODO -each-while
+** TODO -each-indexed
+** TODO -each-r
+** TODO -each-r-while
+** TODO -dotimes
+** TODO -doto
+** TODO --doto
+* Destructive operations [0/2]
+** TODO !cons
+** TODO !cdr
+* Functions combinators [0/15]
+** TODO -partial
+** TODO -rpartial
+** TODO -juxt
+** TODO -compose
+** TODO -applify
+** TODO -on
+** TODO -flip
+** TODO -const
+** TODO -cut
+** TODO -not
+** TODO -orfn
+** TODO -adnfn
+** TODO -iteratefn
+** TODO -fixfn
+** TODO -prodfn
+

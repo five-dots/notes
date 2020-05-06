@@ -1,0 +1,1257 @@
+#+STARTUP: folded indent inlineimages
+#+PROPERTY: header-args:R :session *R:oop* :results output
+
+* Libraries
+
+#+begin_src R :results silent
+library(tidyverse)
+library(glue)
+library(lubridate)
+library(R6)
+
+library(pryr)
+library(sloop) # OOP helpers
+#+end_src
+
+* S3
+** 概要
+
+- S3 = *Generic-function OO* (メソッドがクラスではなく、関数に帰属する)
+- Generic-function = 総称関数とも呼ばれる
+- Java, C# or C++ = Message(Method)-passing OO (メソッドがクラスに帰属する)
+- S3 = list + attribute or vector + attribute
+- method.S3ClassName() の形式
+
+** Generic-function
+
+- =print()= 関数は引数の型に応じて呼び出す関数を変更してくれる (*Method Dispatch*)
+#+begin_src R
+print("hi")
+print.default("hi") # 上と同じ
+
+print(head(iris))
+print.data.frame(head(iris)) # 上と同じ
+#+end_src
+
+#+RESULTS:
+#+begin_example
+[1] "hi"
+
+[1] "hi"
+
+  Sepal.Length Sepal.Width Petal.Length Petal.Width Species
+1          5.1         3.5          1.4         0.2  setosa
+2          4.9         3.0          1.4         0.2  setosa
+3          4.7         3.2          1.3         0.2  setosa
+4          4.6         3.1          1.5         0.2  setosa
+5          5.0         3.6          1.4         0.2  setosa
+6          5.4         3.9          1.7         0.4  setosa
+
+  Sepal.Length Sepal.Width Petal.Length Petal.Width Species
+1          5.1         3.5          1.4         0.2  setosa
+2          4.9         3.0          1.4         0.2  setosa
+3          4.7         3.2          1.3         0.2  setosa
+4          4.6         3.1          1.5         0.2  setosa
+5          5.0         3.6          1.4         0.2  setosa
+6          5.4         3.9          1.7         0.4  setosa
+#+end_example
+
+- 関数名は =method.S3ClassName()= の形式
+#+begin_src R
+dates <- c(today(), today() - 1, today() - 2)
+class(dates)
+mean.Date(c(today(), today() - 1, today() - 2))
+#+end_src
+
+#+RESULTS:
+: 
+: [1] "Date"
+: 
+: [1] "2020-01-13"
+
+#+begin_src R
+class(iris$Species)
+print.factor(iris$Species)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+[1] "factor"
+
+  [1] setosa     setosa     setosa     setosa     setosa     setosa    
+  [7] setosa     setosa     setosa     setosa     setosa     setosa    
+ [13] setosa     setosa     setosa     setosa     setosa     setosa    
+ [19] setosa     setosa     setosa     setosa     setosa     setosa    
+ [25] setosa     setosa     setosa     setosa     setosa     setosa    
+ [31] setosa     setosa     setosa     setosa     setosa     setosa    
+ [37] setosa     setosa     setosa     setosa     setosa     setosa    
+ [43] setosa     setosa     setosa     setosa     setosa     setosa    
+ [49] setosa     setosa     versicolor versicolor versicolor versicolor
+ [55] versicolor versicolor versicolor versicolor versicolor versicolor
+ [61] versicolor versicolor versicolor versicolor versicolor versicolor
+ [67] versicolor versicolor versicolor versicolor versicolor versicolor
+ [73] versicolor versicolor versicolor versicolor versicolor versicolor
+ [79] versicolor versicolor versicolor versicolor versicolor versicolor
+ [85] versicolor versicolor versicolor versicolor versicolor versicolor
+ [91] versicolor versicolor versicolor versicolor versicolor versicolor
+ [97] versicolor versicolor versicolor versicolor virginica  virginica 
+[103] virginica  virginica  virginica  virginica  virginica  virginica 
+[109] virginica  virginica  virginica  virginica  virginica  virginica 
+[115] virginica  virginica  virginica  virginica  virginica  virginica 
+[121] virginica  virginica  virginica  virginica  virginica  virginica 
+[127] virginica  virginica  virginica  virginica  virginica  virginica 
+[133] virginica  virginica  virginica  virginica  virginica  virginica 
+[139] virginica  virginica  virginica  virginica  virginica  virginica 
+[145] virginica  virginica  virginica  virginica  virginica  virginica 
+Levels: setosa versicolor virginica
+#+end_example
+
+** 代表的なジェネリック
+
+#+begin_src R
+methods("print") %>% head()
+#+end_src
+
+#+RESULTS:
+: [1] "print.acf"         "print.all_vars"    "print.anova"      
+: [4] "print.anova.lme"   "print.ansi_string" "print.ansi_style"
+
+#+begin_src R
+methods("summary") %>% head()
+#+end_src
+
+#+RESULTS:
+: [1] "summary.aov"                   "summary.aovlist"              
+: [3] "summary.aspell"                "summary.check_packages_in_dir"
+: [5] "summary.connection"            "summary.corAR1"
+
+#+begin_src R
+methods("predict") %>% head()
+#+end_src
+
+#+RESULTS:
+: [1] "predict.ar"     "predict.Arima"  "predict.arima0" "predict.glm"   
+: [5] "predict.gls"    "predict.gnls"
+
+#+begin_src R
+methods("update") %>% head()
+#+end_src
+
+#+RESULTS:
+: [1] "update.corStruct" "update.Date"      "update.default"   "update.formula"  
+: [5] "update.gls"       "update.gnls"
+
+
+- ={generics}= パッケージ (by r-lib) に多数の S3 generics が収録されている
+#+begin_src R
+pacman::p_funs(generics)
+#+end_src
+
+#+RESULTS:
+:  [1] "as.difftime"  "as.factor"    "as.ordered"   "augment"      "calculate"   
+:  [6] "compile"      "components"   "equation"     "estfun"       "evaluate"    
+: [11] "explain"      "fit"          "fit_xy"       "generate"     "glance"      
+: [16] "hypothesize"  "interpolate"  "intersect"    "is.element"   "learn"       
+: [21] "prune"        "refit"        "setdiff"      "setequal"     "specify"     
+: [26] "tidy"         "train"        "union"        "var_imp"      "varying_args"
+: [31] "visualize"
+
+** 新規作成
+
+- =UseMethod()= で generic-function として宣言
+- =greeting.foo()= で foo class 向けの関数を定義
+#+begin_src R
+greeting <- function(x) {
+  UseMethod("greeting", x)
+}
+
+greeting.foo <- function(x) {
+  print(x$foo)
+}
+
+x <- list(foo = "foo")
+class(x) <- c("foo")
+
+greeting(x)
+#+end_src
+
+#+RESULTS:
+: 
+: [1] "foo"
+
+- クラスの継承
+- 要素が先のクラスが子クラスになる
+#+begin_src R
+greeting.bar <- function(x){
+  print(x$bar)
+}
+
+x <- list(foo = "foo", bar = "bar")
+class(x) <- c("bar", "foo")
+
+greeting(x)
+#+end_src
+
+#+RESULTS:
+: 
+: [1] "bar"
+
+#+begin_src R
+s3_dispatch(greeting(x))
+#+end_src
+
+#+RESULTS:
+: => greeting.bar
+:  * greeting.foo
+:    greeting.default
+
+** Type Predicate
+
+- =pryr::ftype()= で調べる
+#+begin_src R
+ftype(greeting)
+#+end_src
+
+#+RESULTS:
+: [1] "S3"      "generic"
+: 
+: [1] "base"
+
+- generic に紐付いているすべてのメソッドを調べる
+#+begin_src R
+methods("greeting")
+#+end_src
+
+#+RESULTS:
+: [1] greeting.bar greeting.foo greeting.hoo
+: see '?methods' for accessing help and source code
+
+- Internal/Primitive generic は C code を直接呼んでいる
+#+begin_src R
+sum
+cbind
+ftype(sum)   # primitive, generic
+ftype(cbind) # internal, generic
+#+end_src
+
+#+RESULTS:
+#+begin_example
+function (..., na.rm = FALSE)  .Primitive("sum")
+
+function (..., deparse.level = 1) 
+.Internal(cbind(deparse.level, ...))
+<bytecode: 0x55d412688f60>
+<environment: namespace:base>
+
+[1] "primitive" "generic"
+
+[1] "internal" "generic"
+#+end_example
+
+* S4
+** 概要
+
+- ={methods}= で定義されている
+- More formal than S3
+- [[https://bioconductor.org/help/course-materials/2017/Zurich/S4-classes-and-methods.html][S4 classes and methods]]
+
+** Reference
+
+#+begin_src R :results silent
+
+## Class, contains, slots, prototype 以外はほぼ使わない
+setClass(
+  Class,                # "クラス名" (UpperCamelCase)
+  representation,
+  prototype,            # slot のデフォルト値. ここを使わずに initialize() を定義することが推奨
+  contains=character(), # 継承する親クラス by character vector
+  validity,
+  access,
+  where,
+  version,
+  sealed,
+  package,
+  S3methods = FALSE,
+  slots                 # named vector. 名前とデータ型の組み合わせ (ANYであらゆる型)
+)
+
+setGeneric(
+  name,  # lowerCamelCase にする
+  def= , # standardGeneric() 関数を渡す
+  group=list(),
+  valueClass=character(),
+  where= ,
+  package= ,
+  signature= , # method dispatch に使う関数を指定する
+  useAsDefault= ,
+  genericFunction= ,
+  simpleInheritanceOnly = 
+)
+
+standardGeneric(
+  f,   # Generic の名前
+  fdef
+)
+
+setMethod(
+  f, # メソッド名 lowerCamelCase
+  signature=character(), # クラス名
+  definition, # 関数定義
+  where = topenv(parent.frame()),
+  valueClass = NULL,
+  sealed = FALSE
+)
+#+end_src
+
+** =setClass()= -> =new()=
+
+- classRepresentation class
+#+begin_src R
+setClass(
+  "Person",
+  ## Field
+  slots = c(
+    name = "character",
+    age = "numeric"
+  ),
+  ## Filed への初期値
+  prototype = list(
+    name = NA_character_,
+    age = NA_real_
+  )
+)
+
+john <- new("Person", name = "John Smith", age = NA_real_)
+john
+#+end_src
+
+#+RESULTS:
+: An object of class "Person"
+: Slot "name":
+: [1] "John Smith"
+: 
+: Slot "age":
+: [1] NA
+
+- クラスへのアクセス
+- 基本的には =@= を使う
+#+begin_src R
+is("john")
+john@name
+slot(john, "name")
+#+end_src
+
+#+RESULTS:
+: [1] "character"           "vector"              "data.frameRowLabels"
+: [4] "SuperClassMethod"
+: [1] "John Smith"
+: [1] "John Smith"
+
+** =setGeneric()= -> =setMethod()=
+
+- generic 関数名には lowerCamelCase を使う
+- Setter/Getter を定義する
+#+begin_src R
+
+## まずは Generic を定義
+setGeneric("age", function(x) standardGeneric("age"))
+setGeneric("age<-", function(x, value) standardGeneric("age<-"))
+
+setMethod("age", "Person", function(x) x@age)
+setMethod("age<-", "Person", function(x, value) {
+  x@age <- value
+  ## データチェックを必ず呼び出す
+  validObject(x)
+  x
+})
+
+age(john) <- 20
+age(john)
+#+end_src
+
+#+RESULTS:
+: [1] "age"
+: [1] "age<-"
+: [1] 20
+
+- Generic の一覧を得る
+#+begin_src R
+methods("age")
+#+end_src
+
+#+RESULTS:
+: [1] age,Person-method
+: see '?methods' for accessing help and source code
+
+#+begin_src R
+methods(class = "Person")
+#+end_src
+
+#+RESULTS:
+: [1] age   age<-
+: see '?methods' for accessing help and source code
+
+#+begin_src R
+selectMethod("age", "Person")
+#+end_src
+
+#+RESULTS:
+: Method Definition:
+: 
+: function (x) 
+: x@age
+: 
+: Signatures:
+:         x       
+: target  "Person"
+: defined "Person"
+
+** Inheritance
+
+- S4 クラスを親に指定
+- S3 クラスを継承することも可能 (=setOldClass()=)
+- R の base type を継承すること可能 (vector, matrix など)
+
+#+begin_src R
+setClass(
+  "Employee",
+  contains = "Person",
+  slot = c(boss = "Person"),
+  prototype = new("Person"),
+)
+
+str(new("Employee"))
+#+end_src
+
+#+RESULTS:
+: Formal class 'Employee' [package ".GlobalEnv"] with 3 slots
+:   ..@ boss:Formal class 'Person' [package ".GlobalEnv"] with 2 slots
+:   .. .. ..@ name: chr NA
+:   .. .. ..@ age : num NA
+:   ..@ name: chr NA
+:   ..@ age : num NA
+
+** Helper
+*** Constructor
+
+- 基本的には =new()= を使わずに、ヘルパーを作成する
+- クラスと同名がよい
+- slots の定義に合わせて自動的に型チェックをしてくれる
+- 
+#+begin_src R
+Person <- function(name, age = NA) {
+  age <- as.double(age)
+  new("Person", name = name, age = age)
+}
+
+Person("Hadley")
+#+end_src
+
+#+RESULTS:
+: Person
+:   Name: Hadley
+:   Age:  NA
+
+*** =setValidity()=
+
+- 型指定だけなので =length()= のチェックはしてくれない
+#+begin_src R
+Person("Hadley", age=c(30, 37))
+#+end_src
+
+#+RESULTS:
+: Error in validObject(.Object) : 
+:   invalid class “Person” object: @name and @age must be same length
+
+- 長さチェック機能を追加
+#+begin_src R
+setValidity("Person", function(object) {
+  if (length(object@name) != length(object@age)) {
+    "@name and @age must be same length"
+  } else {
+    TRUE
+  }
+})
+#+end_src
+
+#+RESULTS:
+: Class "Person" [in ".GlobalEnv"]
+: 
+: Slots:
+:                           
+: Name:       name       age
+: Class: character   numeric
+: 
+: Known Subclasses: "Employee"
+
+#+begin_src R
+Person("Hadley", age=c(30, 37))
+#+end_src
+
+#+RESULTS:
+: Error in validObject(.Object) : 
+:   invalid class “Person” object: @name and @age must be same length
+
+- =new()= の際には型チェックを行うが =@= では行われない
+- 明示的に行うには =validObject()=
+#+begin_src R
+validObject(john)
+#+end_src
+
+#+RESULTS:
+: [1] TRUE
+
+*** =show()=
+
+- デフォルトの print() 動作
+#+begin_src R
+getGeneric("show")
+#+end_src
+
+#+RESULTS:
+: standardGeneric for "show" defined from package "methods"
+: 
+: function (object) 
+: standardGeneric("show")
+: <bytecode: 0x556ab45080d8>
+: <environment: 0x556ab44473a0>
+: Methods may be defined for arguments: object
+: Use  showMethods("show")  for currently available ones.
+: (This generic function excludes non-simple inheritance; see ?setIs)
+
+- Person 用の show() を定義
+#+begin_src R
+setMethod("show", "Person", function(object) {
+  cat(is(object)[[1]], "\n",
+      "  Name: ", object@name, "\n",
+      "  Age:  ", object@age, "\n",
+      sep = ""
+      )
+})
+#+end_src
+
+*** =initialize()=
+
+- prototype でデフォルト値を設定するのではなく =initialize()= generic を定義する
+#+begin_src R
+setMethod("initialize", "Person", function(obj, name = "Shun", age = 36, ...) {
+  obj <- callNextMethod(obj, ...)
+  if(length(name) != length(age))
+    stop("specified x and y of different lengths")
+  obj@name <- name
+  obj@age <- age
+  validObject(obj)
+  age
+})
+#+end_src
+
+** Method Dispatch
+
+- S3 との違い
+  - S4 は継承ができる (複数の親クラス)
+  - S4 の Method Dispatch では複数のクラスを指定できる
+  - -> どのクラスに対してのメソッドが呼び出されているかわかりにくい
+
+** Type Predicate
+
+- S4 object かどうかの見分け方
+#+begin_src R
+isS4(john)
+is(john, "Person")
+#+end_src
+
+#+RESULTS:
+: [1] TRUE
+: [1] TRUE
+
+- =otype()= = Object Type
+#+begin_src R
+sloop::otype(john)
+#+end_src
+
+#+RESULTS:
+: [1] "S4"
+
+- =ftype()= = Function Type
+#+begin_src R
+sloop::ftype(age)
+#+end_src
+
+#+RESULTS:
+: [1] "S4"      "generic"
+
+* RC
+
+- Reference Class = Message-passing OO (object$method())
+- R 標準の Copy-on-modify semantics に従わない (参照型)
+
+* R6
+** 概要
+
+- R6 = 環境
+
+** 全関数
+
+#+begin_src R
+pacman::p_funs(R6)
+#+end_src
+
+#+RESULTS:
+: [1] "is.R6"      "is.R6Class" "R6Class"
+
+** Best Practice
+
+- クラス名と同名の Generater を生成する
+- 副作用を目的とした場合 (クラスのフィールドを書き換えるなど) =invisible(self)= する
+  - Method Chaining ができる
+- =$initialize()=, =$print()= は基本的に実装するようにする
+  - =$initialize()= は =$new()= を上書きする. 入力チェックを実装できる
+  - =$print()= でも =invisible(self)= する
+- 入力チェックは =$validate()= 関数で別出しにもできる
+- =$clone()= は R6 のコピーを作成するが、フィールドに R6 があった場合はコピーではなく参照で渡される
+  - コピーで渡したい場合は =$clone(deep=TRUE)= する
+- フィールドが R6 の場合は =$initialize()= の中で作成する 
+- =$finalize()= でデストラクタの処理をする (=on.exit()= みたいな)
+- Active binding はフィールドとして使えるが、実際には毎回関数が呼び出される
+  - 引数 (value) を無しで定義すれば Read only になる
+
+** Reference
+
+#+begin_src R :exports both
+R6Class(
+  classname    = NULL,   # chr scalar (S3 dispatch にも使える)
+  public       = list(), # list
+  private      = NULL,   # list
+  active       = NULL,   # Active biding function (list)
+  inherit      = NULL,   # 継承する R6ClassGenerator object (super$ で親にアクセス)
+  lock_objects = TRUE,   # TRUE なら新たなメンバーを環境に追加できない
+  class        = TRUE,   # class 属性を追加するか
+  portable     = TRUE,   # 別のパッケージ間で継承を可能にするか
+  lock_class   = FALSE,  # R6ClassGenerator$set で新たなメンバー追加を可能にするか
+  cloneable    = TRUE,   # $clone を使えるようにするか
+  parent_env   = parent.frame(), # R6 の親クラス
+  lock # deprecated
+)
+#+end_src
+
+** Advanced R 2nd の例
+
+#+begin_src R
+Accumulator <- R6Class(
+  "Accumulator",
+  list(
+    sum = 0,
+    add = function(x = 1) {
+      self$sum <- self$sum + x
+      invisible(self)
+    }
+  )
+)
+
+class(Accumulator)
+is.R6Class(Accumulator)
+is.environment(Accumulator)
+
+## Generator クラスが持っているフィールド・メソッド
+ls(Accumulator)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+[1] "R6ClassGenerator"
+
+[1] TRUE
+
+[1] TRUE
+
+ [1] "active"          "class"           "classname"       "clone_method"   
+ [5] "cloneable"       "debug"           "debug_names"     "get_inherit"    
+ [9] "has_private"     "inherit"         "is_locked"       "lock"           
+[13] "lock_class"      "lock_objects"    "new"             "parent_env"     
+[17] "portable"        "private_fields"  "private_methods" "public_fields"  
+[21] "public_methods"  "self"            "set"             "undebug"        
+[25] "unlock"
+#+end_example
+
+** Manual の Example
+*** Class Definition
+
+- キューの実装
+- FIFO
+- private の queue で中身が保持される
+- =self$=, =private$=, =super$= でメンバーにアクセスする
+
+#+begin_src R
+Queue <- R6Class("Queue",
+  public = list(
+    initialize = function(...) {
+      for (item in list(...)) {
+        self$add(item)
+      }
+    },
+    add = function(x) {
+      private$queue <- c(private$queue, list(x))
+      invisible(self)
+    },
+    remove = function() {
+      if (private$length() == 0) return(NULL)
+      # Can use private$queue for explicit access
+      head <- private$queue[[1]]
+      private$queue <- private$queue[-1]
+      head
+    }
+  ),
+  private = list(
+    queue = list(),
+    length = function() base::length(private$queue)
+  )
+)
+
+Queue
+is.R6Class(Queue) # TRUE
+#+end_src
+
+#+RESULTS:
+#+begin_example
+<
+object generator
+  Public:
+    initialize: function (...) 
+    add: function (x) 
+    remove: function () 
+    clone: function (deep = FALSE) 
+  Private:
+    queue: list
+    length: function () 
+  Parent env: <environment: R_GlobalEnv>
+  Locked objects: TRUE
+  Locked class: FALSE
+  Portable: TRUE
+[1] TRUE
+#+end_example
+
+*** Instance
+
+#+begin_src R
+q <- Queue$new(5, 6, "foo")
+
+## Add and remove items
+q$add("something")
+q$add("another thing")
+q$add(17)
+q$remove() # 5
+q$remove() # 6
+
+## Private members can't be accessed directly
+q$queue # NULL
+q$length() # Error: attempt to apply non-function
+#+end_src
+
+#+RESULTS:
+: [1] 5
+: [1] 6
+: NULL
+: Error: attempt to apply non-function
+
+- =add()= では =invisble(self)= しているので、メソッドを連ねることができる
+#+begin_src R
+# add() returns self, so it can be chained
+q$add(10)$add(11)$add(12)
+
+# remove() returns the value removed, so it's not chainable
+q$remove()
+#> [1] "foo"
+q$remove()
+#> [1] "something"
+q$remove()
+#> [1] "another thing"
+q$remove()
+#> [1] 17
+#+end_src
+
+#+RESULTS:
+: [1] "foo"
+: [1] "something"
+: [1] "another thing"
+: [1] 17
+
+*** Active Biding
+
+#+begin_src R
+Numbers <- R6Class("Numbers",
+  public = list(
+    x = 100
+  ),
+  active = list(
+    ## 引数ありの Filed (値を設定することもできる)
+    x2 = function(value) {
+      if (missing(value)) return(self$x * 2)
+      else self$x <- value/2
+    },
+    ## 引数なしの Filed
+    rand = function() rnorm(1)
+  )
+)
+
+n <- Numbers$new()
+n$x  # 100
+n$x2 # 200
+n$x2 <- 1000
+n$x  # 500
+
+## If the function takes no arguments, it's not possible to use it with <-:
+n$rand
+n$rand
+n$rand <- 3 # Error: unused argument (quote(3))
+#+end_src
+
+#+RESULTS:
+: [1] 100
+: [1] 200
+: [1] 500
+: [1] 0.3480713
+: [1] -0.6011325
+: Error in (function ()  : unused argument (base::quote(3))
+
+*** Inheritance 1
+
+#+begin_src R
+# Note that this isn't very efficient - it's just for illustrating inheritance.
+HistoryQueue <- R6Class("HistoryQueue",
+  inherit = Queue,
+  public = list(
+    show = function() {
+      cat("Next item is at index", private$head_idx + 1, "\n")
+      for (i in seq_along(private$queue)) {
+        cat(i, ": ", private$queue[[i]], "\n", sep = "")
+      }
+    },
+    remove = function() {
+      if (private$length() - private$head_idx == 0) return(NULL)
+      private$head_idx <<- private$head_idx + 1
+      private$queue[[private$head_idx]]
+    }
+  ),
+  private = list(
+    head_idx = 0
+  )
+)
+
+hq <- HistoryQueue$new(5, 6, "foo")
+hq$show()
+#> Next item is at index 1
+#> 1: 5
+#> 2: 6
+#> 3: foo
+hq$remove()
+#> [1] 5
+hq$show()
+#> Next item is at index 2
+#> 1: 5
+#> 2: 6
+#> 3: foo
+hq$remove()
+#> [1] 6
+#+end_src
+
+#+RESULTS:
+#+begin_example
+Next item is at index 1 
+1: 5
+2: 6
+3: foo
+[1] 5
+Next item is at index 2 
+1: 5
+2: 6
+3: foo
+[1] 6
+#+end_example
+
+*** Inheritance 2
+
+#+begin_src R
+CountingQueue <- R6Class("CountingQueue",
+  inherit = Queue,
+  public = list(
+    add = function(x) {
+      private$total <<- private$total + 1
+      ## super で親にアクセス
+      super$add(x)
+    },
+    get_total = function() private$total
+  ),
+  private = list(
+    total = 0
+  )
+)
+
+cq <- CountingQueue$new("x", "y")
+cq$get_total()
+#> [1] 2
+cq$add("z")
+cq$remove()
+#> [1] "x"
+cq$remove()
+#> [1] "y"
+cq$get_total()
+#> [1] 3
+#+end_src
+
+#+RESULTS:
+: [1] 2
+: [1] "x"
+: [1] "y"
+: [1] 3
+
+*** Non-portable class
+
+#+begin_src R
+# By default, R6 classes are portable, which means they can be inherited
+# across different packages. Portable classes require using self$ and
+# private$ to access members.
+# When used in non-portable mode, members can be accessed without self$,
+# and assignments can be made with <<-.
+
+NP <- R6Class("NP",
+  portable = FALSE,
+  public = list(
+    x = NA,
+    getx = function() x,
+    setx = function(value) x <<- value
+  )
+)
+
+np <- NP$new()
+np$setx(10)
+np$getx()
+#> [1] 10
+#+end_src
+
+#+RESULTS:
+: [1] 10
+
+*** Setting new values by =$set=
+
+#+begin_src R
+# It is possible to add new members to the class after it has been created,
+# by using the $set() method on the generator.
+
+Simple <- R6Class("Simple",
+  public = list(
+    x = 1,
+    getx = function() self$x
+  )
+)
+
+Simple$set("public", "getx2", function() self$x*2)
+
+# Use overwrite = TRUE to overwrite existing values
+Simple$set("public", "x", 10, overwrite = TRUE)
+
+s <- Simple$new()
+s$x
+s$getx2()
+#+end_src
+
+#+RESULTS:
+: [1] 10
+: [1] 20
+
+*** Cloning objects
+
+- オブジェクトの内容がコピーされる
+#+begin_src R
+a <- Queue$new(5, 6)
+a$remove() # 5
+
+# Clone a. New object gets a's state.
+b <- a$clone()
+
+# Can add to each queue separately now.
+a$add(10)
+b$add(20)
+
+a$remove() # 6
+a$remove() # 10
+
+b$remove() # 6
+b$remove() # 20
+#+end_src
+
+*** Deep clones
+
+- Shallow Copy
+  - メンバーに R6 がある場合 =clone()= 先の メンバーも同じ R6 を参照している
+  - =R6= や =enviroment= でなければ、同じメンバーを参照するわけではない
+- Deep Copy
+  - =$clone(deep=TRUE)=
+
+#+begin_src R
+Simple <- R6Class("Simple",
+ public = list(
+   x = NULL,
+   initialize = function(val) self$x <- val
+ )
+)
+
+Cloner <- R6Class("Cloner",
+  public = list(
+    s = NULL,
+    y = 1,
+    initialize = function() self$s <- Simple$new(1)
+  )
+)
+
+a <- Cloner$new()
+b <- a$clone()
+c <- a$clone(deep = TRUE)
+
+## Modify a
+a$s$x <- 2
+a$y <- 2
+
+## b is a shallow clone. b$s is the same as a$s because they are R6 objects.
+b$s$x # 2
+## But a$y and b$y are different, because y is just a value.
+b$y # 1
+
+## c is a deep clone, so c$s is not the same as a$s.
+c$s$x # 1
+c$y # 1
+#+end_src
+
+#+RESULTS:
+: [1] 2
+: [1] 1
+: [1] 1
+: [1] 1
+
+*** Deep clones with custom deep_clone method
+
+#+begin_src R
+CustomCloner <- R6Class("CustomCloner",
+  public = list(
+    e = NULL,
+    s1 = NULL,
+    s2 = NULL,
+    s3 = NULL,
+    initialize = function() {
+      self$e <- new.env(parent = emptyenv())
+      self$e$x <- 1
+      self$s1 <- Simple$new(1)
+      self$s2 <- Simple$new(1)
+      self$s3 <- Simple$new(1)
+    }
+  ),
+  private = list(
+    # When x$clone(deep=TRUE) is called, the deep_clone gets invoked once for
+    # each field, with the name and value.
+    deep_clone = function(name, value) {
+      if (name == "e") {
+        # e1 is an environment, so use this quick way of copying
+        list2env(as.list.environment(value, all.names = TRUE),
+                 parent = emptyenv())
+
+      } else if (name %in% c("s1", "s2")) {
+        # s1 and s2 are R6 objects which we can clone
+        value$clone()
+
+      } else {
+        # For everything else, just return it. This results in a shallow
+        # copy of s3.
+        value
+      }
+    }
+  )
+)
+
+a <- CustomCloner$new()
+b <- a$clone(deep = TRUE)
+
+# Change some values in a's fields
+a$e$x <- 2
+a$s1$x <- 3
+a$s2$x <- 4
+a$s3$x <- 5
+
+# b has copies of e, s1, and s2, but shares the same s3
+b$e$x
+#> [1] 1
+b$s1$x
+#> [1] 1
+b$s2$x
+#> [1] 1
+b$s3$x
+#> [1] 5
+#+end_src
+
+*** Debugging
+
+#+begin_src R
+# This will enable debugging the getx() method for objects of the 'Simple'
+# class that are instantiated in the future.
+Simple$debug("getx")
+s <- Simple$new()
+s$getx()
+
+# Disable debugging for future instances:
+Simple$undebug("getx")
+s <- Simple$new()
+s$getx()
+
+# To enable and disable debugging for a method in a single instance of an
+# R6 object (this will not affect other objects):
+s <- Simple$new()
+debug(s$getx)
+s$getx()
+undebug(s$getx)
+#+end_src
+
+** Sample
+
+#+begin_src R
+Person <- R6Class(
+  "Person",
+  public = list(
+    name = NULL,
+    hair = NULL,
+    initialize = function(name = NA, hair = NA) {
+      self$name <- name
+      self$hair <- hair
+      self$greet()
+    },
+    set_hair = function(val) {
+      self$hair <- val
+    },
+    greet = function() {
+      cat(paste0("Hello, my name is ", self$name, ".\n"))
+    }
+  )
+)
+
+d = data.frame(x = seq(1, 10, 1), y = seq(11, 20, 1))
+ann <- Person$new("Ann", "Black")
+ann$name
+ann$hair
+ann$initialize("Ann", "Black")
+ann$greet()
+ann$set_hair("Brown")
+john <- ann$clone()
+john$greet()
+ann$.__enclos_env__
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+Hello, my name is Ann.
+
+[1] "Ann"
+
+[1] "Black"
+
+Hello, my name is Ann.
+
+Hello, my name is Ann.
+
+Hello, my name is Ann.
+
+<environment: 0x562fbce83a08>
+#+end_example
+
+#+begin_src R
+Queue <- R6Class(
+  "Queue",
+  public = list(
+    initialize = function(...) {
+      for (item in list(...)) {
+        self$add(item)
+      }
+    },
+    add = function(x) {
+      private$queue <- c(private$queue, list(x))
+      invisible(self)
+    },
+    remove = function() {
+      if (private$length() == 0) return(NULL)
+      head <- private$queue[[1]]
+      private$queue <- private$queue[-1]
+      head
+    }
+  ),
+  private = list(
+    queue = list(),
+    length = function() base::length(private$queue)
+  )
+)
+
+q <- Queue$new(5, 6, "foo")
+
+q$remove()
+q$add("hoge")$add("fuga")
+
+q$queue
+q$length()
+
+a = list(5, 6, "foo", "go")
+d = c(a, list("x"))
+
+for (b in a) { print(b) }
+
+Numbers <- R6Class(
+  "Numbers",
+  public = list(
+    x = 100
+  ),
+  active = list(
+    x2 = function(value) {
+      if (missing(value)) return(self$x * 2)
+      else self$x <- value/2
+    },
+    rand = function() rnorm(1)
+  )
+)
+
+num <- Numbers$new()
+num$x
+num$rand
+num$x2
+num$x2 <- 1000
+
+HistoryQueue <- R6Class(
+  "HistoryQueue",
+  inherit = Queue,
+  public = list(
+    show = function() {
+      cat("Next item is at index", private$head_idx + 1, "\n")
+      for (i in seq_along(private$queue)) {
+        cat(i, ": ", private$queue[[i]], "\n", sep = "")
+      }
+    },
+    remove = function() {
+      if (private$length() - private$head_idx == 0) return(NULL)
+      private$head_idx <<- private$head_idx + 1
+      private$queue[[private$head_idx]]
+    }
+  ),
+  private = list(
+    head_idx = 0
+  )
+)
+
+hq <- HistoryQueue$new(5, 6, "foo")
+hq$show()
+hq$remove()
+hq$add("hoge")
+
+HistoryQueue$
+
+install.packages("R99class")
+library(R99)
+#+end_src
+
+* 参考情報
+
+- [[https://qiita.com/d0d0npa/items/412dd355cb630fbc277c][R言語S3クラスの実装@Qiita]]

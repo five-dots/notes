@@ -1,0 +1,160 @@
+#+STARTUP: folded indent
+
+* company
+** Package
+
+- company
+- company-lsp
+- company-prescient
+- company-posframe
+- company-quickhelp
+- company-box
+- company-dict
+etc
+
+** Usage
+*** Backends
+**** Overview
+
+- 候補リストの取得
+- 同時に使われるのはひとつのみ
+  - =company-diag= で現在使用されているものを確認できる
+- 前頭から順に試して、該当するものを使う
+- yasnippet との連携
+  https://emacs.stackexchange.com/questions/10431/get-company-to-show-suggestions-for-yasnippet-names
+
+- [[https://github.com/company-mode/company-mode/wiki/Third-Party-Packages][3rd party のバックエンド一覧]]
+
+_汎用バックエンド_
+- ~company-gtags~ (GNU Global)
+- ~company-etags~ (etags.el emacs 組み込みのタグシステム)
+  ソースコードタグシステムによる補完
+  
+- ~company-capf~
+  ~completion-at-point-functions~ という buffer local 変数で挙動を制御
+  global value: ~tags-completion-at-point-function~
+
+- ~company-abbrev~
+- ~company-dabbrev~
+- ~company-dabbrev-code~ (コード内のコメントと文字列を除外)
+  dabbrev = 動的略語
+  バッファ内の単語を補完
+ 
+- ~company-files~
+  パスを補完
+
+- ~company-keywords~
+  言語毎のキーワードから補完
+
+- ~company-yasnippet~
+  スニペットから補完
+
+- ~company-bbdb~
+  BBDB (Insidious Big Brother Database) を使ってアドレスなどを補完
+
+- ~company-ispell~
+  スペルチェッカを利用した補完
+ 
+_特定モード用_
+- ~company-oddmuse~
+  Oddmuse Wiki を oddmuse-mode で補完
+
+- ~company-cmake~
+  ~company-clang~
+  ~company-semantic~
+  C/C++ 言語系
+
+- ~company-elisp~
+  Emacs Lisp
+
+- ~company-eclim~
+  Eclipse Java IDE features 
+  
+- ~company-xcode~ 
+  Xcode
+
+- ~company-tempo~
+  テンプレートシステム
+
+**** org-mode
+
+- ~company-capf~ ~tags-completion-at-point-function~
+
+**** emacs-lisp
+
+- OK = capf, elisp, files, dabbrev, yasnippet
+- NG = gtags, etags, keywords
+- ~company-capf~ (~elisp-completion-at-point~ ~tags-completion-at-point-function~)
+
+**** ess-r-mode
+
+- OK = capf, files, dabbrev, yasnippet
+- OK (ESS) = company-R-args, company-R-library, company-R-objects
+- ~company-capf~ (ess-roxy-complete-tag
+                ess-filename-completion
+                ess-r-package-completion
+                ess-r-object-completion
+                tags-completion-at-point-function)
+                
+**** python-mode
+
+補完機能の選択肢
+- anaconda-mode + company-anaconda
+- company-jedi
+- company-lsp
+  - lsp-pyls (lsp-mode に付属)
+  - lsp-python-ms
+
+Python package for LSP
+- python-language-server (github: palantir/python-language-server) 1,400 stars
+- python-language-server (github: microsoft/python-language-server)  400 stars
+
+Backends
+- OK = capf, files, dabbrev, yasnippet
+- NG = company-R-args, company-R-library, company-R-objects
+- ~company-capf~ (ess-roxy-complete-tag
+                ess-filename-completion
+                ess-r-package-completion
+                ess-r-object-completion
+                tags-completion-at-point-function)
+                
+*** *Transformers*
+
+- 候補リストの変形・ソートなど
+
+(spacemacs//company-transformer-cancel 
+ company-sort-by-occurrence 
+ company-sort-by-statistics)
+
+*** Frontends
+
+(company-pseudo-tooltip-unless-just-one-frontend
+ company-preview-if-just-one-frontend)
+   
+** Reference
+
+- [[https://qiita.com/sune2/items/b73037f9e85962f5afb7][emacsの補完用パッケージcompany-mode@Qiita]]
+
+* yasnippet
+
+- .emacs.d/snippets に自作スニペットを追加
+- yasnippet-snippets のディレクトリはデフォルトで追加済み
+- ~yas-insert-snippet~
+- ~yas-new-snippet~
+- ~yas-visit-snippet-file~
+  
+_c++-mode class の例_
+- 数字は穴埋めされる順番 ~${1:hoge}~
+- ~{n:hoge}~ の hoge がデフォルト値
+- $0 はスニペット展開後のカーソル位置
+
+#+begin_quote
+class ${1:Name}
+{
+public:
+    ${1:$(yas-c++-class-name yas-text)}();
+    ${2:virtual ~${1:$(yas-c++-class-name yas-text)}();}
+};
+$0
+#+end_quote
+

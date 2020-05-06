@@ -296,7 +296,6 @@ $Bacon.downside.risk.funs
 $misc.funs
 [1] "KellyRatio"   "Modigliani"   "UpDownRatios"
 #+end_example
-\\
 
 *** tq_performance(data, Ra, Rb = NULL, performance_fun, ...)
 

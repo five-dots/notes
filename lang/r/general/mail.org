@@ -1,0 +1,67 @@
+#+STARTUP: folded indent inlineimages latexpreview
+#+PROPERTY: header-args:R :results output :colnames yes :session *R:mail*
+
+* {gmailr} package
+
+- r-lib
+- [[https://github.com/r-lib/gmailr][Github]]
+
+#+begin_src R
+library(gmailr)
+
+test_email <- gm_mime() %>%
+  gm_to("syun.asai@gmail.com") %>%
+  gm_from("syun.asai@gmail.com") %>%
+  gm_subject("this is just a gmailr test") %>%
+  gm_text_body("Can you hear me now?")
+
+# Verify it looks correct
+gm_create_draft(test_email)
+
+# If all is good with your draft, then you can send it
+gm_send_message(test_email)
+#+end_src
+
+* {gmailR} package
+
+- [[http://d.hatena.ne.jp/dichika/20140217/p1][Rからメールを送りたい（ただしGmailで）]]
+
+#+begin_src R
+library(gmailR)
+
+from     <- settings$gmail_address
+to       <- settings$gmail_address
+subject  <- "Hello from R"
+message  <- "my first email"
+password <- settings$gmail_app_pwd
+username <- settings$gmail_address
+
+attachment <- ""
+
+gmail(to, password, subject, message, from, username = username)
+#+end_src
+
+
+* {mailR} package
+
+- [[https://cran.r-project.org/web/packages/mailR/index.html][CRAN]]
+- [[https://github.com/rpremraj/mailR][Github]]
+
+#+begin_src R
+library(mailR)
+
+send.mail(from = "syun.asai@gmail.com",
+          to = "syun.asai@gmail.com",
+          subject = "R Markdown Report - rmarkdown",
+          html = TRUE,
+          inline = TRUE,
+          body = html,
+          smtp = list(
+            host.name = "smtp.gmail.com",
+            port = 465,
+            user.name = "syun.asai",
+            passwd = settings$gmail_app_pwd,
+            ssl = TRUE),
+          authenticate = TRUE,
+          send = TRUE)
+#+end_src

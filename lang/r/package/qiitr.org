@@ -1,0 +1,612 @@
+#+STARTUP: folded indent inlineimages latexpreview
+#+PROPERTY: header-args:R :results output :colnames yes :session *R:qiitr*
+
+* ={qiitr}=
+
+- [[https://qiita.com/api/v2/docs][公式 API Document]]
+- https://qiita.com/settings/applications から ACCESS TOKEN を発行する
+
+#+begin_src R
+Sys.getenv("QIITA_ACCESSTOKEN")
+#+end_src
+
+* Library
+
+#+begin_src R :results silent
+library(qiitr)
+#+end_src
+
+* Item
+** Reference
+
+#+begin_src R
+qiita_get_items(item_id = NULL, tag_id = NULL, user_id = NULL,
+  query = NULL, per_page = 100L, page_offset = 0L, page_limit = 1L)
+
+qiita_post_item(title, body, tags = qiita_util_tag("R"), coediting = FALSE,
+  private = TRUE, gist = FALSE, tweet = FALSE)
+
+qiita_delete_item(item_id)
+qiita_update_item(item_id, title, body, tags = list(qiita_util_tag("R")), private = TRUE)
+qiita_stock_item(item_id)
+qiita_unstock_item(item_id)
+qiita_is_stocked_item(item_id)
+qiita_get_stocks(user_id, per_page = 100L, page_offset = 0L, page_limit = 1L)
+#+end_src
+
+** 個別の記事を取得
+
+#+begin_src R
+qiita_get_items(item_id = "361a42baf1e94edf5846")
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+[[1]]
+[[1]]$rendered_body
+[1] "<p>データの欠損値を表す <code>NA</
+。その <code>NA</
+をモダンなパッケージを用いて処理する方法についてまとめる。特に <code>vector</
+と <code>data.frame</
+に対して <code>NA</
+の削除や置換方法を中心に記載していきたい。</p>\n\n<p>※ここで「モダン」と言っているのは、特に明確な定義があるわけではなく、最近開発されたパッケージという程度の意味である。</p>\n\n<h1>\n<span id=\"方針\" class=\"fragment\"></span><a href=\"#%E6%96%B9%E9%87%9D\"><i class=\"fa fa-link\"></i></a>方針</h1>\n\n<p>この記事では <code>{dplyr}</
+や <code>{tidyr}</
+などのパッケージを積極的に使って <code>NA</
+処理をする方法を紹介する方針だ。もちろん <code>{base}</
+の機能でも基本的な <code>NA</
+処理は可能だ。</p>\n\n<p>例えば <code>vector</
+から <code>NA</
+を削除する場合には、</p>\n\n<div class=\"code-frame\" data-lang=\"R\"><div class=\"highlight\"><pre><span class=\"n\">x</span><span class=\"w\"
+</span><span class=\"o\">&lt;-</span><span class=\"w\"
+</span><span class=\"nf\">c</span><span class=\"p\">(</span><span class=\"m\">1</span><span class=\"p\">,</span><span class=\"w\"
+</span><span class=\"m\">2</span><span class=\"p\">,</span><span class=\"w\"
+</span><span class=\"m\">3</span><span class=\"p\">,</span><span class=\"w\"
+</span><span class=\"kc\">NA</span><span class=\"p\">,</span><span class=\"w\"
+</span><span class=\"m\">5</span><span class=\"p\">)</span><span class=\"w\">\n</span><span class=\"n\">x</span><span class=\"w\">\n</span><span class=\"n\">x</span><span class=\"p\">[</span><span class=\"o\">!</span><span class=\"nf\">is.na</span><span class=\"p\">(</span><span class=\"n\">x</span><span class=\"p\">)]</span><span class=\"w\">\n</span></pre></div></div>\n\n<div class=\"code-frame\" data-lang=\"text\"><div class=\"highlight\"><pre>[1]  1  2  3 NA  5\n\n[1] 1 2 3 5\n</pre></div></div>\n\n<p><code>NA</
+を特定の値、例えば 0 に設定したい場合には、</p>\n\n<div class=\"code-frame\" data-lang=\"R\"><div class=\"highlight\"><pre><span class=\"n\">x</span><span class=\"p\">[</span><span class=\"nf\">is.na</span><span class=\"p\">(</span><span class=\"n\">x</span><span class=\"p\">)]</span><span class=\"w\"
+</span><span class=\"o\">&lt;-</span><span class=\"w\"
+</span><span class=\"m\">0</span><span class=\"w\">\n</span><span class=\"n\">x</span><span class=\"w\">\n</span></pre></div></div>\n\n<div class=\"code-frame\" data-lang=\"text\"><div class=\"highlight\"><pre>[1] 1 2 3 0 5\n</pre></div></div>\n\n<p>と書くのが一般的だろう。添字に <code>logical vector</
+やインデックスを渡すこのやり方は、いかにも R っぽいコードであるし、汎用的でもある。</p>\n\n<p>ただ、個人的にはこの記述法は好ましくない考えている。プログラミングは <strong>「どのようにやるか (How)」ではなく、「何をやるか (What)」</
+という視点で書くべきだからだ。このくらいシンプルな例であれば問題ないかもしれないが、インデックスに複雑な計算が入っていたり <code>for</
+がネストされていて <code>i, j, k...</
+などと登場してくるととても読む気がなくなってしまうし、まさに How にフォーカスした書き方と言えるだろう。</p>\n\n<p>後者の例であれば <code>{tidyr}</
+を使って、こう書いた方が <strong>「何をしたいか (What)」</
+が明確でよりわかりやすい。</p>\n\n<div class=\"code-frame\" data-lang=\"R\"><div class=\"highlight\"><pre><span class=\"n\">tidyr</span><span class=\"o\">::</span><span class=\"n\">replace_na</span><span class=\"p\">(</span><span class=\"n\">x</span><span class=\"p\">,</span><span class=\"w\"
+</span><span class=\"m\">0</span><span class=\"p\">)</span><span class=\"w\"
+\n</span></pre></div></div>\n\n<div class=\"code-frame\" data-lang=\"text\"><div class=\"highlight\"><pre>[1] 1 2 3 0 5\n</pre></div></div>\n\n<p>いつでも使いたいパッケージを使うことができる、という環境にない場合もあるだろうし、何だかんだで <code>{base}</
+での書き方も押さえておく必要がある。どちらも学ぶ必要があって大変、というのは 「R あるある」かもしれないが、将来コードを見え返す自分のためにも、少しでもわかりやすいコードを心がけるのは有益だと思う。</p>\n\n<h1>\n<span id=\"紹介する関数まとめ\" class=\"fragment\"></span><a href=\"#%E7%B4%B9%E4%BB%8B%E3%81%99%E3%82%8B%E9%96%A2%E6%95%B0%E3%81%BE%E3%81%A8%E3%82%81\"><i class=\"fa fa-link\"></i></a>紹介する関数まとめ</h1>\n\n<p>代表的な <code>NA</
+処理毎に <code>{base}</
+の機能のみを使った一般的な書き方と、今回紹介する関数を <code>vector</code>, <code>data.frame</
+毎に一覧にまとめるとこのようになる。「 <code>NA</
+<strong>を</
+置換」は <code>NA</
+を <code>0</
+に置換する場合、「 <code>NA</
+<strong>に</
+置換」は <code>1</
+を <code>NA</
+に置換すると想定した場合の例である。</p>\n\n<h2>\n<span id=\"vector\" class=\"fragment\"></span><a href=\"#vector\"><i class=\"fa fa-link\"></i></a>vector</h2>\n\n<table>\n<thead>\n<tr>\n<th></th>\n<th>一般的なコード例</th>\n<th>紹介するコード例</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>NA を削除</td>\n<td><code>x[!is.na(x)]</code></td>\n<td><code>na.omit(x)</code></td>\n</tr>\n<tr>\n<td>NA の有無</td>\n<td><code>stopifnot(!anyNA(x))</code></td>\n<td><code>assert_that(noNA(x))</code></td>\n</tr>\n<tr>\n<td>NA を置換</td>\n<td><code>x[is.na(x)] &lt;- 0</code></td>\n<td>\n<code>replace_na(x, 0)</code>, <code>coalesce(x, 0)</code>\n</td>\n</tr>\n<tr>\n<td>NA に置換</td>\n<td><code>x[x = 1] &lt;- NA</code></td>\n<td><code>na_if(x, 1)</code></td>\n</tr>\n</tbody>\n</table>\n\n<h2>\n<span id=\"dataframe\" class=\"fragment\"></span><a href=\"#dataframe\"><i class=\"fa fa-link\"></i></a>data.frame</h2>\n\n<table>\n<thead>\n<tr>\n<th></th>\n<th>一般的なコード例</th>\n<th>紹介するコード例</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>NA を削除</td>\n<td><code>df[complete.cases(df), ]</code></td>\n<td><code>drop_na(df, everything())</code></td>\n</tr>\n<tr>\n<td>NA の有無</td>\n<td><code>stopifnot(!anyNA(df))</code></td>\n<td><code>assert(df, not_na, everything())</code></td>\n</tr>\n<tr>\n<td>NA を置換</td>\n<td><code>df[is.na(df)] &lt;- 0</code></td>\n<td><code>replace_na(df, list(y  0))</code></td>\n</tr>\n<tr>\n<td>NA に置換</td>\n<td><code>df[df = 1] &lt;- NA</code></td>\n<td><code>mutate(df, na_if(x, 1))</code></td>\n</tr>\n</tbody>\n</table>\n\n<p>また <code>data.frame</
+向けの特殊な例として <code>tidyr::fill()</
+と <code>recipes::step_meanimpute()</
+などの <code>step_*impute()</
+の関数も一部紹介する。</p>\n\n<h1>\n<span id=\"ライブラリの読み込み\" class=\"fragment\"></span><a href=\"#%E3%83%A9%E3%82%A4%E3%83%96%E3%83%A9%E3%83%AA%E3%81%AE%E8%AA%AD%E3%81%BF%E8%BE%BC%E3%81%BF\"><i class=\"fa fa-link\"></i></a>ライブラリの読み込み</h1>\n\n<p>まずは、利用するパッケージの読み込みからスタート。</p>\n\n<div class=\"code-frame\" data-lang=\"R\"><div class=\"highlight\"><pre><span class=\"n\">library</span><span class=\"p\">(</span><span class=\"n\">dplyr</span><span class=\"p\">)</span><span class=\"w\">\n</span><span class=\"n\">library</span><span class=\"p\">(</span><span class=\"n\">tidyr</span><span class=\"p\">)</span><span class=\"w\">\n</span><span class=\"n\">library</span><span class=\"p\">(</span><span class=\"n\">recipes</span><span class=\"p\">)</span><span class=\"w\">\n</span><span class=\"n\">library</span><span class=\"p\">(</span><span class=\"n\">assertr</span><span class=\"p\">)</span><span class=\"w\">\n</span><span class=\"n\">library</span><span class=\"p\">(</span><span class=\"n\">assertthat</span><span class=\"p\">)</span><span class=\"w\">\n</span></pre></div></div>\n\n<h1>\n<span id=\"na-には型がある\" class=\"fragment\"></span><a href=\"#na-%E3%81%AB%E3%81%AF%E5%9E%8B%E3%81%8C%E3%81%82%E3%82%8B\"><i class=\"fa fa-link\"></i></a>NA には型がある</h1>\n\n<p>具体的な内容に入る前に <code>NA</
+の型について確認しておきたい。自分自身、よく理解せずに過去にハマった経験があるからだ。</p>\n\n<p><code>NA</
+には型があるのだが、単に <code>NA</
+とした場合には <code>logical</
+型である。例えば <code>character</
+型の <code>NA</
+が欲しい場合には <code>NA_character_</
+とする必要がある。この辺りのことは <code>?NA</
+を見るか、日本語では <a href=\"https://qiita.com/fujit33/items/5950889b983f93250998\" id=\"reference-60c51a0748916d196f7e\">こちら</
+の記事が詳しい。</p>\n\n<p><code>raw</
+型を除く 5 つの <code>vector types</
+でこれらの型付きの <code>NA</
+が用意されている。</p>\n\n<div class=\"code-frame\" data-lang=\"R\"><div class=\"highlight\"><pre><span class=\"n\">purrr</span><span class=\"o\">::</span><span class=\"n\">map_lgl</span><span class=\"p\">(</span><span class=\"nf\">c</span><span class=\"p\">(</span><span class=\"kc\">NA</span><span class=\"p\">,</span><span class=\"w\"
+</span><span class=\"kc\">NA_integer_</span><span class=\"p\">,</span><span class=\"w\"
+</span><span class=\"kc\">NA_real_</span><span class=\"p\">,</span><span class=\"w\"
+</span><span class=\"kc\">NA_character_</span><span class=\"p\">,</span><span class=\"w\"
+</span><span class=\"kc\">NA_complex_</span><span class=\"p\">),</span><span class=\"w\"
+</span><span class=\"n\">is.na</span><span class=\"p\">)</span><span class=\"w\">\n</span></pre></div></div>\n\n<div class=\"code-frame\" data-lang=\"text\"><div class=\"highlight\"><pre>[1] TRUE TRUE TRUE TRUE TRUE\n</pre></div></div>\n\n<p>当然、こうしたチェックはすべて <code>TRUE</
+になる。</p>\n\n<div class=\"code-frame\" data-lang=\"R\"><div class=\"highlight\"><pre><span class=\"nf\">is.logical</span><span class=\"p\">(</span><span class=\"kc\">NA</span><span class=\"p\">)</span><span class=\"w\">\n</span><span class=\"nf\">is.numeric</span><span class=\"p\">(</span><span class=\"kc\">NA_real_</span><span class=\"p\">)</span><span class=\"w\">\n</span><span class=\"nf\">is.integer</span><span class=\"p\">(</span><span class=\"kc\">NA_integer_</span><span class=\"p\">)</span><span class=\"w\">\n</span><span class=\"nf\">is.character</span><span class=\"p\">(</span><span class=\"kc\">NA_character_</span><span class=\"p\">)</span><span class=\"w\">\n</span><span class=\"nf\">is.complex</span><span class=\"p\">(</span><span class=\"kc\">NA_complex_</span><span class=\"p\">)</span><span class=\"w\">\n</span></pre></div></div>\n\n<div class=\"code-frame\" data-lang=\"text\"><div class=\"highlight\"><pre>[1] TRUE\n\n[1] TRUE\n\n[1] TRUE\n\n[1] TRUE\n\n[1] TRUE\n</pre></div></div>\n\n<p>この「 <code>NA</
+の型」が問題になる例として、 <code>dplyr::if_else()</
+や <code>dplyr::case_when()</
+など <strong>関数の返り値の型が同じかどうかを厳密にチェックするタイプの関数</
+を利用する場合がある。</p>\n\n<p>例えば、この例は <code>base::ifelse()</
+では意図した通りの結果になるが <code>dplyr::if_else()</
+ではエラーになる。</p>\n\n<p><code>base::ifelse()</
+の場合、</p>\n\n<div class=\"code-frame\" data-lang=\"R\"><div class=\"highlight\"><pre><span class=\"n\">x</span><span class=\"w\"
+</span><span class=\"o\">&lt;-</span><span class=\"w\"
+</span><span class=\"nf\">c</span><span class=\"p\">(</span><span class=\"m\">3</span><span class=\"p\">,</span><span class=\"w\"
+</span><span class=\"m\">2</span><span class=\"p\">,</span><span class=\"w\"
+</span><span class=\"m\">1</span><span class=\"p\">,</span><span class=\"w\"
+</span><span class=\"m\">0</span><span class=\"p\">,</span><span class=\"w\"
+</span><span class=\"m\">-1</span><span class=\"p\">,</span><span class=\"w\"
+</span><span class=\"m\">-2</span><span class=\"p\">,</span><span class=\"w\"
+</span><span class=\"m\">-3</span><span class=\"p\">)</span><span class=\"w\">\n</span><span class=\"n\">ifelse</span><span class=\"p\">(</span><span class=\"n\">x</span><span class=\"w\"
+</span><span class=\"o\">&gt;</span><span class=\"w\"
+</span><span class=\"m\">0</span><span class=\"p\">,</span><span class=\"w\"
+</span><span class=\"s2\">\"positive\"</span><span class=\"p\">,</span><span class=\"w\"
+</span><span class=\"kc\">NA</span><span class=\"p\">)</span><span class=\"w\">\n</span></pre></div></div>\n\n<div class=\"code-frame\" data-lang=\"text\"><div class=\"highlight\"><pre>[1] \"positive\" \"positive\" \"positive\" NA         NA         NA         NA\n</pre></div></div>\n\n<p><code>dplyr::if_else()</
+の場合、</p>\n\n<div class=\"code-frame\" data-lang=\"R\"><div class=\"highlight\"><pre><span class=\"n\">dplyr</span><span class=\"o\">::</span><span class=\"n\">if_else</span><span class=\"p\">(</span><span class=\"n\">x</span><span class=\"w\"
+</span><span class=\"o\">&gt;</span><span class=\"w\"
+</span><span class=\"m\">0</span><span class=\"p\">,</span><span class=\"w\"
+</span><span class=\"s2\">\"positive\"</span><span class=\"p\">,</span><span class=\"w\"
+</span><span class=\"kc\">NA</span><span class=\"p\">)</span><span class=\"w\">\n</span></pre></div></div>\n\n<div class=\"code-frame\" data-lang=\"text\"><div class=\"highlight\"><pre>Error: `false` must be a character vector, not a logical vector\nCall `rlang::last_error()` to see a backtrace\n</pre></div></div>\n\n<p>これは <code>dplyr::if_else()</
+が <code>TRUE/FALSE</
+の評価結果として、同じ型であることを求めるからだ。この場合には、 <code>NA_character_</
+を使って明示的に <code>character</
+型の欠損値であることを示す必要がある。</p>\n\n<div class=\"code-frame\" data-lang=\"R\"><div class=\"highlight\"><pre><span class=\"n\">dplyr</span><span class=\"o\">::</span><span class=\"n\">if_else</span><span class=\"p\">(</span><span class=\"n\">x</span><span class=\"w\"
+</span><span class=\"o\">&gt;</span><span class=\"w\"
+</span><span class=\"m\">0</span><span class=\"p\">,</span><span class=\"w\"
+</span><span class=\"s2\">\"positive\"</span><span class=\"p\">,</span><span class=\"w\"
+</span><span class=\"kc\">NA_character_</span><span class=\"p\">)</span><span class=\"w\">\n</span></pre></div></div>\n\n<div class=\"code-frame\" data-lang=\"text\"><div class=\"highlight\"><pre>[1] \"positive\" \"positive\" \"positive\" NA         NA         NA         NA\n</pre></div></div>\n\n<p>自らがコードの中で <code>NA</
+を設定する場合には、必ず型を明示したほうがより安全になるだろう。(そのお陰で <code>base::ifelse()</
+よりも <code>dplyr::if_else()</
+のほうが若干高速らしい)</p>\n\n<h1>\n<span id=\"利用するデータ\" class=\"fragment\"></span><a href=\"#%E5%88%A9%E7%94%A8%E3%81%99%E3%82%8B%E3%83%87%E3%83%BC%E3%82%BF\"><i class=\"fa fa-link\"></i></a>利用するデータ</h1>\n\n<p>ここからは <code>vector</code>, <code>data.frame</
+ともにできるだけシンプルなデータをつかって、具体的な <code>NA</
+処理を見ていく。</p>\n\n<h2>\n<span id=\"vector-1\" class=\"fragment\"></span><a href=\"#vector-1\"><i class=\"fa fa-link\"></i></a>vector</h2>\n\n<div class=\"code-frame\" data-lang=\"R\"><div class=\"highlight\"><pre><span class=\"n\">x</span><span class=\"w\"
+</span><span class=\"o\">&lt;-</span><span class=\"w\"
+</span><span class=\"nf\">c</span><span class=\"p\">(</span><span class=\"m\">1</span><span class=\"p\">,</span><span class=\"w\"
+</span><span class=\"m\">2</span><span class=\"p\">,</span><span class=\"w\"
+</span><span class=\"m\">3</span><span class=\"p\">,</span><span class=\"w\"
+</span><span class=\"kc\">NA</span><span class=\"p\">,</span><span class=\"w\"
+</span><span class=\"m\">5</span><span class=\"p\">)</span><span class=\"w\">\n</span><span class=\"n\">x</span><span class=\"w\">\n</span></pre></div></div>\n\n<div class=\"code-frame\" data-lang=\"text\"><div class=\"highlight\"><pre>[1]  1  2  3 NA  5\n</pre></div></div>\n\n<h2>\n<span id=\"dataframe-1\" class=\"fragment\"></span><a href=\"#dataframe-1\"><i class=\"fa fa-link\"></i></a>data.frame</h2>\n\n<div class=\"code-frame\" data-lang=\"R\"><div class=\"highlight\"><pre><span class=\"n\">df</span><span class=\"w\"
+</span><span class=\"o\">&lt;-</span><span class=\"w\"
+</span><span class=\"n\">data.frame</span><span class=\"p\">(</span><span class=\"w\">\n  </span><span class=\"n\">x</span><span class=\"w\"
+</span><span class=\"o\">=</span><span class=\"w\"
+</span><span class=\"nf\">c</span><span class=\"p\">(</span><span class=\"m\">1</span><span class=\"p\">,</span><span class=\"w\"
+</span><span class=\"m\">2</span><span class=\"p\">,</span><span class=\"w\"
+</span><span class=\"m\">3</span><span class=\"p\">),</span><span class=\"w\">\n  </span><span class=\"n\">y</span><span class=\"w\"
+</span><span class=\"o\">=</span><span class=\"w\"
+</span><span class=\"nf\">c</span><span class=\"p\">(</span><span class=\"m\">1</span><span class=\"p\">,</span><span class=\"w\"
+</span><span class=\"kc\">NA</span><span class=\"p\">,</span><span class=\"w\"
+</span><span class=\"m\">3</span><span class=\"p\">),</span><span class=\"w\">\n  </span><span class=\"n\">z</span><span class=\"w\"
+</span><span class=\"o\">=</span><span class=\"w\"
+</span><span class=\"nf\">c</span><span class=\"p\">(</span><span class=\"m\">1</span><span class=\"p\">,</span><span class=\"w\"
+</span><span class=\"kc\">NA</span><span class=\"p\">,</span><span class=\"w\"
+</span><span class=\"kc\">NA</span><span class=\"p\">)</span><span class=\"w\">\n</span><span class=\"p\">)</span><span class=\"w\">\n</span><span class=\"n\">df</span><span class=\"w\">\n</span></pre></div></div>\n\n<table>\n<thead>\n<tr>\n<th>x</th>\n<th>y</th>\n<th>z</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>1</td>\n<td>1</td>\n<td>1</td>\n</tr>\n<tr>\n<td>2</td>\n<td>nil</td>\n<td>nil</td>\n</tr>\n<tr>\n<td>3</td>\n<td>3</td>\n<td>nil</td>\n</tr>\n</tbody>\n</table>\n\n<p>※この記事は、emacs の org-mode を使って執筆しているが、org-mode では <code>NA</
+が <code>nil</
+と記載されてしまうので、適宜読み替えていただきたい。</p>\n\n<h1>\n<span id=\"na-を削除する\" class=\"fragment\"></span><a href=\"#na-%E3%82%92%E5%89%8A%E9%99%A4%E3%81%99%E3%82%8B\"><i class=\"fa fa-link\"></i></a>NA を削除する</h1>\n\n<h2>\n<span id=\"vector-2\" class=\"fragment\"></span><a href=\"#vector-2\"><i class=\"fa fa-link\"></i></a>vector</h2>\n\n<ul>\n<
+ <code>stata::na.omit(object, ...)</
+を使う</li>\n<
+ モダンなパッケージと言っておきながら <code>{stats}</
+からの関数だが、十分にシンプルかつ明確</li>\n<
+ 取り除かれたインデックスを <code>attribute</
+として保持してくれる</li>\n</ul>\n\n<div class=\"code-frame\" data-lang=\"R\"><div class=\"highlight\"><pre><span class=\"n\">x</span><span class=\"w\"
+</span><span class=\"o\">&lt;-</span><span class=\"w\"
+</span><span class=\"nf\">c</span><span class=\"p\">(</span><span class=\"m\">1</span><span class=\"p\">,</span><span class=\"w\"
+</span><span class=\"m\">2</span><span class=\"p\">,</span><span class=\"w\"
+</span><span class=\"m\">3</span><span class=\"p\">,</span><span class=\"w\"
+</span><span class=\"kc\">NA</span><span class=\"p\">,</span><span class=\"w\"
+</span><span class=\"m\">5</span><span class=\"p\">)</span><span class=\"w\">\n</span><span class=\"n\">na.omit</span><span class=\"p\">(</span><span class=\"n\">x</span><span class=\"p\">)</span><span class=\"w\">\n</span></pre></div></div>\n\n<div class=\"code-frame\" data-lang=\"text\"><div class=\"highlight\"><pre>[1] 1 2 3 5\nattr(,\"na.action\")\n[1] 4\nattr(,\"class\")\n[1] \"omit\"\n</pre></div></div>\n\n<h2>\n<span id=\"dataframe-2\" class=\"fragment\"></span><a href=\"#dataframe-2\"><i class=\"fa fa-link\"></i></a>data.frame</h2>\n\n<ul>\n<
+ <code>tidyr::drop_na(data, ...)</
+を使う</li>\n<
+ 特定の列の <code>NA</
+を省いた <code>data.frame</
+を返してくれる</li>\n<
+ 列選択には <code>dplyr::select()</
+同様の方法が利用できる</li>\n</ul>\n\n<div class=\"code-frame\" data-lang=\"R\"><div class=\"highlight\"><pre><span class=\"n\">df</span><span class=\"w\"
+</span><span class=\"o\">%&gt;%</span><span class=\"w\">\n  </span><span class=\"n\">drop_na</span><span class=\"p\">(</span><span class=\"n\">y</span><span class=\"p\">)</span><span class=\"w\"
+</span><span class=\"c1\"># y 列の NA を含む行を削除</span><span class=\"w\">\n</span></pre></div></div>\n\n<table>\n<thead>\n<tr>\n<th>x</th>\n<th>y</th>\n<th>z</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>1</td>\n<td>1</td>\n<td>1</td>\n</tr>\n<tr>\n<td>3</td>\n<td>3</td>\n<td>nil</td>\n</tr>\n</tbody>\n</table>\n\n<ul>\n<
+ 全ての列から <code>NA</
+を含む行を削除したい場合は <code>tidyselect::everything()</
+を使う</li>\n<
+ <code>filter(df, complete.cases(df))</
+と同じだが、個人的にはより意図が明確になると思う</li>\n</ul>\n\n<div class=\"code-frame\" data-lang=\"R\"><div class=\"highlight\"><pre><span class=\"n\">df</span><span class=\"w\"
+</span><span class=\"o\">%&gt;%</span><span class=\"w\">\n  </span><span class=\"n\">drop_na</span><span class=\"p\">(</span><span class=\"n\">everything</span><span class=\"p\">())</span><span class=\"w\">\n</span></pre></div></div>\n\n<table>\n<thead>\n<tr>\n<th>x</th>\n<th>y</th>\n<th>z</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>1</td>\n<td>1</td>\n<td>1</td>\n</tr>\n</tbody>\n</table>\n\n<h1>\n<span id=\"na-の有無を確認する\" class=\"fragment\"></span><a href=\"#na-%E3%81%AE%E6%9C%89%E7%84%A1%E3%82%92%E7%A2%BA%E8%AA%8D%E3%81%99%E3%82%8B\"><i class=\"fa fa-link\"></i></a>NA の有無を確認する</h1>\n\n<p><code>NA</
+が (ひとつでも) 含まれていないか確認したいケースというのは <code>NA</
+が含まれていた場合を不正として扱いたい場合が多いだろう。そうした観点で、ここでは関数の入力値のチェックや、一連のデータ処理の間でアサーションを行う場合の例を紹介する。</p>\n\n<h2>\n<span id=\"vector-3\" class=\"fragment\"></span><a href=\"#vector-3\"><i class=\"fa fa-link\"></i></a>vector</h2>\n\n<ul>\n<
+ <code>assertthat::noNA(x)</
+を使う</li>\n<
+ <a href=\"https://github.com/hadley/assertthat\" rel=\"nofollow noopener\" target=\"_blank\"
+<code>{assertthat}</
+</a>は <code>base::stopifnot()</
+よりもエラー時により直感的なわかりやすいメッセージを出してくれる</li>\n<
+ <code>noNA()</
+は、ひとつでも <code>NA</
+が含まれていた場合 <code>FALSE</
+を返す</li>\n</ul>\n\n<div class=\"code-frame\" data-lang=\"R\"><div class=\"highlight\"><pre><span class=\"n\">x</span><span class=\"w\"
+</span><span class=\"o\">&lt;-</span><span class=\"w\"
+</span><span class=\"nf\">c</span><span class=\"p\">(</span><span class=\"m\">1</span><span class=\"p\">,</span><span class=\"w\"
+</span><span class=\"m\">2</span><span class=\"p\">,</span><span class=\"w\"
+</span><span class=\"kc\">NA</span><span class=\"p\">,</span><span class=\"w\"
+</span><span class=\"m\">4</span><span class=\"p\">)</span><span class=\"w\">\n</span><span class=\"n\">assert_that</span><span class=\"p\">(</span><span class=\"n\">noNA</span><span class=\"p\">(</span><span class=\"n\">x</span><span class=\"p\">))</span><span class=\"w\">\n</span></pre></div></div>\n\n<div class=\"code-frame\" data-lang=\"text\"><div class=\"highlight\"><pre>Error: x contains 1 missing values\n</pre></div></div>\n\n<ul>\n<
+ <code>{base}</
+のみだと以下のように書くことができるが <code>{assertthat}</
+の方がエラーが明確でわかりやすい。</li>\n</ul>\n\n<div class=\"code-frame\" data-lang=\"R\"><div class=\"highlight\"><pre><span class=\"n\">stopifnot</span><span class=\"p\">(</span><span class=\"o\">!</span><span class=\"nf\">anyNA</span><span class=\"p\">(</span><span class=\"n\">x</span><span class=\"p\">))</span><span class=\"w\">\n</span></pre></div></div>\n\n<div class=\"code-frame\" data-lang=\"text\"><div class=\"highlight\"><pre>Error: !anyNA(x) is not TRUE\n</pre></div></div>\n\n<h2>\n<span id=\"dataframe-3\" class=\"fragment\"></span><a href=\"#dataframe-3\"><i class=\"fa fa-link\"></i></a>data.frame</h2>\n\n<ul>\n<
+ <code>assertr::assert()</
+と <code>assertr::not_na()</
+を組み合わせる</li>\n<
+ <a href=\"https://github.com/ropensci/assertr\" rel=\"nofollow noopener\" target=\"_blank\"
+<code>{assertr}</
+</
+は <code>data.frame</
+をパイプ内でアサーションするためのパッケージ</li>\n<
+ エラーの場合に、違反箇所を明示してくれる</li>\n</ul>\n\n<div class=\"code-frame\" data-lang=\"R\"><div class=\"highlight\"><pre><span class=\"n\">df</span><span class=\"w\"
+</span><span class=\"o\">%&gt;%</span><span class=\"w\">\n </span><span class=\"c1\"># dplyr 等のなんらかの処理 %&gt;%</span><span class=\"w\">\n </span><span class=\"n\">assert</span><span class=\"p\">(</span><span class=\"n\">not_na</span><span class=\"p\">,</span><span class=\"w\"
+</span><span class=\"n\">y</span><span class=\"p\">)</span><span class=\"w\"
+</span><span class=\"c1\"># 結果が意図通りかを確認するためのアサーションをパイプで挟む</span><span class=\"w\">\n</span></pre></div></div>\n\n<div class=\"code-frame\" data-lang=\"text\"><div class=\"highlight\"><pre>Column 'y' violates assertion 'not_na' 1 time\n    verb redux_fn predicate column index value\n1 assert       NA    not_na      y     2    NA\n\nError: assertr stopped execution\n</pre></div></div>\n\n<ul>\n<
+ 列選択には <code>{tidyselect}</
+の関数が利用できるので、全ての列に対して NA チェックをしたい場合は <code>everything()</
+とすれば良い</li>\n</ul>\n\n<div class=\"code-frame\" data-lang=\"R\"><div class=\"highlight\"><pre><span class=\"n\">df</span><span class=\"w\"
+</span><span class=\"o\">%&gt;%</span><span class=\"w\"
+</span><span class=\"n\">assert</span><span class=\"p\">(</span><span class=\"n\">not_na</span><span class=\"p\">,</span><span class=\"w\"
+</span><span class=\"n\">everything</span><span class=\"p\">())</span><span class=\"w\">\n</span></pre></div></div>\n\n<div class=\"code-frame\" data-lang=\"text\"><div class=\"highlight\"><pre>Column 'y' violates assertion 'not_na' 1 time\n    verb redux_fn predicate column index value\n1 assert       NA    not_na      y     2    NA\n\nColumn 'z' violates assertion 'not_na' 2 times\n    verb redux_fn predicate column index value\n1 assert       NA    not_na      z     2    NA\n2 assert       NA    not_na      z     3    NA\n\nError: assertr stopped execution\n</pre></div></div>\n\n<h1>\n<span id=\"na-を置換する\" class=\"fragment\"></span><a href=\"#na-%E3%82%92%E7%BD%AE%E6%8F%9B%E3%81%99%E3%82%8B\"><i class=\"fa fa-link\"></i></a>NA を置換する</h1>\n\n<h2>\n<span id=\"vector-4\" class=\"fragment\"></span><a href=\"#vector-4\"><i class=\"fa fa-link\"></i></a>vector</h2>\n\n<ul>\n<
+ <code>tidyr::replace_na(data, replace)</
+を使う</li>\n</ul>\n\n<div class=\"code-frame\" data-lang=\"R\"><div class=\"highlight\"><pre><span class=\"n\">replace_na</span><span class=\"p\">(</span><span class=\"n\">x</span><span class=\"p\">,</span><span class=\"w\"
+</span><span class=\"m\">0</span><span class=\"p\">)</span><span class=\"w\">\n</span></pre></div></div>\n\n<div class=\"code-frame\" data-lang=\"text\"><div class=\"highlight\"><pre>[1] 1 2 3 0 5\n</pre></div></div>\n\n<ul>\n<
+ 置換後の値が 1 つでない場合、 <code>dplyr::coalesce(...)</
+を使う</li>\n<
+ 複数のベクトルから、最初の <code>NA</
+でない値を返してくれる</li>\n<
+ 複数のベクトルの指定した順に <code>NA</
+でない値で合体してくれるイメージ</li>\n<
+ 全ての引数は、長さ 1 もしくは、第 1 引数と同じ長さである必要がある</li>\n</ul>\n\n<div class=\"code-frame\" data-lang=\"R\"><div class=\"highlight\"><pre><span class=\"n\">y</span><span class=\"w\"
+</span><span class=\"o\">&lt;-</span><span class=\"w\"
+</span><span class=\"nf\">c</span><span class=\"p\">(</span><span class=\"m\">1</span><span class=\"p\">,</span><span class=\"w\"
+</span><span class=\"m\">2</span><span class=\"p\">,</span><span class=\"w\"
+</span><span class=\"m\">3</span><span class=\"p\">,</span><span class=\"w\"
+</span><span class=\"m\">4</span><span class=\"p\">)</span><span class=\"w\">\n</span><span class=\"n\">coalesce</span><span class=\"p\">(</span><span class=\"n\">x</span><span class=\"p\">,</span><span class=\"w\"
+</span><span class=\"n\">y</span><span class=\"p\">)</span><span class=\"w\">\n</span></pre></div></div>\n\n<div class=\"code-frame\" data-lang=\"text\"><div class=\"highlight\"><pre>Error: Argument 2 must be length 5 (length of `x`) or one, not 4\nCall `rlang::last_error()` to see a backtrace\n</pre></div></div>\n\n<h2>\n<span id=\"dataframe-4\" class=\"fragment\"></span><a href=\"#dataframe-4\"><i class=\"fa fa-link\"></i></a>data.frame</h2>\n\n<ul>\n<
+ <code>data.frame</
+の場合も <code>tidyr::replace_na()</
+を使う</li>\n<
+ ただし、置換後の値を列ごとに <code>list</
+で指定する</li>\n</ul>\n\n<div class=\"code-frame\" data-lang=\"R\"><div class=\"highlight\"><pre><span class=\"n\">replace_na</span><span class=\"p\">(</span><span class=\"n\">df</span><span class=\"p\">,</span><span class=\"w\"
+</span><span class=\"n\">replace</span><span class=\"w\"
+</span><span class=\"o\">=</span><span class=\"w\"
+</span><span class=\"nf\">list</span><span class=\"p\">(</span><span class=\"n\">y</span><span class=\"w\"
+</span><span class=\"o\">=</span><span class=\"w\"
+</span><span class=\"m\">0</span><span class=\"p\">,</span><span class=\"w\"
+</span><span class=\"n\">z</span><span class=\"w\"
+</span><span class=\"o\">=</span><span class=\"w\"
+</span><span class=\"m\">2</span><span class=\"p\">))</span><span class=\"w\">\n</span></pre></div></div>\n\n<table>\n<thead>\n<tr>\n<th>x</th>\n<th>y</th>\n<th>z</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>1</td>\n<td>1</td>\n<td>1</td>\n</tr>\n<tr>\n<td>2</td>\n<td>0</td>\n<td>2</td>\n</tr>\n<tr>\n<td>3</td>\n<td>3</td>\n<td>2</td>\n</tr>\n</tbody>\n</table>\n\n<ul>\n<
+ 直前の <code>NA</
+でない値で置換したい場合 <code>tidyr::fill()</
+を使う</li>\n<
+ 時系列データの <code>NA</
+置換でよく利用する (当日が <code>NA</
+なら前日の値で埋める等)</li>\n<
+ <code>.direction = \"down\"/\"up\"</
+で下方向に置換するか、上方向に置換するかを選ぶことができる</li>\n</ul>\n\n<div class=\"code-frame\" data-lang=\"R\"><div class=\"highlight\"><pre><span class=\"n\">fill</span><span class=\"p\">(</span><span class=\"n\">df</span><span class=\"p\">,</span><span class=\"w\"
+</span><span class=\"n\">y</span><span class=\"p\">,</span><span class=\"w\"
+</span><span class=\"n\">.direction</span><span class=\"w\"
+</span><span class=\"o\">=</span><span class=\"w\"
+</span><span class=\"s2\">\"down\"</span><span class=\"p\">)</span><span class=\"w\">\n</span></pre></div></div>\n\n<table>\n<thead>\n<tr>\n<th>x</th>\n<th>y</th>\n<th>z</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>1</td>\n<td>1</td>\n<td>1</td>\n</tr>\n<tr>\n<td>2</td>\n<td>1</td>\n<td>nil</td>\n</tr>\n<tr>\n<td>3</td>\n<td>3</td>\n<td>nil</td>\n</tr>\n</tbody>\n</table>\n\n<ul>\n<
+ 特定の値ではなく、より柔軟に <code>NA</
+を置換したい場合は <a href=\"https://github.com/tidymodels/recipes\" rel=\"nofollow noopener\" target=\"_blank\"
+<code>{recipes}</
+</a>パッケージの <code>step_*impute()</
+関数群を使う</li>\n<
+ 例えば、平均値で置換したい場合は <code>step_meanimpute()</code>\n</li>\n<
+ <code>{recipes}</
+や <code>{tidymodels}</
+パッケージ群の使い方は、<a href=\"https://dropout009.hatenablog.com/entry/2019/01/06/124932\" rel=\"nofollow noopener\" target=\"_blank\">こちら</a>の記事がわかりやすい</li>\n</ul>\n\n<div class=\"code-frame\" data-lang=\"R\"><div class=\"highlight\"><pre><span class=\"n\">df</span><span class=\"w\"
+</span><span class=\"o\">%&gt;%</span><span class=\"w\">\n  </span><span class=\"n\">recipe</span><span class=\"p\">()</span><span class=\"w\"
+</span><span class=\"o\">%&gt;%</span><span class=\"w\">\n  </span><span class=\"n\">step_meanimpute</span><span class=\"p\">(</span><span class=\"n\">y</span><span class=\"p\">,</span><span class=\"w\"
+</span><span class=\"n\">z</span><span class=\"p\">)</span><span class=\"w\"
+</span><span class=\"o\">%&gt;%</span><span class=\"w\"
+</span><span class=\"c1\"># step_*() で前処理をパイプで繋いでいく</span><span class=\"w\">\n  </span><span class=\"n\">prep</span><span class=\"p\">()</span><span class=\"w\"
+</span><span class=\"o\">%&gt;%</span><span class=\"w\"
+               </span><span class=\"c1\"># 実際に前処理を実行</span><span class=\"w\">\n  </span><span class=\"n\">juice</span><span class=\"p\">()</span><span class=\"w\"
+                  </span><span class=\"c1\"># 前処理結果を data.frame として取り出す</span><span class=\"w\">\n</span></pre></div></div>\n\n<table>\n<thead>\n<tr>\n<th>x</th>\n<th>y</th>\n<th>z</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>1</td>\n<td>1</td>\n<td>1</td>\n</tr>\n<tr>\n<td>2</td>\n<td>2</td>\n<td>1</td>\n</tr>\n<tr>\n<td>3</td>\n<td>3</td>\n<td>1</td>\n</tr>\n</tbody>\n</table>\n\n<ul>\n<
+ <code>step_*impute()</
+系は現状 7 つの関数が用意されている</li>\n<
+ 機能は名前からなんとなく想像はできると思うが、詳細はマニュアル参照</li>\n</ul>\n\n<div class=\"code-frame\" data-lang=\"R\"><div class=\"highlight\"><pre><span class=\"n\">pacman</span><span class=\"o\">::</span><span class=\"n\">p_funs</span><span class=\"p\">(</span><span class=\"n\">recipes</span><span class=\"p\">)</span><span class=\"w\"
+</span><span class=\"o\">%&gt;%</span><span class=\"w\">\n  </span><span class=\"n\">stringr</span><span class=\"o\">::</span><span class=\"n\">str_subset</span><span class=\"p\">(</span><span class=\"s2\">\"^step_.*impute$\"</span><span class=\"p\">)</span><span class=\"w\">\n</span></pre></div></div>\n\n<div class=\"code-frame\" data-lang=\"text\"><div class=\"highlight\"><pre>[1] \"step_bagimpute\"    \"step_knnimpute\"    \"step_lowerimpute\" \n[4] \"step_meanimpute\"   \"step_medianimpute\" \"step_modeimpute\"  \n[7] \"step_rollimpute\"\n</pre></div></div>\n\n<h1>\n<span id=\"na-に置換する\" class=\"fragment\"></span><a href=\"#na-%E3%81%AB%E7%BD%AE%E6%8F%9B%E3%81%99%E3%82%8B\"><i class=\"fa fa-link\"></i></a>NA に置換する</h1>\n\n<h2>\n<span id=\"vector-5\" class=\"fragment\"></span><a href=\"#vector-5\"><i class=\"fa fa-link\"></i></a>vector</h2>\n\n<ul>\n<
+ <code>dplyr::na_if(x, y)</
+を使う</li>\n<
+ 特定の値を <code>NA</
+に置き換える</li>\n<
+ 不正な値を <code>NA</
+にして、除外する際に使う</li>\n<
+ <code>x</code>: 対象となるベクトル</li>\n<
+ <code>y</code>: <code>NA</
+に置換するベクトル</li>\n</ul>\n\n<div class=\"code-frame\" data-lang=\"R\"><div class=\"highlight\"><pre><span class=\"n\">na_if</span><span class=\"p\">(</span><span class=\"n\">x</span><span class=\"p\">,</span><span class=\"w\"
+</span><span class=\"m\">1</span><span class=\"p\">)</span><span class=\"w\">\n</span></pre></div></div>\n\n<div class=\"code-frame\" data-lang=\"text\"><div class=\"highlight\"><pre>[1] NA  2 NA  4\n</pre></div></div>\n\n<h2>\n<span id=\"dataframe-5\" class=\"fragment\"></span><a href=\"#dataframe-5\"><i class=\"fa fa-link\"></i></a>data.frame</h2>\n\n<ul>\n<
+ <code>data.frame</
+の場合も <code>dplyr::na_if(x, y)</
+を <code>mutate()</
+内で使う</li>\n</ul>\n\n<div class=\"code-frame\" data-lang=\"R\"><div class=\"highlight\"><pre><span class=\"n\">df</span><span class=\"w\"
+</span><span class=\"o\">%&gt;%</span><span class=\"w\">\n  </span><span class=\"n\">mutate</span><span class=\"p\">(</span><span class=\"n\">b</span><span class=\"w\"
+</span><span class=\"o\">=</span><span class=\"w\"
+</span><span class=\"n\">na_if</span><span class=\"p\">(</span><span class=\"n\">y</span><span class=\"p\">,</span><span class=\"w\"
+</span><span class=\"m\">1</span><span class=\"p\">))</span><span class=\"w\">\n</span></pre></div></div>\n\n<table>\n<thead>\n<tr>\n<th>x</th>\n<th>y</th>\n<th>z</th>\n<th>b</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>1</td>\n<td>1</td>\n<td>1</td>\n<td>nil</td>\n</tr>\n<tr>\n<td>2</td>\n<td>nil</td>\n<td>nil</td>\n<td>nil</td>\n</tr>\n<tr>\n<td>3</td>\n<td>3</td>\n<td>nil</td>\n<td>3</td>\n</tr>\n</tbody>\n</table>\n\n<ul>\n<
+ 複数列に適応したい場合は <code>mutate_at()</
+<code>{tidyselect}</
+を使う</li>\n</ul>\n\n<div class=\"code-frame\" data-lang=\"R\"><div class=\"highlight\"><pre><span class=\"n\">df</span><span class=\"w\"
+</span><span class=\"o\">%&gt;%</span><span class=\"w\">\n  </span><span class=\"n\">mutate_at</span><span class=\"p\">(</span><span class=\"n\">vars</span><span class=\"p\">(</span><span class=\"n\">everything</span><span class=\"p\">()),</span><span class=\"w\"
+</span><span class=\"n\">na_if</span><span class=\"p\">,</span><span class=\"w\"
+</span><span class=\"n\">y</span><span class=\"w\"
+</span><span class=\"o\">=</span><span class=\"w\"
+</span><span class=\"m\">1</span><span class=\"p\">)</span><span class=\"w\"
+</span><span class=\"c1\"># ここでの y は、na_if() の引数名</span><span class=\"w\">\n</span></pre></div></div>\n\n<table>\n<thead>\n<tr>\n<th>x</th>\n<th>y</th>\n<th>z</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>nil</td>\n<td>nil</td>\n<td>nil</td>\n</tr>\n<tr>\n<td>2</td>\n<td>nil</td>\n<td>nil</td>\n</tr>\n<tr>\n<td>3</td>\n<td>3</td>\n<td>nil</td>\n</tr>\n</tbody>\n</table>\n"
+
+[[1]]$body
+[1] "データの欠損値を表す `NA` 。その `NA` をモダンなパッケージを用いて処理する方法についてまとめる。特に `vector` と `data.frame` に対して `NA` の削除や置換方法を中心に記載していきたい。\n\n※ここで「モダン」と言っているのは、特に明確な定義があるわけではなく、最近開発されたパッケージという程度の意味である。\n\n# 方針\n\nこの記事では `{dplyr}` や `{tidyr}` などのパッケージを積極的に使って `NA` 処理をする方法を紹介する方針だ。もちろん `{base}` の機能でも基本的な `NA` 処理は可能だ。\n\n例えば `vector` から `NA` を削除する場合には、\n\n```R\nx <- c(1, 2, 3, NA, 5)\nx\nx[!is.na(x)]\n```\n\n    \n    [1]  1  2  3 NA  5\n    \n    [1] 1 2 3 5\n\n`NA` を特定の値、例えば 0 に設定したい場合には、\n\n```R\nx[is.na(x)] <- 0\nx\n```\n\n    \n    [1] 1 2 3 0 5\n\nと書くのが一般的だろう。添字に `logical vector` やインデックスを渡すこのやり方は、いかにも R っぽいコードであるし、汎用的でもある。\n\nただ、個人的にはこの記述法は好ましくない考えている。プログラミングは **「どのようにやるか (How)」ではなく、「何をやるか (What)」** という視点で書くべきだからだ。このくらいシンプルな例であれば問題ないかもしれないが、インデックスに複雑な計算が入っていたり `for` がネストされていて `i, j, k...` などと登場してくるととても読む気がなくなってしまうし、まさに How にフォーカスした書き方と言えるだろう。\n\n後者の例であれば `{tidyr}` を使って、こう書いた方が **「何をしたいか (What)」** が明確でよりわかりやすい。\n\n```R\ntidyr::replace_na(x, 0) \n```\n\n    [1] 1 2 3 0 5\n\nいつでも使いたいパッケージを使うことができる、という環境にない場合もあるだろうし、何だかんだで `{base}` での書き方も押さえておく必要がある。どちらも学ぶ必要があって大変、というのは 「R あるある」かもしれないが、将来コードを見え返す自分のためにも、少しでもわかりやすいコードを心がけるのは有益だと思う。\n\n# 紹介する関数まとめ\n\n代表的な `NA` 処理毎に `{base}` の機能のみを使った一般的な書き方と、今回紹介する関数を `vector`, `data.frame` 毎に一覧にまとめるとこのようになる。「 `NA` **を** 置換」は `NA` を `0` に置換する場合、「 `NA` **に** 置換」は `1` を `NA` に置換すると想定した場合の例である。\n\n## vector\n\n|        | 一般的なコード例       | 紹介するコード例                     |\n|------ |---------------------- |------------------------------------ |\n| NA を削除 | `x[!is.na(x)]`         | `na.omit(x)`                         |\n| NA の有無 | `stopifnot(!anyNA(x))` | `assert_that(noNA(x))`               |\n| NA を置換 | `x[is.na(x)] <- 0`     | `replace_na(x, 0)`, `coalesce(x, 0)` |\n| NA に置換 | `x[x = 1] <- NA`       | `na_if(x, 1)`                        |\n\n## data.frame\n\n|        | 一般的なコード例           | 紹介するコード例                   |\n|------ |-------------------------- |---------------------------------- |\n| NA を削除 | `df[complete.cases(df), ]` | `drop_na(df, everything())`        |\n| NA の有無 | `stopifnot(!anyNA(df))`    | `assert(df, not_na, everything())` |\n| NA を置換 | `df[is.na(df)] <- 0`       | `replace_na(df, list(y  0))`       |\n| NA に置換 | `df[df = 1] <- NA`         | `mutate(df, na_if(x, 1))`          |\n\nまた `data.frame` 向けの特殊な例として `tidyr::fill()` と `recipes::step_meanimpute()` などの `step_*impute()` の関数も一部紹介する。\n\n# ライブラリの読み込み\n\nまずは、利用するパッケージの読み込みからスタート。\n\n```R\nlibrary(dplyr)\nlibrary(tidyr)\nlibrary(recipes)\nlibrary(assertr)\nlibrary(assertthat)\n```\n\n# NA には型がある\n\n具体的な内容に入る前に `NA` の型について確認しておきたい。自分自身、よく理解せずに過去にハマった経験があるからだ。\n\n`NA` には型があるのだが、単に `NA` とした場合には `logical` 型である。例えば `character` 型の `NA` が欲しい場合には `NA_character_` とする必要がある。この辺りのことは `?NA` を見るか、日本語では [こちら](https://qiita.com/fujit33/items/5950889b983f93250998) の記事が詳しい。\n\n`raw` 型を除く 5 つの `vector types` でこれらの型付きの `NA` が用意されている。\n\n```R\npurrr::map_lgl(c(NA, NA_integer_, NA_real_, NA_character_, NA_complex_), is.na)\n```\n\n    [1] TRUE TRUE TRUE TRUE TRUE\n\n当然、こうしたチェックはすべて `TRUE` になる。\n\n```R\nis.logical(NA)\nis.numeric(NA_real_)\nis.integer(NA_integer_)\nis.character(NA_character_)\nis.complex(NA_complex_)\n```\n\n    [1] TRUE\n    \n    [1] TRUE\n    \n    [1] TRUE\n    \n    [1] TRUE\n    \n    [1] TRUE\n\nこの「 `NA` の型」が問題になる例として、 `dplyr::if_else()` や `dplyr::case_when()` など **関数の返り値の型が同じかどうかを厳密にチェックするタイプの関数** を利用する場合がある。\n\n例えば、この例は `base::ifelse()` では意図した通りの結果になるが `dplyr::if_else()` ではエラーになる。\n\n`base::ifelse()` の場合、\n\n```R\nx <- c(3, 2, 1, 0, -1, -2, -3)\nifelse(x
+0, \"positive\", NA)\n```\n\n    \n    [1] \"positive\" \"positive\" \"positive\" NA         NA         NA         NA\n\n`dplyr::if_else()` の場合、\n\n```R\ndplyr::if_else(x
+0, \"positive\", NA)\n```\n\n    Error: `false` must be a character vector, not a logical vector\n    Call `rlang::last_error()` to see a backtrace\n\nこれは `dplyr::if_else()` が `TRUE/FALSE` の評価結果として、同じ型であることを求めるからだ。この場合には、 `NA_character_` を使って明示的に `character` 型の欠損値であることを示す必要がある。\n\n```R\ndplyr::if_else(x
+0, \"positive\", NA_character_)\n```\n\n    [1] \"positive\" \"positive\" \"positive\" NA         NA         NA         NA\n\n自らがコードの中で `NA` を設定する場合には、必ず型を明示したほうがより安全になるだろう。(そのお陰で `base::ifelse()` よりも `dplyr::if_else()` のほうが若干高速らしい)\n\n# 利用するデータ\n\nここからは `vector`, `data.frame` ともにできるだけシンプルなデータをつかって、具体的な `NA` 処理を見ていく。\n\n## vector\n\n```R\nx <- c(1, 2, 3, NA, 5)\nx\n```\n\n    \n    [1]  1  2  3 NA  5\n\n## data.frame\n\n```R\ndf <- data.frame(\n  x = c(1, 2, 3),\n  y = c(1, NA, 3),\n  z = c(1, NA, NA)\n)\ndf\n```\n\n| x | y   | z   |\n|--- |--- |--- |\n| 1 | 1   | 1   |\n| 2 | nil | nil |\n| 3 | 3   | nil |\n\n※この記事は、emacs の org-mode を使って執筆しているが、org-mode では `NA` が `nil` と記載されてしまうので、適宜読み替えていただきたい。\n\n# NA を削除する\n\n## vector\n\n-   `stata::na.omit(object, ...)` を使う\n-   モダンなパッケージと言っておきながら `{stats}` からの関数だが、十分にシンプルかつ明確\n-   取り除かれたインデックスを `attribute` として保持してくれる\n\n```R\nx <- c(1, 2, 3, NA, 5)\nna.omit(x)\n```\n\n    \n    [1] 1 2 3 5\n    attr(,\"na.action\")\n    [1] 4\n    attr(,\"class\")\n    [1] \"omit\"\n\n## data.frame\n\n-   `tidyr::drop_na(data, ...)` を使う\n-   特定の列の `NA` を省いた `data.frame` を返してくれる\n-   列選択には `dplyr::select()` 同様の方法が利用できる\n\n```R\ndf %>%\n  drop_na(y) # y 列の NA を含む行を削除\n```\n\n| x | y | z   |\n|--- |--- |--- |\n| 1 | 1 | 1   |\n| 3 | 3 | nil |\n\n-   全ての列から `NA` を含む行を削除したい場合は `tidyselect::everything()` を使う\n-   `filter(df, complete.cases(df))` と同じだが、個人的にはより意図が明確になると思う\n\n```R\ndf %>%\n  drop_na(everything())\n```\n\n| x | y | z |\n|--- |--- |--- |\n| 1 | 1 | 1 |\n\n# NA の有無を確認する\n\n`NA` が (ひとつでも) 含まれていないか確認したいケースというのは `NA` が含まれていた場合を不正として扱いたい場合が多いだろう。そうした観点で、ここでは関数の入力値のチェックや、一連のデータ処理の間でアサーションを行う場合の例を紹介する。\n\n## vector\n\n-   `assertthat::noNA(x)` を使う\n-   [ `{assertthat}` ](https://github.com/hadley/assertthat)は `base::stopifnot()` よりもエラー時により直感的なわかりやすいメッセージを出してくれる\n-   `noNA()` は、ひとつでも `NA` が含まれていた場合 `FALSE` を返す\n\n```R\nx <- c(1, 2, NA, 4)\nassert_that(noNA(x))\n```\n\n    \n    Error: x contains 1 missing values\n\n-   `{base}` のみだと以下のように書くことができるが `{assertthat}` の方がエラーが明確でわかりやすい。\n\n```R\nstopifnot(!anyNA(x))\n```\n\n    Error: !anyNA(x) is not TRUE\n\n## data.frame\n\n-   `assertr::assert()` と `assertr::not_na()` を組み合わせる\n-   [ `{assertr}` ](https://github.com/ropensci/assertr) は `data.frame` をパイプ内でアサーションするためのパッケージ\n-   エラーの場合に、違反箇所を明示してくれる\n\n```R\ndf %>%\n # dplyr 等のなんらかの処理 %>%\n assert(not_na, y) # 結果が意図通りかを確認するためのアサーションをパイプで挟む\n```\n\n    \n    Column 'y' violates assertion 'not_na' 1 time\n        verb redux_fn predicate column index value\n    1 assert       NA    not_na      y     2    NA\n    \n    Error: assertr stopped execution\n\n-   列選択には `{tidyselect}` の関数が利用できるので、全ての列に対して NA チェックをしたい場合は `everything()` とすれば良い\n\n```R\ndf %>% assert(not_na, everything())\n```\n\n    Column 'y' violates assertion 'not_na' 1 time\n        verb redux_fn predicate column index value\n    1 assert       NA    not_na      y     2    NA\n    \n    Column 'z' violates assertion 'not_na' 2 times\n        verb redux_fn predicate column index value\n    1 assert       NA    not_na      z     2    NA\n    2 assert       NA    not_na      z     3    NA\n    \n    Error: assertr stopped execution\n\n# NA を置換する\n\n## vector\n\n-   `tidyr::replace_na(data, replace)` を使う\n\n```R\nreplace_na(x, 0)\n```\n\n    [1] 1 2 3 0 5\n\n-   置換後の値が 1 つでない場合、 `dplyr::coalesce(...)` を使う\n-   複数のベクトルから、最初の `NA` でない値を返してくれる\n-   複数のベクトルの指定した順に `NA` でない値で合体してくれるイメージ\n-   全ての引数は、長さ 1 もしくは、第 1 引数と同じ長さである必要がある\n\n```R\ny <- c(1, 2, 3, 4)\ncoalesce(x, y)\n```\n\n    \n    Error: Argument 2 must be length 5 (length of `x`) or one, not 4\n    Call `rlang::last_error()` to see a backtrace\n\n## data.frame\n\n-   `data.frame` の場合も `tidyr::replace_na()` を使う\n-   ただし、置換後の値を列ごとに `list` で指定する\n\n```R\nreplace_na(df, replace = list(y = 0, z = 2))\n```\n\n| x | y | z |\n|--- |--- |--- |\n| 1 | 1 | 1 |\n| 2 | 0 | 2 |\n| 3 | 3 | 2 |\n\n-   直前の `NA` でない値で置換したい場合 `tidyr::fill()` を使う\n-   時系列データの `NA` 置換でよく利用する (当日が `NA` なら前日の値で埋める等)\n-   `.direction = \"down\"/\"up\"` で下方向に置換するか、上方向に置換するかを選ぶことができる\n\n```R\nfill(df, y, .direction = \"down\")\n```\n\n| x | y | z   |\n|--- |--- |--- |\n| 1 | 1 | 1   |\n| 2 | 1 | nil |\n| 3 | 3 | nil |\n\n-   特定の値ではなく、より柔軟に `NA` を置換したい場合は [ `{recipes}` ](https://github.com/tidymodels/recipes)パッケージの `step_*impute()` 関数群を使う\n-   例えば、平均値で置換したい場合は `step_meanimpute()`\n-   `{recipes}` や `{tidymodels}` パッケージ群の使い方は、[こちら](https://dropout009.hatenablog.com/entry/2019/01/06/124932)の記事がわかりやすい\n\n```R\ndf %>%\n  recipe() %>%\n  step_meanimpute(y, z) %>% # step_*() で前処理をパイプで繋いでいく\n  prep() %>%                # 実際に前処理を実行\n  juice()                   # 前処理結果を data.frame として取り出す\n```\n\n| x | y | z |\n|--- |--- |--- |\n| 1 | 1 | 1 |\n| 2 | 2 | 1 |\n| 3 | 3 | 1 |\n\n-   `step_*impute()` 系は現状 7 つの関数が用意されている\n-   機能は名前からなんとなく想像はできると思うが、詳細はマニュアル参照\n\n```R\npacman::p_funs(recipes) %>%\n  stringr::str_subset(\"^step_.*impute$\")\n```\n\n    \n    [1] \"step_bagimpute\"    \"step_knnimpute\"    \"step_lowerimpute\" \n    [4] \"step_meanimpute\"   \"step_medianimpute\" \"step_modeimpute\"  \n    [7] \"step_rollimpute\"\n\n# NA に置換する\n\n## vector\n\n-   `dplyr::na_if(x, y)` を使う\n-   特定の値を `NA` に置き換える\n-   不正な値を `NA` にして、除外する際に使う\n-   `x`: 対象となるベクトル\n-   `y`: `NA` に置換するベクトル\n\n```R\nna_if(x, 1)\n```\n\n    [1] NA  2 NA  4\n\n## data.frame\n\n-   `data.frame` の場合も `dplyr::na_if(x, y)` を `mutate()` 内で使う\n\n```R\ndf %>%\n  mutate(b = na_if(y, 1))\n```\n\n| x | y   | z   | b   |\n|--- |--- |--- |--- |\n| 1 | 1   | 1   | nil |\n| 2 | nil | nil | nil |\n| 3 | 3   | nil | 3   |\n\n-   複数列に適応したい場合は `mutate_at()`
+`{tidyselect}` を使う\n\n```R\ndf %>%\n  mutate_at(vars(everything()), na_if, y = 1) # ここでの y は、na_if() の引数名\n```\n\n| x   | y   | z   |\n|--- |--- |--- |\n| nil | nil | nil |\n| 2   | nil | nil |\n| 3   | 3   | nil |\n"
+
+[[1]]$coediting
+[1] FALSE
+
+[[1]]$comments_count
+[1] 0
+
+[[1]]$created_at
+[1] "2019-11-06T18:16:53+09:00"
+
+[[1]]$group
+NULL
+
+[[1]]$id
+[1] "361a42baf1e94edf5846"
+
+[[1]]$likes_count
+[1] 16
+
+[[1]]$private
+[1] FALSE
+
+[[1]]$reactions_count
+[1] 0
+
+[[1]]$tags
+[[1]]$tags[[1]]
+[[1]]$tags[[1]]$name
+[1] "R"
+
+[[1]]$tags[[1]]$versions
+list()
+
+
+
+[[1]]$title
+[1] "R のモダンな NA 処理まとめ"
+
+[[1]]$updated_at
+[1] "2019-11-06T18:38:04+09:00"
+
+[[1]]$url
+[1] "https://qiita.com/five-dots/items/361a42baf1e94edf5846"
+
+[[1]]$user
+[[1]]$user$description
+NULL
+
+[[1]]$user$facebook_id
+NULL
+
+[[1]]$user$followees_count
+[1] 6
+
+[[1]]$user$followers_count
+[1] 3
+
+[[1]]$user$github_login_name
+[1] "five-dots"
+
+[[1]]$user$id
+[1] "five-dots"
+
+[[1]]$user$items_count
+[1] 6
+
+[[1]]$user$linkedin_id
+NULL
+
+[[1]]$user$location
+NULL
+
+[[1]]$user$name
+[1] ""
+
+[[1]]$user$organization
+NULL
+
+[[1]]$user$permanent_id
+[1] 178795
+
+[[1]]$user$profile_image_url
+[1] "https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/178795/profile-images/1572767176"
+
+[[1]]$user$team_only
+[1] FALSE
+
+[[1]]$user$twitter_screen_name
+NULL
+
+[[1]]$user$website_url
+NULL
+
+
+[[1]]$page_views_count
+[1] 3698
+#+end_example
+* User
+** Reference
+
+#+begin_src R :results silent
+qiita_get_users(user_id)
+qiita_get_stockers(item_id, per_page = 100L, page_offset = 0L, page_limit = 1L)
+qiita_get_followees(user_id, per_page = 100L, page_offset = 0L, page_limit = 1L)
+qiita_get_followers(user_id, per_page = 100L, page_offset = 0L, page_limit = 1L)
+qiita_follow_user(user_id)
+qiita_unfollow_user(user_id)
+qiita_is_following_user(user_id)
+qiita_get_authenticated_user()
+#+end_src
+
+** 自分の情報
+
+#+begin_src R
+qiita_get_users("five-dots")
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+[[1]]
+[[1]]$description
+NULL
+
+[[1]]$facebook_id
+NULL
+
+[[1]]$followees_count
+[1] 6
+
+[[1]]$followers_count
+[1] 3
+
+[[1]]$github_login_name
+[1] "five-dots"
+
+[[1]]$id
+[1] "five-dots"
+
+[[1]]$items_count
+[1] 6
+
+[[1]]$linkedin_id
+NULL
+
+[[1]]$location
+NULL
+
+[[1]]$name
+[1] ""
+
+[[1]]$organization
+NULL
+
+[[1]]$permanent_id
+[1] 178795
+
+[[1]]$profile_image_url
+[1] "https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/178795/profile-images/1572767176"
+
+[[1]]$team_only
+[1] FALSE
+
+[[1]]$twitter_screen_name
+NULL
+
+[[1]]$website_url
+NULL
+#+end_example
+
+* Tag
+** Reference
+
+#+begin_src R :results silent
+qiita_get_tags(tag_id = NULL, user_id = NULL, per_page = 100L, page_offset = 0L, page_limit = 1L)
+qiita_follow_tag(tag_id)
+qiita_unfollow_tag(tag_id)
+qiita_is_following_tag(tag_id)
+#+end_src
+
+** タグ情報
+
+#+begin_src R
+qiita_get_tags("R")
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+[[1]]
+[[1]]$followers_count
+[1] 2141
+
+[[1]]$icon_url
+[1] "https://s3-ap-northeast-1.amazonaws.com/qiita-tag-image/3a721a3f0c87ad07749c5f659b0365ea548f8def/medium.jpg?1516532296"
+
+[[1]]$id
+[1] "R"
+
+[[1]]$items_count
+[1] 3299
+#+end_example
+
+** 自分が follow しているタグ
+
+#+begin_src R
+qiita_get_tags(user_id = "five-dots")
+#+end_src
+
+#+RESULTS:
+#+begin_example
+total count is 5 (= 1 pages)
+[[1]]
+[[1]]$followers_count
+[1] 14421
+
+[[1]]$icon_url
+[1] "https://s3-ap-northeast-1.amazonaws.com/qiita-tag-image/2920f41f5aefd36267c6c04183d7e6197b4d2b99/medium.jpg?1364837723"
+
+[[1]]$id
+[1] "Emacs"
+
+[[1]]$items_count
+[1] 2008
+
+
+[[2]]
+[[2]]$followers_count
+[1] 6423
+
+[[2]]$icon_url
+[1] "https://s3-ap-northeast-1.amazonaws.com/qiita-tag-image/a94d4d239b3b0b83723d5b56c050ffc54b8593e7/medium.jpg?1394635775"
+
+[[2]]$id
+[1] "機械学習"
+
+[[2]]$items_count
+[1] 7323
+
+
+[[3]]
+[[3]]$followers_count
+[1] 74482
+
+[[3]]$icon_url
+[1] "https://s3-ap-northeast-1.amazonaws.com/qiita-tag-image/ceafd5ce024e312de9e893ce876ec89995ec3a7f/medium.jpg?1559694099"
+
+[[3]]$id
+[1] "Python"
+
+[[3]]$items_count
+[1] 40169
+
+
+[[4]]
+[[4]]$followers_count
+[1] 750
+
+[[4]]$icon_url
+[1] "https://s3-ap-northeast-1.amazonaws.com/qiita-tag-image/2ccc06a46da3fb3b17b5101f5b9c7821db8e2714/medium.jpg?1505180100"
+
+[[4]]$id
+[1] "Kaggle"
+
+[[4]]$items_count
+[1] 745
+
+
+[[5]]
+[[5]]$followers_count
+[1] 2141
+
+[[5]]$icon_url
+[1] "https://s3-ap-northeast-1.amazonaws.com/qiita-tag-image/3a721a3f0c87ad07749c5f659b0365ea548f8def/medium.jpg?1516532296"
+
+[[5]]$id
+[1] "R"
+
+[[5]]$items_count
+[1] 3299
+#+end_example

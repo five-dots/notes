@@ -2,8 +2,6 @@
 #+PROPERTY: header-args:R :results output :colnames yes :session *R:lintr*
 
 * ~{lintr}~: Static Code Analysis for R                              :noexport:
-\\
-
 * 目次                                                                :quote:
 #+BEGIN_QUOTE
 - [[#ライブラリの読み込みとバージョンの確認][ライブラリの読み込みとバージョンの確認]]
@@ -70,9 +68,9 @@
 * ライブラリの読み込みとバージョンの確認
 
 #+begin_src R :results silent
+library(tidyverse)
 library(lintr)
 #+end_src
-\\
 
 - バージョン
 #+begin_src R :exports both
@@ -80,8 +78,7 @@ packageVersion("lintr")
 #+end_src
 
 #+RESULTS:
-: [1] ‘1.0.3’
-\\
+: [1] ‘2.0.0’
 
 * 全関数リスト
 
@@ -91,24 +88,109 @@ pacman::p_funs(lintr)
 
 #+RESULTS:
 #+begin_example
- [1] "absolute_paths_linter"          "assignment_linter"
- [3] "camel_case_linter"              "clear_cache"
- [5] "closed_curly_linter"            "commas_linter"
- [7] "commented_code_linter"          "default_linters"
- [9] "expect_lint_free"               "get_source_expressions"
-[11] "infix_spaces_linter"            "line_length_linter"
-[13] "lint"                           "Lint"
-[15] "lint_package"                   "multiple_dots_linter"
-[17] "no_tab_linter"                  "object_length_linter"
-[19] "object_usage_linter"            "open_curly_linter"
-[21] "single_quotes_linter"           "snake_case_linter"
-[23] "spaces_inside_linter"           "spaces_left_parentheses_linter"
-[25] "trailing_blank_lines_linter"    "trailing_whitespace_linter"
-[27] "with_defaults"
+ [1] "absolute_path_linter"             "absolute_paths_linter"           
+ [3] "all_undesirable_functions"        "all_undesirable_operators"       
+ [5] "assignment_linter"                "camel_case_linter"               
+ [7] "checkstyle_output"                "clear_cache"                     
+ [9] "closed_curly_linter"              "commas_linter"                   
+[11] "commented_code_linter"            "cyclocomp_linter"                
+[13] "default_linters"                  "default_settings"                
+[15] "default_undesirable_functions"    "default_undesirable_operators"   
+[17] "equals_na_linter"                 "expect_lint"                     
+[19] "expect_lint_free"                 "extraction_operator_linter"      
+[21] "function_left_parentheses_linter" "get_source_expressions"          
+[23] "ids_with_token"                   "implicit_integer_linter"         
+[25] "infix_spaces_linter"              "line_length_linter"              
+[27] "lint"                             "Lint"                            
+[29] "lint_dir"                         "lint_package"                    
+[31] "multiple_dots_linter"             "no_tab_linter"                   
+[33] "nonportable_path_linter"          "object_length_linter"            
+[35] "object_name_linter"               "object_usage_linter"             
+[37] "open_curly_linter"                "paren_brace_linter"              
+[39] "pipe_continuation_linter"         "semicolon_terminator_linter"     
+[41] "seq_linter"                       "single_quotes_linter"            
+[43] "snake_case_linter"                "spaces_inside_linter"            
+[45] "spaces_left_parentheses_linter"   "T_and_F_symbol_linter"           
+[47] "todo_comment_linter"              "trailing_blank_lines_linter"     
+[49] "trailing_semicolons_linter"       "trailing_whitespace_linter"      
+[51] "undesirable_function_linter"      "undesirable_operator_linter"     
+[53] "unneeded_concatenation_linter"    "with_defaults"                   
+[55] "with_id"
 #+end_example
 
-* 基本
+- Total 37 linters
+#+begin_src R
+pacman::p_funs(lintr) %>% stringr::str_subset("linter$")
+#+end_src
 
+#+RESULTS:
+#+begin_example
+ [1] "absolute_path_linter"             "absolute_paths_linter"           
+ [3] "assignment_linter"                "camel_case_linter"               
+ [5] "closed_curly_linter"              "commas_linter"                   
+ [7] "commented_code_linter"            "cyclocomp_linter"                
+ [9] "equals_na_linter"                 "extraction_operator_linter"      
+[11] "function_left_parentheses_linter" "implicit_integer_linter"         
+[13] "infix_spaces_linter"              "line_length_linter"              
+[15] "multiple_dots_linter"             "no_tab_linter"                   
+[17] "nonportable_path_linter"          "object_length_linter"            
+[19] "object_name_linter"               "object_usage_linter"             
+[21] "open_curly_linter"                "paren_brace_linter"              
+[23] "pipe_continuation_linter"         "semicolon_terminator_linter"     
+[25] "seq_linter"                       "single_quotes_linter"            
+[27] "snake_case_linter"                "spaces_inside_linter"            
+[29] "spaces_left_parentheses_linter"   "T_and_F_symbol_linter"           
+[31] "todo_comment_linter"              "trailing_blank_lines_linter"     
+[33] "trailing_semicolons_linter"       "trailing_whitespace_linter"      
+[35] "undesirable_function_linter"      "undesirable_operator_linter"     
+[37] "unneeded_concatenation_linter"
+#+end_example
+
+* Linters
+
+Default=Bold, Deprecated=Strikethrough
+
+- "_assignment_linter_"                =<-= 以外で assign NG
+- "absolute_path_linter"             絶対パス
+- "+absolute_paths_linter+"
+- "camel_case_linter"                CamelCase チェック
+- "_closed_curly_linter_"              =}= は =else= が続かない限り改行が必要
+- "_commas_linter_"                    =,= はスペースを空ける
+- =x= "_commented_code_linter_"          コメント内のコード NG
+- "_cyclocomp_linter_"                 過剰に複雑な =expression= NG
+- "_equals_na_linter_"                 x == NA は NG (is.na(x) を使う)
+- "extraction_operator_linter"       =[]=, =$= を使わずに =[[]]= を使う
+- "_function_left_parentheses_linter_"
+- =o= "implicit_integer_linter"        整数は 1L のように L をつける
+- "_infix_spaces_linter_"              infix の前後にスペース必要
+- "_line_length_linter_"               コード行
+- "+multiple_dots_linter+"            
+- "_no_tab_linter_"                    インデントは Tab ではなく Space をつかう
+- "nonportable_path_linter"         
+- "_object_length_linter_"             名前の文字数上限
+- "_object_name_linter_"               名前のスタイルチェック (デフォルト snake_case)
+- "_object_usage_linter_"              =codetools::checkUsage()= でチェック
+- "_open_curly_linter_"                ={= は改行が続く
+- "_paren_brace_linter_"              
+- "_pipe_continuation_linter_"         =%>%= は改行するか、全てを 1 行に収めるか
+- "semicolon_terminator_linter"      =;= で終了 NG
+- "_seq_linter_"                       =1:nrow(...)= はバグの可能性 (=seq_len()=, =seq_along()= を使う)
+- "_single_quotes_linter_"             シングルクオート NG
+- "+snake_case_linter+"
+- "_spaces_inside_linter_"             =()= や =[]= 内でスペース
+- "_spaces_left_parentheses_linter_"   カッコ後のスペース
+- =o= "T_and_F_symbol_linter"            =T=, =F= は NG
+- =o= "todo_comment_linter"              "todo", "fixeme"
+- "_trailing_blank_lines_linter_"      最後の空白行
+- "+trailing_semicolons_linter+"
+- "_trailing_whitespace_linter_"       最後の空白
+- "undesirable_function_linter"      =options()= や =sapply()= などの推奨されない関数
+- "undesirable_operator_linter"      =:::=, =<<-= などの推奨されない演算子
+- "unneeded_concatenation_linter"    スカラーに =c()= を使っている場合
+
+* 設定
+
+- =~/.R= ディレクトリが無いと動作しない
 - ~.lintr~ ファイルにプロジェクト毎の設定を記述可能
 
 - サンプル設定
@@ -119,10 +201,6 @@ exclude: "# Exclude Linting"
 exclude_start: "# Begin Exclude Linting"
 exclude_end: "# End Exclude Linting"
 #+end_quote
-
-#+begin_src R
-
-#+end_src
 
 * 実行環境
 
@@ -167,3 +245,5 @@ loaded via a namespace (and not attached):
 - [[https://github.com/jimhester/lintr][Github Repo]]
 - Vignette
   - [[https://cran.r-project.org/web/packages/lintr/vignettes/creating_linters.html][Creating new linters]]
+- Blog
+  - [[https://qiita.com/wakuteka/items/b615b6679eee7064a4ac][ドブネズミ みたいに 美しくな {lintr} い@Qiita]]

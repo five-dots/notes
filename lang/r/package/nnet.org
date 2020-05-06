@@ -1,0 +1,146 @@
+#+STARTUP: folded indent inlineimages latexpreview
+#+PROPERTY: header-args:R :session *R:nnet* :width 640 :height 480 :colnames yes
+
+* ライブラリの読み込み
+
+#+begin_src R :results silent
+library(tidyverse)
+library(tidymodels)
+library(nnet)
+#+end_src
+
+* ={nnet}= Package
+
+#+begin_src R
+nnet(
+  formula,
+  data, # data.frame
+  weights,
+  ...,
+  subset,
+  na.action,
+  contrasts = NULL)
+
+nnet(
+  x, # matrix or data.frame
+  y, # matrix or data.frame
+  weights,
+  size, # 隠れ層の数
+  Wts,
+  mask,
+  linout = FALSE,   # Use linear output (default = logistic output)
+  entropy = FALSE,  # Use entropy (default = least-square)
+  softmax = FALSE,  # Use softmax
+  censored = FALSE,
+  skip = FALSE,
+  rang = 0.7,
+  decay = 0, # weight decay のパラメタ (正規化項の重み付け. Lambda)
+  maxit = 100, # 最大 iter 数
+  Hess = FALSE, # 推定値に対する Hesse 行列を出力するか
+  trace = TRUE,
+  MaxNWts = 1000,
+  abstol = 1.0e-4,
+  reltol = 1.0e-8,
+  ...)
+#+end_src
+
+#+begin_src R
+library(nnet)
+attach(rock)
+
+area1 <- area/10000
+peri1 <- peri/10000
+rock1 <- data.frame(perm, area=area1, peri=peri1, shape)
+
+rock.nn <- nnet(
+  log(perm) ~ area + peri + shape,
+  rock1,
+  size = 3,
+  decay = 1e-3,
+  linout = TRUE,
+  skip = TRUE,
+  maxit = 1000,
+  Hess = TRUE)
+
+rock.nn
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+The following objects are masked from rock (pos = 3):
+
+    area, peri, perm, shape
+
+# weights:  19
+initial  value 1453.190381 
+iter  10 value 32.229746
+iter  20 value 30.477639
+iter  30 value 28.613754
+iter  40 value 21.907679
+iter  50 value 15.586444
+iter  60 value 14.902713
+iter  70 value 14.612633
+iter  80 value 14.513879
+iter  90 value 14.504511
+iter 100 value 14.492296
+iter 110 value 14.487694
+final  value 14.487312 
+converged
+
+a 3-3-1 network with 19 weights
+inputs: area peri shape 
+output(s): log(perm) 
+options were - skip-layer connections  linear output units  decay=0.001
+#+end_example
+* [[http://totech.hateblo.jp/entry/2016/04/11/093802][【機械学習】Rで手書き数字データMNISTをニューラルネットで学習してみた@カタカタブログ]]
+
+#+begin_src R
+library(tidyverse)
+library(glue)
+
+dir <- "~/Dropbox/repos/github/five-dots/notes/kaggle/Digit_Recognizer/data"
+train_path <- glue("{dir}/train.csv")
+test_path <- glue("{dir}/test.csv")
+## MNIST のトレーニングデータ読み込み
+train <- read.csv(train_path)
+str(train)
+
+## MNIST のトレーニングデータを画像表示する
+view_train <- function(train, range = 1:20) {
+  par(mfrow=c(length(range)/4, 5))
+  par(mar=c(0,0,0,0))
+  for (i in range) {
+    m <- matrix(data.matrix(train[i,-1]), 28, 28)
+    image(m[,28:1])
+  }
+}
+
+## ラベルを表示
+view_label <- function(train, range = 1:20) {
+  matrix(train[range,"label"], 4, 5, byrow = TRUE)
+}
+
+range <- 1:20
+view_train(train, range)
+view_label(train, range)
+
+## MNIST のトレーニングデータ読み込み
+train <- read.csv("MNIST/train.csv")
+
+## 42000 件のデータを 30000 件のトレーニングデータと 12000 件のテストデータにランダム・サンプリング
+training.index <- sample(1:nrow(train), 30000)
+mnist.train <- train[training.index,]
+mnist.test <- train[-training.index,]
+
+## トレーニングデータをニューラルネットで学習
+mnist.nnet <- nnet(label ~ ., size = 3, data = mnist.train)
+mnist.nnet <- nnet(label ~ ., size = 3, data = mnist.train, MaxNWts = 4000)
+#+end_src
+
+* 参考
+
+- [[https://cran.r-project.org/web/packages/nnet/index.html][CRAN]]
+
+- Blog
+  - [[http://totech.hateblo.jp/entry/2016/04/11/093802][【機械学習】Rで手書き数字データMNISTをニューラルネットで学習してみた@カタカタブログ]]

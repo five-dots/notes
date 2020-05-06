@@ -1,0 +1,48 @@
+#+STARTUP: folded indent
+
+* Reference
+
+- [[http://suzuki.tdiary.net/20140816.html][Emacs Lisp のユニットテストツール ERT について調べてみた]]
+
+- [[http://www.kaichan.info/blog/2014-02-23-emacs-cask.html][Emacs Lisp のテスト、依存性管理、CI]]
+
+- [[http://pogin.hatenablog.com/entry/20130617/1371488876][EmacsLisp で最小構成(っぽい)テストをする方法]]
+
+- [[https://qiita.com/conao3/items/098242804eb34da61f49][Emacs のパッケージも Travis Cl して build:passing したい！]]
+
+* Tools
+
+- ERT = Emacs Lisp Regression Test (Unit test tool)
+  - emacs24 から標準で添付
+  - Manual https://www.gnu.org/software/emacs/manual/html_node/ert/index.html
+
+  ~(erf-deftest)~ 関数でテストを定義 
+  ~(should)~ でテストを買いていく
+
+- rejeep/ert-runner
+
+- ecukes/ecukes
+
+- Cask = プロジェクトマネジメントツール・依存性管理
+  .emacs.d/ 以外も対象にライブラリを管理できる
+  プロジェクトリポジトリのローカルにライブラリの環境を用意する
+  
+  ~/.cask/bin/cask にインストールされる
+  Cask file に依存ライブラリを記述
+  
+  ~cast install~ で .cask ディレクトリにダウンロードできる
+  ~cask exec hoge-command~ で .cask を PATH に追加したうえでコマンドを実行できる
+
+  テストの実行例)
+  ~cask exec emacs -batch -L . -l test/ess-r-spreadsheet-tests.el -f ert-run-tests-batch-and-exit~
+  -Q       .emacs, .emacs.d/init.el を読み込まずに実行
+  -batch   バッチ実行
+  -L .     現在のフォルダを load-path に追加
+  -l ~.el  ファイルをロードする 
+  -f hoge  関数を引数なしで読み込む
+  
+- Travis-CI = CI
+
+- flycheck/emacs-travis
+  https://github.com/flycheck/emacs-travis
+  Travis-CI 用に emacs, cask, texinfo をビルドできるように makefile を提供してくれる

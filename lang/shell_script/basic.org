@@ -1,0 +1,750 @@
+#+STARTUP: folded indent inlineimages
+#+PROPERTY: header-args:shell :results output
+
+* 基本
+
+- スクリプトとして実行するときは、実行権限を付与する
+  - =chmod u+x hoge.sh=
+
+#+begin_src shell
+echo "Hello world"
+#+end_src
+
+#+RESULTS:
+: Hello world
+
+* コメント
+
+- =#=
+- 複数行
+  - =<<COMMENT=
+  - =COMMENT=
+
+* 変数 (シェル変数)
+
+#+begin_src shell
+var="Hoge"  # 代入は = の間にスペースを入れない
+echo var
+echo "var"
+echo $var   # 変数として展開される
+echo ${var} # 変数として展開される
+#+end_src
+
+#+RESULTS:
+: var
+: var
+: Hoge
+: Hoge
+
+- 特別な変数
+|-------------+-------------------------------------------------------|
+| 変数        | 内容                                                  |
+|-------------+-------------------------------------------------------|
+| $0          | スクリプトの名前                                      |
+| $1, $2, ... | 第１引数, 第２引数 ...                                |
+| $#          | 与えられた引数の数                                    |
+| $*          | 与えられたすべての引数. 引数全体が"で囲まれている     |
+| $@          | 与えられたすべての引数. 引数一つ一つが"で囲まれている |
+| $-          | シェルに与えられたフラグ                              |
+| $?          | 最後に行ったコマンドの戻り値 (0=success, 1=fail)      |
+| $$          | 現在のシェルのプロセス番号                            |
+| $!          | 最後にバックグラウンドで行ったコマンドのプロセス番号  |
+|-------------+-------------------------------------------------------|
+
+- _sh には型は存在しない_. 全てが文字列.
+- bash
+  - 通常の方法以外に =declare=, =typeset= を使った宣言方法 (=typeset= は非推奨)
+
+#+begin_src shell
+declare -i i=1 # -i 数値, -a 配列, -A 連想配列, -r 読み込み専用, -x エクスポート(環境変数)
+echo $i
+declare -p i # -p で定義内容を確認
+#+end_src
+
+#+RESULTS:
+: 1
+: declare -i i="1"
+
+* 環境変数
+
+- グローバルに利用できる変数
+- =export= することで定義できる
+#+begin_src shell
+echo $PATH
+#+end_src
+
+#+RESULTS:
+: /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/home/shun/.dotnet/tools:/home/shun/bin:/home/shun/.local/bin:/home/shun/.doom-emacs.d/bin:/home/shun/.cask/bin:/home/shun/.dotnet/tools:/home/shun/bin:/home/shun/.local/bin:/home/shun/.doom-emacs.d/bin:/home/shun/.cask/bin:/usr/local/share/libFM/bin:/usr/local/share/LIBFFM/bin
+
+- 一覧表示
+#+begin_src shell
+printenv
+#+end_src
+
+#+RESULTS:
+#+begin_example
+CLUTTER_IM_MODULE=xim
+LS_COLORS=rs=0:di=01;34:ln=01;36:mh=00:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;31;01:mi=00:su=37;41:sg=30;43:ca=30;41:tw=30;42:ow=34;42:st=37;44:ex=01;32:*.tar=01;31:*.tgz=01;31:*.arc=01;31:*.arj=01;31:*.taz=01;31:*.lha=01;31:*.lz4=01;31:*.lzh=01;31:*.lzma=01;31:*.tlz=01;31:*.txz=01;31:*.tzo=01;31:*.t7z=01;31:*.zip=01;31:*.z=01;31:*.Z=01;31:*.dz=01;31:*.gz=01;31:*.lrz=01;31:*.lz=01;31:*.lzo=01;31:*.xz=01;31:*.zst=01;31:*.tzst=01;31:*.bz2=01;31:*.bz=01;31:*.tbz=01;31:*.tbz2=01;31:*.tz=01;31:*.deb=01;31:*.rpm=01;31:*.jar=01;31:*.war=01;31:*.ear=01;31:*.sar=01;31:*.rar=01;31:*.alz=01;31:*.ace=01;31:*.zoo=01;31:*.cpio=01;31:*.7z=01;31:*.rz=01;31:*.cab=01;31:*.wim=01;31:*.swm=01;31:*.dwm=01;31:*.esd=01;31:*.jpg=01;35:*.jpeg=01;35:*.mjpg=01;35:*.mjpeg=01;35:*.gif=01;35:*.bmp=01;35:*.pbm=01;35:*.pgm=01;35:*.ppm=01;35:*.tga=01;35:*.xbm=01;35:*.xpm=01;35:*.tif=01;35:*.tiff=01;35:*.png=01;35:*.svg=01;35:*.svgz=01;35:*.mng=01;35:*.pcx=01;35:*.mov=01;35:*.mpg=01;35:*.mpeg=01;35:*.m2v=01;35:*.mkv=01;35:*.webm=01;35:*.ogm=01;35:*.mp4=01;35:*.m4v=01;35:*.mp4v=01;35:*.vob=01;35:*.qt=01;35:*.nuv=01;35:*.wmv=01;35:*.asf=01;35:*.rm=01;35:*.rmvb=01;35:*.flc=01;35:*.avi=01;35:*.fli=01;35:*.flv=01;35:*.gl=01;35:*.dl=01;35:*.xcf=01;35:*.xwd=01;35:*.yuv=01;35:*.cgm=01;35:*.emf=01;35:*.ogv=01;35:*.ogx=01;35:*.aac=00;36:*.au=00;36:*.flac=00;36:*.m4a=00;36:*.mid=00;36:*.midi=00;36:*.mka=00;36:*.mp3=00;36:*.mpc=00;36:*.ogg=00;36:*.ra=00;36:*.wav=00;36:*.oga=00;36:*.opus=00;36:*.spx=00;36:*.xspf=00;36:
+LC_MEASUREMENT=en_US.UTF-8
+LESSCLOSE=/usr/bin/lesspipe %s %s
+LC_PAPER=en_US.UTF-8
+LC_MONETARY=en_US.UTF-8
+XDG_MENU_PREFIX=gnome-
+_=/usr/bin/printenv
+LANG=en_US.UTF-8
+MANAGERPID=1671
+DISPLAY=:0
+PYENV_ROOT=/home/shun/.pyenv
+OLDPWD=/home/shun/.emacs.d
+INVOCATION_ID=d18bc2bbd101442bb2374f8360c8c0e1
+GNOME_SHELL_SESSION_MODE=ubuntu
+COLORTERM=truecolor
+USERNAME=shun
+XDG_VTNR=1
+REPOS=/home/shun/Dropbox/repos
+LC_NAME=en_US.UTF-8
+XDG_SESSION_ID=1
+USER=shun
+PAGER=cat
+DESKTOP_SESSION=ubuntu
+QT4_IM_MODULE=xim
+TEXTDOMAINDIR=/usr/share/locale/
+GNOME_TERMINAL_SCREEN=/org/gnome/Terminal/screen/fcf16d94_b511_4c28_a6dc_eb992c017053
+PWD=/home/shun/Dropbox/repos/github/five-dots/notes/lang/shell_script
+HOME=/home/shun
+JOURNAL_STREAM=9:38710
+TEXTDOMAIN=im-config
+QT_ACCESSIBILITY=1
+XDG_SESSION_TYPE=x11
+XDG_DATA_DIRS=/usr/share/ubuntu:/usr/local/share/:/usr/share/:/var/lib/snapd/desktop
+XDG_SESSION_DESKTOP=ubuntu
+LC_ADDRESS=en_US.UTF-8
+GJS_DEBUG_OUTPUT=stderr
+LC_NUMERIC=en_US.UTF-8
+IQCONNECT_PRODUCT_ID=SHUN_ASAI_42454
+GTK_MODULES=gail:atk-bridge
+PAPERSIZE=letter
+IQCONNECT_PASSWORD=69240789
+WINDOWPATH=1
+TERM=dumb
+VTE_VERSION=5202
+SHELL=/bin/bash
+QT_IM_MODULE=ibus
+XMODIFIERS=@im=ibus
+IM_CONFIG_PHASE=2
+XDG_CURRENT_DESKTOP=ubuntu:GNOME
+GNOME_TERMINAL_SERVICE=:1.70
+SHLVL=4
+XDG_SEAT=seat0
+LC_TELEPHONE=en_US.UTF-8
+GDMSESSION=ubuntu
+GNOME_DESKTOP_SESSION_ID=this-is-deprecated
+LOGNAME=shun
+DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus
+XDG_RUNTIME_DIR=/run/user/1000
+XAUTHORITY=/run/user/1000/gdm/Xauthority
+XDG_CONFIG_DIRS=/etc/xdg/xdg-ubuntu:/etc/xdg
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/home/shun/.dotnet/tools:/home/shun/bin:/home/shun/.local/bin:/home/shun/.doom-emacs.d/bin:/home/shun/.cask/bin:/home/shun/.dotnet/tools:/home/shun/bin:/home/shun/.local/bin:/home/shun/.doom-emacs.d/bin:/home/shun/.cask/bin:/usr/local/share/libFM/bin:/usr/local/share/LIBFFM/bin
+LC_IDENTIFICATION=en_US.UTF-8
+bash=cannot set terminal process group (-1): Inappropriate ioctl for device
+GJS_DEBUG_TOPICS=JS ERROR;JS LOG
+SESSION_MANAGER=local/desk1:@/tmp/.ICE-unix/1290,unix/desk1:/tmp/.ICE-unix/1290
+IQCONNECT_LOGIN=466518
+LESSOPEN=| /usr/bin/lesspipe %s
+GTK_IM_MODULE=ibus
+LC_TIME=en_US.UTF-8
+#+end_example
+
+* 演算子
+** 基本
+
+- 式を =$(())= で囲む
+
+#+begin_src shell
+x=5
+y=6
+z=$((x + y))
+echo $z
+#+end_src
+
+#+RESULTS:
+: 11
+
+** 四則演算
+
+#+begin_src shell :results output
+echo $((2 + 3))
+echo $((3 - 2))
+echo $((10 / 3)) # 整数除算
+echo $((2 * 3))
+echo $((10 % 3)) # 剰余
+echo $((2 ** 2)) # べき乗
+#+end_src
+
+#+RESULTS:
+: 5
+: 1
+: 3
+: 6
+: 1
+: 4
+
+- インクリメント・デクリメント
+#+begin_src shell :results output
+i=1
+i=$((i++))
+echo $i
+echo $((++i))
+echo $((i--))
+echo $i
+#+end_src
+
+#+RESULTS:
+: 1
+: 2
+: 2
+: 1
+
+** 比較
+
+- TRUE=1, FALSE=0
+#+begin_src shell :results output
+echo $((1 > 0))
+echo $((1 < 0))
+echo $((1 == 1))
+echo $((1 != 1))
+#+end_src
+
+#+RESULTS:
+: 1
+: 0
+: 1
+: 0
+
+** 条件式
+
+#+begin_src shell
+i=1
+if [[ $i == 1 ]]; then 
+    echo "TRUE"
+fi
+#+end_src
+
+#+RESULTS:
+: TRUE
+
+- 条件しいの書き方 (基本的に bash, zsh なら =[[= を使う)
+  1. =[[ 条件 ]\] && 真の時実行 || 偽の時実行=
+  2. =[ 条件 ] && 真の時実行 || 偽の時実行=
+  3. =test 条件 && 真の時実行 || 偽の時実行=
+#+begin_src shell
+[[ 1 -eq 1 ]] && echo "TRUE" # -eq (=)
+[[ 2 -ge 1 ]] && echo "TRUE" # -ge (>=)
+[[ 2 -gt 1 ]] && echo "TRUE" # -gt (>)
+[[ 1 -le 2 ]] && echo "TRUE" # -le (<=)
+[[ 1 -lt 2 ]] && echo "TRUE" # -lt (<)
+[[ 1 -ne 2 ]] && echo "TRUE" # -ne (!=)
+
+test 3 -gt 2 && echo "TRUE"
+#+end_src
+
+#+RESULTS:
+: TRUE
+: TRUE
+: TRUE
+: TRUE
+: TRUE
+: TRUE
+: TRUE
+
+#+begin_src shell
+test 1 -eq 1
+#+end_src
+
+#+RESULTS:
+
+- 文字列の比較
+#+begin_src shell
+[[ "apple" = "apple" ]] && echo "TRUE"   # =
+[[ "apple" != "orange" ]] && echo "TRUE" # !=
+[[ -z "" ]] && echo "TRUE"               # -z (文字列の長さが0である)
+[[ -n "apple" ]] && echo "TRUE"          # -n (文字列の長さが 0以上である)
+#+end_src
+
+#+RESULTS:
+: TRUE
+: TRUE
+: TRUE
+: TRUE
+
+** 条件式 (ファイル関連)
+
+#+begin_src shell
+[[ -f basic.org ]] && echo "TRUE"    # -f ファイルであるかどうか
+[[ -d test_scripts ]] && echo "TRUE" # -d ディレクトリであるかどうか
+[[ -e test_scripts ]] && echo "TRUE" # -e ファイル/ディレクトリが存在するかどうか
+
+# その他
+# -r 読み込み可能か
+# -w 書き込み可能か
+# -x 実行可能か
+# -L シンボリックリンクか
+# -s ファイルが存在し、かつ空でないか
+# -S ファイルがソケットか
+# file_A -nt file_B  AがBよりも新しいか
+# file_A -ot file_B  AがBよりも古いか
+#+end_src
+
+#+RESULTS:
+: TRUE
+: TRUE
+: TRUE
+
+** コマンドをつなげる
+
+- =;=
+- コマンドを連続実行する
+#+begin_src shell :results output
+pwd; ls
+#+end_src
+
+#+RESULTS:
+: /home/shun/Dropbox/repos/github/five-dots/notes/lang/shell_script
+: basic.org
+: test_scripts
+
+- =&=
+- バックグランド実行
+#+begin_src shell :results silent
+sleep 3 & # バックグラウンドなので、shell はスリープしない
+#+end_src
+
+- =&&=
+- 成功 (終了コード=0) の場合に次のコマンドを実行
+#+begin_src shell
+pwd && ls
+#+end_src
+
+#+RESULTS:
+: /home/shun/Dropbox/repos/github/five-dots/notes/lang/shell_script
+: basic.org
+: test_scripts
+
+- =||=
+#+begin_src shell
+pwd || ls
+#+end_src
+
+#+RESULTS:
+: /home/shun/Dropbox/repos/github/five-dots/notes/lang/shell_script
+
+- =|=
+- command1 の標準出力を command2 に渡す
+#+begin_src shell
+cat basic.org | grep pwd
+#+end_src
+
+#+RESULTS:
+: pwd; ls
+: pwd && ls
+: pwd || ls
+
+* 制御構文
+** =if=
+
+#+begin_src shell
+i=1
+if [[ $i -eq 1 ]]; then
+    echo "1 desu"
+elif [[ $i -eq 2 ]]; then
+    echo "2 desu"
+else
+    echo "error!" 1>&2 # 標準出力をエラ出力させる
+    exit 1 # エラーで終了
+fi
+#+end_src
+
+#+RESULTS:
+: 1 desu
+
+- 実行内容が空は NG
+- =:= を置けば OK
+#+begin_src shell
+if [ 1 -eq 1 ]; then
+    :
+else
+#+end_src
+
+** =case=
+
+#+begin_src shell
+fruit="apple"
+case $fruit in
+    apple)
+        echo "aaple desu"
+        ;;
+    orange)
+        echo "orange desu"
+        ;;
+    banana|grape)
+        echo "banana or grape desu"
+        ;;
+    *)
+        exit 1
+        ;;
+esac
+#+end_src
+
+#+RESULTS:
+: aaple desu
+
+** =for=
+
+- いくつかの書き方がある
+- =break=, =continue= が利用できる
+#+begin_src shell
+for fruit in apple orange banana; do
+    echo $fruit
+done
+#+end_src
+
+#+RESULTS:
+: apple
+: orange
+: banana
+
+- 数値の場合
+- bash での書き方
+#+begin_src shell
+for i in {1..5}; do
+    echo "$i th loop"
+done
+#+end_src
+
+#+RESULTS:
+: 1 th loop
+: 2 th loop
+: 3 th loop
+: 4 th loop
+: 5 th loop
+
+#+begin_src shell
+echo {1..3}
+#+end_src
+
+#+RESULTS:
+: 1 2 3
+
+#+begin_src shell
+for ((i = 0; i < 5; i++)); do
+    echo $i
+done
+#+end_src
+
+#+RESULTS:
+: 0
+: 1
+: 2
+: 3
+: 4
+
+- コマンドの出力
+#+begin_src shell
+for file in $(ls); do
+    echo $file
+done
+#+end_src
+
+#+RESULTS:
+: basic.org
+: test_scripts
+
+- コマンドは =``= で囲んでも OK
+#+begin_src shell
+for file in `ls`; do
+    echo $file
+done
+#+end_src
+
+#+RESULTS:
+: basic.org
+: test_scripts
+
+** =while=
+
+#+begin_src shell
+n=1
+while [[ $n -le 5 ]]; do
+    echo $n
+    n=$((n + 1))
+done
+#+end_src
+
+#+RESULTS:
+: 1
+: 2
+: 3
+: 4
+: 5
+
+** =until=
+
+- =while= と逆で、「条件が不成立の間」実行
+#+begin_src shell
+n=1
+until [[ $n -gt 5 ]]; do
+	echo " $n 回目のループです."
+	n=$((n + 1))
+done
+#+end_src
+
+#+RESULTS:
+:  1 回目のループです.
+:  2 回目のループです.
+:  3 回目のループです.
+:  4 回目のループです.
+:  5 回目のループです.
+
+** =select=
+
+- sh, bash で挙動が若干ことなる (以下は bash の例)
+- 複数の選択肢を示して選択させることができる
+- 対話的なプログラム
+- 必ずどこかで =break= を入れる
+#+begin_src shell
+PS3="番号で選択して下さい: "
+select fruit in apple orange banana grape exit
+do
+	case $fruit in
+		apple|orange|banana|grape)
+			echo "$fruit が選択されました!"
+			;;
+		exit)
+			break
+			;;
+		*)
+			echo "1から4の番号で選んで下さい."
+			;;
+	esac
+done
+            
+#+end_src
+
+* 文字列
+** 文字列の置換
+
+- =${var/old/new}=  最初にマッチした old を new で置換
+- =${var//old/new}= 全て old を new で置換
+#+begin_src shell
+var=apple_apple
+echo ${var/apple/orange}
+
+echo ${var//apple/orange}
+#+end_src
+
+#+RESULTS:
+: orange_apple
+: orange_orange
+
+** 文字列の削除
+
+- 冒頭から検索
+  - =${var#pattern}=  (最短マッチ)
+  - =${var##pattern}= (最長マッチ)
+- 末尾から検索
+  - =${var%pattern}=  (最短マッチ) 
+  - =${var%%pattern}= (最長マッチ)
+#+begin_src shell
+var=apple_apple
+echo ${var#apple}
+#+end_src
+
+#+RESULTS:
+: _apple
+: _apple
+
+- ヒアドキュメント
+  - 複数行のテキストの出力
+  - 決めた文字列 (このばあいでは、EOT) で開始 ~ 終了を指定
+#+begin_src shell
+cat << EOT
+apple
+orange
+banana
+EOT
+#+end_src
+
+#+RESULTS:
+: apple
+: orange
+: banana
+
+** 文字列の抽出
+
+#+begin_src shell
+str=abcdef
+echo ${str:0:2}
+echo ${str:1} # 長さを省略した場合は末尾まで抽出
+echo ${str:1:-1} # マイナスも使える
+#+end_src
+
+#+RESULTS:
+: ab
+: bcdef
+: bcde
+
+#+begin_src shell
+echo ${"$(uname)":0:5}
+#+end_src
+
+#+RESULTS:
+: Linux
+
+* 関数
+
+- 1 行で定義
+- 1 行の場合は、末尾にセミコロン必須
+#+begin_src shell
+hello() { echo "Hello $1."; }
+hello Shun
+#+end_src
+
+#+RESULTS:
+: Hello Shun.
+
+#+begin_src shell
+goodbye() {
+    echo "Goodbye $1."
+    echo "Goodbye $2."
+}
+goodbye Shun Shiori
+#+end_src
+
+#+RESULTS:
+: Goodbye Shun.
+: Goodbye Shiori.
+
+* 配列
+
+#+begin_src shell
+empty=()
+family=("Shun", "Shiori")
+echo ${family[0]}
+echo ${family[1]}
+
+# 配列への追加 (末尾に追加)
+family=("${family[@]}", "Tamaki")
+echo ${family[2]}
+
+# 配列への追加 (インデックス指定)
+family[3]="Ryo"
+echo ${family[3]}
+
+# 配列のサイズ
+echo ${#family[@]}
+
+# for loop
+for ((i = 0; i < ${#family[@]}; i++)); do
+    echo ${family[$i]}
+done
+#+end_src
+
+#+RESULTS:
+: Shun,
+: Shiori
+: Tamaki
+: Ryo
+: 4
+: Shun,
+: Shiori,
+: Tamaki
+: Ryo
+
+* 入出力
+
+- ファイルディスクリプタ
+  - 標準入力 =0=
+  - 標準出力 =1= 
+  - 標準エラー出力 =2=
+
+- リダイレクト
+  - =>=
+  - 結果を出力する場所を指定する
+    - =command > 出力先=
+  - 特定のファイルディスクリプタに送る場合は =>&=
+    - =echo "hoge" >&2=
+  - 標準エラー出力のみ表示する
+    - =command > /dev/null=
+  - 標準出力も標準エラー出力も表示しない
+    - =command > /dev/null 2>&1=
+
+  - =1>&2=
+    - 1 の出力先を 2 と同じに設定する、という意味
+
+* ユーザーからの入力
+
+#+begin_src R
+read -p "Please input your name:" name
+echo "Hi $name."
+#+end_src
+
+* OS/Shell 判別
+
+- uname の出力を使う
+#+begin_src shell
+uname -a
+#+end_src
+
+#+RESULTS:
+: Linux x1 5.3.0-28-generic #30~18.04.1-Ubuntu SMP Fri Jan 17 06:14:09 UTC 2020 x86_64 x86_64 x86_64 GNU/Linux
+
+#+begin_src shell
+if [ "$(uname)" = 'Darwin' ]; then
+  OS='Mac'
+elif [ ${"$(uname -s)":0:5} = 'Linux' ]; then
+  OS='Linux'
+elif [ ${"$(uname -s)":0:9} = 'MINGW32_NT' ]; then
+  OS='Cygwin'
+else
+  echo "Your platform ($(uname -a)) is not supported."
+  exit 1
+fi
+echo $OS
+#+end_src
+
+#+RESULTS:
+: Linux
+
+#+begin_src shell
+echo $SHELL
+echo $0
+[ $SHELL = /bin/bash ] && echo T
+#+end_src
+
+#+RESULTS:
+: /bin/bash
+: /bin/bash
+: T
+
+* コマンド有無の確認
+
+#+begin_src shell
+command -v ls > /dev/null 2>&1 && echo "exists"
+#+end_src
+
+#+RESULTS:
+: exists
+
+#+begin_src shell
+if [ -x "$(command -v ls)" ]; then
+    echo "exists"
+else
+    echo "not exitis"
+fi
+#+end_src
+
+#+RESULTS:
+: exists
+
+- [[https://stackoverflow.com/questions/592620/how-can-i-check-if-a-program-exists-from-a-bash-script][How can I check if a program exists from a Bash script?]]
+* Linux コマンド

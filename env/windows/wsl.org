@@ -1,0 +1,37 @@
+#+STARTUP:  showall indent
+
+* vcxsrv
+
+* wsl-terminal 
+
+- [[https://github.com/mskyaxl/wsl-terminal][Github repo]]
+
+* Timezone
+
+- WSL でタイムゾーンを日本に設定
+#+begin_src shell
+sudo dpkg-reconfigure tzdata
+#+end_src
+
+* Error on datetimectl
+
+- =R devtools:check()= で以下のエラーになる
+  Failed to create bus connection: No such file or directory
+  Warning in system("timedatectl", intern = TRUE) :
+  running command 'timedatectl' had status 1
+
+- デバイス接続の問題？
+  - [[https://github.com/HowardHinnant/date/issues/102][Could not get current timezone on WSL (Windows Subsystem for Linux) #102]]
+  - [[https://code.medula.cl/article_karma-chrome-ubuntu-timezone.html][WSL Ubuntu has no timezone set, making Chrome fail on Intl related methods, when running tests with Karma.]]
+  - 一部の事象は以下のコマンドで消えたが =devtools::check()= では消えないまま
+
+#+begin_src shell
+sudo mv /etc/localtime /etc/no-localtime
+sudo ln -s /usr/share/zoneinfo/Europe/Berlin /etc/localtime
+#+end_src
+
+- 実害はないという結論 Docker などの環境で起こる問題
+  - [[https://stat.ethz.ch/pipermail/r-devel/2018-May/076163.html][[Rd] Sys.timezone (timedatectl) unnecessarily warns loudly]]
+    timedatectl binary used by Sys.timezone does not always work reliably.
+    If it doesn't the warning is raised, unnecessarily because later on
+    Sys.timezone gets timezone successfully from /etc/timezone.

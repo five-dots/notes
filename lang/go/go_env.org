@@ -1,0 +1,17 @@
+#+STARTUP: folded indent inlineimages latexpreview
+
+* Tools
+
+- [[https://github.com/syndbg/goenv][goenv@Github]]
+  - pyenv ライクなバージョン管理
+
+- =go mod= (Go Modules)
+
+* GOPATH
+
+#+begin_src shell
+echo $GOPATH
+#+end_src
+
+#+RESULTS:
+: /home/shun/go/1.14.2

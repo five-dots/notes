@@ -1,0 +1,521 @@
+#+STARTUP: content indent
+
+* コマンドリファレンス
+
+|-------------+----------------------+--------------------+---------------------------------------|
+| コマンド    | 引数 (例)            | オプション         | オプション説明                        |
+|-------------+----------------------+--------------------+---------------------------------------|
+| init        | -                    |                    |                                       |
+|-------------+----------------------+--------------------+---------------------------------------|
+| config      | user.name "xxx"      | --global           |                                       |
+|             |                      | --local            | リポジトリ単位の設定                  |
+|-------------+----------------------+--------------------+---------------------------------------|
+| add         | .                    | -A, --all          | すべて                                |
+|             |                      | -u --upgrade       | 変更されたファイルのみ                |
+|             |                      | -f --force         | .gitignore のファイルも               |
+|-------------+----------------------+--------------------+---------------------------------------|
+| status      | -                    |                    |                                       |
+|             |                      |                    |                                       |
+|-------------+----------------------+--------------------+---------------------------------------|
+| log         | -                    |                    | コミット履歴を表示する                |
+|             |                      | --merges           | merge commit だけ表示                 |
+|             |                      | --no-merges        | merg commit を表示しない              |
+|             |                      | --oneline          | 一行で表示                            |
+|-------------+----------------------+--------------------+---------------------------------------|
+| diff        |                      |                    |                                       |
+|-------------+----------------------+--------------------+---------------------------------------|
+| reflog      | -                    |                    |                                       |
+|-------------+----------------------+--------------------+---------------------------------------|
+| commit      | -m "Initial Commit." | -m                 | コミットメッセージ                    |
+|             |                      | --amend            |                                       |
+|-------------+----------------------+--------------------+---------------------------------------|
+| reset       | --hard HEAD^         | --hard             | WT, IDX, HEAD 全て                    |
+|             |                      | --soft             | HEAD のみ (commit 取り消し)           |
+|             |                      | --mixed            | IDX, HEAD のみ (add, commit 取り消し) |
+|             | --hard HEAD@{1}      |                    | reset 自体を取り消す                  |
+|-------------+----------------------+--------------------+---------------------------------------|
+| remote      | add origin "url"     |                    |                                       |
+|             |                      | -v                 | 情報表示                              |
+|-------------+----------------------+--------------------+---------------------------------------|
+| push        | -u origin master     | -u, --set-upstream |                                       |
+|             |                      | -f, --force        | 強制的にプッシュ                      |
+|-------------+----------------------+--------------------+---------------------------------------|
+| tag         |                      |                    |                                       |
+|-------------+----------------------+--------------------+---------------------------------------|
+| clone       | https://../hoge.git  |                    |                                       |
+|             |                      |                    |                                       |
+|-------------+----------------------+--------------------+---------------------------------------|
+| branche     | "develop"            |                    |                                       |
+|             |                      | -d                 | 削除                                  |
+|             |                      | -m                 | リネーム                              |
+|-------------+----------------------+--------------------+---------------------------------------|
+| checkout    | -b "develop"         | -b                 | 存在しなければ新規作成                |
+|             |                      | --force            |                                       |
+|             |                      | --ours             | 競合時に自分を優先                    |
+|             |                      | --thiers           | 競合時に相手を優先                    |
+|-------------+----------------------+--------------------+---------------------------------------|
+| fetch       |                      |                    |                                       |
+|-------------+----------------------+--------------------+---------------------------------------|
+| merge       |                      |                    |                                       |
+|-------------+----------------------+--------------------+---------------------------------------|
+| pull        | origin "develop"     |                    | fetch + merge                         |
+|             |                      | --rebase           |                                       |
+|-------------+----------------------+--------------------+---------------------------------------|
+| rebase      | origin/master        |                    | 履歴を新しく作成し直す                |
+|             |                      |                    |                                       |
+|             |                      |                    |                                       |
+| stash       |                      |                    |                                       |
+| cherry-pick |                      |                    |                                       |
+|-------------+----------------------+--------------------+---------------------------------------|
+
+* Work flow
+** General workflow
+*** overview
+
+1. Working tree
+   Add, edit, delete files
+
+2. Index (Staging)
+   _add_: Working tree => Index
+
+3. Local reposotory
+   _commit_: Index => Local repo
+
+4. Remote repository
+   _push_: Local => Remote
+
+*** =init=
+
+- =git init=
+- .git ディレクトリが作成される
+
+#+begin_src shell :results silent :session "*git*"
+cd =
+rm git-test/ -rf
+mkdir git-test
+cd git-test
+#+end_src
+
+#+begin_src shell :session "*git*"
+git init
+#+end_src
+
+#+RESULTS:
+: Initialized empty Git repository in /home/shun/git-test/.git/
+
+#+begin_src shell :session "*git*"
+ls -a .git/
+#+end_src
+
+#+RESULTS:
+: .  ..  branches  config  description  HEAD  hooks  info  objects  refs
+
+#+begin_src shell :results output :session "*git*"
+cat .git/config
+#+end_src
+
+#+RESULTS:
+: [core]
+: 	repositoryformatversion = 0
+: 	filemode = true
+: 	bare = false
+: 	logallrefupdates = true
+
+*** =config=
+
+- =git config=
+  .git/config に保存されている
+
+#+begin_src shell :results output :session "*git*"
+cd ~/git-test/
+git config --local --list
+#+end_src
+
+#+RESULTS:
+: 
+: core.repositoryformatversion=0
+: core.filemode=true
+: core.bare=false
+: core.logallrefupdates=true
+
+#+begin_src shell :results output :session "*git*"
+cd ~/git-test/
+git config --local user.name "Shun Asai"
+git config --local user.email "syun.asai@gmail.com"
+git config --local --list
+#+end_src
+
+#+RESULTS:
+: 
+: shun@desk1:~/git-test$ shun@desk1:=/git-test$ core.repositoryformatversion=0
+: core.filemode=true
+: core.bare=false
+: core.logallrefupdates=true
+: user.name=Shun Asai
+: user.email=syun.asai@gmail.com
+
+*** =add= (Staging)
+
+- =git add .=
+  全てのファイルを _Working Tree_ から _Index_ に追加する
+  ファイルを commit 対象に追加する目的
+
+#+begin_src shell :results output :session "*git*"
+cd ~/git-test/
+touch hoge.txt
+echo "hoge" > hoge.txt
+git add .
+git status
+#+end_src
+
+#+RESULTS:
+: 
+: shun@desk1:~/git-test$ shun@desk1:~/git-test$ shun@desk1:~/git-test$ On branch master
+: 
+: No commits yet
+: 
+: Changes to be committed:
+: ..." to unstage)
+: 
+: 	new file:   hoge.txt
+
+*** =commit=
+
+- =git commit -m "commit message"=
+  _Index_ から _Local Repository_ に追加する
+
+#+begin_src shell :results output :session "*git*"
+cd =/git-test/
+git commit -m "Initial Commit"
+git status
+#+end_src
+
+#+RESULTS:
+: 
+: On branch master
+: nothing to commit, working tree clean
+: On branch master
+: nothing to commit, working tree clean
+
+*** =log=
+
+- =git log=
+  commit 履歴の閲覧
+
+#+begin_src shell :results output :session "*git*"
+cd ~/git-test/
+git log
+#+end_src
+
+*** =remote=
+
+- =git remote add origin "url"=
+  _remote 追跡ブランチ_ を追加する
+  origin が url の別名になっている
+
+用語
+- master         = local master branch
+- origin/master  = remote origin master branch
+
+#+begin_src shell :results output :session "*git*"
+cd ~/git-test/
+git remote remove origin # 連続実行用に削除
+git remote add origin https://github.com/five-dots/git-test.git
+git remote # 現在のリモートを確認
+#+end_src
+
+#+RESULTS:
+: 
+: shun@desk1:~/git-test$ shun@desk1:~/git-test$ origin
+
+*** =push=
+
+- =git remote add origin "url"=
+  _remote 追跡ブランチ_ を追加する
+  origin が url の別名になっている
+  事前に github にリポジトリを作っておく
+
+#+begin_src shell :results output :session "*git*"
+cd ~/git-test/
+git push -u origin master
+#+end_src
+
+#+RESULTS:
+: 
+: Counting objects: 3, done.
+: (1/3)   Writing objects:  66% (2/3)   Writing objects: 100% (3/3)   Writing objects: 100% (3/3), 221 bytes | 221.00 KiB/s, done.
+: Total 3 (delta 0), reused 0 (delta 0)
+: To github:five-dots/git-test.git
+: master
+: Branch 'master' set up to track remote branch 'master' from 'origin'.
+
+*** =clone=
+
+- =git clone "repo"=
+
+#+begin_src shell :results output :session "*git*"
+cd ~
+rm git-test2/ -rf
+git clone https://github.com/five-dots/git-test.git git-test2
+#+end_src
+
+#+RESULTS:
+: 
+: shun@desk1:~$ Cloning into 'git-test2'...
+: remote: Enumerating objects: 3, done.
+: (1/3)        remote: Counting objects:  66% (2/3)        remote: Counting objects: 100% (3/3)        remote: Counting objects: 100% (3/3), done.        
+: remote: Total 3 (delta 0), reused 3 (delta 0), pack-reused 0
+: (1/3)   Receiving objects:  66% (2/3)   Receiving objects: 100% (3/3)   Receiving objects: 100% (3/3), done.
+
+*** =fetch=
+
+- git-test2 側であらかじめ変更を加えておく 
+
+- =git fetch=
+  remote の変更を取り込む
+
+#+begin_src shell :results output :session "*git*"
+cd ~/git-test1/
+git fetch
+#+end_src
+
+#+RESULTS:
+: 
+: shun@x1:~/git-test1$ remote: Enumerating objects: 5, done.
+: (1/5)        remote: Counting objects:  40% (2/5)        remote: Counting objects:  60% (3/5)        remote: Counting objects:  80% (4/5)        remote: Counting objects: 100% (5/5)        remote: Counting objects: 100% (5/5), done.        
+: remote: Total 3 (delta 0), reused 3 (delta 0), pack-reused 0
+: (1/3)   Unpacking objects:  66% (2/3)   Unpacking objects: 100% (3/3)   Unpacking objects: 100% (3/3), done.
+: From github:five-dots/git-test1
+: origin/master
+
+*** =merge=
+
+- fetch した remote の変更内容を local repo に取り込む
+- もしくは、feature branch での変更を master branch に反映させる際に使う
+
+- =git merge orgin/master=
+
+#+begin_src shell :results output :session "*git*"
+cd ~/git-test1/
+git merge origin/master
+#+end_src
+
+#+RESULTS:
+: 
+: Updating c20d77e..4e6cea1
+: Fast-forward
+:  hoge.txt | 1 +
+:  1 file changed, 1 insertion(+)
+
+*** =pull=
+
+- pull = fetch + merge
+
+** @gold-kou@qiita (develop branch case)
+
+ 1. Web でリモートレポジトリ作成
+ 2. =git clone hoge.git=
+ 3. ローカルでブランチ作成 =git checkout -b develop= (= branch name)
+ 4. ファイル編集
+ 5. 変更ファイルの確認 =git status=
+ 6. ステージング環境に追加 =git add <file>=
+ 7. ローカルコミット =git commit -m "hoge"=
+ 8. 最新リモートの内容をローカルに適応 =git pull --rebase origin develop=
+   - 競合したファイルの修正 =git add <file>=
+   - rebase を完了する =git rebase --continue=
+ 9. リモートにアップロード =git push origin develop=
+10. =pull request=
+
+* Merge conflict
+
+- どちらの branch を優先させるかが決まっている場合
+  =git checkout --ours hoge.txt= (local を優先)
+  =git checkout --theirs hoge.txt= (remote を優先)
+  
+  - その後
+    - add -> commit -> push
+    - 競合のあった commit が merge されたもので上書きされる
+
+- 手動で解決する場合
+  - 以下のように差分が表示される
+  - 修正したら add -> commit -> push
+ 
+  <<<<<<< HEAD
+  hoge
+  =======
+  fuga
+  >>>>>>> 29ec90c91c6e1f18d36e629b927cc66abf708f26
+ 
+* Reset commit
+
+- 以前の変更点に戻る
+- [[https://qiita.com/shuntaro_tamura/items/db1aef9cf9d78db50ffe][[git reset (--hard/--soft)]ワーキングツリー、インデックス、HEADを使いこなす方法@Qiita]]
+
+- =git reset --hard HEAD^= (全て消えてしまうので注意)
+- =git reset --soft HEAD^=
+- =git reset --mixed HEAD^=
+
+- HEAD     = 現在のブランチの先頭のこと
+- HEAD^    = １つ前
+- HEAD^^   = ２つ前
+- HEAD~{n} = n 個前
+- もしくは ID を指定する
+
+* Remove files from repo
+
+#+begin_src shell
+git reset HEAD -- <filename>
+#+end_src
+
+- 一度 commit した後に .gitignore に追加したファイルをキャシュから削除できる
+#+begin_src shell
+git rm --cached <filename>
+#+end_src
+
+* How to write commit messages
+
+- New commit
+  - =git commit -m "commit message"=
+
+- Commit tag
+  - [fix] bug fix
+  - [add] new file, new feature
+  - [update] fix feature
+  - [remove] delete file
+
+- Change recent commit
+  - =git commit --amend= (=> open editor and change message)
+
+* Remote repository
+
+- remote = リモート追跡ブランチのこと (Tracking branch)
+           リモートの変更をローカルで追跡する         
+           自動で更新されるものではなく、手動で更新する
+- origin = リモートリポジトリの URL の別名のこと
+
+- Add remote repo to local repo
+#+begin_src shell
+git remote add origin https://github.com/tmk-c/hoge.git
+git remote -v (check info)
+#+end_src
+
+
+- push to remote repo
+#+begin_src shell
+git push <repo> <refspec>
+# e.g.) git push origin master
+#+end_src
+
+- Check diff on remote repo
+  - リモートリポジトリの最新状態をローカルのリモート追跡ブランチにダウンロード
+  - ワーキングツリーには影響しない
+#+begin_src shell
+git fetch <repo> <refspec>
+#+end_src
+
+- Update diff on remote repo
+#+begin_src shell
+git pull <repo> <refspec>
+#+end_src
+
+- Merge
+  - 指定したブランチを現在のブランチに統合する
+  - fast-forward, non-fast-forward
+#+begin_src shell
+git merge
+#+end_src
+
+- Check url
+#+begin_src shell
+git remote get-url origin
+#+end_src
+
+- Delete remote
+#+begin_src shell
+git remote rm sample
+git remote -v
+#+end_src
+
+* Branch model
+** git-flow model
+
+Use 6 branch
+- master   リリース可能な品質。 _master branch での作業は NG_
+- develop  mater から派生させる。 _develop branch での作業は NG_
+- release  develop から派生させる。リリース作業を行う。master/develop にマージする。
+- feature  develop から派生させる。機能追加を行う。develop にマージする。
+- hotfix   master から派生させる。リリース済みのものへの緊急修正。master/devleo へマージする。
+- support  旧バージョンをサポートするためのブランチ
+
+** Github Flow
+
+- master
+  Release branch
+  No work on this bransh
+  master + develop on git-flow model
+
+- topic
+  New feature, bug fix
+  Delete this branch after merged to master
+  feature + hotfix on git-flow model
+
+* Merge from branch
+
+#+begin_src shell
+git checkbout -b develop
+#+end_src
+edit, add, commit
+
+* submodule
+
+- [[https://qiita.com/sotarok/items/0d525e568a6088f6f6bb][Git submodule の基礎@Qiita]]
+- 外部のリポジトリを自分のリポジトリの配下に置く
+
+- ブランチ単位での管理ではなく、submodule は _commit id_ 単位での管理
+
+* gitignore
+
+- [[https://quartet-communications.com/info/topics/13642][Gitで空のディレクトリを管理する方法の復習]]
+  - app/tmp/ 以下のファイルを全て ignore し、tmp/ フォルダは残して置く場合
+  - ~.gitignore~ に以下を追加
+
+#+begin_quote
+app/tmp/*
+!.gitkeep
+#+end_quote
+
+* Use SSH
+
+- [[https://qiita.com/shizuma/items/2b2f873a0034839e47ce][GitHub で ssh 接続する手順~公開鍵・秘密鍵の生成から~@Qiita]]
+  
+1. ssh-keygen
+2. upload public key
+3. edit ~/.ssh/config
+4. 接続確認
+5. edit ~/.gitconfig
+
+* Emacs Packages
+
+- magit
+
+- magit-gitflow
+  Vincent Driessen がブログに書いた "A successful Git branching model" というブランチモデル (git-flow) の導入を簡単にする git プラグイン
+
+- git-timemachine 
+
+- git-messenger
+  commit message をバッファに表示する
+
+- smeargle
+  変更箇所のバッファをハイライト
+
+- orgit
+  org-integration
+
+* 参考
+
+- [[https://qiita.com/shunhikita/items/9b909b566d1b0a263519][新入社員による新入社員のための Git (+140)@Qiita]]
+- [[https://qiita.com/gold-kou/items/7f6a3b46e2781b0dd4a0][いまさらだけど Git を基本から分かりやすくまとめてみた (+2200)@Qiita]]
+- [[https://qiita.com/itosho/items/9565c6ad2ffc24c09364][Git のコミットメッセージの書き方 (+3700)@Qiita]]
+- [[https://qiita.com/kohga/items/dccf135b0af395f69144 (+350)][Git コマンド早見表@Qiita]]
+- [[https://qiita.com/shuntaro_tamura/items/db1aef9cf9d78db50ffe][git reset (--hard/--soft) ワーキングツリー、インデックス、HEAD を使いこなす方法 (+1000)@Qiita]]

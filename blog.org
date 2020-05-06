@@ -1,0 +1,282 @@
+#+STARTUP: folded indent inlineimages latexpreview
+#+PROPERTY: header-args:R :results output :exports both :session R:blog :width 640 :height 480
+#+OPTIONS: author:nil 
+#+HUGO_BASE_DIR: ~/Dropbox/repos/github/five-dots/blog
+#+HUGO_SECTION: post
+
+* DONE R Packages
+CLOSED: [2019-10-09 Wed 19:02]
+:PROPERTIES:
+:EXPORT_FILE_NAME: r-packages
+:EXPORT_HUGO_SECTION: series
+:EXPORT_HUGO_CUSTOM_FRONT_MATTER+: :toc true
+:END:
+** Package list
+
+- [[https://github.com/rstudio/RStartHere][RStartHere]]
+- [[https://awesome-r.com/][Awesome R]]
+
+** tidyverse
+
+- Core packages
+| Packages  | Description                                            |
+|-----------+--------------------------------------------------------|
+| ~dplyr~     | A grammar of data manipulation                         |
+| ~forcats~   | Tools for working with categorical variables (factors) |
+| ~ggplot2~   | An implementation of the Grammar of Graphics in R      |
+| ~purrr~     | A functional programming toolkit for R                 |
+| ~readr~     | Read flat files (csv, tsv, fwf) into R                 |
+| ~stringr~   | A fresh approach to string manipulation in R           |
+| ~tibble~    | A modern re-imagining of the data frame                |
+| ~tidyr~     | Easily tidy data with spread and gather functions      |
+| ~tidyverse~ | Easily install and load packages from the tidyverse    |
+|-----------+--------------------------------------------------------|
+
+- Other packages
+| Packages   | Description                                                         |
+|------------+---------------------------------------------------------------------|
+| ~broom~      | Convert statistical analysis objects from R into tidy format        |
+| ~cli~        | Tools for making beautiful & useful command line interfaces         |
+| ~crayon~     | R package for colored terminal output                               |
+| ~dbplyr~     | Database (DBI) backend for dplyr                                    |
+| ~haven~      | Read SPSS, Stata and SAS files from R                               |
+| ~hms~        | A simple class for storing time-of-day values                       |
+| ~httr~       | A friendly http package for R                                       |
+| ~jsonlite~   | A Robust, High Performance JSON Parser and Generator for R          |
+| ~lubridate~  | Make working with dates in R just that little bit easier            |
+| ~magrittr~   | Improve the readability of R code with the pipe                     |
+| ~modelr~     | Helper functions for modelling                                      |
+| ~readxl~     | Read excel files (.xls and .xlsx) into R                            |
+| ~reprex~     | Render bits of R code for sharing, e.g., on GitHub or StackOverflow |
+| ~rlang~      | Low-level API for programming with R                                |
+| ~rstudioapi~ | Safely access RStudio's API (when available)                        |
+| ~rvest~      | Simple web scraping for R                                           |
+| ~xml2~       | Bindings to libxml2                                                 |
+|------------+---------------------------------------------------------------------|
+
+- Packages not in tidyverse
+| Packages      | Description                                                                         |
+|---------------+-------------------------------------------------------------------------------------|
+| ~blob~          | A simple S3 class for representing BLOBs                                            |
+| ~googlesheets4~ | Google Spreadsheets R API (reboot of the googlesheets package)                      |
+| ~googledrive~   | Google Drive R API                                                                  |
+| ~dtplyr~        | Data table backend for dplyr                                                        |
+| ~principles~    | Tidyverse principles                                                                |
+| ~tidyeval~      | A guide to tidy evaluation                                                          |
+| ~style~         | The tidyverse style guide for R code                                                |
+| ~glue~          | Glue strings to data in R. Small, fast, dependency free interpreted string literals |
+| ~multidplyr~    | A dplyr backend that partitions a data frame over multiple processes                |
+| ~tidytemplate~  | A pkgdown template for core tidyverse packages                                      |
+
+** tidymodels
+
+| Packages      | Description                                                                                |
+|---------------+--------------------------------------------------------------------------------------------|
+| ~broom~         | Convert statistical analysis objects from R into tidy format                               |
+| ~cli~           | Tools for making beautiful & useful command line interfaces                                |
+| ~crayon~        | R package for colored terminal output                                                      |
+| ~dials~         | Tools for creating tuning parameter values                                                 |
+| ~dplyr~         | A grammar of data manipulation                                                             |
+| ~ggplot2~       | An implementation of the Grammar of Graphics in R                                          |
+| ~infer~         | An R package for tidyverse-friendly statistical inference                                  |
+| ~magrittr~      | Improve the readability of R code with the pipe                                            |
+| ~parsnip~       | A tidy unified interface to models                                                         |
+| ~pillar~        | Format columns with colour                                                                 |
+| ~purrr~         | A functional programming toolkit for R                                                     |
+| ~recipes~       | A preprocessing engine to generate design matrices                                         |
+| ~rlang~         | Low-level API for programming with R                                                       |
+| ~rsample~       | Classes and functions to create and summarize different types of resampling objects        |
+| ~rstudioapi~    | Safely access RStudio's API (when available)                                               |
+| ~tibble~        | A modern re-imagining of the data frame                                                    |
+| ~tidyposterior~ | Bayesian comparisons of models using resampled statistics                                  |
+| ~tidypredict~   | Run predictions inside the database                                                        |
+| ~tidytext~      | Text mining using dplyr, ggplot2, and other tidy tools                                     |
+| ~yardstick~     | Tidy methods for measuring model performance                                               |
+| ~tidymodels~    | Easily Install and Load the 'Tidymodels' Packages                                          |
+|---------------+--------------------------------------------------------------------------------------------|
+| ~aml-training~  | The most recent version of the Applied Machine Learning notes                              |
+| ~applicable~    | Quantify extrapolation of new samples given a training set                                 |
+| ~butcher~       | Reduce the size of model objects saved to disk                                             |
+| ~corrr~         | R package for exploring correlations                                                       |
+| ~discrim~       | Wrappers for discriminant analysis and naive Bayes models for use with the parsnip package |
+| ~embed~         | Extra recipes for categorical predictor embeddings                                         |
+| ~hardhat~       | A Toolkit for the Construction of Modeling Packages                                        |
+| ~modeldb~       | Run models inside a database using R                                                       |
+| ~probably~      | Tools for post-processing class probability estimates                                      |
+| ~textrecipes~   | Extra recipes for Text Processing                                                          |
+| ~tune~          | Tools for tidy parameter tuning                                                            |
+
+** other
+- vroom
+
+* DONE The first post
+CLOSED: [2019-10-10 Wed 13:03]
+:PROPERTIES:
+:EXPORT_FILE_NAME: first-post
+:EXPORT_HUGO_SECTION*: 2019/10/
+:EXPORT_HUGO_CUSTOM_FRONT_MATTER+: :toc true
+:END:
+
+ブログの開設にあたって、よく利用する記法がブログ側でどのように表現されるかを確認する。特に [[https://gohugo.io/][Hugo]] の [[https://github.com/xianmin/hugo-theme-jane][Jane]] テーマで、意図した通りに表示されるかを確認したい。なお、当面は Emacs の [[https://orgmode.org/ja/][org-mode]] で記事を執筆し、[[https://ox-hugo.scripter.co/][ox-hugo]] でエクスポートした markdown を [[https://www.netlify.com/][Netlify]] で公開するというフローでブログを運営していく。
+** h1
+*** h1
+**** h2
+***** h3
+****** h5
+** Table/Text
+
+| name      | org-mode    | result      |
+|-----------+-------------+-------------|
+| bold      | ~*hoge*~      | *hoge*        |
+| italic    | ~/hoge/~      | /hoge/        |
+| underline | ~_hoge_~      | _hoge_        |
+| underline | ~<u>hoge</u>~ | <u>hoge</u> |
+| strike    | ~+hoge+~      | +hoge+        |
+| code      | ~~hoge~~      | ~hoge~        |
+| verbatim  | ~=hoge=~      | =hoge=        |
+
+** List
+
+順序なしリスト
+- hoge
+- fuga
+- piyo
+
+順序ありリスト
+1. hoge
+2. fuga
+3. piyo
+
+チェックボックス
+ - [ ] hoge
+ - [ ] fuga
+ - [ ] piyo
+
+** Quote
+
+#+begin_quote
+Everything should be made as simple as possible,
+but not any simpler ---Albert Einstein
+#+end_quote
+
+** Formula
+
+- インライン ~$y=f(x)$~
+
+$y=f(x)$
+
+- ブロック
+#+begin_example
+\begin{equation}
+\label{eq:1}
+y=f(x)
+\end{equation}
+#+end_example
+
+\begin{equation}
+\label{eq:1}
+y=f(x)
+\end{equation}
+
+** Footnote
+
+- org-mode[fn:org] ~[fn:hoge]~
+[fn:org] https://orgmode.org/ja/
+
+** Horizontal Rule
+
+~---~
+---
+
+** emacs-lisp
+
+#+begin_src emacs-lisp :exports both
+(emacs-version)
+#+end_src
+
+#+RESULTS:
+: GNU Emacs 26.3 (build 2, x86_64-pc-linux-gnu, GTK+ Version 3.22.30)
+:  of 2019-09-17
+
+** R code
+*** Table
+
+#+begin_src R :results value :colnames yes
+library(tidyverse)
+head(iris)
+#+end_src
+
+#+RESULTS:
+| Sepal.Length | Sepal.Width | Petal.Length | Petal.Width | Species |
+|--------------+-------------+--------------+-------------+---------|
+|          5.1 |         3.5 |          1.4 |         0.2 | setosa  |
+|          4.9 |           3 |          1.4 |         0.2 | setosa  |
+|          4.7 |         3.2 |          1.3 |         0.2 | setosa  |
+|          4.6 |         3.1 |          1.5 |         0.2 | setosa  |
+|            5 |         3.6 |          1.4 |         0.2 | setosa  |
+|          5.4 |         3.9 |          1.7 |         0.4 | setosa  |
+
+*** Plot
+
+#+begin_src R :results graphics :file ./img/blog/first-post_iris.png
+ggplot(iris, aes(x = Sepal.Length, y = Sepal.Width)) + geom_point()
+#+end_src
+
+#+RESULTS:
+[[file:./img/blog/first-post_iris.png]]
+
+*** Code output
+
+#+begin_src R
+sessionInfo()
+#+end_src
+
+#+RESULTS:
+#+begin_example
+R version 3.6.1 (2019-07-05)
+Platform: x86_64-pc-linux-gnu (64-bit)
+Running under: Ubuntu 18.04.3 LTS
+
+Matrix products: default
+BLAS:   /usr/lib/x86_64-linux-gnu/blas/libblas.so.3.7.1
+LAPACK: /usr/lib/x86_64-linux-gnu/lapack/liblapack.so.3.7.1
+
+locale:
+ [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C              
+ [3] LC_TIME=en_US.UTF-8        LC_COLLATE=en_US.UTF-8    
+ [5] LC_MONETARY=en_US.UTF-8    LC_MESSAGES=en_US.UTF-8   
+ [7] LC_PAPER=en_US.UTF-8       LC_NAME=C                 
+ [9] LC_ADDRESS=C               LC_TELEPHONE=C            
+[11] LC_MEASUREMENT=en_US.UTF-8 LC_IDENTIFICATION=C       
+
+attached base packages:
+[1] stats     graphics  grDevices utils     datasets  methods   base     
+
+other attached packages:
+[1] forcats_0.4.0   stringr_1.4.0   dplyr_0.8.3     purrr_0.3.2    
+[5] readr_1.3.1     tidyr_1.0.0     tibble_2.1.3    ggplot2_3.2.1  
+[9] tidyverse_1.2.1
+
+loaded via a namespace (and not attached):
+ [1] Rcpp_1.0.2       cellranger_1.1.0 pillar_1.4.2     compiler_3.6.1  
+ [5] tools_3.6.1      zeallot_0.1.0    jsonlite_1.6     lubridate_1.7.4 
+ [9] lifecycle_0.1.0  gtable_0.3.0     nlme_3.1-141     lattice_0.20-38 
+[13] pkgconfig_2.0.3  rlang_0.4.0      cli_1.1.0        rstudioapi_0.10 
+[17] haven_2.1.1      withr_2.1.2      xml2_1.2.2       httr_1.4.1      
+[21] generics_0.0.2   vctrs_0.2.0      hms_0.5.1        grid_3.6.1      
+[25] tidyselect_0.2.5 glue_1.3.1       R6_2.4.0         readxl_1.3.1    
+[29] modelr_0.1.5     magrittr_1.5     backports_1.1.5  scales_1.0.0    
+[33] rvest_0.3.4      assertthat_0.2.1 colorspace_1.4-1 labeling_0.3    
+[37] stringi_1.4.3    lazyeval_0.2.2   munsell_0.5.0    broom_0.5.2     
+[41] crayon_1.3.4
+#+end_example
+
+** Reference
+- [[https://www.xianmin.org/hugo-theme-jane/][Jane Theme]]
+- [[https://ladicle.com/post/ox-hugo-cheat/][ox-Hugo Cheat Sheet]]
+
+* Footnotes
+* COMMENT Local Variables                          :ARCHIVE:
+# Local Variables:
+# eval: (org-hugo-auto-export-mode)
+# End:

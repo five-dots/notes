@@ -1,0 +1,18 @@
+#+STARTUP: showall indent
+
+* JDK
+
+- JDK をインストールすると javac コマンドが使えるようになる
+- JRE のみだと、java コマンド
+
+#+begin_src shell
+apt install openjdk-8-jdk
+#+end_src
+
+- java バージョンの切り替え
+https://askubuntu.com/questions/740757/switch-between-multiple-java-versions/740782
+
+#+begin_src shell
+update-java-alternatives --list
+sudo update-java-alternatives --set /path/to/java/version
+#+end_src

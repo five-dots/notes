@@ -1,0 +1,17 @@
+#+STARTUP: content indent
+
+* Tramp
+** SSH
+
+- TRAMP + sudo
+  - [[https://qiita.com/kayama0fa/items/ca96411667d0d30cc932][emacs上で、root権限でファイル編集@Qiita]]
+ 
+- sudo
+  - =/sudo::/path/to/file=
+
+- Tramp
+  - =/ssh:user@host#port:/path/to/file=
+
+- Tramp + sudo
+  - =/ssh:user@host#port|sudo:host:/path/to/file=
+  - =/ssh:shun@124.209.136.123#2222|sudo:124.209.136.123:/etc/cron.d/shun_cron=

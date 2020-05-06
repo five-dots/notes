@@ -1,0 +1,328 @@
+#+STARTUP: folded indent
+#+PROPERTY: header-args:R :results output :exports both :session *R:jp-input*
+
+* SKK
+** ibus-skk
+*** emacs では無効化
+
+.Xresources に以下を追記
+Emacs*useXIM: false
+
+*** 英語キーボードへの切り替え
+
+/usr/share/ibus/component/skk.xml
+
+<layout>ja</layout>
+を
+<layout>us</layout>
+へ変更
+
+** DDSKK
+*** Install by apt
+
+#+begin_src shell
+apt install ddskk skkdic skkdic-extra
+#+end_src
+
+_この方法だと emacs25 がインストールされてしまう_
+
+*** Install from source
+
+- インストール場所の確認
+#+begin_src shell :results output
+cd ~/Dropbox/repos/public/ddskk-16.2
+make what-where
+#+end_src
+
+#+RESULTS:
+#+begin_example
+emacs -batch -q -no-site-file -l SKK-MK -f SKK-MK-what-where
+
+Running in:
+  GNU Emacs 26.3 (build 2, x86_64-pc-linux-gnu, GTK+ Version 3.22.30)
+ of 2019-09-17
+
+SKK modules:
+  skk-viper, skk-jisx0213, skk-search-web, skk-emacs, ccc, cdb, context-skk, skk-abbrev, skk-act, skk-annotation, skk-auto, skk-autoloads, skk-azik, skk-cdb, skk-comp, skk-cursor, skk-cus, skk-dcomp, skk-develop, skk-gadget, skk-hint, skk-inline, skk-isearch, skk-jisx0201, skk-jisyo-edit-mode, skk-kakasi, skk-kcode, skk-leim, skk-look, skk-macs, skk-num, skk-server-completion, skk-server, skk-show-mode, skk-sticky, skk-study, skk-tankan, skk-tut, skk-vars, skk-version, skk, tar-util
+  -> /usr/share/emacs/26.3/site-lisp/skk
+
+SKK infos:
+  skk.info
+  -> /usr/share/info
+
+SKK tutorials:
+  SKK.tut, SKK.tut.E, NICOLA-SKK.tut, skk.xpm
+  -> /usr/share/skk
+
+#+end_example
+
+sudo make install でインストール
+
+*** Usage
+
+モード変換
+- C-j ひらかな
+- q   カタカナ
+- l   ASCII
+- L   全英
+
+- /   英字変換
+- x   子音 (xtu -> っ, xa -> ぁ)
+- \   文字コード
+- きごう (e.g. 〒 〆 ‖)
+- /greek, /Greek
+
+- Q   変換の再開 (変換開始まで戻って Q、 その後変換終了地点で space)
+- x   (変換中) 前の候補
+
+- 誤って辞書登録画面になってしまった時は、空白文字で確定すればよい
+- 「動く」は うご k として辞書登録されている。入力するには「UgoKu」と入力 
+
+- tab 読みの補完
+- .   次の補完候補
+- ,   前の補完候補
+
+- 記号入力
+  z, ‥
+  z- 〜
+  z. …
+  z/ ・
+  z[ 『
+  z] 』
+  zh ←
+  zj ↓
+  zk ↑
+  zl →
+
+* Google 日本語入力
+** Reference
+
+- [[https://solist.work/blog/posts/mozc/][Google 日本語入力(Mozc)]]
+- [[http://d.hatena.ne.jp/sifue/20120411/1334161078][escape を IME キャンセルに割り当てる for vim binding]]
+- [[https://github.com/google/mozc][Official repo]]
+  
+** デフォルト英数を半角に設定する
+
+- GUI の設定画面から
+
+** escape を IME キャンセルに割り当てる
+
+- http://d.hatena.ne.jp/sifue/20120411/1334161078 for vim binding
+- デフォルト英数を半角に設定する
+
+** Mozc Installation
+
+- [[http://mickey-happygolucky.hatenablog.com/entry/2015/12/11/001402][emacs-mozcを使用する]]
+
+- ibus-mozc
+- emacs-mozc-bin
+
+- ctrl-space で IME の有効化・無効化
+- Escpae で IME の無効化
+- Muhenkan で IME の無効化
+
+** Mozc En-Ja Mapping
+*** 変換表を作成
+
+- xml2 パッケージを使って作成
+
+#+begin_src R :results silent
+library(xml2)
+library(tidyverse)
+
+path <- "~/Dropbox/repos/github/google/mozc/src/gui/config_dialog/keymap_ja.ts"
+keymap <- read_xml(path)
+
+en <- xml_find_all(keymap, ".//source") %>% xml_text()
+ja <- xml_find_all(keymap, ".//translation") %>% xml_text()
+mapping <- data.frame(English = en, Japanese = ja, stringsAsFactors = FALSE)
+#+end_src
+
+*** モード
+
+#+begin_src R :results value :colnames yes
+modes <- slice(mapping, 1:6)
+#+end_src
+
+#+RESULTS:
+| English        | Japanese         |
+|----------------+------------------|
+| Conversion     | 変換中           |
+| Composition    | 変換前入力中     |
+| DirectInput    | 直接入力         |
+| Precomposition | 入力文字なし     |
+| Prediction     | サジェスト選択中 |
+| Suggestion     | サジェスト表示中 |
+
+*** コマンド
+
+#+begin_src R :results value :colnames yes
+commands <- slice(mapping, 7:n()) %>% arrange(English)
+#+end_src
+
+#+RESULTS:
+| English                   | Japanese                  |
+|---------------------------+---------------------------|
+| Backspace                 | 左の文字を削除            |
+| Cancel                    | キャンセル                |
+| CancelAndIMEOff           | キャンセル後 IME を無効化 |
+| Commit                    | 確定                      |
+| CommitFirstSuggestion     | 最初の予測候補を確定      |
+| CommitOnlyFirstSegment    | 最初の文節のみを確定      |
+| Convert                   | 変換                      |
+| ConvertNext               | 次候補を選択              |
+| ConvertNextPage           | 次候補ページを選択        |
+| ConvertPrev               | 前候補を選択              |
+| ConvertPrevPage           | 前候補ページを選択        |
+| ConvertToFullAlphanumeric | 全角英数に変換            |
+| ConvertToFullKatakana     | 全角カタカナに変換        |
+| ConvertToHalfAlphanumeric | 半角英数に変換            |
+| ConvertToHalfKatakana     | 半角カタカナに変換        |
+| ConvertToHalfWidth        | 半角に変換                |
+| ConvertToHiragana         | ひらがなに変換            |
+| ConvertWithoutHistory     | 学習を使わずに変換        |
+| Delete                    | 右の文字を削除            |
+| DeleteSelectedCandidate   | 選択候補を履歴から削除    |
+| DisplayAsFullAlphanumeric | 全角英数に表示切替        |
+| DisplayAsFullKatakana     | 全角カタカナに表示切替    |
+| DisplayAsHalfAlphanumeric | 半角英数に表示切替        |
+| DisplayAsHalfKatakana     | 半角カタカナに表示切替    |
+| DisplayAsHalfWidth        | 半角に表示切替            |
+| DisplayAsHiragana         | ひらがなに表示切替        |
+| IMEOff                    | IME を無効化              |
+| IMEOn                     | IME を有効化              |
+| InputModeFullAlphanumeric | 全角英数に入力切替        |
+| InputModeFullKatakana     | 全角カタカナに入力切替    |
+| InputModeHalfAlphanumeric | 半角英数に入力切替        |
+| InputModeHalfKatakana     | 半角カタカナに入力切替    |
+| InputModeHiragana         | ひらがなに入力切替        |
+| InputModeSwitchKanaType   | 次のかな文字種に入力切替  |
+| InsertAlternateSpace      | 代替空白文字を入力        |
+| InsertFullSpace           | 全角空白を入力            |
+| InsertHalfSpace           | 半角空白を入力            |
+| InsertSpace               | 空白を入力                |
+| LaunchConfigDialog        | プロパティを起動          |
+| LaunchDictionaryTool      | 辞書ツールを起動          |
+| LaunchWordRegisterDialog  | 単語登録を起動            |
+| MoveCursorLeft            | カーソルを左に移動        |
+| MoveCursorRight           | カーソルを右に移動        |
+| MoveCursorToBeginning     | カーソルを左端に移動      |
+| MoveCursorToEnd           | カーソルを右端に移動      |
+| PredictAndConvert         | 予測変換                  |
+| Reconvert                 | 再変換                    |
+| Revert                    | 最後の学習をキャンセル    |
+| SegmentFocusFirst         | 文節を左端に移動          |
+| SegmentFocusLast          | 文節を右端に移動          |
+| SegmentFocusLeft          | 文節を左に移動            |
+| SegmentFocusRight         | 文節を右に移動            |
+| SegmentWidthExpand        | 文節を伸ばす              |
+| SegmentWidthShrink        | 文節を縮める              |
+| SwitchKanaType            | ひらがな・カタカナを切替  |
+| ToggleAlphanumericMode    | 英数入力切り替え          |
+| Undo                      | 確定取り消し              |
+
+** Commands + Modes
+
+#+begin_src R :results value :colnames yes
+path <- "~/Dropbox/mozc/keymap_default.txt"
+keymaps <- read_tsv(path) %>%
+  select(command, status, key) %>%
+  arrange(command) %>%
+  group_split(command, status) %>%
+  map_dfr(~ {
+    pivot_wider(., values_from = key, names_from = key) %>%
+      unite(default_keys, -status, -command, sep = ", ") %>%
+      select(command, status, default_keys)
+  })
+all_keymaps <- full_join(commands, keymaps, by =  c("English" = "command")) %>%
+  rename(english_command = English, japanese_command = Japanese)
+#+end_src
+
+#+RESULTS:
+| english_command           | japanese_command          | status         | default_keys                                                                               |
+|---------------------------+---------------------------+----------------+--------------------------------------------------------------------------------------------|
+| Backspace                 | 左の文字を削除            | Composition    | Backspace, Ctrl Backspace, Ctrl h, Shift Backspace                                         |
+| Cancel                    | キャンセル                | Composition    | Ctrl z, ESC, Shift ESC                                                                     |
+| Cancel                    | キャンセル                | Conversion     | Backspace, Ctrl Backspace, Ctrl g, Ctrl h, Ctrl z, Delete, ESC, Shift Backspace, Shift ESC |
+| CancelAndIMEOff           | キャンセル後 IME を無効化 | nil            | nil                                                                                        |
+| Commit                    | 確定                      | Composition    | Ctrl Enter, Ctrl m, Enter                                                                  |
+| Commit                    | 確定                      | Conversion     | Ctrl Enter, Ctrl m, Enter                                                                  |
+| CommitFirstSuggestion     | 最初の予測候補を確定      | Suggestion     | Shift Enter                                                                                |
+| CommitOnlyFirstSegment    | 最初の文節のみを確定      | Conversion     | Ctrl Down, Ctrl n                                                                          |
+| Convert                   | 変換                      | Composition    | Henkan, Shift Space, Space                                                                 |
+| ConvertNext               | 次候補を選択              | Conversion     | Ctrl x, Down, Henkan, Space                                                                |
+| ConvertNextPage           | 次候補ページを選択        | Conversion     | PageDown, Shift Down                                                                       |
+| ConvertPrev               | 前候補を選択              | Conversion     | Ctrl e, Ctrl Up, Shift Henkan, Shift Space, Shift Tab, Up                                  |
+| ConvertPrevPage           | 前候補ページを選択        | Conversion     | PageUp, Shift Up                                                                           |
+| ConvertToFullAlphanumeric | 全角英数に変換            | Composition    | Ctrl p, F9, Shift Muhenkan                                                                 |
+| ConvertToFullAlphanumeric | 全角英数に変換            | Conversion     | Ctrl p, F9, Shift Muhenkan                                                                 |
+| ConvertToFullKatakana     | 全角カタカナに変換        | Composition    | Ctrl i, F7                                                                                 |
+| ConvertToFullKatakana     | 全角カタカナに変換        | Conversion     | Ctrl i, F7                                                                                 |
+| ConvertToHalfAlphanumeric | 半角英数に変換            | Composition    | Ctrl t, F10                                                                                |
+| ConvertToHalfAlphanumeric | 半角英数に変換            | Conversion     | Ctrl t, F10                                                                                |
+| ConvertToHalfKatakana     | 半角カタカナに変換        | nil            | nil                                                                                        |
+| ConvertToHalfWidth        | 半角に変換                | Composition    | Ctrl o, F8                                                                                 |
+| ConvertToHalfWidth        | 半角に変換                | Conversion     | Ctrl o, F8                                                                                 |
+| ConvertToHiragana         | ひらがなに変換            | Composition    | Ctrl u, F6                                                                                 |
+| ConvertToHiragana         | ひらがなに変換            | Conversion     | Ctrl u, F6                                                                                 |
+| ConvertWithoutHistory     | 学習を使わずに変換        | Composition    | F2                                                                                         |
+| Delete                    | 右の文字を削除            | Composition    | Ctrl g, Delete                                                                             |
+| DeleteSelectedCandidate   | 選択候補を履歴から削除    | Prediction     | Ctrl Delete                                                                                |
+| DisplayAsFullAlphanumeric | 全角英数に表示切替        | nil            | nil                                                                                        |
+| DisplayAsFullKatakana     | 全角カタカナに表示切替    | nil            | nil                                                                                        |
+| DisplayAsHalfAlphanumeric | 半角英数に表示切替        | nil            | nil                                                                                        |
+| DisplayAsHalfKatakana     | 半角カタカナに表示切替    | nil            | nil                                                                                        |
+| DisplayAsHalfWidth        | 半角に表示切替            | nil            | nil                                                                                        |
+| DisplayAsHiragana         | ひらがなに表示切替        | nil            | nil                                                                                        |
+| IMEOff                    | IME を無効化              | Composition    | Hankaku/Zenkaku, Kanji, OFF                                                                |
+| IMEOff                    | IME を無効化              | Conversion     | Hankaku/Zenkaku, Kanji, OFF                                                                |
+| IMEOff                    | IME を無効化              | Precomposition | Hankaku/Zenkaku, Kanji, OFF                                                                |
+| IMEOn                     | IME を有効化              | Composition    | ON                                                                                         |
+| IMEOn                     | IME を有効化              | Conversion     | ON                                                                                         |
+| IMEOn                     | IME を有効化              | DirectInput    | Eisu, F13, Hankaku/Zenkaku, Hiragana, Katakana, Kanji, ON                                  |
+| IMEOn                     | IME を有効化              | Precomposition | ON                                                                                         |
+| InputModeFullAlphanumeric | 全角英数に入力切替        | nil            | nil                                                                                        |
+| InputModeFullKatakana     | 全角カタカナに入力切替    | Composition    | Katakana                                                                                   |
+| InputModeFullKatakana     | 全角カタカナに入力切替    | Conversion     | Katakana                                                                                   |
+| InputModeFullKatakana     | 全角カタカナに入力切替    | Precomposition | Katakana                                                                                   |
+| InputModeHalfAlphanumeric | 半角英数に入力切替        | nil            | nil                                                                                        |
+| InputModeHalfKatakana     | 半角カタカナに入力切替    | nil            | nil                                                                                        |
+| InputModeHiragana         | ひらがなに入力切替        | Composition    | Hiragana                                                                                   |
+| InputModeHiragana         | ひらがなに入力切替        | Conversion     | Hiragana                                                                                   |
+| InputModeHiragana         | ひらがなに入力切替        | Precomposition | Hiragana                                                                                   |
+| InputModeSwitchKanaType   | 次のかな文字種に入力切替  | Precomposition | Muhenkan                                                                                   |
+| InsertAlternateSpace      | 代替空白文字を入力        | Precomposition | Shift Space                                                                                |
+| InsertFullSpace           | 全角空白を入力            | Composition    | Ctrl Shift Space                                                                           |
+| InsertFullSpace           | 全角空白を入力            | Conversion     | Ctrl Shift Space                                                                           |
+| InsertFullSpace           | 全角空白を入力            | Precomposition | Ctrl Shift Space                                                                           |
+| InsertHalfSpace           | 半角空白を入力            | Composition    | Ctrl Space                                                                                 |
+| InsertHalfSpace           | 半角空白を入力            | Conversion     | Ctrl Space                                                                                 |
+| InsertSpace               | 空白を入力                | Precomposition | Space                                                                                      |
+| LaunchConfigDialog        | プロパティを起動          | nil            | nil                                                                                        |
+| LaunchDictionaryTool      | 辞書ツールを起動          | nil            | nil                                                                                        |
+| LaunchWordRegisterDialog  | 単語登録を起動            | nil            | nil                                                                                        |
+| MoveCursorLeft            | カーソルを左に移動        | Composition    | Ctrl k, Ctrl s, Left, Shift Left                                                           |
+| MoveCursorRight           | カーソルを右に移動        | Composition    | Ctrl d, Ctrl l, Right, Shift Right                                                         |
+| MoveCursorToBeginning     | カーソルを左端に移動      | Composition    | Ctrl a, Ctrl e, Ctrl Left, Ctrl Up, Home                                                   |
+| MoveCursorToEnd           | カーソルを右端に移動      | Composition    | Ctrl Down, Ctrl f, Ctrl n, Ctrl Right, Ctrl x, Down, End                                   |
+| PredictAndConvert         | 予測変換                  | Composition    | Tab                                                                                        |
+| PredictAndConvert         | 予測変換                  | Conversion     | Tab                                                                                        |
+| PredictAndConvert         | 予測変換                  | Suggestion     | Down                                                                                       |
+| Reconvert                 | 再変換                    | DirectInput    | Henkan                                                                                     |
+| Reconvert                 | 再変換                    | Precomposition | Henkan                                                                                     |
+| Revert                    | 最後の学習をキャンセル    | Precomposition | Backspace                                                                                  |
+| SegmentFocusFirst         | 文節を左端に移動          | Conversion     | Ctrl a, Ctrl Left, Home                                                                    |
+| SegmentFocusLast          | 文節を右端に移動          | Conversion     | Ctrl f, Ctrl Right, End                                                                    |
+| SegmentFocusLeft          | 文節を左に移動            | Conversion     | Ctrl s, Left                                                                               |
+| SegmentFocusRight         | 文節を右に移動            | Conversion     | Ctrl d, Right                                                                              |
+| SegmentWidthExpand        | 文節を伸ばす              | Conversion     | Ctrl l, Shift Right                                                                        |
+| SegmentWidthShrink        | 文節を縮める              | Conversion     | Ctrl k, Shift Left                                                                         |
+| SwitchKanaType            | ひらがな・カタカナを切替  | Composition    | Muhenkan                                                                                   |
+| SwitchKanaType            | ひらがな・カタカナを切替  | Conversion     | Muhenkan                                                                                   |
+| ToggleAlphanumericMode    | 英数入力切り替え          | Composition    | Eisu                                                                                       |
+| ToggleAlphanumericMode    | 英数入力切り替え          | Conversion     | Eisu                                                                                       |
+| ToggleAlphanumericMode    | 英数入力切り替え          | Precomposition | Eisu, Shift Muhenkan                                                                       |
+| Undo                      | 確定取り消し              | Precomposition | Ctrl Backspace                                                                             |
+| InsertCharacter           | nil                       | Composition    | ASCII                                                                                      |
+| InsertCharacter           | nil                       | Precomposition | ASCII                                                                                      |
+

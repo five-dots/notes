@@ -1,0 +1,241 @@
+#+STARTUP: folded indent inlineimages latexpreview
+#+PROPERTY: header-args:R :session *R:dials* :width 640 :height 480 :results output
+
+* ライブラリの読み込み
+  
+#+begin_src R :results silent
+library(tidyverse)
+library(tidymodels)
+#+end_src
+
+* 全関数リスト
+
+#+begin_src R
+pacman::p_funs(dials)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+ [1] "activation"           "batch_size"           "cost"                
+ [4] "cost_complexity"      "deg_free"             "degree"              
+ [7] "degree_int"           "dist_power"           "dropout"             
+[10] "encode_unit"          "epochs"               "finalize"            
+[13] "freq_cut"             "get_batch_sizes"      "get_log_p"           
+[16] "get_n"                "get_n_frac"           "get_n_frac_range"    
+[19] "get_p"                "get_rbf_range"        "grid_latin_hypercube"
+[22] "grid_max_entropy"     "grid_random"          "grid_regular"        
+[25] "has_unknowns"         "hidden_units"         "is_unknown"          
+[28] "kernel_offset"        "Laplace"              "learn_rate"          
+[31] "loss_reduction"       "margin"               "max_times"           
+[34] "max_tokens"           "min_dist"             "min_n"               
+[37] "min_times"            "min_unique"           "mixture"             
+[40] "mtry"                 "mtry_long"            "neighbors"           
+[43] "new_qual_param"       "new_quant_param"      "num_breaks"          
+[46] "num_comp"             "num_hash"             "num_terms"           
+[49] "over_ratio"           "param_set"            "parameters"          
+[52] "parameters_constr"    "penalty"              "prod_degree"         
+[55] "prune"                "prune_method"         "range_get"           
+[58] "range_set"            "range_validate"       "rbf_sigma"           
+[61] "sample_prop"          "sample_size"          "scale_factor"        
+[64] "signed_hash"          "smoothness"           "spline_degree"       
+[67] "surv_dist"            "threshold"            "token"               
+[70] "tree_depth"           "trees"                "under_ratio"         
+[73] "unique_cut"           "unknown"              "value_inverse"       
+[76] "value_sample"         "value_seq"            "value_set"           
+[79] "value_transform"      "value_validate"       "values_activation"   
+[82] "values_prune_method"  "values_surv_dist"     "values_token"        
+[85] "values_weight_func"   "values_weight_scheme" "weight"              
+[88] "weight_func"          "weight_scheme"        "window_size"
+#+end_example
+
+* 関数解説
+** パラメタ生成関数
+
+- パッケージ毎に異なるパラメタ名を統一 (=parsnip= と同じ)
+- =param= 型かつ =quant_param= or =qual_param= 型
+
+- 木アルゴリズム
+  - =trees(range = c(1L, 2000L), trans = NULL)=
+  - =min_n(range = c(2L, 40L), trans = NULL)=
+  - =sample_size(range = c(unknown(), unknown()), trans = NULL)=
+  - =sample_prop(range = c(1/10, 0), trans = NULL)=
+  - =loss_reduction(range = c(-10, 1.5), trans = log10_trans())=
+  - =tree_depth(range = c(1L, 15L), trans = NULL)=
+  - =prune(values = c(TRUE, FALSE))=
+  - =cost_complexity(range = c(-10, -1), trans = log10_trans())=
+
+  - =mtry(range = c(1L, unknown()), trans = NULL)=
+  - =mtry_long(range = c(0L, unknown()), trans = log10_trans())=
+
+- ニューラルネットワーク
+  - =dropout(range = c(0, 1), trans = NULL)=
+  - =epochs(range = c(1L, 1000L), trans = NULL)=
+  - =hidden_units(range = c(1L, 10), trans = NULL)=
+  - =batch_size(range = c(unknown(), unknown()), trans = log2_trans())=
+
+- Kernel functions for distance weighting
+  - =weight_func(values = values_weight_func)=
+  - =values_weight_func=
+
+- Number of new features
+  - =num_comp(range = c(1L, unknown()), trans = NULL)=
+  - =num_terms(range = c(1L, unknown()), trans = NULL)=
+
+- 正則化・ペナルティ
+  - =penalty(range = c(-10, 0), trans = log10_trans())=
+  - =mixture(range = c(0, 1), trans = NULL)=
+
+- その他多数
+
+- 上限が定まっていないパラメタは =finalize()= を使って設定
+#+begin_src R
+mtry()
+sample_size()
+num_terms()
+num_comp()
+
+finalize(mtry(), iris) # data.frame を与えると列数を上限に設定してくれる
+#+end_src
+
+#+RESULTS:
+#+begin_example
+# Randomly Selected Predictors  (quantitative)
+Range: [1, ?]
+
+# Observations Sampled  (quantitative)
+Range: [?, ?]
+
+# Model Terms  (quantitative)
+Range: [1, ?]
+
+# Components  (quantitative)
+Range: [1, ?]
+
+# Randomly Selected Predictors  (quantitative)
+Range: [1, 5]
+#+end_example
+
+** =parameters= class
+
+- =tibble= を拡張した =parameters= クラス
+#+begin_src R
+glmnet_set <- parameters(list(lambda = penalty(), alpha = mixture()))
+glmnet_set
+class(glmnet_set)
+#+end_src
+
+#+RESULTS:
+: Collection of 2 parameters for tuning
+: 
+:      id parameter type object class
+:  lambda        penalty    nparam[+]
+:   alpha        mixture    nparam[+]
+: [1] "parameters" "tbl_df"     "tbl"        "data.frame"
+
+** パラメタを操作する関数
+
+- =parameters(x, ...)=
+- =finalize(object, x, force = TRUE, ...)=
+
+- =range_validate(object, range, ukn_ok = TRUE)=
+- =range_get(object, original = TRUE)=
+- =range_set(object, range)=
+
+- =value_validate(object, values)=
+- =value_seq(object, n, original = TRUE)=
+- =value_sample(object, n, original = TRUE)=
+- =value_transform(object, values)=
+- =value_inverse(object, values)=
+- =value_set(object, values)=
+
+- =get_p(object, x, log_vals = FALSE, ...)=
+- =get_log_p(object, x, ...)=
+- =get_n_frac(object, x, log_vals = FALSE, frac = 1/3, ...)=
+- =get_n_frac_range(object, x, log_vals = FALSE, frac = c(1/10, 5/10), ...)=
+- =get_n(object, x, log_vals = FALSE, ...)=
+- =get_rbf_range(object, x, seed = sample.int(10^5, 1), ...)=
+- =get_batch_sizes(object, x, frac = c(1/10, 1/3), ...)=
+
+#+begin_src R
+cost_complexity() %>% range_get()
+#+end_src
+
+#+RESULTS:
+: $lower
+: [1] 1e-10
+: 
+: $upper
+: [1] 0.1
+
+#+begin_src R
+cost_complexity() %>% value_seq(n = 4)
+#+end_src
+
+#+RESULTS:
+: [1] 1e-10 1e-07 1e-04 1e-01
+
+#+begin_src R
+set.seed(5473)
+cost_complexity() %>% value_sample(n = 4)
+#+end_src
+
+#+RESULTS:
+: [1] 6.905948e-09 8.463338e-04 3.448626e-06 5.902285e-10
+
+** =grid_*()= 関数群
+
+- =grid_regular(x, ..., levels = 3, original = TRUE)=
+- =grid_random(x, ..., size = 5, original = TRUE)=
+- =make_regular_grid(..., levels = 3, original = TRUE)=
+- =grid_max_entropy(x, ..., size = 3, original = TRUE, variogram_range = 0.5, iter = 1000)=
+- =grid_latin_hypercube(x, ..., size = 3, original = TRUE)=
+
+- =grid_regular= 型かつ =param_grid= 型
+#+begin_src R :results value :colnames yes
+grid_regular(
+  mixture(),
+  penalty(),
+  levels = 3 # 各パラメタでいくつ抽出するか? (Default=3)
+)
+#+end_src
+
+#+RESULTS:
+| mixture | penalty |
+|---------+---------|
+|       0 |   1e-10 |
+|     0.5 |   1e-10 |
+|       1 |   1e-10 |
+|       0 |   1e-05 |
+|     0.5 |   1e-05 |
+|       1 |   1e-05 |
+|       0 |       1 |
+|     0.5 |       1 |
+|       1 |       1 |
+
+- ランダムの場合は size を指定
+#+begin_src R :results value :colnames yes
+grid_random(
+  mixture(),
+  penalty(),
+  size = 6 
+)
+#+end_src
+
+#+RESULTS:
+|           mixture |              penalty |
+|-------------------+----------------------|
+| 0.175451813265681 | 4.97041574005604e-10 |
+| 0.242712671170011 | 7.14818850305021e-10 |
+| 0.898300575790927 |    0.657460337686803 |
+| 0.838401368120685 | 3.09568106895613e-08 |
+| 0.890736233210191 |  0.00579461619229725 |
+| 0.901473781093955 |   0.0146150074513335 |
+
+* 参考リンク
+
+- [[https://tidymodels.github.io/dials/][公式サイト]]
+- [[https://cloud.r-project.org/web/packages/dials/index.html][CRAN]]
+- [[https://cloud.r-project.org/web/packages/dials/dials.pdf][Reference Manual]]
+- [[https://github.com/tidymodels/dials][Github repo]]
+- Vignette
+  - [[https://cloud.r-project.org/web/packages/dials/vignettes/Basics.html][Working with Tuning Parameters]]

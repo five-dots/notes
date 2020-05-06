@@ -1,0 +1,47 @@
+#+STARTUP: showall indent
+
+* Components
+** Universe
+*** Finacial Instrument Spec
+** Market Data
+*** Bar (OHLCV)
+*** Tick
+*** Adjusted, Unadjusted (by split, dividends)
+*** Timeframe conversion
+**** Input Day, Minute, Tick => Convert any timeframe
+** Transaction
+*** Entry, Exit, PnL
+** Parameters
+*** Parameter set
+*** Parallel calculation
+*** Walkforward Analysis
+*** Best parameter from WFA (+Scoring)
+** Signal Logic
+*** Long = 1, Short = -1, Nothing = 0
+*** Generate signal by dplyr::mutate(signal_func)
+*** enquo -> !! or quos -> !!!
+** Performance
+*** Backtest result by parameter set
+** Plot
+** Untility
+*** Trading hours
+*** Commission
+*** Slippage
+*** Indicator
+
+* Functions
+** Run backtest (Parallel)
+** Save object as RDS
+
+* R Packages
+** quantmod
+** quantstrat
+** TTR
+** PerformanceAnalytics
+** FinacialInstrument
+** Tidyverse
+** foreach
+** xts
+** Tidyquant
+*** Integrate xts(+zoo), quantmod, TTR and PerformanceAnalytics
+** tibbletime, timetk

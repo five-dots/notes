@@ -113,7 +113,6 @@ mtcars %>% verify(nrow(.) > 10)
 #+begin_src R :results silent
 mtcars %>% assert(in_set(0, 1), am, vs)
 #+end_src
-\\
 
 *** ★★★ ~assert_rows(data, row_reduction_fn, predicate, ..., success_fun = success_continue, error_fun = error_stop)~.
 
@@ -122,7 +121,6 @@ mtcars %>% assert(in_set(0, 1), am, vs)
 #+begin_src R :results silent
 mtcars %>% assert_rows(num_row_NAs, within_bounds(0, 2), everything())
 #+end_src
-\\
 
 *** ★★★ ~insist(data, predicate_generator, ..., success_fun = success_continue, error_fun = error_stop)~.
 
@@ -153,14 +151,14 @@ mtcars %>% insist_rows(maha_dist, within_n_mads(10), everything())
 *** ★★☆ ~within_bounds(lower.bound, upper.bound, include.lower = TRUE, include.upper = TRUE, allow.na = TRUE)~.
 ** Predicate Generator for ~insist()~ / ~insist_rows()~.
 *** ★★☆ ~within_n_sds(n, ...)~.
+
 - Z-Score でデータをチェックする
 - データが Z-Score 3 以下に収まっているか、等
-\\
 
 *** ★★☆ ~within_n_mads(n, ...)~.
+
 - Median Absolute Deviation
 - よりロバストな Z-Score チェック
-\\
 
 ** Row Reduction Functions for ~assert_rows()~ / ~insist_rows()~.
 *** ★★☆ ~col_concat(data, sep = "")~.

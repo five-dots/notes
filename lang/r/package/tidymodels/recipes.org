@@ -1,0 +1,667 @@
+#+STARTUP: folded indent inlineimages latexpreview
+#+PROPERTY: header-args:R :results value :colnames yes :session *R:recipes*
+
+* 目次                                                                :QUOTE:
+#+BEGIN_QUOTE
+- [[#ライブラリの読み込みとバージョンの確認][ライブラリの読み込みとバージョンの確認]]
+- [[#ワークフロー][ワークフロー]]
+  - [[#概要][概要]]
+  - [[#recipex-formula--null--vars--null-roles--null][recipe(x, formula = NULL, ..., vars = NULL, roles = NULL)]]
+  - [[#prepx-training--null-fresh--false-verbose--false-retain--true-strings_as_factors--true-][prep(x, training = NULL, fresh = FALSE, verbose = FALSE, retain = TRUE, strings_as_factors = TRUE, ...)]]
+  - [[#juiceobject--composition--tibble][juice(object, ..., composition = "tibble")]]
+  - [[#bakeobject-new_data--null--composition--tibble][bake(object, new_data = NULL, ..., composition = "tibble")]]
+- [[#step-functions][step functions]]
+  - [[#all-functions][All functions]]
+  - [[#step_center][step_center()]]
+  - [[#step_interact][step_interact()]]
+  - [[#step_logrecipe--role--na-trained--false-base--exp1-offset--0-columns--null-skip--false-signed--false-id--rand_idlog][step_log(recipe, ..., role = NA, trained = FALSE, base = exp(1), offset = 0, columns = NULL, skip = FALSE, signed = FALSE, id = rand_id("log"))]]
+- [[#selection-helpers][selection helpers]]
+  - [[#has_rolematch--predictor][has_role(match = "predictor")]]
+  - [[#all_predictors][all_predictors()]]
+  - [[#all_outcomes][all_outcomes()]]
+  - [[#has_typematch--numeric][has_type(match = "numeric")]]
+  - [[#all_numeric][all_numeric()]]
+  - [[#all_nominal][all_nominal()]]
+  - [[#current_info-internal][current_info() (internal)]]
+- [[#tunablestep_-リスト][tunable.step_*() リスト]]
+- [[#実行環境][実行環境]]
+- [[#参考リンク][参考リンク]]
+#+END_QUOTE
+
+* ライブラリの読み込みとバージョンの確認
+
+#+begin_src R :results silent
+library(recipes)
+#+end_src
+\\
+
+- バージョン
+#+begin_src R :results output :exports both
+packageVersion("recipes")
+#+end_src
+
+#+RESULTS:
+: [1] ‘0.1.7’
+\\
+
+* 全関数のリスト
+
+- 74 個の step 関数
+
+#+begin_src R :results output :exports both
+pacman::p_funs(recipes) %>% stringr::str_subset("^step_")
+#+end_src
+
+#+RESULTS:
+#+begin_example
+ [1] "step_arrange"       "step_bagimpute"     "step_bin2factor"   
+ [4] "step_BoxCox"        "step_bs"            "step_center"       
+ [7] "step_classdist"     "step_corr"          "step_count"        
+[10] "step_date"          "step_depth"         "step_discretize"   
+[13] "step_downsample"    "step_dummy"         "step_factor2string"
+[16] "step_filter"        "step_geodist"       "step_holiday"      
+[19] "step_hyperbolic"    "step_ica"           "step_integer"      
+[22] "step_interact"      "step_intercept"     "step_inverse"      
+[25] "step_invlogit"      "step_isomap"        "step_knnimpute"    
+[28] "step_kpca"          "step_kpca_poly"     "step_kpca_rbf"     
+[31] "step_lag"           "step_lincomb"       "step_log"          
+[34] "step_logit"         "step_lowerimpute"   "step_meanimpute"   
+[37] "step_medianimpute"  "step_modeimpute"    "step_mutate"       
+[40] "step_mutate_at"     "step_naomit"        "step_nnmf"         
+[43] "step_normalize"     "step_novel"         "step_ns"           
+[46] "step_num2factor"    "step_nzv"           "step_ordinalscore" 
+[49] "step_other"         "step_pca"           "step_pls"          
+[52] "step_poly"          "step_profile"       "step_range"        
+[55] "step_ratio"         "step_regex"         "step_relu"         
+[58] "step_rename"        "step_rename_at"     "step_rm"           
+[61] "step_rollimpute"    "step_sample"        "step_scale"        
+[64] "step_shuffle"       "step_slice"         "step_spatialsign"  
+[67] "step_sqrt"          "step_string2factor" "step_unknown"      
+[70] "step_unorder"       "step_upsample"      "step_window"       
+[73] "step_YeoJohnson"    "step_zv"
+#+end_example
+\\
+
+* ワークフロー
+** 概要
+
+- データの前処理を一貫した方法で記述できる
+- 用語
+  - *role*: 変数がモデル内でどのように使われるか
+    - ~predictor~, ~response~, ~case weight~, ~id~ など
+  - *terms*: 説明変数・特徴量のこと
+
+- ワークフロー
+| No. | Function          | Description                                        |
+|-----+-------------------+----------------------------------------------------|
+|  1. | ~recipe()~          | モデルを定義 (outcome ~ predictors の形式)         |
+|  2. | ~step_*()~          | データの前処理を記述                               |
+|  3. | ~prep()~            | データの前処理を実行 (この時点までは ~recipe~ class) |
+|  4. | ~juice()~ or ~bake()~ | 前処理を施したデータを ~data.frame~ として取り出す   |
+
+** データセット
+
+- Vignette [[https://cloud.r-project.org/web/packages/recipes/vignettes/Simple_Example.html][Basic Recipes]] の例
+- ~credit_data~
+  - 信用 Status = Good or Bad
+  - 13 の説明変数
+  - 欠損値あり
+- ~{rsample}~ を使って、訓練データとテストデータに分割する
+
+#+begin_src R
+data("credit_data")
+set.seed(55)
+train_test_split <- rsample::initial_split(credit_data) # デフォルトで 75% が訓練データ
+credit_train <- rsample::training(train_test_split)
+credit_test <- rsample::testing(train_test_split)
+
+head(credit_train)
+#+end_src
+
+#+RESULTS:
+| Status | Seniority | Home  | Time | Age | Marital | Records | Job       | Expenses | Income | Assets | Debt | Amount | Price |
+|--------+-----------+-------+------+-----+---------+---------+-----------+----------+--------+--------+------+--------+-------|
+| good   |         9 | rent  |   60 |  30 | married | no      | freelance |       73 |    129 |      0 |    0 |    800 |   846 |
+| good   |        17 | rent  |   60 |  58 | widow   | no      | fixed     |       48 |    131 |      0 |    0 |   1000 |  1658 |
+| good   |         0 | rent  |   60 |  24 | single  | no      | fixed     |       63 |    182 |   2500 |    0 |    900 |  1325 |
+| good   |         0 | rent  |   36 |  26 | single  | no      | fixed     |       46 |    107 |      0 |    0 |    310 |   910 |
+| good   |         1 | owner |   60 |  36 | married | no      | fixed     |       75 |    214 |   3500 |    0 |    650 |  1645 |
+| good   |         0 | owner |   60 |  32 | married | no      | freelance |       90 |    107 |  15000 |    0 |   1200 |  1957 |
+\\
+
+** レシピの作成
+
+- recipe class を作成する
+- ~recipe()~ は S3 ジェネリックメソッド
+  - Default S3 method:
+    ~recipe(x, ...)~
+    
+  - S3 method for class ~data.frame~
+    ~recipe(x, formula = NULL, ..., vars = NULL, roles = NULL)~
+    
+  - S3 method for class ~formula~
+    ~recipe(formula, data, ...)~
+    
+  - S3 method for class ~matrix~
+    ~recipe(x, ...)~
+
+- =recipe()= の =data= は必ずしも、training set のデータでなくてもよい
+  - 必要な変数がわかればいよいので、大きなデータであれば =head()= でもよい
+#+begin_src R :results output :exports both
+rec_obj <- recipe(Status ~ ., data = credit_data)
+class(rec_obj)
+#+end_src
+
+#+RESULTS:
+: 
+: [1] "recipe"
+
+** 前処理の追加
+
+- ~step_*()~ を順番に適応していく
+  - 欠損値の処理
+  - ダミー変数の作成
+  - データの正規化
+
+#+begin_src R :results output :exports both
+standardized <- rec_obj %>%
+  # K 近傍法で欠損値を補完
+  step_knnimpute(all_predictors()) %>%
+  # 数値データ以外をダミーデータに変換 
+  step_dummy(all_predictors(), -all_numeric()) %>%
+  # データを中心化 (平均ゼロ)
+  step_center(all_predictors()) %>%
+  # データをSD=1に正規化
+  step_scale(all_predictors())
+standardized
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+Data Recipe
+
+Inputs:
+
+      role #variables
+   outcome          1
+ predictor         13
+
+Operations:
+
+K-nearest neighbor imputation for all_predictors
+Dummy variables from all_predictors, -, all_numeric()
+Centering for all_predictors
+Scaling for all_predictors
+#+end_example
+
+** 前処理の実行
+
+- ~prep(x, training = NULL, fresh = FALSE, verbose = FALSE, retain = TRUE, strings_as_factors = TRUE, ...)~
+- 各ステップの末尾に *[trained]* と記載される
+
+#+begin_src R :results output :exports both
+trained_rec <- prep(standardized, training = credit_train, verbose = TRUE)
+trained_rec
+#+end_src
+
+#+RESULTS:
+#+begin_example
+oper 1 step knnimpute [training] 
+oper 2 step dummy [training] 
+oper 3 step center [training] 
+oper 4 step scale [training] 
+The retained training set is ~ 0.58 Mb  in memory.
+
+Data Recipe
+
+Inputs:
+
+      role #variables
+   outcome          1
+ predictor         13
+
+Training data contained 3341 data points and 303 incomplete rows. 
+
+Operations:
+
+K-nearest neighbor imputation for Home, Time, Age, Marital, Records, ... [trained]
+Dummy variables from Home, Marital, Records, Job [trained]
+Centering for Seniority, Time, Age, Expenses, Income, ... [trained]
+Scaling for Seniority, Time, Age, Expenses, Income, ... [trained]
+#+end_example
+
+** データの抽出
+
+- ~juice(object, ..., composition = "tibble")~.
+  レシピから前処理済みのデータを取り出す
+
+- ~bake(object, new_data = NULL, ..., composition = "tibble")~.
+  既存のレシピを別のデータに当てはめる
+
+#+begin_src R
+train_data <- bake(trained_rec, new_data = credit_train)
+test_data  <- bake(trained_rec, new_data = credit_test)
+
+train_data %>%
+  select(1:10) %>%
+  mutate_if(is.numeric, round, digit = 2) %>%
+  head()
+#+end_src
+
+#+RESULTS:
+| Status | Seniority |  Time |   Age | Expenses | Income | Assets |  Debt | Amount | Price |
+|--------+-----------+-------+-------+----------+--------+--------+-------+--------+-------|
+| good   |      0.13 |  0.92 | -0.64 |     0.89 |  -0.17 |  -0.45 | -0.27 |  -0.49 |    -1 |
+| good   |      1.12 |  0.92 |  1.92 |    -0.39 |  -0.15 |  -0.45 | -0.27 |  -0.06 |  0.34 |
+| good   |     -0.98 |  0.92 | -1.18 |     0.38 |   0.49 |  -0.24 | -0.27 |  -0.28 | -0.21 |
+| good   |     -0.98 | -0.71 |    -1 |    -0.49 |  -0.45 |  -0.45 | -0.27 |  -1.53 | -0.89 |
+| good   |     -0.86 |  0.92 | -0.09 |     0.99 |   0.89 |  -0.16 | -0.27 |  -0.81 |  0.32 |
+| good   |     -0.98 |  0.92 | -0.45 |     1.75 |  -0.45 |    0.8 | -0.27 |   0.36 |  0.84 |
+\\
+
+** Example のコード
+
+#+begin_src R :results silent
+
+#+end_src
+
+* step 関数を適応する順番
+
+[[https://cloud.r-project.org/web/packages/recipes/vignettes/Ordering.html][Ordering of Steps]] に記載されている指針
+
+1. 欠損値の補完 (Impute)
+2. Individual transformations for skewness and other issues
+3. 連続値の離散値化 (Discretize (if needed and if you have no other choice))
+4. ダミー変数の作成 (Create dummy variables)
+5. 交互作用項の作成(Create interactions)
+6. 標準化(Normalization steps (center, scale, range, etc))
+7. 多変量の変換 (Multivariate transformation (e.g. PCA, spatial sign, etc))
+
+* TODO step functions
+** 欠損値の補完 (Imputation)
+
+- ~step_meanimpute(recipe, ..., role = NA, trained = FALSE, means = NULL, trim = 0, skip = FALSE, id = rand_id("meanimpute"))~
+  - 平均値で欠損補完
+
+- ~step_modeimpute(recipe, ..., role = NA, trained = FALSE, modes = NULL, skip = FALSE, id = rand_id("modeimpute"))~
+  - 最頻値で欠損補完
+  
+- ~step_medianimpute(recipe, ..., role = NA, trained = FALSE, medians = NULL, skip = FALSE, id = rand_id("medianimpute"))~
+  - 中央値で欠損補完
+  
+- ~step_rollimpute(recipe, ..., role = NA, trained = FALSE, columns = NULL, statistic = median, window = 5, skip = FALSE, id = rand_id("rollimpute"))~
+  - スライド窓を利用した欠損値補完. デフォルトは中央値
+
+- ~step_knnimpute(recipe, ..., role = NA, trained = FALSE, neighbors = 5, impute_with = imp_vars(all_predictors()), options = list(nthread = 1, eps = 1e-08), ref_data = NULL, columns = NULL, skip = FALSE, id = rand_id("knnimpute"))~
+  - K 近傍法で欠損処理
+
+- ~step_bagimpute(recipe, ..., role = NA, trained = FALSE, impute_with = imp_vars(all_predictors()), trees = 25, models = NULL, options = list(keepX = FALSE), seed_val = sample.int(10^4, 1), skip = FALSE, id = rand_id("bagimpute"))~
+  - 決定木のバギングで欠損補完
+  - 特徴量を =imp_vars()= で指定
+  - 特徴量自身に欠損があっても OK
+
+- ~step_lowerimpute(recipe, ..., role = NA, trained = FALSE, threshold = NULL, skip = FALSE, id = rand_id("lowerimpute"))~
+
+** 変数の削除 (Filter)
+
+- ~step_rm(recipe, ..., role = NA, trained = FALSE, removals = NULL, skip = FALSE, id = rand_id("rm"))~
+  名前や型に基づいて変数を削除
+  
+- ~step_corr(recipe, ..., role = NA, trained = FALSE, threshold = 0.9, use = "pairwise.complete.obs", method = "pearson", removals = NULL, skip = FALSE, id = rand_id("corr"))~
+  閾値よりも高い相関がある変数を削除
+
+- ~step_zv(recipe, ..., role = NA, trained = FALSE, removals = NULL, skip = FALSE, id = rand_id("zv")~
+  分散が 0 の変数を削除
+
+- ~step_nzv(recipe, ..., role = NA, trained = FALSE, freq_cut = 95/5, unique_cut = 10, options = list(freq_cut = 95/5, unique_cut = 10), removals = NULL, skip = FALSE, id = rand_id("nzv"))~
+  分散が 0 に近い変数を削除
+ 
+- ~step_lincomb(recipe, ..., role = NA, trained = FALSE, max_steps = 5, removals = NULL, skip = FALSE, id = rand_id("lincomp"))~
+  他の変数と線形関係にある変数の削除
+ 
+** 基本的な変換 (Basic)
+
+- ~step_log(recipe, ..., role = NA, trained = FALSE, base = exp(1), offset = 0, columns = NULL, skip = FALSE, signed = FALSE, id = rand_id("log"))~
+  - 対数変換
+
+- ~step_sqrt(recipe, ..., role = NA, trained = FALSE, columns = NULL, skip = FALSE, id = rand_id("sqrt"))~
+  - 平方根
+
+- ~step_inverse(recipe, ..., role = NA, offset = 0, trained = FALSE, columns = NULL, skip = FALSE, id = rand_id("inverse"))~
+  - 逆変換
+
+- ~step_poly(recipe, ..., role = "predictor", trained = FALSE, objects = NULL, degree = 2, options = list(), skip = FALSE, id = rand_id("poly"))~
+  - 直交多項式
+
+- ~step_logit(recipe, ..., role = NA, trained = FALSE, columns = NULL, skip = FALSE, id = rand_id("logit"))~
+  - ロジット変換
+  - 0 ~ 1 を取る値を入力し、log(p/(1-p)) で変換する
+  - 確率をオッズの対数に変換する
+
+- ~step_invlogit(recipe, ..., role = NA, trained = FALSE, columns = NULL, skip = FALSE, id = rand_id("invlogit"))~
+  - 逆ロジット変換 = ロジスティック関数 = 1/(1+exp(-x))
+  - 0 ~ 1 に変換する
+
+- ~step_relu(recipe, ..., role = "predictor", trained = FALSE, shift = 0, reverse = FALSE, smooth = FALSE, prefix = "right_relu_", columns = NULL, skip = FALSE, id = rand_id("relu"))~
+  - Relu (発火関数)
+  
+- ~step_hyperbolic(recipe, ..., role = NA, trained = FALSE, func = "sin", inverse = TRUE, columns = NULL, skip = FALSE, id = rand_id("hyperbolic"))~
+  - ハイパボリック変換
+
+** 標準化 (Normalization)
+
+- ~step_normalize(recipe, ..., role = NA, trained = FALSE, means = NULL, sds = NULL, na_rm = TRUE, skip = FALSE, id = rand_id("normalize"))~
+  - 平均 = 0、SD = 1 に標準化する
+  - =step_center()= + =step_scale()=
+
+- ~step_center(recipe, ..., role = NA, trained = FALSE, means = NULL, na_rm = TRUE, skip = FALSE, id = rand_id("center"))~
+  - 中心化 (平均 = 0 に変換する)
+  - データの中心からの距離を算出
+
+- ~step_scale(recipe, ..., role = NA, trained = FALSE, sds = NULL, na_rm = TRUE, skip = FALSE, id = rand_id("scale"))~
+  - SD = 1 に正規化する
+ 
+- ~step_range(recipe, ..., role = NA, trained = FALSE, min = 0, max = 1, ranges = NULL, skip = FALSE, id = rand_id("range"))~
+  - 数値データを指定した範囲に変換する (0 ~ 1 など)
+  - 外れ値の影響を受けやすい・平均がゼロにならないため、標準化の方がよく使われる
+
+- ~step_depth(recipe, ..., class, role = "predictor", trained = FALSE, metric = "halfspace", options = list(), data = NULL, skip = FALSE, id = rand_id("depth"))~
+  - データの中心からの近さを算出 (近いほど大きい)
+  - =class= にクラスとして利用するカテゴリカル変数を文字列で指定する
+  
+- ~step_classdist(recipe, ..., class, role = "predictor", trained = FALSE, mean_func = mean, cov_func = cov, pool = FALSE, log = TRUE, objects = NULL, skip = FALSE, id = rand_id("classdist"))~
+  - Distances to Class Centroids
+
+- ~step_BoxCox(recipe, ..., role = NA, trained = FALSE, lambdas = NULL, limits = c(-5, 5), num_unique = 5, skip = FALSE, id = rand_id("BoxCox"))~
+  - Box-Cox 変換
+  - Box-Cox 変換の lambda = 0 は、通常の対数変換を表す
+  - 対数変換を拡張して、より正規分布に近づけるようにパラメタを追加したものという理解
+ 
+- ~step_YeoJohnson(recipe, ..., role = NA, trained = FALSE, lambdas = NULL, limits = c(-5, 5), num_unique = 5, na_rm = TRUE, skip = FALSE, id = rand_id("YeoJohnson"))~
+  - Yeo-Johnson 変換
+  - Box-Cox を負数にも対応できるようにしたもの
+
+** 型の変換 (Type Conversion)
+
+- ~step_num2factor(recipe, ..., role = NA, transform = function(x) x, trained = FALSE, levels = NULL, ordered = FALSE, skip = FALSE, id = rand_id("num2factor"))~
+  - 数値をファクターに変換
+
+- ~step_string2factor(recipe, ..., role = NA, trained = FALSE, levels = NULL, ordered = FALSE, skip = FALSE, id = rand_id("string2factor"))~
+  - 文字列をファクターに変換
+  - *label encodling* とも呼ばれる
+
+- ~step_factor2string(recipe, ..., role = NA, trained = FALSE, columns = FALSE, skip = FALSE, id = rand_id("factor2string"))~
+  - ファクターを文字列に変換
+
+- ~step_bin2factor(recipe, ..., role = NA, trained = FALSE, levels = c("yes", "no"), ref_first = TRUE, columns = NULL, skip = FALSE, id = rand_id("bin2factor"))~
+  - 2 値のダミーデータ (1,0) をファクターに変換
+  - デフォルトでは、(yes, no) に変換する
+
+** エンコーディング (Encoding)
+
+- ~step_dummy(recipe, ..., role = "predictor", trained = FALSE, one_hot = FALSE, preserve = FALSE, naming = dummy_names, levels = NULL, skip = FALSE, id = rand_id("dummy"))~
+  - 文字列やファクター (nominal data) を 0/1 データに変換する
+  - 2 値でない場合、複数列が作成される
+  - *one-hot encoding* とも呼ばれる
+  - デフォルトでは、n-1 の変数を作成 (=one_hot= 引数で制御)
+
+- ~step_regex(recipe, ..., role = "predictor", trained = FALSE, pattern = ".", options = list(), result = make.names(pattern), input = NULL, skip = FALSE, id = rand_id("regex"))~ 
+  - 正規表現に基づいてダミー変数を作成 (文字列処理に便利)
+
+- ~step_ordinalscore(recipe, ..., role = NA, trained = FALSE, columns = NULL, convert = as.numeric, skip = FALSE, id = rand_id("ordinalscore"))~
+  - 順序尺度を数値に変換
+  - 順序尺度 = =factor(hoge, levels = hoge, ordered = TRUE)= で作成した因子データ
+
+- ~step_discretize(recipe, ..., role = NA, trained = FALSE, num_breaks = 4, min_unique = 10, objects = NULL, options = list(), skip = FALSE, id = rand_id("discretize"))~
+  - 数値データを離散化する (=ファクター型になる)
+  - 同じデータ量のファクターに変換できるように bins を決定する
+  - *binning* とも呼ばれる
+
+- ~step_integer(recipe, ..., role = "predictor", trained = FALSE, strict = FALSE, zero_based = FALSE, key = NULL, skip = FALSE, id = rand_id("integer"))~
+  - 文字列を数値に変換するのに便利
+  
+- ~step_nnmf(recipe, ..., role = "predictor", trained = FALSE, num_comp = 2, num_run = 30, options = list(), res = NULL, prefix = "NNMF", seed = sample.int(10^5, 1), skip = FALSE, id = rand_id("nnmf"))~
+  - 非負値行列因子分解
+  - 非負のデータしか使えないが、行列をより少ない次元の行列の積に変換する
+  
+- ~step_ratio(recipe, ..., role = "predictor", trained = FALSE, denom = denom_vars(), naming = function(numer, denom) make.names(paste(numer, denom, sep = "_o_")), columns = NULL, skip = FALSE, id = rand_id("ratio"))~
+  - create one or more ratios out of numeric variables
+ 
+- ~step_spatialsign(recipe, ..., role = "predictor", na_rm = TRUE, trained = FALSE, columns = NULL, skip = FALSE, id = rand_id("spatialsign"))~
+  - convert numeric data into a projection on to a unit sphere
+
+** 主成分分析 (PCA)
+
+- 次元を削減するために利用
+
+- ~step_pca(recipe, ..., role = "predictor", trained = FALSE, num_comp = 5, threshold = NA, options = list(), res = NULL, prefix = "PC", skip = FALSE, id = rand_id("pca"))~
+  principal components
+
+- ~step_kpca(recipe, ..., role = "predictor", trained = FALSE, num_comp = 5, res = NULL, options = list(kernel = "rbfdot", kpar = list(sigma = 0.2)), prefix = "kPC", skip = FALSE, id = rand_id("kpca"))~
+  principal components using a kernel basis expansion.
+       
+- ~step_kpca_poly(recipe, ..., role = "predictor", trained = FALSE, num_comp = 5, res = NULL, degree = 2, scale_factor = 1, offset = 1, prefix = "kPC", skip = FALSE, id = rand_id("kpca_poly"))~
+  principal components using a polynomial kernel basis expansion
+
+- ~step_kpca_rbf(recipe, ..., role = "predictor", trained = FALSE, num_comp = 5, res = NULL, sigma = 0.2, prefix = "kPC", skip = FALSE, id = rand_id("kpca_rbf"))~
+  principal components using a radial basis function kernel basis expansion
+ 
+- ~step_ica(recipe, ..., role = "predictor", trained = FALSE, num_comp = 5, options = list(), res = NULL, prefix = "IC", skip = FALSE, id = rand_id("ica"))~
+  independent components
+
+** 日付 (Date features)
+
+- ~step_date(recipe, ..., role = "predictor", trained = FALSE, features = c("dow", "month", "year"), abbr = TRUE, label = TRUE, ordinal = FALSE, columns = NULL, skip = FALSE, id = rand_id("date"))~
+  Date をファクターもしくは数値へ変換する
+
+- ~step_holiday(recipe, ..., role = "predictor", trained = FALSE, holidays = c("LaborDay", "NewYearsDay", "ChristmasDay"), columns = NULL, skip = FALSE, id = rand_id("holiday"))~
+  休日を示す 2 値データへ変換する
+ 
+** TODO 次元の削減
+
+Dimension Reduction: PCA, kernel PCA, ICA, Isomap, data depth features, class distances
+
+** その他
+
+- ~step_novel(recipe, ..., role = NA, trained = FALSE, new_level = "new", objects = NULL, skip = FALSE, id = rand_id("novel"))~
+  初見のカテゴリに新しいファクターを割り当てる
+
+- ~step_bs(recipe, ..., role = "predictor", trained = FALSE, deg_free = NULL, degree = 3, objects = NULL, options = list(), skip = FALSE, id = rand_id("bs"))~
+  B-Spline を用いた特徴量抽出
+
+- ~step_interact(recipe, terms, role = "predictor", trained = FALSE, objects = NULL, sep = "_x_", skip = FALSE, id = rand_id("interact"))~
+  交互作用項 (interaction term) を追加する
+
+- ~step_count(recipe, ..., role = "predictor", trained = FALSE, pattern = ".", normalize = FALSE, options = list(), result = make.names(pattern), input = NULL, skip = FALSE, id = rand_id("count"))~
+  正規表現にマッチしたカウントに変換する
+  
+- ~step_lag(recipe, ..., role = "predictor", trained = FALSE, lag = 1, prefix = "lag_", default = NA, columns = NULL, skip = FALSE, id = rand_id("lag"))~
+  ラグを取った新しい列を追加する
+
+- ~step_downsample(recipe, ..., under_ratio = 1, ratio = NA, role = NA, trained = FALSE, column = NULL, target = NA, skip = TRUE, seed = sample.int(10^5, 1), id = rand_id("downsample"))~
+  remove rows of a data set to make the occurrence of levels in a specific factor level equal
+
+- ~step_upsample(recipe, ..., over_ratio = 1, ratio = NA, role = NA, trained = FALSE, column = NULL, target = NA, skip = TRUE, seed = sample.int(10^5, 1), id = rand_id("upsample"))~
+  replicate rows of a data set to make the occurrence of levels in a specific factor level equal.
+
+- ~step_geodist(recipe, lat = NULL, lon = NULL, role = "predictor", trained = FALSE, ref_lat = NULL, ref_lon = NULL, log = FALSE, name = "geo_dist", columns = NULL, skip = FALSE, id = rand_id("geodist"))~
+  calculate the distance between points on a map to a reference location.
+
+- ~step_intercept(recipe, ..., role = "predictor", trained = FALSE, name = "intercept", value = 1, skip = FALSE, id = rand_id("intercept"))~
+  切片 (定数項) をデータの先頭に加える
+
+- ~step_isomap(recipe, ..., role = "predictor", trained = FALSE, num_terms = 5, neighbors = 50, options = list(.mute = c("message", "output")), res = NULL, prefix = "Isomap", skip = FALSE, id = rand_id("isomap"))~
+  convert numeric data into one or more new dimensions
+
+- ~step_naomit(recipe, ..., role = NA, trained = FALSE, columns = NULL, skip = FALSE, id = rand_id("naomit"))~
+  NA を含む列を削減
+
+- ~step_ns(recipe, ..., role = "predictor", trained = FALSE, objects = NULL, deg_free = 2, options = list(), skip = FALSE, id = rand_id("ns"))~
+  create new columns that are basis expansions of variables using natural splines.
+
+- ~step_other(recipe, ..., role = NA, trained = FALSE, threshold = 0.05, other = "other", objects = NULL, skip = FALSE, id = rand_id("other"))~
+  potentially pool infrequently occurring values into an "other" category.
+
+- ~step_pls(recipe, ..., role = "predictor", trained = FALSE, num_comp = 2, outcome = NULL, options = NULL, res = NULL, prefix = "PLS", skip = FALSE, id = rand_id("pls"))~
+  convert numeric data into one or more new dimensions
+
+- ~step_profile(recipe, ..., profile = NULL, pct = 0.5, index = 1, grid = list(pctl = TRUE, len = 100), columns = NULL, role = NA, trained = FALSE, skip = FALSE, id = rand_id("profile"))~
+  fix the levels of all variables but one and will create a sequence of values for the remaining variable.
+
+- ~step_shuffle(recipe, ..., role = NA, trained = FALSE, columns = NULL, skip = FALSE, id = rand_id("shuffle"))~
+  指定した列の行をランダムに入れ替える
+
+- ~step_unknown(recipe, ..., role = NA, trained = FALSE, new_level = "unknown", objects = NULL, skip = FALSE, id = rand_id("unknown"))~
+  NA のファクターに "unknown" を割り当てる
+
+- ~step_unorder(recipe, ..., role = NA, trained = FALSE, columns = NULL, skip = FALSE, id = rand_id("unorder"))~
+  transform the data.
+  
+- ~step_window(recipe, ..., role = NA, trained = FALSE, size = 3, na_rm = TRUE, statistic = "mean", columns = NULL, names = NULL, skip = FALSE, id = rand_id("window"))~
+  create new columns that are the results of functions that compute statistics across moving windows
+
+** dplyr 関数
+
+- ~step_arrange(recipe, ..., role = NA, trained = FALSE, inputs = NULL, skip = FALSE, id = rand_id("arrange"))~
+
+- ~step_filter(recipe, ..., role = NA, trained = FALSE, inputs = NULL, skip = FALSE, id = rand_id("filter"))~
+
+- ~step_mutate(recipe, ..., role = "predictor", trained = FALSE, inputs = NULL, skip = FALSE, id = rand_id("mutate"))~
+
+- ~step_mutate_at(recipe, ..., fn, role = "predictor", trained = FALSE, inputs = NULL, skip = FALSE, id = rand_id("mutate_at"))~
+
+- ~step_rename(recipe, ..., role = "predictor", trained = FALSE, inputs = NULL, skip = FALSE, id = rand_id("rename"))~
+
+- ~step_rename_at(recipe, ..., fn, role = "predictor", trained = FALSE, inputs = NULL, skip = FALSE, id = rand_id("rename_at"))~
+
+- ~step_slice(recipe, ..., role = NA, trained = FALSE, inputs = NULL, skip = FALSE, id = rand_id("slice"))~
+      
+- ~step_sample(recipe, ..., role = NA, trained = FALSE, size = NULL, replace = FALSE, skip = FALSE, id = rand_id("sample"))~
+
+* ={embed}='s step functions
+
+- Max Kuh によって開発されている、extra step functions
+- カテゴリ変数の変換手法が追加されている
+
+- =embed::step_embed()=
+- =embed::step_lencode_mixed()=
+- =embed::step_lencode_bayes()=
+- =embed::step_lencode_glm()=
+- =embed::step_umap()=
+- =embed::step_woe()=
+
+* TODO tunable.step functions
+
+#+begin_src R :results output :exports both
+pacman::p_funs(recipes) %>% stringr::str_subset("^tunable.step_")
+#+end_src
+
+#+RESULTS:
+#+begin_example
+ [1] "tunable.step_bagimpute"  "tunable.step_bs"        
+ [3] "tunable.step_corr"       "tunable.step_discretize"
+ [5] "tunable.step_downsample" "tunable.step_ica"       
+ [7] "tunable.step_isomap"     "tunable.step_knnimpute" 
+ [9] "tunable.step_kpca_poly"  "tunable.step_kpca_rbf"  
+[11] "tunable.step_meanimpute" "tunable.step_nnmf"      
+[13] "tunable.step_ns"         "tunable.step_nzv"       
+[15] "tunable.step_other"      "tunable.step_pca"       
+[17] "tunable.step_pls"        "tunable.step_poly"      
+[19] "tunable.step_rollimpute" "tunable.step_upsample"  
+[21] "tunable.step_window"
+#+end_example
+\\
+
+* TODO selection helpers
+
+- 列選択のヘルパー関数が利用できる
+- ~{tidyselect}~ による列選択も可能
+- マイナスでの指定も可能
+
+** ~has_role(match = "predictor")~.
+** ~all_predictors()~.
+** ~all_outcomes()~.
+** ~has_type(match = "numeric")~.
+** ~all_numeric()~.
+** ~all_nominal()~.
+** ~current_info() (internal)~.
+* TODO check functions
+
+- recipe を引数に取って、データのバリデーションが可能
+- ~{assertr}~ とどちらを使うか検討
+
+- ~check_cols(recipe, ..., role = NA, trained = FALSE, skip = FALSE, id = rand_id("cols"))~
+- ~check_missing(recipe, ..., role = NA, trained = FALSE, columns = NULL, skip = FALSE, id = rand_id("missing"))~
+- ~check_name(res, new_data, object, newname = NULL, names = FALSE)~
+- ~check_new_values(recipe, ..., role = NA, trained = FALSE, columns = NULL, ignore_NA = TRUE, values = NULL, skip = FALSE, id = rand_id("new_values"))~
+- ~check_range(recipe, ..., role = NA, skip = FALSE, trained = FALSE, slack_prop = 0.05, warn = FALSE, lower = NULL, upper = NULL, id = rand_id("range_check_"))~
+- ~check_type(dat, quant = TRUE)~
+
+* TODO other functions
+** ~prepper(split_obj, recipe, ...)~.
+
+- ~rsample::vfold_cv()~ で分割した ~splits~ に ~recipe~ を適応する
+
+* 実行環境
+
+#+begin_src R :results output :exports both
+sessionInfo()
+#+end_src
+
+#+RESULTS:
+#+begin_example
+R version 3.6.1 (2019-07-05)
+Platform: x86_64-pc-linux-gnu (64-bit)
+Running under: Ubuntu 18.04.3 LTS
+
+Matrix products: default
+BLAS:   /usr/lib/x86_64-linux-gnu/blas/libblas.so.3.7.1
+LAPACK: /usr/lib/x86_64-linux-gnu/lapack/liblapack.so.3.7.1
+
+locale:
+ [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C              
+ [3] LC_TIME=en_US.UTF-8        LC_COLLATE=en_US.UTF-8    
+ [5] LC_MONETARY=en_US.UTF-8    LC_MESSAGES=en_US.UTF-8   
+ [7] LC_PAPER=en_US.UTF-8       LC_NAME=C                 
+ [9] LC_ADDRESS=C               LC_TELEPHONE=C            
+[11] LC_MEASUREMENT=en_US.UTF-8 LC_IDENTIFICATION=C       
+
+attached base packages:
+[1] stats     graphics  grDevices utils     datasets  methods   base     
+
+other attached packages:
+[1] recipes_0.1.7 dplyr_0.8.3  
+
+loaded via a namespace (and not attached):
+ [1] Rcpp_1.0.2         magrittr_1.5       splines_3.6.1      MASS_7.3-51.4     
+ [5] tidyselect_0.2.5   prodlim_2018.04.18 lattice_0.20-38    R6_2.4.0          
+ [9] rlang_0.4.0        stringr_1.4.0      tools_3.6.1        nnet_7.3-12       
+[13] grid_3.6.1         ipred_0.9-9        timeDate_3043.102  pacman_0.5.1      
+[17] withr_2.1.2        gower_0.2.1        class_7.3-15       survival_2.44-1.1 
+[21] assertthat_0.2.1   tibble_2.1.3       crayon_1.3.4       Matrix_1.2-17     
+[25] lava_1.6.6         purrr_0.3.2        rpart_4.1-15       glue_1.3.1        
+[29] stringi_1.4.3      compiler_3.6.1     pillar_1.4.2       generics_0.0.2    
+[33] lubridate_1.7.4    pkgconfig_2.0.3
+#+end_example
+\\
+
+* 参考リンク
+
+- [[https://tidymodels.github.io/recipes/][公式サイト]]
+- [[https://cloud.r-project.org/web/packages/recipes/index.html][CRAN]]
+- [[https://cloud.r-project.org/web/packages/recipes/recipes.pdf][Reference Manual]]
+- [[https://github.com/tidymodels/recipes][github repo]]
+- Vignette
+  - [[https://cloud.r-project.org/web/packages/recipes/vignettes/Custom_Steps.html][Creating Custom Step Functions]]
+  - [[https://cloud.r-project.org/web/packages/recipes/vignettes/Dummies.html][How are categorical predictors handled in recipes?]]
+  - [[https://cloud.r-project.org/web/packages/recipes/vignettes/Ordering.html][Ordering of Steps]]
+  - [[https://cloud.r-project.org/web/packages/recipes/vignettes/Roles.html][Roles in Recipes]]
+  - [[https://cloud.r-project.org/web/packages/recipes/vignettes/Selecting_Variables.html][Selecting Variables]]
+  - [[https://cloud.r-project.org/web/packages/recipes/vignettes/Simple_Example.html][Basic Recipes]]
+  - [[https://cloud.r-project.org/web/packages/recipes/vignettes/Skipping.html][On Skipping Steps]]
+- Blog
+  - [[https://blog.hoxo-m.com/entry/2018/08/26/161144][モデルで扱うデータの前処理をrecipesで行う@株式会社ホクソエムのブログ]]
+  - [[https://www.slideshare.net/YutakaKuroki/tokyo-r-20181110][Rパッケージ recipes の紹介　「うまい飯を作る」@SlideShare]]
+  - [[https://dropout009.hatenablog.com/entry/2019/01/06/124932][tidymodelsによるtidyな機械学習フロー（その1）@Dropout]]
+  - [[https://speakerdeck.com/s_uryu/tidymodels][tidymodelsによるモデル構築と運用@speakerdeck]]

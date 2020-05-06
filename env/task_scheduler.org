@@ -1,0 +1,33 @@
+#+STARTUP: content indent
+
+* cron
+
+- [[https://qiita.com/UNILORN/items/a1a3f62409cdb4256219][Cronの使い方とテクニックと詰まったところ@Qiita]]
+- [[https://qiita.com/taichi_akippa/items/f950895fe3c7ea4b79ca][イケてるcrontabのいじり方@Qiita]]
+
+- 既存のファイルをコピーして利用
+- =/etc/cron.d= に追加していくのがよい
+
+#+begin_src shell
+sudo cp /etc/crontab /etc/cron.d/cron_test
+#+end_src
+
+- 設定反映
+#+begin_src shell
+sudo systemctl restart cron
+#+end_src
+
+* Rundeck
+
+- [[https://l-w-i.net/t/rundeck/0install_001.txt][Rundeck 導入手順(Ubuntu 16.04)]]
+
+- [[https://dev.classmethod.jp/server-side/server/try-rundeck-job/][ジョブスケジューラ「Rundeck」を試してみる]]
+
+#+begin_src shell
+apt-get install openjdk-8-jdk-headless
+dpkg -i rundeck_3.0.23.20190619-1.201906191858_all.deb
+#+end_src
+
+- java -version でバージョンが 1.8 かどうかを確認する
+
+

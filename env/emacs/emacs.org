@@ -1,0 +1,62 @@
+#+STARTUP:  content indent
+
+* emacs 26 package
+
+- Flycheck support start from emacs 26 (and require lintr for R)
+  - だたし、R で Flycheck が有効になると、sentinel error 多発で、重くなる
+
+#+begin_src shell
+sudo add-apt-repository ppa:kelleyk/emacs
+sudo apt update
+sudo apt install emacs26
+#+end_src
+
+- すでに emacs25 がある環境では、以下を実行して削除
+#+begin_src shell
+sudo apt remove --purge emacs25-nox
+sudo apt remove --purge emacs25-el
+sudo apt remove --purge emacs25-common
+sudo apt remove --purge emacs25
+#+end_src
+
+* TODO emacs 27
+
+- ソースからのビルド方法
+- 主な機能
+
+* Windows
+** 日本語パッチ -> *Official を使った方が実際はトラブルが少かった*
+
+- [[https://github.com/chuntaro/NTEmacs64][Windows 版 Emacs (通称 NTEmacs) の 64bit 版]]
+- [[http://cha.la.coocan.jp/doc/NTEmacs.html][NTEmacs / Emacs for Windows]]
+
+** 環境変数
+
+- .emacs.d\ created at C:\Users\hoge\AppData\Roaming\
+- 環境変数に C:\User\shun を設定（これをしないと AppData\Roaming が HOME のまま）
+
+* spacemacs
+** clone
+
+#+begin_src shell
+git clone https://github.com/syl20bnr/spacemacs ~/.emacs.d
+
+cd ~/.emacs.d
+git checkout develop
+#+end_src
+
+** spacemacs を最新に更新
+
+- [[https://qiita.com/osamu2001/items/43ca7977b2667daef2a9][Spacemacsを最新状態にしたい@Qiita]]
+#+begin_src shell
+cd ~/src/github.com/syl20bnr/spacemacs
+git fetch --prune
+git checkout --force develop
+git reset --hard origin/develop
+emacsclient -e '(configuration-layer/update-packages t)'
+emacsclient -e '(dotspacemacs/sync-configuration-layers)'
+emacsclient -e '(spacemacs/restart-emacs-resume-layouts)'
+#+end_src
+** Windows 10
+
+- [[http://cpthgli.hatenablog.jp/entry/2016/12/21/Windows10%E3%81%A7Spacemacs%21%21][Windows10でSpacemacs!!]]

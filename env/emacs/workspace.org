@@ -1,0 +1,51 @@
+#+STARTUP: content indent
+
+- ウィンドウ管理・バッファ・タブ機能など
+
+* Windows/Buffers Configuration
+** persp-mode.el, 207 stars
+
+- perspective.el がベースになっている
+- _spacemacs-layouts layar_ としても採用されている
+- window 構成、そこで開かれている buffer を保存できる
+- REPL などもカスタム関数を作成すれば、復元できる
+
+** eyebrowse, 364 stars
+
+- window/workspace 管理
+- _spacemacs-layouts layar_ にも採用されている
+
+** window-purpose, 337 stars
+
+- window に対して、purpose を設定
+- mode に対して、puropose のグループを設定
+- 指定した window では、特定の purpose を持つ mode のバッファしか開かないようにする
+- _spacemacs-purpose layar_
+
+** perspective.el, 417 stars
+** elscreen.el, 144 stars
+** perspeen.el, 61 stars
+* Tab for Buffers
+** elscreen
+** tabbar
+
+- window 上部に buffer のタブを表示する
+- mode 毎に グループを設定可能。同じグループのタブのみ表示することが可能。
+
+** iflibp
+
+- ウィンドウで開いているタブの切り替え
+
+* R/ESS Workspace Idea
+
+- 3 window + treemacs + アルファ
+- ess-rdired
+  - evil mode で扱いやすいキーバインド
+- Imenu
+- org-babel でソースを編集
+  - REPL, source, org の順にウィンドウを並べる
+- window-purpose で REPL ウィンドウに別バッファを表示しないようにする
+- ess-r-help のポップアップ場所をうまく管理したい
+- tabbar-mode のグループを使って、ウィンドウに関係するタブのみ表示する
+- ess-describe-object-at-point の gtk-tooltip を monospace font にする
+- yasnippet 対応

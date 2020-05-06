@@ -1,0 +1,32 @@
+#+STARTUP: showall indent
+
+* Event
+** EIA weekly reports (Wednesdays)
+- 毎週現地時間 10:30 に発表 (JST 0:30 / 23:30 Summar time)
+- 1 週間の統計情報を公開
+	9/20 日発表は、9/15 日までの情報
+- 原油在庫、ガソリン在庫、石油精製品在庫、ディスティレート(留出油)、製油所稼働率などを発表
+
+** API weekly reports (Tuesdays)
+- track total U.S. and regional inventories and refinery operations data
+
+** OPEC meetings of 14 top exporting countries
+- when OPEC talks, the oil markets listen
+
+** Refinery capacity reports
+- track use vs. capacity for available oil refineries
+
+** GDP reports 
+- track health of the U.S. economy and in turn, consumer demand for gasoline 
+
+** Natural gas inventory reports
+- cheaper nat gas affects oil demand as a viable energy alternative
+
+** Weather events
+- can impact major production sites and pipelines
+
+** World events
+- war, financial crises elections and more can affect oil policy and cost of oil
+
+** Import/export policy changes
+- can dramatically impact world oil supply and, in turn, prices

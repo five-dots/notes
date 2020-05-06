@@ -1,0 +1,28 @@
+#+STARTUP: showall indent
+
+* Index
+- Hong Kong Hansen
+- Hangsen H
+- Hangsen Red Chip
+- Shanhai
+
+* Future
+- China A50 (Singapore)
+- 中国 H 株指数 (Hong Kong)
+- CSI300 (Shanghai)
+	http://www.cffex.com.cn/en_new/CSI300IndexFutures.html
+	IF
+	Multiple CNY300
+	China Financial Futures Exchange
+	上海と深センが共同
+	中国全体の A 株パフォーマンス
+
+* IB 取扱い
+SEHK (Hong Kong Stock Exchange) (HKD)
+SEHKNTL (Shanghai Hong Kong Stock Connect) (CNH)
+SEHKSZSE (Shenzhen Hong Kong Stock Connect) (CNH)
+
+* CNY and CNH
+人民元 = 通貨バスケット管理変動相場
+CNY = オンショア人民元
+CNH = オフショア人民元 @ Hong-Kong

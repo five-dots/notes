@@ -1,0 +1,102 @@
+#+STARTUP: content indent
+
+* SDK Install (gcloud command)
+
+- [[https://cloud.google.com/sdk/docs/quickstart-debian-ubuntu][Debian と Ubuntu 用のクイックスタート]]
+
+#+begin_src shell
+export CLOUD_SDK_REPO="cloud-sdk-$(lsb_release -c -s)"
+echo "deb http://packages.cloud.google.com/apt $CLOUD_SDK_REPO main" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
+curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
+
+sudo apt install google-cloud-sdk
+gcloud init
+#+end_src
+
+- From WSL
+#+begin_src shell
+gcloud init --console-only
+#+end_src
+
+* gcloud ssh login
+
+#+begin_src shell
+gcloud compute ssh host_name --zone asia-east1-b
+#+end_src
+
+- SSH login by own key
+#+begin_src shell
+ssh-keygen -t rsa -C shun
+#+end_src
+
+.pub 公開鍵を Web にコピペ
+
+* gcloud compute instances
+** machine-type
+
+- n1-highcpu-96 (86.40GB)
+- n1-standard-96 (360GB)
+- n1-highmem-96 (624GB)
+- n1-megamem-96 (1433.6GB)
+
+** 新たに作成
+
+#+begin_src shell
+gcloud compute instances create test01 \
+  --boot-disk-size 10GB \
+  --zone asia-east1-b \
+  --image-project ubuntu-minimal-1804-lts \
+  --maintenance-policy TERMINATE \
+  --preemptible \
+  --machine-type n1-standard-96 \
+  --min-cpu-platform skylake
+#+end_src
+
+** 既存のマシンタイプを変更 
+
+#+begin_src shell
+gcloud compute instances stop remoter01
+#+end_src
+
+- CPU タイプをまずは変更
+#+begin_src shell
+gcloud compute instances update remoter01 \
+  --min-cpu-platform "Intel Skylake"
+#+end_src
+
+- 最大構成
+#+begin_src shell
+gcloud compute instances set-machine-type remoter01 \
+  --zone asia-east1-b \
+  --machine-type n1-standard-16
+  # --machine-type n1-highcpu-96
+#+end_src
+
+#+begin_src shell
+gcloud compute instances start remoter01
+#+end_src
+
+#+begin_src shell
+gcloud compute instances list
+#+end_src
+
+* Google Cloud Storage を Google Compute Engine でマウントする
+
+- https://github.com/GoogleCloudPlatform/gcsfuse/blob/master/docs/installing.md
+
+#+begin_src shell
+export GCSFUSE_REPO=gcsfuse-`lsb_release -c -s`
+echo "deb http://packages.cloud.google.com/apt $GCSFUSE_REPO main" | sudo tee /etc/apt/sources.list.d/gcsfuse.list
+curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
+
+sudo apt-get update
+sudo apt-get install gcsfuse
+#+end_src
+
+* scp file copy
+
+- [[https://cloud.google.com/compute/docs/instances/transfer-files?hl=ja][インスタンスへのファイルの転送]]
+
+#+begin_src shell
+gcloud compute scp local_path instance_name:~/
+#+end_src

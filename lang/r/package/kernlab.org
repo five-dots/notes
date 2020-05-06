@@ -1,0 +1,344 @@
+#+STARTUP: folded indent inlineimages latexpreview
+#+PROPERTY: header-args:R :session *R:kernlab* :results output :width 640 :height 480 :colnames yes
+
+* ライブラリの読み込み
+  
+#+begin_src R :results silent
+library(kernlab)
+library(tidyverse)
+library(tidymodels)
+#+end_src
+
+* 全関数
+
+#+begin_src R
+pacman::p_funs(kernlab)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+  [1] ".__C__anovakernel"             ".__C__besselkernel"           
+  [3] ".__C__csi"                     ".__C__fourierkernel"          
+  [5] ".__C__gausspr"                 ".__C__inchol"                 
+  [7] ".__C__ipop"                    ".__C__kcca"                   
+  [9] ".__C__kernel"                  ".__C__kernelMatrix"           
+ [11] ".__C__kfa"                     ".__C__kfunction"              
+ [13] ".__C__kha"                     ".__C__kmmd"                   
+ [15] ".__C__kpca"                    ".__C__kqr"                    
+ [17] ".__C__ksvm"                    ".__C__laplacekernel"          
+ [19] ".__C__lssvm"                   ".__C__onlearn"                
+ [21] ".__C__polykernel"              ".__C__ranking"                
+ [23] ".__C__rbfkernel"               ".__C__rvm"                    
+ [25] ".__C__specc"                   ".__C__splinekernel"           
+ [27] ".__C__stringkernel"            ".__C__tanhkernel"             
+ [29] ".__C__vanillakernel"           ".__T__[:base"                 
+ [31] ".__T__[[<-:base"               ".__T__[<-:base"               
+ [33] ".__T__$:base"                  ".__T__$<-:base"               
+ [35] ".__T__alpha:kernlab"           ".__T__alphaindex:kernlab"     
+ [37] ".__T__as.kernelMatrix:kernlab" ".__T__Asymbound:kernlab"      
+ [39] ".__T__AsympH0:kernlab"         ".__T__b:kernlab"              
+ [41] ".__T__buffer:kernlab"          ".__T__centers:kernlab"        
+ [43] ".__T__coef:stats"              ".__T__convergence:kernlab"    
+ [45] ".__T__cross:kernlab"           ".__T__csi:kernlab"            
+ [47] ".__T__diagresidues:kernlab"    ".__T__dual:kernlab"           
+ [49] ".__T__edgegraph:kernlab"       ".__T__eig:kernlab"            
+ [51] ".__T__error:kernlab"           ".__T__fitted:stats"           
+ [53] ".__T__gausspr:kernlab"         ".__T__H0:kernlab"             
+ [55] ".__T__how:kernlab"             ".__T__inchol:kernlab"         
+ [57] ".__T__inlearn:kernlab"         ".__T__ipop:kernlab"           
+ [59] ".__T__kcall:kernlab"           ".__T__kcca:kernlab"           
+ [61] ".__T__kcor:kernlab"            ".__T__kernelf:kernlab"        
+ [63] ".__T__kernelFast:kernlab"      ".__T__kernelMatrix:kernlab"   
+ [65] ".__T__kernelMult:kernlab"      ".__T__kernelPol:kernlab"      
+ [67] ".__T__kfa:kernlab"             ".__T__kha:kernlab"            
+ [69] ".__T__kkmeans:kernlab"         ".__T__kmmd:kernlab"           
+ [71] ".__T__kpar:kernlab"            ".__T__kpca:kernlab"           
+ [73] ".__T__kqr:kernlab"             ".__T__ksvm:kernlab"           
+ [75] ".__T__lev:kernlab"             ".__T__lssvm:kernlab"          
+ [77] ".__T__maxresiduals:kernlab"    ".__T__mlike:kernlab"          
+ [79] ".__T__mmdstats:kernlab"        ".__T__nSV:kernlab"            
+ [81] ".__T__nvar:kernlab"            ".__T__obj:kernlab"            
+ [83] ".__T__onlearn:kernlab"         ".__T__param:kernlab"          
+ [85] ".__T__pcv:kernlab"             ".__T__pivots:kernlab"         
+ [87] ".__T__plot:graphics"           ".__T__predgain:kernlab"       
+ [89] ".__T__predict:stats"           ".__T__primal:kernlab"         
+ [91] ".__T__prior:kernlab"           ".__T__prob.model:kernlab"     
+ [93] ".__T__Q:kernlab"               ".__T__R:kernlab"              
+ [95] ".__T__Radbound:kernlab"        ".__T__ranking:kernlab"        
+ [97] ".__T__rho:kernlab"             ".__T__rotated:kernlab"        
+ [99] ".__T__RVindex:kernlab"         ".__T__rvm:kernlab"            
+[101] ".__T__scaling:kernlab"         ".__T__show:methods"           
+[103] ".__T__sigest:kernlab"          ".__T__size:kernlab"           
+[105] ".__T__specc:kernlab"           ".__T__SVindex:kernlab"        
+[107] ".__T__truegain:kernlab"        ".__T__type:kernlab"           
+[109] ".__T__withinss:kernlab"        ".__T__xcoef:kernlab"          
+[111] ".__T__xmatrix:kernlab"         ".__T__ycoef:kernlab"          
+[113] ".__T__ymatrix:kernlab"         "alpha"                        
+[115] "alphaindex"                    "anovadot"                     
+[117] "as.kernelMatrix"               "Asymbound"                    
+[119] "AsympH0"                       "b"                            
+[121] "besseldot"                     "buffer"                       
+[123] "centers"                       "coef"                         
+[125] "convergence"                   "couple"                       
+[127] "cross"                         "csi"                          
+[129] "diagresidues"                  "dual"                         
+[131] "edgegraph"                     "eig"                          
+[133] "error"                         "fitted"                       
+[135] "gausspr"                       "H0"                           
+[137] "how"                           "inchol"                       
+[139] "inlearn"                       "ipop"                         
+[141] "kcall"                         "kcca"                         
+[143] "kcor"                          "kernelf"                      
+[145] "kernelFast"                    "kernelMatrix"                 
+[147] "kernelMult"                    "kernelPol"                    
+[149] "kfa"                           "kha"                          
+[151] "kkmeans"                       "kmmd"                         
+[153] "kpar"                          "kpca"                         
+[155] "kqr"                           "ksvm"                         
+[157] "laplacedot"                    "lev"                          
+[159] "lssvm"                         "maxresiduals"                 
+[161] "mlike"                         "mmdstats"                     
+[163] "nSV"                           "nvar"                         
+[165] "obj"                           "onlearn"                      
+[167] "param"                         "pcv"                          
+[169] "pivots"                        "plot"                         
+[171] "polydot"                       "predgain"                     
+[173] "predict"                       "primal"                       
+[175] "prior"                         "prob.model"                   
+[177] "Q"                             "R"                            
+[179] "Radbound"                      "ranking"                      
+[181] "rbfdot"                        "rho"                          
+[183] "rotated"                       "RVindex"                      
+[185] "rvm"                           "scaling"                      
+[187] "show"                          "sigest"                       
+[189] "size"                          "specc"                        
+[191] "splinedot"                     "stringdot"                    
+[193] "SVindex"                       "tanhdot"                      
+[195] "truegain"                      "type"                         
+[197] "vanilladot"                    "withinss"                     
+[199] "xcoef"                         "xmatrix"                      
+[201] "ycoef"                         "ymatrix"
+#+end_example
+
+* [[file:../general/linear_model.org][Linear Model]]
+* カーネル法を利用した分析手法
+
+- カーネル法を利用するための機能を提供するのが ={kernlab}=
+  - Support vector machine =ksvm()=
+    - ヒルベルト空間上で、線形関数の最適値を探索する
+  - Relevance vector machine =rvm()=
+    - SVM のベイズ版. 回帰のみサポート
+  - Gaussian Processes =gausspr()=
+  - Ranking =ranking()=
+  - Online learning with kernels =inlearn()=
+  - Spectral clustering =specc()=
+  - Kernel PCA =kpca()=
+    - ヒルベルト空間で PCA する
+  - Kernel feature analysis =kfa()=
+    - kpca をより高速にしたもの
+  - Kernel canonical correlation analysis =kcca()=
+    - 正準相関分析の説明変数をヒルベルト空間上の点に置き換える
+  - Interior point code quadratic optimizer =ipop()=
+  - Incomplete cholesky decomposition =inchol()=
+
+* カーネル関数
+
+- カーネル関数は、S4 で実装されている
+
+#+begin_src R :results silent
+rbfdot(sigma = 1)
+polydot(degree = 1, scale = 1, offset = 1)
+tanhdot(scale = 1, offset = 1)
+vanilladot()
+laplacedot(sigma = 1)
+besseldot(sigma = 1, order = 1, degree = 1)
+anovadot(sigma = 1, degree = 1)
+splinedot()
+stringdot(length = 4, lambda = 1.1, type = "spectrum", normalized = TRUE)
+#+end_src
+
+- RBF カーネル
+
+$K(x_1, x_2) = exp(-\alpha|x_1 - x_2|^2)$
+
+#+begin_src R
+alpha <- 0.7
+rbfk <- rbfdot(alpha) # カーネル関数を作成する関数 "rbfkernel" class
+x <- rnorm(3)
+y <- rnorm(3)
+rbfk(x,y)
+exp(-alpha * sum((x-y)^2)) # 検算
+#+end_src
+
+#+RESULTS:
+: 
+:             [,1]
+: [1,] 0.004263108
+: 
+: [1] 0.004263108
+
+* Reference
+
+#+begin_src R :results silent
+
+## S4 method for signature 'formula'
+ksvm(x, data = NULL, ..., subset, na.action = na.omit, scaled = TRUE)
+
+ksvm(
+  x,
+  y = NULL,
+  scaled = TRUE, # 数値データの標準化
+  type = NULL,
+  kernel ="rbfdot",   # ハイパーパラメタを参照
+  kpar = "automatic", # ハイパーパラメタを参照
+  C = 1,              # ハイパーパラメタを参照
+  nu = 0.2,           # ハイパーパラメタを参照
+  epsilon = 0.1,      # ハイパーパラメタを参照
+  prob.model = FALSE, # 分類タスク: 確率を予測するモデル
+  class.weights = NULL,
+  cross = 0, # 正の整数を指定すると cross-validation のスコアを計算 (分類=acc/error, 回帰=mse)
+  fit = TRUE,
+  cache = 40,
+  tol = 0.001,
+  shrinking = TRUE,
+  ..., 
+  subset,
+  na.action = na.omit
+)
+
+## S4 method for signature 'kernel'
+kernelMatrix(kernel, x, y = NULL)
+
+## S4 method for signature 'kernel'
+kernelPol(kernel, x, y = NULL, z, k = NULL)
+
+## S4 method for signature 'kernel'
+kernelMult(kernel, x, y = NULL, z, blocksize = 256)
+
+## S4 method for signature 'kernel'
+kernelFast(kernel, x, y, a)
+#+end_src
+
+* ハイパーパラメタ
+
+- kernal parameter (=kpar=)
+|------------+-------------------+------------+----------------------------------|
+| parameter  | range             |    default | note                             |
+|------------+-------------------+------------+----------------------------------|
+| =sigma=      | [-10, 0] (log10)  |        1.0 | =kernlab::sigest()= by "automatic" |
+|            |                   |            | "automatic" でない方が精度良い   |
+| =degree=     | [1L, 3L]          |          1 | 多項式の次数 正の整数            |
+| =scale=      | [-10, -1] (log10) |          1 |                                  |
+| =offset=     |                   |          1 |                                  |
+| =order=      |                   |          1 |                                  |
+| =length=     |                   |          4 |                                  |
+| =lambda=     |                   |        1.1 |                                  |
+| =type=       |                   | "spectrum" |                                  |
+| =normalized= |                   |       TRUE |                                  |
+|------------+-------------------+------------+----------------------------------|
+
+|--------------+----------------------------------+----------------------|
+| kernel       | parameter                        | note                 |
+|--------------+----------------------------------+----------------------|
+| ="rbfdot"=     | =sigma=                            | 最も一般的に使われる |
+| ="polydot"=    | =degree=, =scale=, =offset=            |                      |
+| ="vanilladot"= | no param                         |                      |
+| ="tanhdot"=    | =scale=, =offset=                    |                      |
+| ="laplacedot"= | =sigma=                            |                      |
+| ="basseldot"=  | =sigma=, =order=, =degree=             |                      |
+| ="anovadot"=   | =sigma=, =deree=                     |                      |
+| ="splinedot"=  | no param                         |                      |
+| ="stringdot"=  | =length=, =lambda=, =type=, =normalized= |                      |
+|--------------+----------------------------------+----------------------|
+
+- type parameters
+|-----------+------------------+---------+-------------------------------------|
+| parameter | range            | default | note                                |
+|-----------+------------------+---------+-------------------------------------|
+| =C=         | [-10, -1] (log2) |     1.0 | 誤判定の許容度. 正の数 (ゼロはダメ) |
+|           |                  |         | 0.0 < C < 3.0 で試してみる          |
+| =epsilon=   | [0.0, 0.2]       |     0.1 | 回帰のみのパラメタ                  |
+|           |                  |         | -0.2 < e < 0.2 で試してみる         |
+| =nu=        | [0, 1]           |     0.2 | 0 ~ 1 の数                          |
+|-----------+------------------+---------+-------------------------------------|
+
+|------------+-------------+----------------------|
+| type       | parameter   | note                 |
+|------------+-------------+----------------------|
+| ="C-svc"=    | =C=           | 分類問題のデフォルト |
+| ="nu-svc"=   | =nu=          |                      |
+| ="C-bsvc"=   | =C=           |                      |
+| ="spoc-svc"= | =C=           |                      |
+| ="kbb-svc"=  | =C=           |                      |
+|------------+-------------+----------------------|
+| ="one-svc"=  | =nu=          |                      |
+|------------+-------------+----------------------|
+| ="eps-svr"=  | =C=, =epsilon=  | 回帰問題のデフォルト |
+| ="nu-svr"=   | =nu=, =epsilon= |                      |
+| ="eps-bsvr"= | no param    |                      |
+|------------+-------------+----------------------|
+  
+* データ
+
+#+begin_src R :results value
+bird <- data.frame(
+  wing = c(12, 10, 13, 10, 13, 12),
+  body = c(15, 20, 23, 30, 36, 39),
+  type = c("A","A", "A", "B", "B", "B")
+)
+bird
+#+end_src
+
+#+RESULTS:
+| wing | body | type |
+|------+------+------|
+|   12 |   15 | A    |
+|   10 |   20 | A    |
+|   13 |   23 | A    |
+|   10 |   30 | B    |
+|   13 |   36 | B    |
+|   12 |   39 | B    |
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+plot(wing ~ body, data=bird, type="n", main="鳥の羽と体の大きさ")
+text(wing ~ body, data=bird, rownames(bird), col=c(1,2)[bird$type], cex=2)
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-rzey1e.png]]
+
+* 当てはめ
+
+#+begin_src R
+## 線形のSV分類
+svm_bird <- ksvm(type ~ wing + body, data=bird, type="C-svc", kernel="vanilladot")
+svm_bird
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+ Setting default kernel parameters
+
+Support Vector Machine object of class "ksvm" 
+
+SV type: C-svc  (classification) 
+ parameter : cost C = 1 
+
+Linear (vanilla) kernel function. 
+
+Number of Support Vectors : 4 
+
+Objective Function Value : -1.5318 
+Training error : 0
+#+end_example
+
+* 参考
+
+- [[https://cran.r-project.org/web/packages/kernlab/index.html][CRAN]]
+- [[https://cran.r-project.org/web/packages/kernlab/kernlab.pdf][Reference (PDF]]
+- Vignette
+  - [[https://cran.r-project.org/web/packages/kernlab/vignettes/kernlab.pdf][kernlab - An S4 Package for Kernel Methods in R]]
+
+- SVM
+  - [[http://ryamada22.hatenablog.jp/entry/20180109/1515282861][kernlab パッケージ@ryamadaの遺伝学・遺伝統計学メモ]]

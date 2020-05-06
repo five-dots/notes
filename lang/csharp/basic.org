@@ -1,0 +1,208 @@
+#+STARTUP: content indent
+
+* Basic  
+** Value Types / Reference Types 値型と参照型
+
+- 値型 = int, long, double, decimal, char などの組込型と struct, enum
+- 参照型 = object, string, class
+- class と struct の違い
+ - class  = サイズの大きいオブジェクト
+ - class  = 参照 + オブジェクトそのもの。コピーは参照のみなので効率が良い。
+ - struct = サイズの小さいオブジェクト。継承不可。
+ - struct = オブジェクトそのもの。大きな struct のコピーにはコストがかかる。
+- メモリ管理
+ - 値型 	 = すべてがスタック領域に置かれる
+ - 参照型 = 実際の値はヒープ領域に置かれ、参照（ポインター）のみがスタックに置かれる。
+ - ガベージコレクションよってヒープを管理している。
+
+** static
+
+- 静的クラス = インスタンスが作成できない（する必要がないもの、一意に決まるもの）
+- Main()は静的メソッド。Main()から直接呼び出すメソッドも静的である必要あり
+- インスタンスプロパティやインスタンスフィールドを利用していないメソッドは静的メソッドにできる
+ - インスタンスの変数に戻り値が依存していない
+- クラス内のすべてのメンバーが静的な場合、静的クラスにできる
+- const を利用する場合は、public にしない。例) private const double ratio = 0.3048;
+- const は自動的に static として認識されるので、指定する必要はない
+- 定数を public にする場合や変更の可能性のある定数は、public static readonly を使う
+- public readonly double ratio = 0.3048;
+- const = ビルド時に決定 vs. readonly = 実行時に決定
+- const のバージョン管理問題 = dll 内の const の値を変更しても、参照している exe の const はビルド時に決定済みのため、dll を差し替えても const の変更が反映されない問題
+     
+** Inheritance 継承
+
+- is a 関係(kind of 関係)が成り立つ (Employee class (社員)は Person class (人間)である）
+- object は、すべての型を代入できる = 抽象度の高い型でオブジェクトを扱う。
+
+** interface 
+
+- クラス A が IX インターフェースを実装しているとき、オブジェクト A は、IX 型の変数に代入できる。
+- IX 型の変数は、IX インターフェースがもつプロパティ・メソッドを利用できる。
+- プロパティやメソッドの具体的な動作は、クラス A に実装されている。
+- 具体的なクラスではなく、インターフェースに対してプログラミングすることが、オブジェクト志向の定石
+ - 変更に強くなる
+ - 余計な実装がないため、意図しない変更を防ぐことができる。
+ 
+** Lambda Expressions ラムダ式
+
+- メソッドを記述する方法
+- C#2 の delegate キーワードがなくなり、=> ラムダ演算子で記述
+- (引数リスト) => { メソッド return xxx; }
+ - 引数が 1 つの場合は、()を省略できる
+ - ラムダ式内が 1 つの文のみの場合、{}と return を省略できる
+ - 引数の型を省略できる（コンパイラによる推論）
+- メソッドを引数として渡したいときなどに使う。引数としてジェネリックデリゲートが指定されていたりする。(LINQ 等)
+ 
+** 命名規則
+
+- メソッドの名前は、何が返るのかを明確にする
+- 単数系か複数形かを意識する
+
+** var
+
+- 代入の右側から型が明らかな場合
+- for や foreach の中
+
+** LINQ
+
+- IEnumerable<T>の拡張メソッド x 47 (system.linq)
+-------------------------------------------------
+- (フィルター)	Where, Skip, SkipWhile, DefaultIfEmpty, Select, SelectMany(フラット化), 
+- (取得)		    First/FirstOrDefault, Last/LastOrDefault, ElementAt/ElementAtOrDefault, 
+               Single/SigleOrDefault, Take, TakeWhile
+- (まとめる)	  GroupBy, GroupJoin, Join, Concat, Zip, Distinct
+- (並べ替え)	  OrderBy, OrderbyDescending, ThenBy, ThenByDescending, Reverse
+- (キャスト)	  Cast, OfType
+- (集合) 		  Except(差集合), Union(和集合), Intersect(積集合)
+- (計算) 		  Count, LongCount, Average, Max, Min, Sum, Aggregate
+- (Bool) 		  All(要素が空の場合は常に True), Any, Contains, SequenceEqual 
+- (ToXXX)		  ToArray, ToDictionary, ToList, ToLookup
+-------------------------------------------------
+- Enumerable.Repeat, Enumerable.Range
+- シーケンス = 連続するデータ(配列, List 等) への操作
+- Count は、Count プロパティ(=要素数)と Count()メソッド(条件に一致する要素数)の 2 種類がある。
+- Select は、第 2 引数に要素のインデックスを扱うオーバーロードがある .Select((x, idx) => new { … })
+
+** List<T>
+
+- Exists 有無 bool
+- Find 最初の要素
+- FindIndex 最初のインデックス
+- FindAll 一致するすべての要素
+- RemoveAll 一致するすべての要素を削除
+- ForEach 繰り返し
+- ConvertAll すべての要素を変換
+
+** Dictionary<TKey, TValue>
+
+- ハッシュテーブルとも呼ばれる
+- キーとしてカスタムクラスを利用する場合は、GetHashCode()と Equals()メソッドをオーバーライドする必要あり。
+- ハッシュコードをバラけさせるため、31 という素数を使うのも定石。
+- 中身は、KeyValuePair<TKey, TValue>  .Key, .Value でアクセスする。
+- LINQ の ToDictionary メソッドで、キーを指定して、Dict を作成できる。
+
+** HashSet<T>
+
+- ディクショナリに似ているが、保持するのは Key のみ。
+- 重複が許されないが、重複で Add しても例外にならず、False が返る。
+- リストよりも高速にアクセスできる。
+
+** 拡張メソッド
+
+- 静的クラスの中に、第 1 引数に this キーワードをつけた静的メソッドとして定義
+- namespace xxx.Extensions {
+		 public static class MyExtensions {
+			 public static 戻り値 メソッド名(this 型 引数名) {
+       
+** yield return
+
+- IEnumerable<T>を返すメソッドの場合、コレクションに格納しなくても yield return でシーケンスを返す
+- foreach (var item in list) {
+		 yeild return xxxx;
+     
+** プロパティ
+
+	 - 読み取り専用プロパティ
+		 - public string FamilyName { get; private set; }　 private 利用、コンストラクタなどから初期化
+		 - public string FamilyName { get; }　 get のみ、クラス内からも変更できない
+		 - public string Name => FamilyName + " " + GivenName;  ラムダ式を使った読み取り専用プロパティ
+			 - 今後 get のみのケースは利用しなくなる
+		 - 参照型(List 等)の読み取り専用プロパティの場合は、IReadOnlyList<T>や IEnumerable<T>を使う
+			 - プロパティを読み取り専用にしても、オブジェクトは変更できてしまうから
+		 - readonly は static field でのみ利用する
+
+** メソッド
+
+	 - オーバーロードより、オプション引数を利用する　デフォルト値を引数に予め指定すれば、省略可能。
+	 - コンストラクタもオーバーロードではなく、オプション引数を利用可能
+	 - params キーワードで、可変長引数
+
+** null
+
+	 - Nullable 型.HasValue => null でなければ true
+	 - ?? null 合体演算子
+		 - var message = GetMessage() ?? DefaultMessage(); null の場合、デフォルト値を設定
+	 - ?. null 条件演算子
+		 - null でなければ、プロパティにアクセス、null の場合は null を返す
+		 - null 合体演算子と組み合わせて null の場合のデフォルト値を設定
+			 - var name = product?.Name ?? DefaultName;
+         
+** キャスト
+
+	 - 参照型のキャストには、as を使う object => クラス等
+	 - 値型のキャストには、(int)を使う
+     
+** this
+
+	 - 4 つの用法がある
+		 - 1 自分自身のインスタンスを参照する場合
+		 - 2 インデクサを定義する場合
+		 - 3 拡張メソッドの最初の引数として
+		 - 4 自信の別のコンストラクタを呼び出す場合
+       
+** string
+
+	 - String クラスのメソッド、プロパティ
+	 ------------------------------------------------
+	 - String.Compare, String.IsNullOrEmpty, String.IsNullOrWhiteSpace, 
+	 - StartWith, EndWith, Contains, IndexOf, Substring(途中抜き出し),
+	 - Trim(空白除去), TrimStart(先頭空白除去), TrimEnd(末尾空白除去)
+	 - Remove, Insert, Replace, ToUpper, ToLower, 
+	 - String.Join(配列=>文字列), Split(文字列=>配列)
+	 ------------------------------------------------
+	 - String.Empty と string text = ""; は同じ意味
+	 - string は、IEnumerable<Char>を実装している。LINQ のメソッドを char に対して実行できる。
+	 - string は不変オブジェクトのため、書き換えができない。そのため、変更の都度新しいインスタンスが作成される。
+	 - 複数回の繰り返しで string を操作する場合は、StringBuilder を利用する
+			 -文字列のインスタンスを作成する、特殊なインスタンス作成クラス
+	 - ToString(), String.Format(), ${} 書式設定
+     
+** Type クラス
+
+	 - System.Type 型情報を表す
+	 - 2 種類の取得方法
+		 - クラス名から Type type = typeof(Product);
+		 - オブジェクトから Type type = person.GetType();
+	 - リフレクションで利用(= 実行時にクラスのメタデータ(クラス名・メンバー名・アクセスレベル等)を取得すること）
+		 - クラス名の文字列からインスタンスを動的に作成したりできる
+
+** DateTime
+
+	 - Today プロパティ、Now プロパティ、DayOfWeek プロパティ(曜日)、DayOfYear(1/1 から何日か）
+	 - IsLeapYear 静的メソッド(うるう年)、TryParse 静的メソッド(String=>DateTime)、DaysInMonth 静的メソッド(月末日）
+	 - AddDays, AddMonth, AddYears
+	 - DateTime 型は、String 型等同様、不変オブジェクト
+	 - TimeSpan 構造体、+- で何分後等を計算できる。
+     
+** File
+
+	 - System.IO 名前空間
+	 - File.Exisits(filepath) で存在確認してからアクセス
+	 - StreamReader クラスでファイルアクセス
+		 - using (var reader = new StreamReader(filepath, encoding) {
+			 while (!reader.EnfOfStream) {
+				 var line = reader.ReadLine();
+
+* Unit Test
+* WPF
+** [[wiki:WPF_Control][WPF_Control]]

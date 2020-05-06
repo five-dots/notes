@@ -1,0 +1,56 @@
+#+STARTUP: showall indent
+
+* Pre Market
+** 4:00am - 9:30
+** 8:00am - が一般的
+
+* After Market   
+** - 20:00
+
+* NYSE
+** Opening/Closing auction
+https://www.nyse.com/publicdocs/nyse/markets/nyse/NYSE_Opening_and_Closing_Auctions_Fact_Sheet.pdf
+
+** am 7:30 から発注入力可能
+** MOO, LOO オーダーを入力可能
+** 前日の株価、売り・買いのインバランスをベースにした Reference Price が公開される
+*** 9:00 - 9:20, 1min interval
+*** 9:20 - 9:30, 15sec interval
+*** 9:28 likely opening price
+*** 9:28 - 9:35 この時間帯のオーダーはキャンセルできない
+
+** Slippage
+9:30 の最初の tick で opening auction が行われていないように見える
+そのため、Open price から数ティックのスリッページが発生する場合がある
+
+* NASDAQ 
+** Opening/Closing Crosses = NASDAQ の用語
+https://www.nasdaqtrader.com/content/TechnicalSupport/UserGuides/TradingProducts/crosses/openclosequickguide.pdf
+
+** MOO
+• Market-on-open (MOO) must be received prior to
+9:28 a.m.
+
+• Market Orders placed after 9:28 a.m. will be held
+until the market opens and will not participate in the
+Opening Cross.
+
+** LOO
+• Limit-on-open (LOO) received after 9:28 a.m. are
+treated as Imbalance-Only orders.
+
+** IO Order
+• Imbalance-Only (IO) Orders: Executable only during the
+Cross.
+
+• Liquidity-providing orders that stabilize the crossing
+price.
+
+• IO orders to buy (or sell) that are priced more
+aggressively than the 9:30 a.m., Nasdaq bid (or ask)
+will be adjusted to the Nasdaq bid (or ask) prior to the
+execution of the Cross.
+
+** MOC
+• Market-on-close (MOC) must be received prior to 3:55
+p.m.

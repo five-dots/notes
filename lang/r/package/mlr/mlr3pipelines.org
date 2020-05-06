@@ -1,0 +1,582 @@
+#+STARTUP: folded indent
+#+PROPERTY: header-args:R :results output :colnames yes :session *R:mlr3pipelines*
+
+* ={mlr3pipelines}=
+* ライブラリの読み込み
+  
+#+begin_src R :results silent
+library(tidyverse)
+
+library(mlr3)
+library(mlr3learners)
+library(mlr3pipelines)
+library(mlr3tuning)
+library(mlr3filters)
+library(mlr3viz)
+
+library(paradox)
+#+end_src
+
+* 全関数 ={mlr3pipelines}=
+
+#+begin_src R
+pacman::p_funs(mlr3pipelines)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+ [1] "%>>%"                          "add_class_hierarchy_cache"    
+ [3] "as_graph"                      "as_pipeop"                    
+ [5] "as.data.table"                 "assert_graph"                 
+ [7] "assert_pipeop"                 "branch"                       
+ [9] "filter_noop"                   "Graph"                        
+[11] "GraphLearner"                  "greplicate"                   
+[13] "gunion"                        "is_noop"                      
+[15] "LearnerClassifAvg"             "LearnerRegrAvg"               
+[17] "mlr_pipeops"                   "NO_OP"                        
+[19] "PipeOp"                        "PipeOpBoxCox"                 
+[21] "PipeOpBranch"                  "PipeOpChunk"                  
+[23] "PipeOpClassBalancing"          "PipeOpClassifAvg"             
+[25] "PipeOpClassWeights"            "PipeOpColApply"               
+[27] "PipeOpCollapseFactors"         "PipeOpCopy"                   
+[29] "PipeOpEncode"                  "PipeOpEncodeImpact"           
+[31] "PipeOpEncodeLmer"              "PipeOpEnsemble"               
+[33] "PipeOpFeatureUnion"            "PipeOpFilter"                 
+[35] "PipeOpFixFactors"              "PipeOpHistBin"                
+[37] "PipeOpICA"                     "PipeOpImpute"                 
+[39] "PipeOpImputeHist"              "PipeOpImputeMean"             
+[41] "PipeOpImputeMedian"            "PipeOpImputeNewlvl"           
+[43] "PipeOpImputeSample"            "PipeOpKernelPCA"              
+[45] "PipeOpLearner"                 "PipeOpLearnerCV"              
+[47] "PipeOpMissInd"                 "PipeOpModelMatrix"            
+[49] "PipeOpMutate"                  "PipeOpNOP"                    
+[51] "PipeOpPCA"                     "PipeOpQuantileBin"            
+[53] "PipeOpRegrAvg"                 "PipeOpRemoveConstants"        
+[55] "PipeOpScale"                   "PipeOpScaleMaxAbs"            
+[57] "PipeOpScaleRange"              "PipeOpSelect"                 
+[59] "PipeOpSmote"                   "PipeOpSpatialSign"            
+[61] "PipeOpSubsample"               "PipeOpTaskPreproc"            
+[63] "PipeOpTaskPreprocSimple"       "PipeOpUnbranch"               
+[65] "PipeOpYeoJohnson"              "po"                           
+[67] "register_autoconvert_function" "reset_autoconvert_register"   
+[69] "reset_class_hierarchy_cache"   "selector_all"                 
+[71] "selector_grep"                 "selector_intersect"           
+[73] "selector_invert"               "selector_name"                
+[75] "selector_none"                 "selector_setdiff"             
+[77] "selector_type"                 "selector_union"
+#+end_example
+* 概要
+
+- ={mlr3pipelines}= (={mlrCPO}= の後継)
+- 主な機能
+  1. データ操作・前処理・特徴量選択・欠損処理
+  2. Task のサブサンプル作成 (高速化などが目的)
+  3. Learner の操作と予測・スタッキング
+  4. 予測結果のアンサンブル
+
+- 個々の処理は *PipeOps (PO)* と呼ばれる
+- list 形式で複数の入力・出力を PO 間でやり取りする
+- 複数の PO をつなげて Graph を作成する
+- Graph 自身にも =train()=, =predict()= を持っていて、Graph から出力を得ることができる
+
+- ={mlr3}= との統合
+  - =PipeOpsLearner= mlr3 の Learner を内包する PO
+  - =GraphLearner= Learner として Graph を利用するクラス 
+   - =resample()= や =benchmark()= の Learner として利用する
+
+- PO の重要コンポーネント
+  - =train()=   list で引数を受取り、出力を list にして返す (結果を state に残す)
+  - =state=     
+  - =predict()= list で引数を受取り、出力を list にして返す (state の結果を利用する)
+
+#+begin_src R
+mlr_pipeops
+
+po("learner", lrn("classif.rpart"))
+#+end_src
+
+#+RESULTS:
+#+begin_example
+<
+with 42 stored values
+Keys: boxcox, branch, chunk, classbalancing, classifavg, classweights,
+  colapply, collapsefactors, copy, encode, encodeimpact, encodelmer,
+  featureunion, filter, fixfactors, histbin, ica, imputehist,
+  imputemean, imputemedian, imputenewlvl, imputesample, kernelpca,
+  learner, learner_cv, missind, modelmatrix, mutate, nop, pca,
+  quantilebin, regravg, removeconstants, scale, scalemaxabs,
+  scalerange, select, smote, spatialsign, subsample, unbranch,
+  yeojohnson
+PipeOp: <
+(not trained)
+values: <xval=0>
+Input channels <name [train type, predict type]>:
+  input [TaskClassif,TaskClassif]
+Output channels <name [train type, predict type]>:
+  output [NULL,PredictionClassif]
+#+end_example
+
+* PipeOp
+** リスト
+
+- NA のところは innum / outnum で明示的に指定する
+#+begin_src R :results value :rownames yes
+as.data.table(mlr_pipeops)[, c("key", "input.num", "output.num")]
+#+end_src
+
+#+RESULTS:
+|    | key             | input.num | output.num |
+|----+-----------------+-----------+------------|
+|  1 | boxcox          |         1 |          1 |
+|  2 | branch          |         1 |        nil |
+|  3 | chunk           |         1 |        nil |
+|  4 | classbalancing  |         1 |          1 |
+|  5 | classifavg      |       nil |          1 |
+|  6 | classweights    |         1 |          1 |
+|  7 | colapply        |         1 |          1 |
+|  8 | collapsefactors |         1 |          1 |
+|  9 | copy            |         1 |        nil |
+| 10 | encode          |         1 |          1 |
+| 11 | encodeimpact    |         1 |          1 |
+| 12 | encodelmer      |         1 |          1 |
+| 13 | featureunion    |       nil |          1 |
+| 14 | filter          |         1 |          1 |
+| 15 | fixfactors      |         1 |          1 |
+| 16 | histbin         |         1 |          1 |
+| 17 | ica             |         1 |          1 |
+| 18 | imputehist      |         1 |          1 |
+| 19 | imputemean      |         1 |          1 |
+| 20 | imputemedian    |         1 |          1 |
+| 21 | imputenewlvl    |         1 |          1 |
+| 22 | imputesample    |         1 |          1 |
+| 23 | kernelpca       |         1 |          1 |
+| 24 | learner         |         1 |          1 |
+| 25 | learner_cv      |         1 |          1 |
+| 26 | missind         |         1 |          1 |
+| 27 | modelmatrix     |         1 |          1 |
+| 28 | mutate          |         1 |          1 |
+| 29 | nop             |         1 |          1 |
+| 30 | pca             |         1 |          1 |
+| 31 | quantilebin     |         1 |          1 |
+| 32 | regravg         |       nil |          1 |
+| 33 | removeconstants |         1 |          1 |
+| 34 | scale           |         1 |          1 |
+| 35 | scalemaxabs     |         1 |          1 |
+| 36 | scalerange      |         1 |          1 |
+| 37 | select          |         1 |          1 |
+| 38 | smote           |         1 |          1 |
+| 39 | spatialsign     |         1 |          1 |
+| 40 | subsample       |         1 |          1 |
+| 41 | unbranch        |       nil |          1 |
+| 42 | yeojohnson      |         1 |          1 |
+
+** スケーリング
+
+- scale       標準化/中央化/正規化
+- scalemaxabs 絶対値の最大値を指定して変換 (デフォルト 1)
+- scalerange  lower/upper のレンジに変換
+
+#+begin_src R :results value
+data <- tibble(
+  y = as.factor(sample(0:1, 5, replace = T)),
+  x = c(1, 2, 3, 4, 5)
+)
+task <- TaskClassif$new("test", backend = data, target = "y")
+data
+#+end_src
+
+#+RESULTS:
+| y | x |
+|---+---|
+| 1 | 1 |
+| 0 | 2 |
+| 0 | 3 |
+| 0 | 4 |
+| 1 | 5 |
+
+#+begin_src R
+scale <- po("scale", center = TRUE, scale = TRUE) # 標準化
+## scale <- po("scale", center = TRUE, scale = FALSE)   # 中央化
+## scale <- po("scale", center = FALSE, scale = TRUE)   # 正規化
+
+scale$train(list(task))[[1]]$data()
+#+end_src
+
+#+RESULTS:
+:    y          x
+: 1: 1 -1.2649111
+: 2: 0 -0.6324555
+: 3: 0  0.0000000
+: 4: 0  0.6324555
+: 5: 1  1.2649111
+
+** エンコーディング
+*** =PipeOpEncode=
+
+- factor, character and ordered をエンコードする
+- method
+  - "one-hot"
+  - "treatment" (n-1)
+  - "helmert" ヘルマート変換 by =stats::contr.helmert()=
+  - "poly"
+  - "sum"
+
+- サンプルデータとタスク
+#+begin_src R :results value
+data <- tibble(
+  y = as.factor(sample(0:1, 5, replace = T)),
+  x = factor(c("A", "B", "B", "C", "C"))
+)
+task <- TaskClassif$new("test", backend = data, target = "y")
+data
+#+end_src
+
+#+RESULTS:
+| y | x |
+|---+---|
+| 1 | A |
+| 0 | B |
+| 1 | B |
+| 1 | C |
+| 0 | C |
+
+- one-hot
+#+begin_src R
+one_hot <- po("encode", method = "one-hot")
+one_hot$train(list(task))[[1]]$data()
+#+end_src
+
+#+RESULTS:
+:    y x.A x.B x.C
+: 1: 0   1   0   0
+: 2: 0   0   1   0
+: 3: 1   0   1   0
+: 4: 0   0   0   1
+: 5: 1   0   0   1
+
+- treatment
+#+begin_src R
+treatment <- po("encode", method = "treatment")
+treatment$train(list(task))[[1]]$data()
+#+end_src
+
+#+RESULTS:
+:    y x.B x.C
+: 1: 0   0   0
+: 2: 0   1   0
+: 3: 1   1   0
+: 4: 0   0   1
+: 5: 1   0   1
+
+- helmert
+#+begin_src R
+helmert <- po("encode", method = "helmert")
+helmert$train(list(task))[[1]]$data()
+#+end_src
+
+#+RESULTS:
+:    y x.1 x.2
+: 1: 0  -1  -1
+: 2: 0   1  -1
+: 3: 1   1  -1
+: 4: 0   0   2
+: 5: 1   0   2
+
+- poly
+#+begin_src R
+poly <- po("encode", method = "poly")
+poly$train(list(task))[[1]]$data()
+#+end_src
+
+#+RESULTS:
+:    y           x.1        x.2
+: 1: 0 -7.071068e-01  0.4082483
+: 2: 0 -7.850462e-17 -0.8164966
+: 3: 1 -7.850462e-17 -0.8164966
+: 4: 0  7.071068e-01  0.4082483
+: 5: 1  7.071068e-01  0.4082483
+
+- sum
+#+begin_src R
+sum <- po("encode", method = "sum")
+sum$train(list(task))[[1]]$data()
+#+end_src
+
+#+RESULTS:
+:    y x.1 x.2
+: 1: 0   1   0
+: 2: 0   0   1
+: 3: 1   0   1
+: 4: 0  -1  -1
+: 5: 1  -1  -1
+
+*** =PipeOpEncodeImpact=
+
+- "encodeimpact"
+- 分類タスク
+  converts factor levels of each (factorial) column to the difference between each target level's conditional log-likelihood given this level, and the target level's global log-likelihood.
+
+- 回帰タスク
+  converts factor levels of each (factorial) column to the difference between the target's conditional mean given this level, and the target's global mean.
+
+- impact
+#+begin_src R
+impact <- po("encodeimpact") # args: smoothing, impute_zero
+impact$train(list(task))[[1]]$data()
+#+end_src
+
+#+RESULTS:
+:    y        x.0        x.1
+: 1: 1 -8.8049919  8.8049919
+: 2: 0  0.4054484 -0.4054484
+: 3: 1  0.4054484 -0.4054484
+: 4: 1  0.4054484 -0.4054484
+: 5: 0  0.4054484 -0.4054484
+
+*** =PipeOpEncodeLmer=
+
+- encodelmer
+- Random Intercept Models を使ったエンコード
+- Target エンコーディングの手法
+- =lme4::glmer(target ~ 1 + (1 | facotr)= を使って当てはめが行われる
+
+#+begin_src R
+lmer <- po("encodelmer")
+lmer$train(list(task))[[1]]$data()
+#+end_src
+
+#+RESULTS:
+: boundary (singular) fit: see ?isSingular
+:    y         x
+: 1: 1 0.4054651
+: 2: 0 0.4054651
+: 3: 1 0.4054651
+: 4: 1 0.4054651
+: 5: 0 0.4054651
+
+** 欠損処理
+
+- imputehist   ヒストグラム
+- imputemean   平均
+- mputemedian  中央値
+- imputenewlvl 新たな因子
+- imputesample サンプリング 
+
+#+begin_src R :results value
+data <- tibble(
+  y = as.factor(sample(0:1, 5, replace = T)),
+  x = c(1, 2, 3, 4, NA)
+)
+task <- TaskClassif$new("test", backend = data, target = "y")
+data
+#+end_src
+
+#+RESULTS:
+| y |   x |
+|---+-----|
+| 0 |   1 |
+| 1 |   2 |
+| 1 |   3 |
+| 1 |   4 |
+| 0 | nil |
+
+- 欠損あり
+#+begin_src R
+task$missings()
+#+end_src
+
+#+RESULTS:
+: y x 
+: 0 1
+
+- 平均で埋める
+#+begin_src R
+mean <- po("imputemean")
+new_task <- mean$train(list(task))[[1]]
+new_task$data()
+#+end_src
+
+#+RESULTS:
+: 
+:    y   x
+: 1: 0 1.0
+: 2: 1 2.0
+: 3: 1 3.0
+: 4: 1 4.0
+: 5: 0 2.5
+
+- 欠損がなくなっている
+#+begin_src R
+new_task$missings()
+#+end_src
+
+#+RESULTS:
+: y x 
+: 0 0
+
+#+begin_src R
+mean$state$model
+#+end_src
+
+#+RESULTS:
+: $x
+: [1] 2.5
+
+** PCA
+
+- "pca", "ica" or "kernelpca"
+- iris 分類タスクに PCA を適応してみる
+#+begin_src R
+task <- tsk("iris")
+pca <- po("pca")
+
+pca$train(list(task))[[1]]$data()
+pca$state
+
+single_line_task <- task$clone()$filter(1)
+pca$predict(list(single_line_task))[[1]]$data() # 上の1行目と同じ
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+       Species       PC1         PC2         PC3          PC4
+  1:    setosa -2.684126  0.31939725 -0.02791483 -0.002262437
+  2:    setosa -2.714142 -0.17700123 -0.21046427 -0.099026550
+  3:    setosa -2.888991 -0.14494943  0.01790026 -0.019968390
+  4:    setosa -2.745343 -0.31829898  0.03155937  0.075575817
+  5:    setosa -2.728717  0.32675451  0.09007924  0.061258593
+ ---                                                         
+146: virginica  1.944110  0.18753230  0.17782509 -0.426195940
+147: virginica  1.527167 -0.37531698 -0.12189817 -0.254367442
+148: virginica  1.764346  0.07885885  0.13048163 -0.137001274
+149: virginica  1.900942  0.11662796  0.72325156 -0.044595305
+150: virginica  1.390189 -0.28266094  0.36290965  0.155038628
+
+Standard deviations (1, .., p=4):
+[1] 2.0562689 0.4926162 0.2796596 0.1543862
+
+Rotation (n x k) = (4 x 4):
+                     PC1         PC2         PC3        PC4
+Petal.Length  0.85667061 -0.17337266  0.07623608  0.4798390
+Petal.Width   0.35828920 -0.07548102  0.54583143 -0.7536574
+Sepal.Length  0.36138659  0.65658877 -0.58202985 -0.3154872
+Sepal.Width  -0.08452251  0.73016143  0.59791083  0.3197231
+
+   Species       PC1       PC2         PC3          PC4
+1:  setosa -2.684126 0.3193972 -0.02791483 -0.002262437
+#+end_example
+
+* Selector
+
+- selector_all()
+- selector_none()
+- selector_type(types)
+- selector_grep(pattern, ignore.case = FALSE, perl = FALSE, fixed = FALSE)
+- selector_name(feature_names, assert_present = FALSE)
+- selector_invert(selector)
+- selector_intersect(selector_x, selector_y)
+- selector_union(selector_x, selector_y)
+- selector_setdiff(selector_x, selector_y)
+
+* PO + =%>>%=
+
+- =%>>%= で PO をつないでいく
+#+begin_src R
+gr <- po("scale") %>>% po("pca")
+gr
+#+end_src
+
+#+RESULTS:
+: Graph with 2 PipeOps:
+:     ID         State sccssors prdcssors
+:  scale <<UNTRAINED>
+:      pca          
+:    pca <<UNTRAINED>
+:              scale
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+gr$plot()
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-wiDaGQ.png]]
+
+* 特徴量結合の例
+
+- "featureunion" は複数の入力 (list) を受取り =cbind()= して返す
+- Input Channel を 2 つもつ場合
+- Stacking などに利用できそう
+#+begin_src R
+
+## iris を2つに分割
+iris_first_half = task$clone()$select(c("Petal.Length", "Petal.Width"))
+iris_second_half = task$clone()$select(c("Sepal.Length", "Sepal.Width"))
+
+## 再度結合する
+po_fu <- po("featureunion", innum = 2)
+po_fu$train(list(iris_first_half, iris_second_half))[[1]]$data()
+
+## 入力が2つ
+po_fu$input
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+       Species Petal.Length Petal.Width Sepal.Length Sepal.Width
+  1:    setosa          1.4         0.2          5.1         3.5
+  2:    setosa          1.4         0.2          4.9         3.0
+  3:    setosa          1.3         0.2          4.7         3.2
+  4:    setosa          1.5         0.2          4.6         3.1
+  5:    setosa          1.4         0.2          5.0         3.6
+ ---                                                            
+146: virginica          5.2         2.3          6.7         3.0
+147: virginica          5.0         1.9          6.3         2.5
+148: virginica          5.2         2.0          6.5         3.0
+149: virginica          5.4         2.3          6.2         3.4
+150: virginica          5.1         1.8          5.9         3.0
+
+     name train predict
+1: input1  Task    Task
+2: input2  Task    Task
+#+end_example
+
+* グラフ実行の例
+
+- iris をスケールしてから、10%をサンプリングする例
+- Graph Class の =train()= にタスクを渡す
+#+begin_src R
+task <- tsk("iris")
+gr <- po("scale") %>>% po("subsample", param_vals = list(frac = 0.1))
+gr$train(task)[[1]]$data()
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+       Species Petal.Length Petal.Width Sepal.Length Sepal.Width
+ 1:     setosa  -1.33575163  -1.3110521   -1.7430170 -0.36096697
+ 2:     setosa  -1.56234224  -1.3110521   -1.5014904  1.24503015
+ 3:     setosa  -1.22245633  -1.3110521   -1.0184372 -0.13153881
+ 4:     setosa  -1.05251337  -1.0486668   -0.8976739  1.70388647
+ 5: versicolor   0.64691619   0.3944526    1.2760656  0.09788935
+ 6: versicolor   0.13708732   0.1320673   -0.4146207 -1.73753594
+ 7: versicolor   0.53362088   0.5256453    0.5514857  0.55674567
+ 8: versicolor   0.53362088   0.2632600    0.3099591 -0.36096697
+ 9: versicolor  -0.08950329   0.1320673   -0.2938574 -0.36096697
+10: versicolor   0.36367793   0.2632600    0.9137757 -0.13153881
+11: versicolor  -0.14615094  -0.2615107   -0.1730941 -1.04925145
+12: versicolor  -0.42938920  -0.1303181   -0.8976739 -1.27867961
+13:  virginica   1.32668801   1.7063794    1.6383555  1.24503015
+14:  virginica   0.98680210   0.7880307    0.7930124 -0.13153881
+15:  virginica   1.15674505   0.5256453    1.6383555 -0.13153881
+#+end_example
+
+* 参考
+
+- ={mlr3pipelines}=
+  - [[https://mlr3pipelines.mlr-org.com/reference/index.html][Reference]]
+  - Vigette
+    - [[https://mlr3pipelines.mlr-org.com/articles/introduction.html][Introduction to mlr3pipelines]]
+

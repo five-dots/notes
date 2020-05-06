@@ -1,0 +1,354 @@
+#+STARTUP: folded indent
+#+PROPERTY: header-args:R :results value :colnames yes :session *R:yardstick* :width 640 :height 480
+
+* ~{yardstick}~: Tidy methods for measuring model performance :noexport:
+
+~{yardstick}~ はモデルによる予測結果を評価するための評価指標を多数収録したパッケージ。 ~{tidymodels}~ のパッケージ群に含まれる。 ~{tidyverse}~ な手法で、モデルの予測精度を評価できる。
+\\
+
+* 目次                                                            :quote:toc:
+#+BEGIN_QUOTE
+- [[#ライブラリの読み込みとバージョンの確認][ライブラリの読み込みとバージョンの確認]]
+- [[#関数リスト][関数リスト]]
+  - [[#overview][Overview]]
+  - [[#generic-functions][Generic functions]]
+    - [[#-metricsdata-truth-estimate--options--list-na_rm--true][★★☆ ~metrics(data, truth, estimate, ..., options = list(), na_rm = TRUE)~.]]
+  - [[#class-metrics][Class metrics]]
+    - [[#-accuracydata-truth-estimate-na_rm--true-][★★★ ~accuracy(data, truth, estimate, na_rm = TRUE, ...)~.]]
+    - [[#-bal_accuracydata-truth-estimate-estimator--null-na_rm--true-][★☆☆ ~bal_accuracy(data, truth, estimate, estimator = NULL, na_rm = TRUE, ...)~.]]
+    - [[#-detection_prevalencedata-truth-estimate-estimator--null-na_rm--true-][★☆☆ ~detection_prevalence(data, truth, estimate, estimator = NULL, na_rm = TRUE, ...)~.]]
+    - [[#-f_measdata-truth-estimate-beta--1-estimator--null-na_rm--true-][★☆☆ ~f_meas(data, truth, estimate, beta = 1, estimator = NULL, na_rm = TRUE, ...)~.]]
+    - [[#-j_indexdata-truth-estimate-estimator--null-na_rm--true-][★☆☆ ~j_index(data, truth, estimate, estimator = NULL, na_rm = TRUE, ...)~.]]
+    - [[#-kapdata-truth-estimate-na_rm--true-][★★★ ~kap(data, truth, estimate, na_rm = TRUE, ...)~.]]
+    - [[#-mccdata-truth-estimate-na_rm--true-][★☆☆ ~mcc(data, truth, estimate, na_rm = TRUE, ...)~.]]
+    - [[#-npvdata-truth-estimate-prevalence--null-estimator--null-na_rm--true-][★☆☆ ~npv(data, truth, estimate, prevalence = NULL, estimator = NULL, na_rm = TRUE, ...)~.]]
+    - [[#-ppvdata-truth-estimate-prevalence--null-estimator--null-na_rm--true-][★☆☆ ~ppv(data, truth, estimate, prevalence = NULL, estimator = NULL, na_rm = TRUE, ...)~.]]
+    - [[#-precisiondata-truth-estimate-estimator--null-na_rm--true-][★☆☆ ~precision(data, truth, estimate, estimator = NULL, na_rm = TRUE, ...)~.]]
+    - [[#-recalldata-truth-estimate-estimator--null-na_rm--true-][★☆☆ ~recall(data, truth, estimate, estimator = NULL, na_rm = TRUE, ...)~.]]
+    - [[#-sensdata-truth-estimate-estimator--null-na_rm--true-][★☆☆ ~sens(data, truth, estimate, estimator = NULL, na_rm = TRUE, ...)~.]]
+    - [[#-specdata-truth-estimate-estimator--null-na_rm--true-][★☆☆ ~spec(data, truth, estimate, estimator = NULL, na_rm = TRUE, ...)~.]]
+  - [[#class-probability-metrics][Class probability metrics]]
+    - [[#-average_precisiondata-truth--estimator--null-na_rm--true][★☆☆ ~average_precision(data, truth, ..., estimator = NULL, na_rm = TRUE)~.]]
+    - [[#-gain_capturedata-truth--estimator--null-na_rm--true][★☆☆ ~gain_capture(data, truth, ..., estimator = NULL, na_rm = TRUE)~.]]
+    - [[#-mn_log_lossdata-truth--na_rm--true-sum--false][★★★ ~mn_log_loss(data, truth, ..., na_rm = TRUE, sum = FALSE)~.]]
+    - [[#-pr_aucdata-truth--estimator--null-na_rm--true][★☆☆ ~pr_auc(data, truth, ..., estimator = NULL, na_rm = TRUE)~.]]
+    - [[#-roc_aucdata-truth--options--list-estimator--null-na_rm--true][★★★ ~roc_auc(data, truth, ..., options = list(), estimator = NULL, na_rm = TRUE)~.]]
+  - [[#numeric-metrics][Numeric metrics]]
+    - [[#-cccdata-truth-estimate-bias--false-na_rm--true-][★☆☆ ~ccc(data, truth, estimate, bias = FALSE, na_rm = TRUE, ...)~.]]
+    - [[#-huber_lossdata-truth-estimate-delta--1-na_rm--true-][★☆☆ ~huber_loss(data, truth, estimate, delta = 1, na_rm = TRUE, ...)~.]]
+    - [[#-huber_loss_pseudodata-truth-estimate-delta--1-na_rm--true-][★☆☆ ~huber_loss_pseudo(data, truth, estimate, delta = 1, na_rm = TRUE, ...)~.]]
+    - [[#-iicdata-truth-estimate-na_rm--true-][★☆☆ ~iic(data, truth, estimate, na_rm = TRUE, ...)~.]]
+    - [[#-maedata-truth-estimate-na_rm--true-][★★★ ~mae(data, truth, estimate, na_rm = TRUE, ...)~.]]
+    - [[#-mapedata-truth-estimate-na_rm--true-][★☆☆ ~mape(data, truth, estimate, na_rm = TRUE, ...)~.]]
+    - [[#-masedata-truth-estimate-m--1l-mae_train--null-na_rm--true-][★☆☆ ~mase(data, truth, estimate, m = 1L, mae_train = NULL, na_rm = TRUE, ...)~.]]
+    - [[#-rmsedata-truth-estimate-na_rm--true-][★★★ ~rmse(data, truth, estimate, na_rm = TRUE, ...)~.]]
+    - [[#-rpddata-truth-estimate-na_rm--true-][★☆☆ ~rpd(data, truth, estimate, na_rm = TRUE, ...)~.]]
+    - [[#-rpiqdata-truth-estimate-na_rm--true-][★☆☆ ~rpiq(data, truth, estimate, na_rm = TRUE, ...)~.]]
+    - [[#-rsqdata-truth-estimate-na_rm--true-][★★★ ~rsq(data, truth, estimate, na_rm = TRUE, ...)~.]]
+    - [[#-rsq_traddata-truth-estimate-na_rm--true-][★☆☆ ~rsq_trad(data, truth, estimate, na_rm = TRUE, ...)~.]]
+    - [[#-smapedata-truth-estimate-na_rm--true-][★☆☆ ~smape(data, truth, estimate, na_rm = TRUE, ...)~.]]
+- [[#参考リンク][参考リンク]]
+#+END_QUOTE
+
+* ライブラリの読み込みとバージョンの確認
+
+#+begin_src R :results silent
+library(yardstick)
+library(tidyverse)
+#+end_src
+\\
+
+- バージョン
+#+begin_src R :results output :exports both
+packageVersion("yardstick")
+#+end_src
+
+#+RESULTS:
+: [1] ‘0.0.4’
+\\
+
+* 関数リスト
+** Overview
+
+- truth, estimate の型によって得られる指標が異なる
+- 結果が 3 columns の ~data.frame~ で得られる点は共通
+
+1. *Class metrics* (hard predictions)
+  - truth - ~factor~
+  - estimate - ~factor~
+
+2. *Class probability metrics* (soft predictions)
+  - truth - ~factor~
+  - estimate / ... - multiple ~numeric~ columns containing class probabilities
+
+3. *Numeric metrics*
+  - truth - ~numeric~
+  - estimate - ~numeric~
+
+** Generic functions
+*** ★★☆ ~metrics(data, truth, estimate, ..., options = list(), na_rm = TRUE)~.
+
+- truth の型によって、算出される指標が自動的に選ばれる
+  - ~factor~: ~accuracy()~, ~kap()~
+  - 2 levels + probs: Two class ver. of ~mn_log_loss()~ and ~roc_auc()~
+  - 2+ levels + probs: multiclass ver. of ~mn_log_loss()~ and Hand Till generalization of ~roc_auc()~
+  - ~numeric~: ~rmse()~, ~rsq()~, ~mae()~
+
+#+begin_src R
+metrics(two_class_example, truth, predicted)
+#+end_src
+
+#+RESULTS:
+| .metric  | .estimator |         .estimate |
+|----------+------------+-------------------|
+| accuracy | binary     |             0.838 |
+| kap      | binary     | 0.674876372744204 |
+
+** Class metrics
+*** ★★★ ~accuracy(data, truth, estimate, na_rm = TRUE, ...)~.
+
+- 正解データ / データ数 (単純な正答率)
+#+begin_src R
+two_class_example %>% accuracy(truth, predicted)
+#+end_src
+
+#+RESULTS:
+| .metric  | .estimator | .estimate |
+|----------+------------+-----------|
+| accuracy | binary     |     0.838 |
+\\
+
+- 上記と同じ
+#+begin_src R :results output
+sum(two_class_example$truth == two_class_example$predicted) / nrow(two_class_example)
+#+end_src
+
+#+RESULTS:
+: [1] 0.838
+\\
+
+*** ★☆☆ ~bal_accuracy(data, truth, estimate, estimator = NULL, na_rm = TRUE, ...)~.
+
+- Balanced accuracy
+
+*** ★☆☆ ~detection_prevalence(data, truth, estimate, estimator = NULL, na_rm = TRUE, ...)~.
+
+- Detection prevalence is defined as the number of _predicted_ positive events (both true positive and false positive) divided by the total number of predictions.
+
+*** ★☆☆ ~f_meas(data, truth, estimate, beta = 1, estimator = NULL, na_rm = TRUE, ...)~.
+
+- F Measure
+
+*** ★☆☆ ~j_index(data, truth, estimate, estimator = NULL, na_rm = TRUE, ...)~.
+
+- Youden's J statistic is defined as: sens + spec - 1
+
+*** ★★★ ~kap(data, truth, estimate, na_rm = TRUE, ...)~.
+
+- Kappa is a similar measure to accuracy
+- but is normalized by the accuracy that would be expected by chance alone and is very useful when one or more classes have large frequency distributions.
+
+*** ★☆☆ ~mcc(data, truth, estimate, na_rm = TRUE, ...)~.
+
+- Matthews correlation coefficient
+
+*** ★☆☆ ~npv(data, truth, estimate, prevalence = NULL, estimator = NULL, na_rm = TRUE, ...)~.
+
+- Negative predictive value
+
+*** ★☆☆ ~ppv(data, truth, estimate, prevalence = NULL, estimator = NULL, na_rm = TRUE, ...)~.
+
+- Positive predictive value
+
+*** ★☆☆ ~precision(data, truth, estimate, estimator = NULL, na_rm = TRUE, ...)~.
+
+- hpc_cv dataset
+#+begin_src R
+data("hpc_cv")
+hpc_cv <- as_tibble(hpc_cv)
+head(mutate_if(hpc_cv, is.numeric, round, digits =2))
+#+end_src
+
+#+RESULTS:
+| obs | pred |   VF |    F |    M | L | Resample |
+|-----+------+------+------+------+---+----------|
+| VF  | VF   | 0.91 | 0.08 | 0.01 | 0 | Fold01   |
+| VF  | VF   | 0.94 | 0.06 |    0 | 0 | Fold01   |
+| VF  | VF   | 0.95 | 0.05 |    0 | 0 | Fold01   |
+| VF  | VF   | 0.93 | 0.07 | 0.01 | 0 | Fold01   |
+| VF  | VF   | 0.94 | 0.05 |    0 | 0 | Fold01   |
+| VF  | VF   | 0.95 | 0.05 |    0 | 0 | Fold01   |
+\\
+
+- Macro averaged multiclass precision
+#+begin_src R
+precision(hpc_cv, obs, pred)
+#+end_src
+
+#+RESULTS:
+| .metric   | .estimator |         .estimate |
+|-----------+------------+-------------------|
+| precision | macro      | 0.631422002463784 |
+\\
+
+- Micro averaged multiclass precision
+#+begin_src R
+precision(hpc_cv, obs, pred, estimator = "micro")
+#+end_src
+
+#+RESULTS:
+| .metric   | .estimator |         .estimate |
+|-----------+------------+-------------------|
+| precision | micro      | 0.708681857513701 |
+\\
+
+*** ★☆☆ ~recall(data, truth, estimate, estimator = NULL, na_rm = TRUE, ...)~.
+*** ★☆☆ ~sens(data, truth, estimate, estimator = NULL, na_rm = TRUE, ...)~.
+
+- Sensitivity
+
+*** ★☆☆ ~spec(data, truth, estimate, estimator = NULL, na_rm = TRUE, ...)~.
+
+- Specificity
+
+** Class probability metrics
+*** ★☆☆ ~average_precision(data, truth, ..., estimator = NULL, na_rm = TRUE)~.
+
+- average_precision is an alternative to pr_auc that avoids any ambiguity about what the value of precision should be when ‘recall == 0’ and there are not yet any false positive values (some say it should be ‘0’, others say ‘1’, others say undefined).
+
+*** ★☆☆ ~gain_capture(data, truth, ..., estimator = NULL, na_rm = TRUE)~.
+     
+- gain_capture is a measure of performance similar to an AUC calculation, but applied to a gain curve.
+
+*** ★★★ ~mn_log_loss(data, truth, ..., na_rm = TRUE, sum = FALSE)~.
+
+- Compute the logarithmic loss of a classification model.
+
+*** ★☆☆ ~pr_auc(data, truth, ..., estimator = NULL, na_rm = TRUE)~.
+     
+- Area under the precision recall curve
+
+*** ★★★ ~roc_auc(data, truth, ..., options = list(), estimator = NULL, na_rm = TRUE)~.
+
+- computes the area under the ROC curve
+- *ROC* = Receiver Operating Characteristic (受信者動作特性曲線)
+- *AUC* = Area Under the Curve
+
+#+begin_src R
+two_class_example %>% roc_auc(truth, Class1)
+#+end_src
+
+#+RESULTS:
+| .metric | .estimator |         .estimate |
+|---------+------------+-------------------|
+| roc_auc | binary     | 0.939313857389967 |
+\\
+
+- k-fold 毎に算出する
+#+begin_src R
+hpc_cv %>%
+  group_by(Resample) %>%
+  roc_auc(obs, VF:L)
+#+end_src
+
+#+RESULTS:
+| Resample | .metric | .estimator |         .estimate |
+|----------+---------+------------+-------------------|
+| Fold01   | roc_auc | hand_till  | 0.830517223654884 |
+| Fold02   | roc_auc | hand_till  | 0.816526398886534 |
+| Fold03   | roc_auc | hand_till  | 0.869300415775658 |
+| Fold04   | roc_auc | hand_till  | 0.848745974512476 |
+| Fold05   | roc_auc | hand_till  | 0.811261656020739 |
+| Fold06   | roc_auc | hand_till  | 0.835559715620921 |
+| Fold07   | roc_auc | hand_till  | 0.825177210288762 |
+| Fold08   | roc_auc | hand_till  | 0.845730256948982 |
+| Fold09   | roc_auc | hand_till  | 0.835929996070205 |
+| Fold10   | roc_auc | hand_till  | 0.819826388103158 |
+\\
+
+- ~roc_curve()~, ~pr_curve()~, ~gain_curve()~ は ~ggplot2::autoplot()~ が使える
+#+begin_src R :results output graphics :file ./img/autoplot.png :exports both
+hpc_cv %>%
+  group_by(Resample) %>%
+  roc_curve(obs, VF:L) %>%
+  ggplot2::autoplot()
+#+end_src
+
+#+RESULTS:
+[[file:./img/autoplot.png]]
+
+** Numeric metrics
+*** ★☆☆ ~ccc(data, truth, estimate, bias = FALSE, na_rm = TRUE, ...)~.
+
+- Concordance Correlation Coefficient
+
+*** ★☆☆ ~huber_loss(data, truth, estimate, delta = 1, na_rm = TRUE, ...)~.
+
+- Huber loss
+- A loss function used in robust regression.
+- This loss function is less sensitive to outliers than rmse.
+- This function is quadratic for small residual values and linear for large residual values.
+
+*** ★☆☆ ~huber_loss_pseudo(data, truth, estimate, delta = 1, na_rm = TRUE, ...)~.
+
+- Pseudo-Huber Loss
+- A smooth approximation of huber_loss.
+- Like huber_loss, this is less sensitive to outliers than rmse.
+
+*** ★☆☆ ~iic(data, truth, estimate, na_rm = TRUE, ...)~.
+
+- Index of Ideality of Correlation.
+
+*** ★★★ ~mae(data, truth, estimate, na_rm = TRUE, ...)~.
+
+- Mean Absolute Error
+
+*** ★☆☆ ~mape(data, truth, estimate, na_rm = TRUE, ...)~.
+
+- Mean Absolute Percentage Error
+
+*** ★☆☆ ~mase(data, truth, estimate, m = 1L, mae_train = NULL, na_rm = TRUE, ...)~.
+
+- Mean Absolute Scaled Error
+
+*** ★★★ ~rmse(data, truth, estimate, na_rm = TRUE, ...)~.
+
+- Root Mean Squared Error
+
+*** ★☆☆ ~rpd(data, truth, estimate, na_rm = TRUE, ...)~.
+
+- Ratio of Performance to Deviation
+
+*** ★☆☆ ~rpiq(data, truth, estimate, na_rm = TRUE, ...)~.
+
+- Ratio of Performance to Inter-Quartile
+
+*** ★★★ ~rsq(data, truth, estimate, na_rm = TRUE, ...)~.
+
+- R squared
+
+*** ★☆☆ ~rsq_trad(data, truth, estimate, na_rm = TRUE, ...)~.
+
+- R squared - traditional
+
+*** ★☆☆ ~smape(data, truth, estimate, na_rm = TRUE, ...)~.
+
+- Symmetric Mean Absolute Percentage Error
+
+* 参考リンク
+
+- [[https://tidymodels.github.io/yardstick/][公式サイト]]
+- [[https://cloud.r-project.org/web/packages/yardstick/index.html][CRAN]]
+- [[https://cloud.r-project.org/web/packages/yardstick/yardstick.pdf][Reference Manual]]
+- [[https://github.com/tidymodels/yardstick][Github Repo]]
+- Vignette
+  - [[https://cloud.r-project.org/web/packages/yardstick/vignettes/metric-types.html][Metric types]]
+  - [[https://cloud.r-project.org/web/packages/yardstick/vignettes/multiclass.html][Multiclass averaging]]
+  - [[https://cloud.r-project.org/web/packages/yardstick/vignettes/custom-metrics.html][Custom metrics]]
+- Blog
+  - [[https://dropout009.hatenablog.com/entry/2019/01/06/124932][tidymodelsによるtidyな機械学習フロー（その1）@Dropout]]
+  - [[https://dropout009.hatenablog.com/entry/2019/01/09/214233][tidymodelsによるtidyな機械学習フロー（その2：Cross Varidation）@Dropout]]
+  - [[https://dropout009.hatenablog.com/entry/2019/11/10/125650][tidymodelsによるtidyな機械学習（その3：ハイパーパラメータのチューニング）@Dropout]]
+  - [[https://dropout009.hatenablog.com/entry/2019/11/17/112655][tidymodelsとDALEXによるtidyで解釈可能な機械学習@Dropout]]
+  - [[https://techblog.gmo-ap.jp/2018/12/14/%E6%A9%9F%E6%A2%B0%E5%AD%A6%E7%BF%92%E3%81%AE%E8%A9%95%E4%BE%A1%E6%8C%87%E6%A8%99-roc%E6%9B%B2%E7%B7%9A%E3%81%A8auc/][機械学習の評価指標 – ROC曲線とAUC]]
+  - [[https://speakerdeck.com/s_uryu/tidymodels][tidymodelsによるモデル構築と運用@speakerdeck]]

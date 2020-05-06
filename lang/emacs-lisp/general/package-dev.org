@@ -1,0 +1,6 @@
+#+STARTUP: folded indent
+
+* Comment format
+
+- パッケージフォーマット
+  https://emacs-jp.github.io/tips/package/format

@@ -1,0 +1,69 @@
+#+STARTUP: showall indent
+
+* Enum で定義されている
+- SetDefault	: 初期値の設定 -> UI へプッシュ
+- Configure		: インジの適応 OK or Apply を押したとき
+- Active		  : (Indicator, Strategy 以外で使う)
+- DataLoaded	: すべての Data Series がロードされた時
+- Historical	: Historical Data を読み込み始めるとき〜読み込み中
+- Transition	: Historical -> Realtime への変化時
+- Realtime		: Realtime Data の読み込み開始〜読み込み中
+- Terminated	: シャットダウンの開始時
+
+* OnStateChange() メソッド
+- State 変化時に呼び出されるメソッド
+- Multi-thread のためインジケーターのインスタンスとは違うスレッドで処理される可能性がある
+
+* 必ず以下の 2 つが呼び出される(インジケーター画面を開いて、すぐに閉じた場合でも)
+1. SetDefault -> デフォルトの Property 値を引き出す
+2. Terminated -> 内部的なレファレンスの Cleanup
+	
+* インジケーターの選択画面で起きていること
+1. (リスト表示) Name Property 　を読み込んですべてのインジのリストを作る
+2. (個別インジ選択) Name and Default Proporties を読み込み
+3. チャート上で実行するためのインスタンスが作成される
+
+* そのため、インジケーターの適応時は以下の State の流れとなる
+1. SetDefault (リスト表示) -> Clone (Clone = オブジェクトの作成)
+2. SetDefault (個別インジ選択) -> Clone
+3. Terminated (一旦クリア)
+4. SetDefault (初期化)
+5. Configure
+6. DateLoaded
+7. Historical
+8. Transition
+9. Realtime
+10. Terminated
+
+* Best Practice
+** SetDefault 
+- 記述は最小に。UI に表示するものだけに留める
+- AddPlot(), AddLine()もここに書く
+- 見せたくないものは、Browsable(false)に
+
+** Configure  
+- SetDefault には書けない具体的な処理はここから
+	- 変数の初期化はここで書く。クラスレベルの変数は const にすべき。
+		- オブジェクトがきちんと読み込まれた後で宣言するほうが確実
+	- AddDataSeries()もここで書く
+	- SetProfitTarget, SetStopLoss
+
+** DataLoaded 
+- マーケットデータを必要とする処理はここから書く
+	- Bars, Instruments, BarsPeriod, TradingHours などへのアクセスはここで
+	- Custom Series<T>の初期化などはここで
+	- AddChartIndicator
+
+** Historlcal 
+- UI Object 関連はここから書く
+	- ChartControl, ChartPanel, ChartBars, NTWindow など
+
+** Transition 
+- Realtime だけに必要な準備はここで
+	- Realtime   Historical Order -> Realtime Order へ変換する？
+	- Terminated オブジェクトのリセット・削除をするべきものはきちんと処理
+		- フラグを付けて、Dispose()
+	
+* Active States vs. Data Processing States
+- Indicator, Strategy, Market Analyzer = Data Proccessing States
+- それ以外 = Active

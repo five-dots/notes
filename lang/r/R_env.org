@@ -1,0 +1,215 @@
+#+STARTUP: content indent
+
+* Requirements
+
+- Ubuntu, Mac で同じ環境を用意したい
+
+- R 本体のバージョンをプロジェクト毎に切り替えたい
+  - バージョン毎に切り替えたいというよりも、過去のプロジェクトに最新バージョンを強要されたくない
+  - 新しいプロジェクトは、基本的に最新バージョンを使っていく
+
+- パッケージバージョンを自由に切り替えたい
+  - これも上の理由と同じで、既に稼動しているものに最新バージョンを強要されたくない
+
+- パッケージのアップグレードを自動で行いたい
+  - インタラクティブな開発作業中に長時間のパッケージ更新があるとうざい
+
+- まっさらな環境にいつも使うパッケージを復元したい
+
+* Workflow
+
+- R 本体
+  - anyenv 経由から Renv を利用
+  - ソースからビルド
+
+- パッケージ
+  - ソースからインストール
+  - .Rprofile で .libPaths() を実行
+  - renv は一旦保留
+    - system の library と renv の Global Cache で二重に管理が発生してしまう
+      - =link_package.R= は作成済み
+    - =renv::install()= の挙動に不明点があるため、renv cache から system library にリンクを張る計画は現状難しい
+      - =install_packages.R= のコマンドを =renv::install()= に変更して稼動できればベスト
+
+- パッケージのリストを保存するスクリプト: =list_installed_packages.R=
+  - Platform x version 毎に日次で保存
+
+- パッケージの一括アップグレード: =upgrade_packages.R=
+  - ={dtupdate}= を使って github package も一括アップグレード
+
+- パッケージの一括インストール: =restore_packages.R=
+  - 環境構築時の利用を想定
+
+* Build R from Source
+
+- [[https://support.rstudio.com/hc/en-us/articles/218004217-Building-R-from-source][Building R from source]]
+- [[https://stats.biopapyrus.jp/r/devel/r-install.html][ソースコードをコンパイルして R をインストール@biostatistics]]
+
+- [[https://cran.ism.ac.jp/][CRAN]] から必要なバージョンのソースをダウンロード
+- =./configure --help= で利用可能なオプションを確認
+
+- tex 関連のエラーが出る可能性あり
+  - mac の場合は、texinfo の PATH を通す
+- cairo の機能が skipped になるケースがある
+
+#+begin_src shell
+
+# anyenv を利用する場合は、以下のようにインストール先を指定
+# --enable-R-shlib は R Studio Server から R shared library にアクセスするために必要
+./configure --prefix=/home/shun/.anyenv/envs/Renv/versions/4.0.0 --enable-R-shlib
+
+# mac
+# ./configure --prefix=/Users/shun/.anyenv/envs/Renv/versions/4.0.0 --enable-R-shlib
+
+make
+make install
+#+end_src
+
+#+RESULTS:
+
+- 有効な機能を確認
+#+begin_src R :results output
+capabilities()
+#+end_src
+
+#+RESULTS:
+:        jpeg         png        tiff       tcltk         X11        aqua
+:        TRUE        TRUE        TRUE        TRUE        TRUE       FALSE
+:    http/ftp     sockets      libxml        fifo      cledit       iconv
+:        TRUE        TRUE        TRUE        TRUE       FALSE        TRUE
+:         NLS     profmem       cairo         ICU long.double     libcurl
+:        TRUE       FALSE        TRUE        TRUE        TRUE        TRUE
+
+* WSL
+
+- [[https://qiita.com/yutannihilation/items/78708fa9f3a9c22e56b3][WSLのUbuntu 18.04にRをインストールする@Qiita]]
+
+* anyenv/Renv
+
+- [[https://github.com/anyenv/anyenv][anyenv@Github]]
+- [[https://github.com/viking/Renv][Renv@Github]]
+
+* Ubuntu
+** R from apt repo
+
+- [[https://cran.r-project.org/bin/linux/ubuntu/README.html][UBUNTU PACKAGES FOR R]]
+- バイナリのパッケージをインストールする方法
+- =/etc/apt/sources.list= に追加
+  - deb https://cloud.r-project.org/bin/linux/ubuntu bionic-cran35/
+
+- リリースの確認方法
+#+begin_src shell
+lsb_release -cs
+#+end_src
+
+#+RESULTS:
+: bionic
+
+#+begin_src shell
+sudo apt install r-base
+sudo apt install r-base-dev
+#+end_src
+
+- 公開鍵の追加
+- 方法 1
+#+begin_src shell
+sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E298A3A825C0D65DFD57CBB651716619E084DAB9
+#+end_src
+
+- 方法２ WSL の場合はこちらを使う
+
+#+begin_src shell
+gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys E298A3A825C0D65DFD57CBB651716619E084DAB9
+gpg -a --export E298A3A825C0D65DFD57CBB651716619E084DAB9 | sudo apt-key add -
+#+end_src
+
+_インストール済みの公開鍵の確認_
+#+begin_src shell
+sudo apt-key list
+#+end_src
+
+** Binary package
+
+- ppa: https://launchpad.net/~marutter/+archive/ubuntu/c2d4u3.5
+
+#+begin_src shell
+sudo add-apt-repository ppa:marutter/c2d4u3.5
+sudo apt install r-cran-tidyverse
+#+end_src
+
+このリポジトリに無いパッケージもある模様
+
+* [[./package/renv/renv.org][renv]]
+
+- 懸念点
+  - Cache Versio x R Version x platform x Package version で容量が莫大になる
+  - Cache version が気づかないうちに上ってないか
+
+* library path
+
+- =/usr/lib/R/library=
+  - base, stats などの built-in パッケージ
+
+- =/usr/lib/R/site-library=
+  - apt binary パッケージでインストールしたもの
+
+- =/usr/local/lib/R/site-library=
+  - =install.package()= でユーザーが個別にインストールしたもの
+  - ただし、書き込み権限がない場合がインストールできない
+
+- =/home/shun/Dropbox/R/x86_64-pc-linux-gnu-library/3.6=
+  - plotform + version で個別にユーザーパッケージを配置する場所
+
+- =/home/shun/.anyenv/envs/Renv/versions/3.6.2/lib/R/library=
+  - anyenv+Renv を利用した場合の lib path
+
+- =./renv/library/R-3.6/x86_64-pc-linux-gnu=
+  - ={renv}= を利用した場合の path
+  - プロジェクト直下に作成される
+  - コード内の利用パッケージを自動的に走査して =renv.lock= ファイルを作成
+  - パッケージ自体は、Global Cahce からのリンクを貼っているだけ
+
+- =$RENV_PATHS_ROOT/cahce/V4/R-3.6/x86_64-pc-linx-gnu=
+  - ={renv}= の Global Cache
+  - $RENV_PATHS_ROOT のデフォルトは =~/.local/share/renv=
+  - 各プロジェクトへは、ここからリンクが貼られる
+
+- パッケージのインストール先を変更する
+  - =install.packages("dplyr", lib=="~~/lib/")~ のように都度設定する
+  - =.libPaths()= で設定する
+  - =R_LIBS_USER= に設定する
+
+* RTVS Daemon
+** Install
+
+- [[https://github.com/Microsoft/RTVS/blob/master/doc/rtvsd/rtvs-daemon-installation.md][Remote R Service for Linux@Github]]
+
+#+begin_src shell
+sudo systemctl enable rtvsd
+sudo systemctl start rtvsd
+ps -A -f | grep rtvsd
+#+end_src
+
+- /etc/rc.local に systemctl start rtvsd 追記
+
+** password 設定
+
+sudo passwd で root パスワード設定
+passwd shun で user パスワード設定
+
+** build-essential install
+
+R package のコンパイルのため
+
+** Port 5444 開放
+
+GCP Console で Firewall rule 追加
+
+** RTVS からログイン ユーザー名 = <<unix>>>\shun
+** リモート側へ R Package 導入
+** WinSCP を利用してファイル転送
+** TODOs
+
+- RTVSD 自動起動
+- デフォルトの Linux ユーザー名
+- ファイル転送(ファイル共有)とパス設定

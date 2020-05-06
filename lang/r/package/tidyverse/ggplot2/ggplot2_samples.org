@@ -1,0 +1,754 @@
+#+STARTUP: folded indent inlineimages
+#+PROPERTY: header-args:R :results output :session "*R:plot_samples*"
+#+PROPERTY: header-args:R+ :width 640 :height 480
+
+* ライブラリ
+
+#+begin_src R :results silent
+library(tidyverse)
+library(glue)
+#+end_src
+
+* 時系列グラフ
+** 日付 X 軸の書式を変更する
+*** ベースとなるプロット
+
+- デフォルトの表示形式は、動的に決まる
+- 1 ヶ月分のデータ
+#+begin_src R :results graphics file :file (my/get-babel-file)
+df <- data.frame(date = Sys.Date() - 0:29, price = runif(30))
+ggplot(df, aes(date, price)) + geom_line()
+## base
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-hbAetB.png]]
+
+*** X 軸の表示を変更する scale_x_xxxx() 関数
+
+時間軸の型に合わせて表示を調整する関数が用意されている
+- =scale_x_date()=     = Date
+- =scale_x_datetime()= = POSIXct
+- =scale_x_time()=     = hms
+
+#+begin_src R :results silent
+scale_x_date(
+  name              = waiver(),
+  breaks            = waiver(),
+  date_breaks       = waiver(),
+  labels            = waiver(),
+  date_labels       = waiver(),
+  minor_breaks      = waiver(),
+  date_minor_breaks = waiver(),
+  limits            = NULL,
+  expand            = waiver(),
+  position          = "bottom",
+  sec.axis          = waiver())
+#+end_src
+
+*** 日付の表示文字列を変換する (date_labels)
+
+#+begin_src R :results graphics file :file (get-babel-file)
+base + scale_x_date(date_labels = "%Y/%m/%d")
+#+END_SRC
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-wjB9V0.png]]
+
+*** 区切り線の位置を調整する (date_breaks)
+
+"1 week", "10 years" などが指定できる
+
+#+begin_src R :results graphics file :file (get-babel-file)
+base + scale_x_date(date_breaks = "2 week", date_labels = "%W")
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-e8Pjf7.png]]
+
+*** 表示する範囲を指定する (limits)
+
+#+begin_src R :results graphics file :file (get-babel-file)
+base + scale_x_date(limits = c(Sys.Date() - 7, NA))
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-v4Z8lE.png]]
+
+** 端点にラベルを表示する
+*** 参照
+
+- [[https://blog.hoxo-m.com/entry/2018/09/16/093000][ggplot2 で時系列プロットの端点にラベルを表示する]]
+- [[https://note.mu/goando/n/neb6ea35f1da3][データ視覚化のデザイン #1]]
+- [[https://id.fnshr.info/2017/03/19/ggrepel/][ggplot2 パッケージによる可視化の際のラベルの重なりを防ぐ]]
+
+*** 通常のプロット
+
+#+begin_src R :results graphics file :file (my/get-babel-file)
+library(tidyverse)
+set.seed(314)
+d <- map_dfr(c("setosa", "versicolor", "virginica"), ~ tibble(
+  idx = 1:400,
+  value = cumsum(runif(400, -1, 1)),
+  type = .))
+
+ggplot(d, aes(idx, value, colour = type)) + geom_line()
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-VpXNiL.png]]
+
+*** 改善したプロット
+
+- x 軸の最大値に label を追加する
+- ~gg_label_repel()~ の ~xlim~ 引数に x 軸の端点を指定する
+#+begin_src R :results graphics file :file (my/get-babel-file)
+library(ggrepel)
+d <- d %>% mutate(label = ifelse(idx == max(idx), type, NA))
+
+ggplot(d, aes(idx, value, colour = type)) +
+  geom_line() + 
+  geom_label_repel(aes(label = label), na.rm = TRUE, xlim = c(400, NA)) + 
+  xlim(NA, 500)
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-71N2iG.png]]
+
+** 累積収益率 + ドローダウン
+
+- ~{ggrepel}~ で時系列グラフの右側にラベル付け
+- ~{patchwork}~ でプロットの分割
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+suppressMessages(library(tidyquant))
+suppressMessages(library(PerformanceAnalytics))
+library(ggrepel)
+library(patchwork)
+
+## データをダウンロード
+symbols <- c("SPY", "TLT", "USO")
+raw_data <- map_dfr(symbols, function(symbol) {
+  tq_get(symbol, from = "2008-12-31", to = "2018-12-31") %>%
+    mutate(symbol = !!symbol) %>%
+    select_at(vars(symbol, date, adjusted))
+})
+
+data <- raw_data %>%
+  group_by(symbol) %>%
+  mutate(ret = (adjusted - lag(adjusted)) / lag(adjusted)) %>%
+  slice(-1) %>%
+  mutate(cum_ret = cumprod(1 + ret) - 1,
+         drawdown = Drawdowns(ret),
+         label = if_else(date == max(date), symbol, NA_character_)) %>%
+  ungroup()
+
+## ラベルを右側に表示するために、x軸に余白を用意する
+range <- c(min(data$date), max(data$date) + days(40))
+my_theme <- theme(axis.title = element_blank(), legend.position = "none")
+
+## 累積リターン
+perf <- data %>%
+  ggplot(aes(x = date, y = cum_ret, color = symbol)) +
+  geom_line() +
+  geom_label_repel(aes(label = label), na.rm = TRUE, xlim = c(max(data$date), NA), size = 3) +
+  scale_x_date(limits = range) +
+  theme(axis.title = element_blank(), legend.position = "none") +
+  ggtitle("Cumulative Returns")
+perf
+
+## ドローダウン
+ddown <- data %>%
+  ggplot(aes(x = date, y = drawdown, color = symbol)) +
+  geom_line() +
+  geom_label_repel(aes(label = label), na.rm = TRUE, xlim = c(max(data$date), NA), size = 3) +
+  scale_x_date(limits = range) +
+  theme(axis.title = element_blank(), legend.position = "none") +
+  ggtitle("Drawdowns")
+ddown
+
+## {patchwork} で結合
+perf + ddown + plot_layout(ncol = 1, heights = c(2, 1))
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-9N6YhW.png]]
+
+* 軸ラベルの数値を "K" や "M" でまとめる
+
+- [[https://stackoverflow.com/questions/37713351/formatting-ggplot2-axis-labels-with-commas-and-k-mm-if-i-already-have-a-y-sc][Formatting ggplot2 axis labels with commas (and K? MM?) if I already have a y-scale@Stackoverflow]]
+- =scales::unit_format()= を使う
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+data <- tibble(
+  x = seq(1, 1000),
+  y = rnorm(1000, 100000, 200000))
+
+library(scales)
+ggplot(data, aes(x = x, y = y)) +
+  geom_line() +
+  scale_y_continuous(label = unit_format(scale = 1e-3, unit = "k"))
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-j50lFw.png]]
+
+* ヒストグラム
+** ヒストグラムに確率密度・カーネル密度を重ねる
+*** 縦軸に確率密度
+
+faithful dataset を使う
+
+#+begin_src R :colnames yes
+head(faithful)
+#+end_src
+
+#+RESULTS:
+| eruptions | waiting |
+|-----------+---------|
+|       3.6 |      79 |
+|       1.8 |      54 |
+|     3.333 |      74 |
+|     2.283 |      62 |
+|     4.533 |      85 |
+|     2.883 |      55 |
+
+#+begin_src R :results graphics file :file (get-babel-file)
+ff <- faithful
+bw <- 2.5
+ggplot(ff, aes(x = waiting)) +
+  # stat() 関数で geom_histogram() の Computed variables にアクセスできる
+  geom_histogram(aes(y = stat(density)), binwidth = bw, fill = "white", color = "black") +
+  # カーネル密度推定の曲線
+  geom_density(fill = "black", alpha = 0.3) +
+  # 正規分布の曲線 (x 軸の値に応じた密度曲線を描く)
+  stat_function(fun = dnorm, args = list(mean = mean(ff$waiting), sd = sd(ff$waiting)))
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-T7wCxN.png]]
+
+*** 縦軸に確率密度 + Facet
+
+- =stat_function()= では facet のパネル毎に別々の関数を適応できない
+- 正規分布のデータを別途用意して、重ね合わせる
+- [[https://stackoverflow.com/questions/1376967/using-stat-function-and-facet-wrap-together-in-ggplot2-in-r][using stat_function and facet_wrap together in ggplot2 in R]]
+
+- オリジナルのコード
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+set.seed(123)
+dd <- data.frame(
+  predicted = rnorm(72, mean = 2, sd = 2),
+  state = rep(c("A", "B", "C"), each = 24)
+)
+
+grid <- with(dd, seq(min(predicted), max(predicted), length = 100))
+library(plyr)
+normaldens <- ddply(dd, "state", function(df) {
+  data.frame(
+    predicted = grid,
+    density = dnorm(grid, mean(df$predicted), sd(df$predicted))
+  )
+})
+
+dd %>%
+  ggplot(aes(predicted))  +
+  geom_density() +
+  geom_line(aes(y = density), data = normaldens, colour = "red") +
+  facet_wrap(~ state)
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-vZGWq6.png]]
+
+- ={tidyverse}= で書き直したもの
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+set.seed(123)
+dd <- data.frame(
+  predicted = rnorm(72, mean = 2, sd = 2),
+  state = rep(c("A", "B", "C"), each = 24)
+)
+
+## x 軸を合わせるためのグリッド
+grid <- seq(min(dd$predicted), max(dd$predicted), length = 100)
+
+## グループ (state) 毎に密度を計算
+normaldens <- dd %>%
+  group_split(state) %>%
+  map_dfr(~ {
+    data.frame(
+      state = .$state[1],
+      predicted = grid,
+      density = dnorm(grid, mean(.$predicted), sd(.$predicted))
+    )
+  })
+
+dd %>%
+  ggplot(aes(predicted))  +
+  geom_density() +
+  geom_line(aes(y = density), data = normaldens, colour = "red") +
+  facet_wrap(~ state)
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-Sfs5ER.png]]
+
+*** 縦軸にカウント
+
+#+begin_src R :results graphics file :file (get-babel-file)
+ggplot(ff, aes(x = waiting)) +
+  geom_histogram(binwidth = bw, fill = "white", color = "black") +
+  geom_density(eval(bquote(aes(y = stat(count) * .(bw)))), fill = "black", alpha = 0.3)
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-yJQ8uR.png]]
+
+** ヒストグラムの中心をゼロにする
+
+- origin = 0 で中心をゼロにする
+#+begin_src R :results graphics file :file (get-babel-file)
+d <- data.frame(x = rnorm(1000))
+ggplot(d, aes(x = x)) +
+  geom_histogram(binwidth = 0.2, origin = 0, fill = "white", color = "black")
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-XMY0pW.png]]
+
+** binwidth を自動的に選択する
+
+- [[https://blog.atusy.net/2018/11/09/binwdith-for-geom-histogram/][geom_histogram のビン幅を動的に決定する]]
+- ={grDevices}= に収録されている bin 数を決める関数を利用
+- =bw()= で便数からビン幅を決定
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+library(grDevices)
+bw = function(x, f) ceiling((max(x) - min(x)) / f(x))
+FD = function(x) bw(x, nclass.FD)
+scott = function(x) bw(x, nclass.scott)
+sturges = function(x) bw(x, nclass.Sturges)
+
+g <- ggplot(diamonds, aes(price)) + 
+  coord_cartesian(xlim=c(0, 2e4), ylim = c(0, 2e4))
+g_FD <- g + geom_histogram(binwidth = FD) + ggtitle('FD')
+g_Sc <- g + geom_histogram(binwidth = scott) + ggtitle('Scott')
+g_St <- g + geom_histogram(binwidth = sturges) + ggtitle('Sturges')
+g_FD
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-7CajgG.png]]
+
+* 確率密度
+** 確率密度関数 (PDF) 正規分布の例
+
+#+begin_src R :results graphics file :file (get-babel-file)
+ggplot(data = tibble(x = -10:10), aes(x = x)) +
+  # "d"関数を使う
+  stat_function(fun = dnorm, args = list(mean = 0, sd = 1)) +
+  stat_function(fun = dnorm, args = list(mean = 0, sd = 2)) +
+  stat_function(fun = dnorm, args = list(mean = 0, sd = 3))
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-YXxJ46.png]]
+
+** 累積分布関数 (CDF) 正規分布の例
+
+#+begin_src R :results graphics file :file (get-babel-file)
+ggplot(data = tibble(x = -5:5), aes(x = x)) +
+  # "p"関数を使う
+  stat_function(fun = pnorm, args = list(mean = 0, sd = 1)) +
+  stat_function(fun = pnorm, args = list(mean = 0, sd = 2), color = "orange") +
+  stat_function(fun = pnorm, args = list(mean = 0, sd = 3), color = "red")
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-OySp6j.png]]
+
+* Q-Q プロット
+** 正規分布の乱数
+
+#+begin_src R :results graphics file :file (get-babel-file)
+norm_df <- data.frame(y = rnorm(1000))
+ggplot(norm_df, aes(sample = y)) +
+  # デフォルトで distribution = stats::qnorm()
+  stat_qq() +
+  stat_qq_line()
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-S6qhjX.png]]
+
+** t 分布の乱数と正規分布の比較
+
+当然マッチしない
+
+#+begin_src R :results graphics file :file (get-babel-file)
+t_df <- data.frame(y = rt(1000, df = 5))
+ggplot(t_df, aes(sample = y)) +
+  stat_qq() +
+  stat_qq_line()
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-TBuhbZ.png]]
+
+** t 分布の母数を MASS::ditdistr() で推定してから Q-Q プロット
+
+適合度が向上している
+
+#+begin_src R :results graphics file :file (get-babel-file)
+params <- as.list(MASS::fitdistr(t_df$y, "t")$estimate)
+ggplot(t_df, aes(sample = y)) +
+  stat_qq(distribution = qt, dparams = params["df"]) +
+  stat_qq_line(distribution = qt, dparams = params["df"])
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-uSKv9H.png]]
+
+** factor 単位で Q-Q プロット (iris の例)
+
+#+begin_src R :results graphics file :file (get-babel-file)
+ggplot(mtcars, aes(sample = mpg, colour = factor(cyl))) +
+  stat_qq() +
+  stat_qq_line()
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-jnQ2O6.png]]
+
+* 直線回帰に信頼区間と予測区間を重ねる
+** 利用するデータ (RStan 本の 4 章の例)
+
+年齢と年収の関係データ
+
+#+begin_src R :colnames yes
+book_dir <- glue("{home}/Dropbox/memo/lang/R/stats/rstan_book", home = Sys.getenv()["HOME"])
+path     <- glue("{book_dir}/chap04/input/data-salary.txt")
+xy_data  <- read.csv(path)
+res_lm   <- lm(Y ~ X, data = xy_data)
+X_new    <- data.frame(X = 23:60) # 元データの X の範囲に近い値で予測
+head(xy_data)
+#+end_src
+
+#+RESULTS:
+:
+:    X   Y
+: 1 24 472
+: 2 24 403
+: 3 26 454
+: 4 32 575
+: 5 33 546
+: 6 35 781
+
+** 信頼区間 (RStan 本の 4 章の例)
+
+50/95% 信頼区間をプロット
+
+#+begin_src R :results graphics file :file (get-babel-file)
+# 回帰モデルに新データを渡して、信頼区間を計算
+conf_95 <- cbind(X_new, predict(res_lm, X_new, interval = "confidence", level = 0.95))
+conf_50 <- cbind(X_new, predict(res_lm, X_new, interval = "confidence", level = 0.50))
+
+ggplot(data = conf_95, aes(x = X)) +
+  geom_ribbon(aes(ymin = lwr, ymax = upr), alpha = 1 / 6) +
+  geom_ribbon(data = conf_50, aes(ymin = lwr, ymax = upr), alpha = 2 / 6) +
+  geom_line(aes(y = fit)) +
+  geom_point(data = xy_data, aes(y = Y)) +
+  labs(y = "Y")
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-Lusd4t.png]]
+
+** 予測区間 (RStan 本の 4 章の例)
+
+50/95% 予測区間をプロット
+
+#+begin_src R :results graphics file :file (get-babel-file)
+pred_95 <- cbind(X_new, predict(res_lm, X_new, interval = "prediction", level = 0.95))
+pred_50 <- cbind(X_new, predict(res_lm, X_new, interval = "prediction", level = 0.50))
+
+ggplot(data = pred_95, aes(x = X)) +
+  geom_ribbon(aes(ymin = lwr, ymax = upr), alpha = 1 / 6) +
+  geom_ribbon(data = pred_50, aes(ymin = lwr, ymax = upr), alpha = 2 / 6) +
+  geom_line(aes(y = fit)) +
+  geom_point(data = xy_data, aes(y = Y)) +
+  labs(y = "Y")
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-4ggrcN.png]]
+
+* 散布図 + 同時分布
+** 参考
+
+- [[https://www.trifields.jp/how-to-plot-the-scatter-plot-and-marginal-distribution-using-ggplot2-in-r-2992][R ggplot2を用いて散布図と周辺分布をプロットする方法]]
+
+** ベースとなる散布図
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+g <- ggplot(iris, aes(x = Sepal.Length, y = Sepal.Width, colour = Species)) +
+  geom_point()
+g
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-ZkHdLR.png]]
+
+** =ggExtra::ggMarginal()= を使う
+
+- =type = c("density", "histogram", "boxplot", "violin", "densigram")=
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+ggMarginal(
+  g,
+  type = "density",
+  margins = "both",   # x,y軸のどこに表示するか
+  size = 5,           # メインのプロットの倍率 (5 = メインが Margin の5倍の大きさ)
+  groupColour = TRUE,
+  groupFill = TRUE 
+)
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-1Hb4MK.png]]
+
+** 個別に作成して =gridExtra::grid.arrange()= でまとめる
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+panel.main <- ggplot(iris, aes(x = Sepal.Length, y = Sepal.Width, colour = Species))
+panel.main <- panel.main + geom_point()
+panel.main <- panel.main  + theme(legend.position = c(1, 1),
+                                  legend.justification = c(1, 1))
+
+panel.top <- ggplot(iris, aes(x = Sepal.Length, fill = Species))
+panel.top <- panel.top + geom_density(alpha = 0.5)
+panel.top <- panel.top + theme(legend.position = "none")
+
+panel.right <- ggplot(iris, aes(x = Sepal.Width, fill = Species))
+panel.right <- panel.right + geom_density(alpha = 0.5)
+panel.right <- panel.right + coord_flip()
+panel.right <- panel.right + theme(legend.position = "none")
+
+panel.blank <- ggplot()
+panel.blank <- panel.blank + geom_point(aes(1, 1), colour = "white")
+panel.blank <- panel.blank + theme(plot.background = element_rect(colour = "white"),
+                                   panel.grid.major = element_blank(),
+                                   panel.grid.minor = element_blank(),
+                                   panel.border = element_blank(),
+                                   panel.background = element_blank(),
+                                   axis.title.x = element_blank(),
+                                   axis.title.y = element_blank(),
+                                   axis.text.x = element_blank(),
+                                   axis.text.y = element_blank(),
+                                   axis.ticks = element_blank())
+grid.arrange(panel.top,
+             panel.blank,
+             panel.main,
+             panel.right,
+             ncol = 2,
+             nrow = 2,
+             widths = c(5, 1),
+             heights = c(1, 5))
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-JV0YfB.png]]
+
+* 箱ひげ図 + バイオリンプロット + 散布図
+** iris の例
+
+箱ひげ図よりもバイオリンプロットの方が、分布がわかるので情報量が多い
+http://yyhhyy.hatenablog.com/entry/2016/08/20/220000
+
+#+begin_src R :results graphics file :file (get-babel-file)
+# Sepal.Length のみを抜き出す (Sepal.Length = Value)
+scatter_data <- gather(iris, "Variable", "Value", - Species) %>%
+  filter(Variable == "Sepal.Length")
+
+ggplot(data = scatter_data, aes(x = Species, y = Value, color = Species)) +
+  geom_violin(aes(fill = Species), alpha = 0.3) +
+  geom_boxplot(color = "black", width = 0.25) +
+  # boxplot の外れ値の点と見分けがつくように、Jitter を追加し、形状を変更する
+  geom_point(position = position_jitter(width = 0.4, height = 0.0), alpha = 0.5) +
+  # 平均値を X で表示
+  stat_summary(fun.y = mean, geom = "point", color = "black", shape = 4, size = 4)
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-wEMAZN.png]]
+
+* 散布図行列
+** =GGally::ggpairs()= を使う
+
+#+begin_src R :results graphics file :file (get-babel-file)
+library(GGally)
+ggpairs(iris)
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-4xAnw0.png]]
+
+** =corrplot::corrplot()= を使う
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+library(corrplot)
+correlations <- cor(iris[, -5])
+corrplot(correlations, method = "ellipse", type = "lower",
+         sig.level = 0.01, insig = "blank")
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-S4yAt0.png]]
+
+#+begin_src R
+corrplot(
+  corr,
+  method = c("circle", "square", "ellipse", "number", "shade", "color", "pie"),
+  type = c("full", "lower", "upper"),
+  add = FALSE,
+  col = NULL,
+  bg = "white", title = "", is.corr = TRUE, diag = TRUE,
+  outline = FALSE,
+  mar = c(0, 0, 0, 0),
+  addgrid.col = NULL,
+  addCoef.col = NULL,
+  addCoefasPercent = FALSE,
+  order = c("original", "AOE", "FPC", "hclust", "alphabet"),
+  hclust.method = c("complete", "ward", "ward.D", "ward.D2", "single", "average", "mcquitty", "median", "centroid"),
+  addrect = NULL,
+  rect.col = "black",
+  rect.lwd = 2,
+  tl.pos = NULL,
+  tl.cex = 1,
+  tl.col = "red",
+  tl.offset = 0.4,
+  tl.srt = 90,
+  cl.pos = NULL,
+  cl.lim = NULL,
+  cl.length = NULL,
+  cl.cex = 0.8,
+  cl.ratio = 0.15,
+  cl.align.text = "c",
+  cl.offset = 0.5,
+  number.cex = 1,
+  number.font = 2,
+  number.digits = NULL,
+  addshade = c("negative", "positive", "all"),
+  shade.lwd = 1,
+  shade.col = "white",
+  p.mat = NULL,
+  sig.level = 0.05,
+  insig = c("pch", "p-value", "blank", "n", "label_sig"),
+  pch = 4,
+  pch.col = "black",
+  pch.cex = 3,
+  plotCI = c("n", "square", "circle", "rect"), 
+  lowCI.mat = NULL,
+  uppCI.mat = NULL,
+  na.label = "?",
+  na.label.col = "black",
+  win.asp = 1,
+  ...)
+#+end_src
+
+* 対数軸の散布図
+** RStan 本の 7 章の例
+
+データの幅が広いデータ
+
+#+begin_src R :results value :colnames yes
+book_dir <- glue("{home}/Dropbox/memo/lang/R/stats/rstan_book", home = Sys.getenv()["HOME"])
+path     <- glue("{book_dir}/chap07/input/data-rental.txt")
+log_data <- read.csv(path)
+head(log_data)
+#+end_src
+
+#+RESULTS:
+|       Y |  Area |
+|---------+-------|
+| 263.062 | 40.66 |
+|     519 | 61.94 |
+|   671.4 | 55.13 |
+|  473.03 | 56.82 |
+|   455.6 | 56.82 |
+|   153.5 |  15.5 |
+
+通常のプロット
+
+#+begin_src R :results graphics file :file (get-babel-file)
+ggplot(log_data, aes(x = Area, y = Y)) + geom_point()
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-ZJG3mq.png]]
+
+X，Y 軸を常用対数で表示
+
+#+begin_src R :results graphics file :file (get-babel-file
+ggplot(log_data, aes(x = Area, y = Y)) + geom_point() +
+  scale_x_log10() + scale_y_log10()
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-fnn9KE.png]]
+
+* コレログラム
+** forecast::ggtsdisplay() を使って、ACF/PACF をまとめてプロット
+
+通常はこれで十分
+
+#+begin_src R :results graphics file :file (get-babel-file)
+# AR(1) に従う乱数
+set.seed(123)
+arima_data <- arima.sim(n = 200, model = list(order = c(1, 0, 0), ar = 0.7))
+
+# 信頼区間を計算する
+conf_level <- 0.95
+ciline <- qnorm((1 - conf_level) / 2) / sqrt(length(arima_data))
+
+# 通常この関数を使えば良い
+forecast::ggtsdisplay(arima_data)
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-hksfvh.png]]
+
+** ggplot2 で ACF を単体でプロットする
+
+#+begin_src R :results graphics file :file (get-babel-file)
+## 信頼区間を計算する
+## 自己相関の信頼区間は、1.96/sqrt(T) で計算 (5%)
+conf_level <- 0.95
+ciline <- qnorm((1 - conf_level) / 2) / sqrt(length(arima_data))
+
+acf_rslt <- acf(arima_data, plot = FALSE)
+acf_data <- tibble(lag = acf_rslt$lag[, 1, 1], acf = acf_rslt$acf[, 1, 1])
+
+ggplot(acf_data, mapping = aes(x = lag, y = acf)) +
+  geom_hline(aes(yintercept = 0)) +
+  geom_segment(mapping = aes(xend = lag, yend = 0)) +
+  geom_hline(aes(yintercept = ciline), linetype = 3, color = "darkblue") +
+  geom_hline(aes(yintercept = -ciline), linetype = 3, color = "darkblue")
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-8LtLWl.png]]
+
+** ggplot2 で PACF を単体でプロットする
+
+#+begin_src R :results graphics file :file (get-babel-file)
+pacf_rslt <- pacf(arima_data, plot = FALSE)
+pacf_data <- tibble(lag = pacf_rslt$lag[, 1, 1], acf = pacf_rslt$acf[, 1, 1])
+
+ggplot(pacf_data, mapping = aes(x = lag, y = acf)) +
+  geom_hline(aes(yintercept = 0)) +
+  geom_segment(mapping = aes(xend = lag, yend = 0)) +
+  geom_hline(aes(yintercept = ciline), linetype = 3, color = "darkblue") +
+  geom_hline(aes(yintercept = -ciline), linetype = 3, color = "darkblue")
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-H9M0vQ.png]]

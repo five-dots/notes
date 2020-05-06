@@ -1,0 +1,41 @@
+#+STARTUP: content indent
+
+* Full-text search tools
+** grep
+
+- Linux ではデフォルト
+- Windows では Rtools で mingw をインストールすると付いてくる
+
+** ag
+
+#+begin_src shell
+sudo apt install silversearcher-ag
+#+end_src
+
+- Windows build https://github.com/k-takata/the_silver_searcher-win32
+
+** pt
+
+- Windows の spacemacs では pt が推奨ツール
+  - [[https://github.com/monochromegane/the_platinum_searcher/releases][Github Release]]
+
+** rg (ripgrep)
+
+- Linux 環境では、これが色々なところで推奨されている模様
+  - [[https://github.com/BurntSushi/ripgrep/releases][Github Release]]
+
+#+begin_src shell
+curl -LO https://github.com/BurntSushi/ripgrep/releases/download/0.10.0/ripgrep_0.10.0_amd64.deb
+sudo dpkg -i ripgrep_0.10.0_amd64.deb
+#+end_src
+
+** ack
+
+#+begin_src shell
+sudo apt install ack-grep
+#+end_src
+
+** TODO git-grep
+
+- git repo の中のみで検索してくれる
+- pull request を投げるときに便利？

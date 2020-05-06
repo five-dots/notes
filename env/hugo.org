@@ -1,0 +1,48 @@
+#+STARTUP: folded indent
+
+* Reference
+
+- [[https://blog.tomoya.dev/2019/01/hugo-with-netlify/][Netlify ではじめる Hugo]]
+
+* Installation
+
+- Hugo の最新版を deb でインストール
+  https://github.com/gohugoio/hugo/releases
+  extended をインストールしないと利用できない機能がある
+
+sudo dpkg -i hugo.deb
+
+#+begin_src shell
+hugo version
+#+end_src
+
+#+RESULTS:
+: Hugo Static Site Generator v0.58.3-4AAC02D4 linux/amd64 BuildDate: 2019-09-19T15:30:47Z
+
+- 新規のサイトを作成
+#+begin_src shell
+hugo new site hoge
+#+end_src
+
+- テーマを submodule として clone
+#+begin_src shell
+cd hoge
+git submodule add https://github.com/olOwOlo/hugo-theme-even themes/even
+
+# テーマのデフォルト設定をコピー
+cp ./themes/even/exampleSite/config.toml ./config.toml
+#+end_src
+
+* Blog/Qiita Post Workflow
+
+- サーバーを起動
+#+begin_src shell
+cd ~/Dropbox/repos/github/five-dots/blog
+hugo server -D --navigateToChanged # サーバーを停止 Ctrl-c
+#+end_src
+
+- Blog/Qiita 向けの Header を付けた org file を用意 (Snippet あり)
+  - 記事は notes repo の中で作成し、blog repo へエクスポートする
+- 変更を確認しながら記事を執筆
+- git commit & push -> Netflify で自動配置される
+- ox-gfm で markdown をエクスポート -> Qiita の投稿画面に貼り付ける

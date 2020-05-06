@@ -1,0 +1,105 @@
+#+STARTUP: content indent
+#+PROPERTY: header-args:R :results output :session *R:parallel* :width 640 :height 480 :colnames yes
+
+* パッケージの読み込み
+
+#+begin_src R :results silent
+library(tidyverse)
+library(tictoc)
+
+library(foreach)
+library(furrr)
+#+end_src
+
+* ={foreach}= package
+* ={furrr}= package
+** purrr の並列化
+
+#+begin_src R
+walk(c("hello", "world"), print)
+#+end_src
+
+#+RESULTS:
+: [1] "hello"
+: [1] "world"
+
+- =future_map(.x, .f, ..., .progress = FALSE, .options = future_options())=
+- map, map2, imap, pmap, invoke_map, modify が実装されている
+#+begin_src R
+plan(multiprocess)
+future_map(c("hello", "world"), print)
+#+end_src
+
+#+RESULTS:
+: 
+: [1] "hello"
+: [1] "world"
+: [[1]]
+: [1] "hello"
+: 
+: [[2]]
+: [1] "world"
+
+** Plan
+
+- 選択肢 (基本的に、multiprocess を選択しておけばいよい)
+|--------------+-----------------------------------------------------|
+| Plan         | Desciption                                          |
+|--------------+-----------------------------------------------------|
+| squential    | シングルスレッド                                    |
+| transparent  |                                                     |
+| multisession | separate session                                    |
+| multicore    | separate _forked_ R process (Not suported on Windows) |
+| _multiprocess_ | multicore(preffered) or multisession                |
+| cluster      | one or more machine                                 |
+| remote       | machine on different network                        |
+|--------------+-----------------------------------------------------|
+
+- 現状の plan を確認 (一度設定したら、変更するまで変わらない)
+#+begin_src R :results output
+plan()
+#+end_src
+
+#+RESULTS:
+: multiprocess:
+: - args: function (expr, envir = parent.frame(), substitute = TRUE, lazy = FALSE, seed = NULL, globals = TRUE, workers = availableCores(), gc = FALSE, earlySignal = FALSE, label = NULL, ...)
+: - tweaked: FALSE
+: - call: plan(multiprocess)
+
+** 速度比較
+
+- plan = sequential
+#+begin_src R :results output
+plan(sequential)
+tic()
+nothingness <- future_map(seq(1, 8, 1), ~ Sys.sleep(1))
+toc()
+#+end_src
+
+#+RESULTS:
+: 
+: 8.337 sec elapsed
+
+- multiprocess (デフォルトですべてのコアを利用)
+#+begin_src R :results output
+plan(multiprocess)
+tic()
+nothingness <- future_map(seq(1, 8, 1), ~ Sys.sleep(1))
+toc()
+#+end_src
+
+#+RESULTS:
+: 
+: 2.352 sec elapsed
+
+- multiprocess (コア数を指定)
+#+begin_src R :results output
+plan(multiprocess(workers = 2))
+tic()
+nothingness <- future_map(seq(1, 8, 1), ~ Sys.sleep(1))
+toc()
+#+end_src
+
+#+RESULTS:
+: 
+: 4.422 sec elapsed

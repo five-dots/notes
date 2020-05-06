@@ -1,0 +1,123 @@
+#+STARTUP: content indent
+
+* TODOs
+** TODO trades データの V2 確認 [0/1]
+*** TODO timestamp が UTC -> EST に変更されているか
+** TODO httptest package を使った API Test の実装
+** TODO curl_fetch_multi() を使った 並列処理 [0/2]
+*** TODO /v1/meta/symbols/{symbol}
+*** TODO /v1/meta/symbols/{symbol}/company
+** TODO package fun 実装 [0/4]
+*** TODO rpolygon_historic()
+*** TODO rpolygon_tickers()
+*** TODO rpolygon_ticks()
+*** TODO rpolygon_minute()
+* API Reference
+
+|---------+---------------+-------------+-----------+------------+---------------+-------------+-----------+---------+-----------------------------------------------------------+-------------+------------|
+| Version | Option1       | Option2     | Option3   | Option4    | Option5       | Option6     | Option7   | Option8 | Args                                                      | DF          | Memo       |
+|---------+---------------+-------------+-----------+------------+---------------+-------------+-----------+---------+-----------------------------------------------------------+-------------+------------|
+| v1/     | meta/         | symbols/    | {symbol}  |            |               |             |           |         |                                                           | no          |            |
+| v1/     | meta/         | symbols/    | {symbol}/ | analysts   |               |             |           |         |                                                           | no          |            |
+| v1/     | meta/         | symbols/    | {symbol}/ | changes    |               |             |           |         |                                                           | no          | No output  |
+| v1/     | meta/         | symbols/    | {symbol}/ | company    |               |             |           |         |                                                           | no          |            |
+| v1/     | meta/         | symbols/    | {symbol}/ | dividends  |               |             |           |         |                                                           | ok          |            |
+| v1/     | meta/         | symbols/    | {symbol}/ | earnings   |               |             |           |         |                                                           | ok          |            |
+| v1/     | meta/         | symbols/    | {symbol}/ | financials |               |             |           |         |                                                           | ok          |            |
+| v1/     | meta/         | symbols/    | {symbol}/ | news       |               |             |           |         | perpage, page                                             | ok          |            |
+| v1/     | meta/         | symbols/    | {symbol}/ | splits     |               |             |           |         |                                                           | ok          |            |
+| v1/     | meta/         | exchanges   |           |            |               |             |           |         |                                                           | ok          |            |
+| v1/     | meta/         | conditions/ | trades    |            |               |             |           |         |                                                           |             |            |
+| v1/     | meta/         | conditions/ | quotes    |            |               |             |           |         |                                                           |             |            |
+| v1/     | historic/     | trades/     | {symbol}/ | {date}     |               |             |           |         | offset, limit                                             | ok(partial) |            |
+| v1/     | historic/     | quotes/     | {symbol}/ | {date}     |               |             |           |         | offset, limit                                             | ok(partial) |            |
+| v1/     | last/         | stocks/     | {symbol}  |            |               |             |           |         |                                                           | ?           |            |
+| v1/     | last_quote/   | stocks/     | {symbol}  |            |               |             |           |         |                                                           | ?           |            |
+| v1/     | open_close/   | {symbol}/   | {date}    |            |               |             |           |         |                                                           | ?           |            |
+| v1/     | marketstatus/ | now         |           |            |               |             |           |         |                                                           | no          |            |
+| v1/     | marketstatus/ | upcoming    |           |            |               |             |           |         |                                                           | ok          |            |
+|---------+---------------+-------------+-----------+------------+---------------+-------------+-----------+---------+-----------------------------------------------------------+-------------+------------|
+| v2/     | reference/    | tickers     |           |            |               |             |           |         | sort, type, market, locale, search, perpage, page, active |             |            |
+| v2/     | reference/    | markets     |           |            |               |             |           |         |                                                           |             |            |
+| v2/     | reference/    | locales     |           |            |               |             |           |         |                                                           |             |            |
+| v2/     | reference/    | types       |           |            |               |             |           |         |                                                           |             |            |
+| v2/     | reference/    | splits/     | {symbol}  |            |               |             |           |         |                                                           |             | metaを使う |
+| v2/     | snapshot/     | locale/     | us/       | markets/   | stocks/       | tickers     |           |         |                                                           |             |            |
+| v2/     | snapshot/     | locale/     | us/       | markets/   | stocks/       | tickers/    | {symbol}/ |         |                                                           |             |            |
+| v2/     | snapshot/     | locale/     | us/       | markets/   | stocks/       | gainers     |           |         |                                                           |             |            |
+| v2/     | snapshot/     | locale/     | us/       | markets/   | stocks/       | losers      |           |         |                                                           |             |            |
+| v2/     | aggs/         | ticker/     | {symbol}/ | prev       |               |             |           |         | unadjusted                                                |             |            |
+| v2/     | aggs/         | ticker/     | {symbol}/ | range/     | {multiplier}/ | {timespan}/ | {from}/   | {to}    | unadjusted                                                |             |            |
+| v2/     | aggs/         | grouped/    | locale/   | {locale}/  | market/       | {market}/   | {date}    |         | unadjusted                                                |             |            |
+|---------+---------------+-------------+-----------+------------+---------------+-------------+-----------+---------+-----------------------------------------------------------+-------------+------------|
+
+* Websocket
+- wscat (Websocket のコマンドラインツール by nodejs) で動作確認
+- > 入力コマンド
+- < 出力結果
+
+- 接続
+> wscat --connect wss://socket.polygon.io/stocks
+< [{"ev":"status","status":"connected","message":"Connected Successfully"}]
+
+- 認証
+> {"action":"auth","params":"8m_BDZbnKjkOQoNvUHk_pXZl1XiwSFN3Nv9xRB"}
+< [{"ev":"status","status":"success","message":"authenticated"}]
+
+- 購読 (=T= = Trades, =Q= = Quotes, =A= = Aggregate, =AM= = Minute Aggregate)
+> {"action":"subscribe","params":"T.MSFT"}
+< [{"ev":"status","status":"success","message":"subscribed to: T.MSFT"}]
+< [{"ev":"T","sym":"MSFT","p":114.119,"x":"11","s":881,"t":1561555194853, .... }]
+< [{"ev":"T","sym":"MSFT","p":114.180,"x":"2","s":954,"t":1561555195343, .... }]
+< [{"ev":"T","sym":"MSFT","p":114.119,"x":"5","s":924,"t":1561555195833, .... }]
+< [{"ev":"T","sym":"MSFT","p":114.122,"x":"13","s":937,"t":1561555196323, .... }]
+< [{"ev":"T","sym":"MSFT","p":114.191,"x":"7","s":109,"t":1561555196813, .... }]
+< [{"ev":"T","sym":"MSFT","p":114.193,"x":"2","s":945,"t":1561555197303, .... }]
+< [{"ev":"T","sym":"MSFT","p":114.135,"x":"14","s":841,"t":1561555197793, .... }]
+< [{"ev":"T","sym":"MSFT","p":114.196,"x":"4","s":182,"t":1561555198283, .... }]
+< [{"ev":"T","sym":"MSFT","p":114.124,"x":"3","s":641,"t":1561555198780, .... }]
+
+- 購読解除
+> {"action":"unsubscribe","params":"T.MSFT"}
+< [{"ev":"status","status":"success","message":"unsubscribed to: T.MSFT"}]
+
+* Tickers
+** US Stocks
+- market = "stocks", local = "us" で検索
+- currency = "USD" *以外の銘柄* は、primaryExch が OTO (OTC) もしくは、GREY (OTC) が多い
+- currency = "USD" 銘柄の取引所は、全部で 27 (NA 含む)
+
+_数量は、2019/7/5 現在_
+- NYSE Group (6,168)
+  - =AMX=        (372)
+  - =ARCA=     (2,018)
+  - =NYE=      (3,778)
+
+- NASDAQ Group                 (4,465)
+  - =NGS= (Global Select Market) (2,044)
+  - =NSD= (Global Market)        (1,080)
+  - =NSC= (Capital Market)       (1,341)
+  - NASDAQ ?? (2)
+
+- Other Exchanges
+  - =BATS= (393)
+  - BOS  (1)
+  - BOX  (1   Boston Option Exchange)
+  - CBO  (5   CBOE Options Exchange)
+  - IEXG (4   IEX Trading, 実質 IBKR のみ)
+  - DJX  (1   Dow Jones International  Symbols)
+  - MDX  (1   CBOE Global Markets)
+  - MIO  (2   Miami International Securities Exchange)
+  - NDD  (16  Nasdaq Alternative  Display Facility)
+  - NMF  (68  Nasdaq Mutual Funds)
+  - NSX  (2   National Stock Exchange)
+  - SPIC (1   CME S&P Complete Indices (Complete))
+
+- OTC
+  - CVEM   (1,817  Nasdaq OTC Caveat  Emptor Market)
+  - GREY   (6,951  Nasdaq OTC Grey Market)
+  - OBB    (32,    Nasdaq OTC Bulletin  Board (OTCBB))
+  - OTC    (25     ??)
+  - OTCQB  (1,120  Nasdaq OTCQB US  Registered)
+  - OTCQX  (580    Nasdaq Pink Quote  OTCQX)
+  - OTO    (10,378 Nasdaq OTC Markets  (Pink Sheets))

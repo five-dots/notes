@@ -1,0 +1,90 @@
+#+STARTUP: folded indent inlineimages latexpreview
+
+* C/C++ 開発環境
+* 規格
+
+- [[https://cpprefjp.github.io/][cpprefjp - C++日本語リファレンス]]
+- [[https://qiita.com/leon-joel/items/81415c1ef355c6246280][C++11, C++14, C++17 新機能まとめ ～使いそうなものだけ@Qiita]]
+
+規格が策定された年号
+- C++11
+- C++14
+- C++17
+- C++2a
+- C++23
+
+* コンパイラの種類
+
+- *gcc*
+  - GNU Compiler Collection
+  - g++ は gcc にオプションを追加して呼び出している
+
+- *Clang* (クラン)
+  - Apple が開発した C, C++, Objective-C, Objective-C++ 向けのコンパイラフロントエンド
+  - gcc の置き換えを目標としている
+  - バックエンドとして LLVM (LLVM 2.6 以降は、LLVM の一部としてリリースされている)
+
+- *icc*
+  - Interl C++ Compiler
+
+- *Microsoft Visual C++*
+
+- *LLVM*
+  - Low Level Vitural Machine
+  - 任意のプログラミング言語に対応可能なコンパイラ基盤
+  - コンパイル時、リンク時、 実行時などにプログラムを最適化する
+
+* ビルドツール
+
+- configure
+  - スクリプトを実行しているだけ
+  - インストールのための環境変数・ライブラリが正しく設定されているかをチェックする
+  - =MakeFile= を作成するためのもの
+
+- *autotools*
+  - いくつかのツールを含むフレームワーク
+    - configure を生成する *autoconf*
+    - MakeFile を生成する *automake*
+
+- *make*
+  - シェルスクリプトをメニュー形式で実行
+  - デフォルトで C コンパイルのルールが定義されている
+  - =make install= コンパイルされたファイル群をディレクトリにコピーしているだけ
+
+- *Cmake*
+  - autotools + make を代替するもの
+
+- *ninja*
+  - C++ 向けのビルドツール
+  - 速度が売り
+  - Cmake + ninja という組合せもあるようだ
+
+* Install Clang/LLVM and ccls for Ubuntu
+
+- CMake
+#+begin_src shell
+sudo apt install cmake (3.8 以上が必要)
+#+end_src
+
+- GCC-7 (7.2 以上が必要)
+
+- Clang/LLVM
+#+begin_src shell
+wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
+sudo apt-add-repository "deb http://apt.llvm.org/bionic/ llvm-toolchain-bionic-8 main"
+sudo apt install clang-8 lldb-8 lld-8
+#+end_src
+
+- その他、clang-format-8, clangd-8 などもインストール
+
+- ccls
+#+begin_src shell
+git clone --depth=1 --recursive https://github.com/MaskRay/ccls
+cd ccls
+cmake -H. -BRelease -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=g++-7
+sudo cmake --build Release --target install
+#+end_src
+
+* Reference
+
+- [[https://www.mikunimaru.com/entry/2019/06/02/022510][Ubuntu / Debianに最新のClangをインストールする方法]]

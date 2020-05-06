@@ -1,0 +1,321 @@
+#+STARTUP: folded indent inlineimages latexpreview
+#+PROPERTY: header-args:R :results output :colnames yes :session *R:formula*
+
+* ライブラリ
+
+#+begin_src R :results silent
+library(tidyverse)
+#+end_src
+
+* formula class
+** 概要
+
+- formula は call = 関数呼び出し 
+#+begin_src R
+f <- y ~ x1 + x2
+typeof(f)
+mode(f)
+class(f)
+#+end_src
+
+#+RESULTS:
+: [1] "language"
+: [1] "call"
+: [1] "formula"
+
+- =~= (tilde) は関数
+#+begin_src R
+as.list(f)
+#+end_src
+
+#+RESULTS:
+: [[1]]
+: `~`
+: 
+: [[2]]
+: y
+: 
+: [[3]]
+: x1
+: x2
+
+- サブセットできる
+#+begin_src R
+f[1]
+f[2]
+f[3]
+f[-2] # 目的変数のみ省く
+#+end_src
+
+#+RESULTS:
+: `~`()
+: y()
+: (x1 + x2)()
+: ~x1 + x2
+
+** モデルの記述方法
+
+- 主な書き方
+  - =y ~ x1 + x2=
+  - =y ~ .= (. は y 以外の全ての変数)
+  - =y ~ . -x1= (x1 以外の全ての変数)
+  - =y ~ x1:x2= (x1 と x2 の交互作用項)
+  - =y ~ x1*x2= (y ~ x1 + x2 + x1:x2 の省略形)
+  - =y ~ (x1+x2)^2= (上記と同じ)
+  - =y ~ x + 0= (切片なし, 0 or -1)
+  - =y ~ 1= (切片のみ)
+
+- 関数適応例
+  - =log(x)=
+  - =sqrt(x)=
+  - =poly(x, 3)= 多項式回帰
+  - =offset(x)= オフセット項
+  - =lag(x)= 自己回帰項
+
+- 元の data.frame に変数を追加することなく、モデルを変更できる
+
+#+begin_src R
+lm(Sepal.Length ~ ., iris)
+#+end_src
+
+#+RESULTS:
+: 
+: Call:
+: lm(formula = Sepal.Length ~ ., data = iris)
+: 
+: Coefficients:
+:       (Intercept)        Sepal.Width       Petal.Length        Petal.Width  
+:            2.1713             0.4959             0.8292            -0.3152  
+: Speciesversicolor   Speciesvirginica  
+:           -0.7236            -1.0235
+
+#+begin_src R
+lm(Sepal.Length ~ . -Species, iris)
+#+end_src
+
+#+RESULTS:
+: 
+: Call:
+: lm(formula = Sepal.Length ~ . - Species, data = iris)
+: 
+: Coefficients:
+:  (Intercept)   Sepal.Width  Petal.Length   Petal.Width  
+:       1.8560        0.6508        0.7091       -0.5565
+
+#+begin_src R
+lm(log(Sepal.Length) ~ poly(Sepal.Width, 3), iris)
+#+end_src
+
+#+RESULTS:
+: 
+: Call:
+: lm(formula = log(Sepal.Length) ~ poly(Sepal.Width, 3), data = iris)
+: 
+: Coefficients:
+:           (Intercept)  poly(Sepal.Width, 3)1  poly(Sepal.Width, 3)2  
+:                1.7554                -0.2203                -0.2215  
+: poly(Sepal.Width, 3)3  
+:                0.3462
+
+** TODO =fomula= vs. =terms= class
+** =formula= の環境
+
+- =formula= は属性として =.Environment= を持っている
+  - =~= で作成した場合は、作成した場所の環境
+  - =as.formula()= の場合は =env= 引数で指定する
+- =model.frame()= を実行した際に =data= 引数には存在しなかった変数を環境内の値で補完する役割
+
+#+begin_src R
+f <- Speices ~ .
+attr(f, ".Environment")
+#+end_src
+
+#+RESULTS:
+: 
+: <environment: R_GlobalEnv>
+
+- 環境を空にする場合
+- =formula= を含むデータを保存する場合、環境も同時に保存してしまうため、データ量が大きくなる
+- =print()= では =GlobalEnv= 以外では環境が表示される
+#+begin_src R
+environment(f) <- rlang::empty_env()
+f
+#+end_src
+
+#+RESULTS:
+: 
+: Speices ~ .
+: <environment: R_EmptyEnv>
+
+** Utilities
+
+- =all.vars()= call から変数を抜き出す
+#+begin_src R
+f <- y ~ x1 + x2
+all.vars(f)
+#+end_src
+
+#+RESULTS:
+: [1] "y"  "x1" "x2"
+
+- =all.names()= もある
+#+begin_src R
+all.names(f)
+#+end_src
+
+#+RESULTS:
+: [1] "~"  "y"  "+"  "x1" "x2"
+
+#+begin_src R
+terms(f)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+y ~ x1
+x2
+attr(,"variables")
+list(y, x1, x2)
+attr(,"factors")
+   x1 x2
+y   0  0
+x1  1  0
+x2  0  1
+attr(,"term.labels")
+[1] "x1" "x2"
+attr(,"order")
+[1] 1 1
+attr(,"intercept")
+[1] 1
+attr(,"response")
+[1] 1
+attr(,".Environment")
+<environment: R_GlobalEnv>
+#+end_example
+
+* =stats::model.*()= 関数群
+** 概要
+
+- S3 generics
+  - =model.frame()= data.frame に formula の情報を attributes として追加した model.frame を作成
+  - =model.matrix()= formula と model.frame から デザイン行列を作成
+- model.frame から情報を抜き出す
+  - =model.extract()= 汎用的に使える
+  - =model.offset()=
+  - =model.response()=
+  - =model.weights()=
+
+#+begin_src R :results silent
+model.frame(
+  formula,
+  data = NULL,
+  subset = NULL,
+  na.action = na.fail,
+  drop.unused.levels = FALSE,
+  xlev = NULL,
+  ...
+)
+
+model.matrix(
+  object,                     # default = formula or term object
+  data = environment(object), # model.frame() によって作成された data.frame
+  contrasts.arg = NULL,
+  xlev = NULL,
+  ...
+)
+
+model.extract(frame, component)
+model.offset(x)
+model.response(data, type = "any")
+model.weights(x)
+#+end_src
+
+** =model.frame()=
+
+- 通常の data.frame に attributes が追加される
+#+begin_src R
+f <- Sepal.Length ~ Sepal.Width + Species
+mm <- model.frame(f, iris)
+head(mm)
+#+end_src
+
+#+RESULTS:
+:   Sepal.Length Sepal.Width Species
+: 1          5.1         3.5  setosa
+: 2          4.9         3.0  setosa
+: 3          4.7         3.2  setosa
+: 4          4.6         3.1  setosa
+: 5          5.0         3.6  setosa
+: 6          5.4         3.9  setosa
+
+- attributes は =terms= class
+- モデルに含まれる変数の種類・型などの情報が入っている
+#+begin_src R
+terms <- attr(mm, "terms")
+class(terms)
+str(terms)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+[1] "terms"   "formula"
+Classes 'terms', 'formula'  language Sepal.Length ~ Sepal.Width
+Species
+  ..- attr(*, "variables")= language list(Sepal.Length, Sepal.Width, Species)
+  ..- attr(*, "factors")= int [1:3, 1:2] 0 1 0 0 0 1
+  .. ..- attr(*, "dimnames")=List of 2
+  .. .. ..$ : chr [1:3] "Sepal.Length" "Sepal.Width" "Species"
+  .. .. ..$ : chr [1:2] "Sepal.Width" "Species"
+  ..- attr(*, "term.labels")= chr [1:2] "Sepal.Width" "Species"
+  ..- attr(*, "order")= int [1:2] 1 1
+  ..- attr(*, "intercept")= int 1
+  ..- attr(*, "response")= int 1
+  ..- attr(*, ".Environment")=<environment: R_
+
+  ..- attr(*, "predvars")= language list(Sepal.Length, Sepal.Width, Species)
+  ..- attr(*, "dataClasses")= Named chr [1:3] "numeric" "numeric" "factor"
+  .. ..- attr(*, "names")= chr [1:3] "Sepal.Length" "Sepal.Width" "Species"
+#+end_example
+
+** =model.matrix()=
+
+- 通常 factor は k-1 のダミーに変換される
+#+begin_src R :results value
+mf <- model.matrix(f, mm)
+head(mf)
+#+end_src
+
+#+RESULTS:
+| (Intercept) | Sepal.Width | Speciesversicolor | Speciesvirginica |
+|-------------+-------------+-------------------+------------------|
+|           1 |         3.5 |                 0 |                0 |
+|           1 |           3 |                 0 |                0 |
+|           1 |         3.2 |                 0 |                0 |
+|           1 |         3.1 |                 0 |                0 |
+|           1 |         3.6 |                 0 |                0 |
+|           1 |         3.9 |                 0 |                0 |
+
+- =+0= すると factor を one-hot に変換できる
+- つまり「切片有り + k-1 dummies」 or 「切片なし + k dummies」のどちらかの選択 
+- [[https://stackoverflow.com/questions/53330579/one-hot-encoding-with-model-matrix-is-the-intercept-required][One-hot encoding with model.matrix. Is the intercept required?@stackoverflow]]
+  - The main idea is that you don't want your model.matrix to be singular. So it's either the intercept + k-1 dummies, or no intercept and all k dummies. It can be shown that the result should be the same, just with slight differences in parameter interpretation.
+#+begin_src R :results value
+f <- Sepal.Length ~ Sepal.Width + Species + 0
+mf <- model.matrix(f, iris)
+head(mf)
+#+end_src
+
+#+RESULTS:
+| Sepal.Width | Speciessetosa | Speciesversicolor | Speciesvirginica |
+|-------------+---------------+-------------------+------------------|
+|         3.5 |             1 |                 0 |                0 |
+|           3 |             1 |                 0 |                0 |
+|         3.2 |             1 |                 0 |                0 |
+|         3.1 |             1 |                 0 |                0 |
+|         3.6 |             1 |                 0 |                0 |
+|         3.9 |             1 |                 0 |                0 |
+
+* 参考
+
+- [[http://ill-identified.hatenablog.com/entry/2017/04/30/004258][R: 予測モデルを作るには formula を活用せよ@ill-identified diary]]
+- [[http://m884.hateblo.jp/entry/20091112/1259855233][formulaとは？（1）]]

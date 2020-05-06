@@ -1,0 +1,131 @@
+#+STARTUP: folded indent inlineimages
+
+* シェルの種類
+** [[file:./bash.org][bash]] (Bourne Again Shell)
+** csh
+** [[file:./zsh.org][zsh]]
+** fish (Friendly Interactive Shell)
+* シェルの 3 つの使い方
+
+1. ログインシェル
+   - コマンドラインを起動したとき、サーバにログインしたときに立ち上がるシェルのこと
+   - 対話形式で入力する
+
+2. インタラクティブシェル
+   - コマンドラインで bash とか zsh と入力すると起動するシェルのこと
+   - 対話形式で入力する
+
+3. シェルスクリプト
+   - シェルによるプログラミングファイルを作成して実行すること
+* bash file load order
+
+1. =/etc/profile=
+2. =~/.bash_profile=, =~/.bash_login=, =~/.profile= (いずれか最初に見つかったもの)
+3. =~/.bashrc= (インタラクティブシェルのみ)
+
+- [[https://superuser.com/questions/183870/difference-between-bashrc-and-bash-profile][Difference between .bashrc and .bash_profile]]
+- [[https://techracho.bpsinc.jp/hachi8833/2019_06_06/66396][Linux: .bashrcと.bash_profile の違いを今度こそ理解する@TechRacho]]
+
+_方針_
+- =~/.profile=
+  - ログイン時にそのセッション全体に適用するものを記述する
+  - シェルの種類に依存しないものを記述する
+  - 環境変数 (PATH など)
+  - GUI アプリで利用する設定
+  - Ubuntu では、ここで =./.bashrc= を読み込む
+
+- =~/.bash_profile=
+  - bash を対話的に利用する場合
+    - =~/.profile= があれば読み込む
+    - =~.bashrc= を読み込む (ログインシェルでは自動的に読み込まれないため)
+  - ただし、Ubuntu だと =~/.profile= しか読み込まないので使わない
+
+- =~/.bashrc=
+  - bash でしか利用しないものを記述する
+  - _ここで何も出力してはならない_
+  - 対話モードで利用するものは全てここに書く
+  - Alias, EDITOR, Prompt
+
+- =~/.bash_login=
+  - 存在しないようにしておく
+* zsh
+** 設定ファイル
+
+- =.zshenv=
+  - ログインシェル、インタラクティブシェル、シェルスクリプト、どれでも常に必要な設定を定義する
+    - PATH, EDITOR, PAGER, LANG などの主要な環境変数
+  - zsh が起動して、必ず最初に読み込まれる設定ファイル
+  - 対話形式のシェル設定をここですると、シェルスクリプト誤作動の原因になるため注意する
+  - 影響範囲が大きいので記述は必要最低限にするべき
+
+- =.zprofile=
+  - ログインシェルに必要な設定だけを記述する
+  - zshenv の次に読み込まれる設定ファイル
+  - zsh ログイン時の一回だけ読み込まれる
+
+- =.zshrc=
+  - ログインシェル、インタラクティブシェルの場合に読み込まれる
+  - alias, 関数, シェルオプション
+
+- =.zlogin=
+  - ログインシェルに必要な設定だけを記述する
+  - 最後に読み込まれる
+  - _役割は .zprofile とほぼ一緒。混乱を避けるため併用しないこと_
+
+- =.zlogout=
+  - exit コマンドで zsh を抜けたときに読み込まれる
+
+- 読み込まれる順番
+  - =.zshenv= -> =.zprofile= -> =.zshrc= -> =.zlogin= -> =.zlogout=
+  - 基本的に =.zshenv= と =.zshrc= の 2 つを利用する
+
+** Ubuntu
+
+#+begin_src shell
+which zsh
+#+end_src
+
+#+RESULTS:
+: /usr/bin/zsh
+
+- =chsh= で =zsh= のパスを指定
+
+#+begin_src shell
+chsh -s $(which zsh)
+#+end_src
+
+** 設定フレームワーク
+
+- [[https://qiita.com/b4b4r07/items/875235f6122a6d779306][まだ oh-my-zsh で消耗してるの？]]
+
+- フレームワーク
+  - oh-my-zsh
+  - [[https://github.com/sorin-ionescu/prezto][Prezto]]
+
+- プラグインマネージャー
+  - Antigen
+  - zgen
+  - zplug
+
+** Prezto
+
+- 以下のファイルへのシンボリックリンクが貼られる
+  - =.zlogin=
+  - =.zprofile=
+  - =.zshenv=
+  - =.zshrc=
+  - =.zlogout=
+  - =.zpreztorc=
+
+** オプション
+
+- =setopt= で =zsh= の設定フラグを ON
+- =unsetopt= でフラグを OFF (もしくは、オプション名に NO_ をつける)
+
+#+begin_src shell
+setopt
+#+end_src
+
+#+RESULTS:
+| nohashdirs |
+| shinstdin  |

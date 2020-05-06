@@ -1,0 +1,284 @@
+#+STARTUP: folded indent
+#+PROPERTY: header-args:R :results output :colnames yes :session *R:Matrix*
+
+* ~{Matrix}~: Sparse and Dense Matrix Classes and Methods            :noexport:
+
+~{Matrxi}~ は疎行列や密行列を扱うパッケージ。
+
+* ライブラリの読み込み
+
+#+begin_src R :results silent
+library(Matrix)
+#+end_src
+
+* 全関数
+
+#+begin_src R
+pacman::p_funs(Matrix)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+  [1] ".__C__abIndex"               ".__C__atomicVector"         
+  [3] ".__C__BunchKaufman"          ".__C__CHMfactor"            
+  [5] ".__C__CHMsimpl"              ".__C__CHMsuper"             
+  [7] ".__C__Cholesky"              ".__C__CholeskyFactorization"
+  [9] ".__C__compMatrix"            ".__C__corMatrix"            
+ [11] ".__C__CsparseMatrix"         ".__C__dCHMsimpl"            
+ [13] ".__C__dCHMsuper"             ".__C__ddenseMatrix"         
+ [15] ".__C__ddiMatrix"             ".__C__denseLU"              
+ [17] ".__C__denseMatrix"           ".__C__dgCMatrix"            
+ [19] ".__C__dgeMatrix"             ".__C__dgRMatrix"            
+ [21] ".__C__dgTMatrix"             ".__C__diagonalMatrix"       
+ [23] ".__C__dMatrix"               ".__C__dpoMatrix"            
+ [25] ".__C__dppMatrix"             ".__C__dsCMatrix"            
+ [27] ".__C__dsparseMatrix"         ".__C__dsparseVector"        
+ [29] ".__C__dspMatrix"             ".__C__dsRMatrix"            
+ [31] ".__C__dsTMatrix"             ".__C__dsyMatrix"            
+ [33] ".__C__dtCMatrix"             ".__C__dtpMatrix"            
+ [35] ".__C__dtrMatrix"             ".__C__dtRMatrix"            
+ [37] ".__C__dtTMatrix"             ".__C__generalMatrix"        
+ [39] ".__C__iMatrix"               ".__C__index"                
+ [41] ".__C__indMatrix"             ".__C__isparseVector"        
+ [43] ".__C__ldenseMatrix"          ".__C__ldiMatrix"            
+ [45] ".__C__lgCMatrix"             ".__C__lgeMatrix"            
+ [47] ".__C__lgRMatrix"             ".__C__lgTMatrix"            
+ [49] ".__C__lMatrix"               ".__C__lsCMatrix"            
+ [51] ".__C__lsparseMatrix"         ".__C__lsparseVector"        
+ [53] ".__C__lspMatrix"             ".__C__lsRMatrix"            
+ [55] ".__C__lsTMatrix"             ".__C__lsyMatrix"            
+ [57] ".__C__ltCMatrix"             ".__C__ltpMatrix"            
+ [59] ".__C__ltrMatrix"             ".__C__ltRMatrix"            
+ [61] ".__C__ltTMatrix"             ".__C__LU"                   
+ [63] ".__C__Matrix"                ".__C__MatrixFactorization"  
+ [65] ".__C__nCHMsimpl"             ".__C__nCHMsuper"            
+ [67] ".__C__ndenseMatrix"          ".__C__ngCMatrix"            
+ [69] ".__C__ngeMatrix"             ".__C__ngRMatrix"            
+ [71] ".__C__ngTMatrix"             ".__C__nMatrix"              
+ [73] ".__C__nsCMatrix"             ".__C__nsparseMatrix"        
+ [75] ".__C__nsparseVector"         ".__C__nspMatrix"            
+ [77] ".__C__nsRMatrix"             ".__C__nsTMatrix"            
+ [79] ".__C__nsyMatrix"             ".__C__ntCMatrix"            
+ [81] ".__C__ntpMatrix"             ".__C__ntrMatrix"            
+ [83] ".__C__ntRMatrix"             ".__C__ntTMatrix"            
+ [85] ".__C__number"                ".__C__pBunchKaufman"        
+ [87] ".__C__pCholesky"             ".__C__pMatrix"              
+ [89] ".__C__replValue"             ".__C__rleDiff"              
+ [91] ".__C__RsparseMatrix"         ".__C__Schur"                
+ [93] ".__C__sparseLU"              ".__C__sparseMatrix"         
+ [95] ".__C__sparseQR"              ".__C__sparseVector"         
+ [97] ".__C__symmetricMatrix"       ".__C__triangularMatrix"     
+ [99] ".__C__TsparseMatrix"         ".__C__xsparseVector"        
+[101] ".__C__zMatrix"               ".__C__zsparseVector"        
+[103] ".__T__-:base"                ".__T__!:base"               
+[105] ".__T__[:base"                ".__T__[<-:base"             
+[107] ".__T__*:base"                ".__T__/:base"               
+[109] ".__T__&:base"                ".__T__%*%:base"             
+[111] ".__T__%/%:base"              ".__T__%&%:Matrix"           
+[113] ".__T__%%:base"               ".__T__^:base"               
+[115] ".__T__+:base"                ".__T__all:base"             
+[117] ".__T__all.equal:base"        ".__T__any:base"             
+[119] ".__T__anyNA:base"            ".__T__Arith:base"           
+[121] ".__T__as.array:base"         ".__T__as.integer:base"      
+[123] ".__T__as.logical:base"       ".__T__as.matrix:base"       
+[125] ".__T__as.numeric:base"       ".__T__as.vector:base"       
+[127] ".__T__band:Matrix"           ".__T__BunchKaufman:Matrix"  
+[129] ".__T__cbind2:methods"        ".__T__chol:base"            
+[131] ".__T__chol2inv:base"         ".__T__Cholesky:Matrix"      
+[133] ".__T__coerce:methods"        ".__T__colMeans:base"        
+[135] ".__T__colSums:base"          ".__T__Compare:methods"      
+[137] ".__T__cov2cor:stats"         ".__T__crossprod:base"       
+[139] ".__T__determinant:base"      ".__T__diag:base"            
+[141] ".__T__diag<-:base"           ".__T__diff:base"            
+[143] ".__T__dim:base"              ".__T__dim<-:base"           
+[145] ".__T__dimnames:base"         ".__T__dimnames<-:base"      
+[147] ".__T__drop:base"             ".__T__expand:Matrix"        
+[149] ".__T__expm:Matrix"           ".__T__facmul:Matrix"        
+[151] ".__T__forceSymmetric:Matrix" ".__T__format:base"          
+[153] ".__T__head:utils"            ".__T__image:graphics"       
+[155] ".__T__is.finite:base"        ".__T__is.infinite:base"     
+[157] ".__T__is.na:base"            ".__T__isDiagonal:Matrix"    
+[159] ".__T__isSymmetric:base"      ".__T__isTriangular:Matrix"  
+[161] ".__T__kronecker:base"        ".__T__length:base"          
+[163] ".__T__log:base"              ".__T__Logic:base"           
+[165] ".__T__lu:Matrix"             ".__T__Math:base"            
+[167] ".__T__Math2:methods"         ".__T__mean:base"            
+[169] ".__T__nnzero:Matrix"         ".__T__norm:base"            
+[171] ".__T__Ops:base"              ".__T__pack:Matrix"          
+[173] ".__T__print:base"            ".__T__prod:base"            
+[175] ".__T__qr:base"               ".__T__qr.coef:base"         
+[177] ".__T__qr.fitted:base"        ".__T__qr.Q:base"            
+[179] ".__T__qr.qty:base"           ".__T__qr.qy:base"           
+[181] ".__T__qr.R:base"             ".__T__qr.resid:base"        
+[183] ".__T__rbind2:methods"        ".__T__rcond:base"           
+[185] ".__T__rep:base"              ".__T__rowMeans:base"        
+[187] ".__T__rowSums:base"          ".__T__Schur:Matrix"         
+[189] ".__T__show:methods"          ".__T__skewpart:Matrix"      
+[191] ".__T__solve:base"            ".__T__sum:base"             
+[193] ".__T__summary:base"          ".__T__Summary:base"         
+[195] ".__T__symmpart:Matrix"       ".__T__t:base"               
+[197] ".__T__tail:utils"            ".__T__tcrossprod:base"      
+[199] ".__T__toeplitz:stats"        ".__T__tril:Matrix"          
+[201] ".__T__triu:Matrix"           ".__T__unname:base"          
+[203] ".__T__unpack:Matrix"         ".__T__update:stats"         
+[205] ".__T__updown:Matrix"         ".__T__which:base"           
+[207] ".__T__writeMM:Matrix"        ".__T__zapsmall:base"        
+[209] "..2dge"                      ".asmatrix"                  
+[211] ".bdiag"                      ".C2nC"                      
+[213] ".dense2sy"                   ".diag.dsC"                  
+[215] ".diag2mat"                   ".diag2sT"                   
+[217] ".diag2tT"                    ".diagU2N"                   
+[219] ".dsy2dsp"                    ".dsy2mat"                   
+[221] ".dxC2mat"                    ".formatSparseSimple"        
+[223] ".m2dgC"                      ".m2lgC"                     
+[225] ".m2ngC"                      ".nC2d"                      
+[227] ".nC2l"                       ".solve.dgC.chol"            
+[229] ".solve.dgC.lu"               ".solve.dgC.qr"              
+[231] ".sparseDiagonal"             ".SuiteSparse_version"       
+[233] ".symDiagonal"                ".T2Cmat"                    
+[235] ".trDiagonal"                 ".updateCHMfactor"           
+[237] ".validateCsparse"            "%&%"                        
+[239] "abIseq"                      "abIseq1"                    
+[241] "all.equal"                   "anyDuplicatedT"             
+[243] "Arith"                       "as.array"                   
+[245] "as.matrix"                   "band"                       
+[247] "bandSparse"                  "bdiag"                      
+[249] "BunchKaufman"                "c.sparseVector"             
+[251] "cBind"                       "cbind2"                     
+[253] "chol"                        "chol2inv"                   
+[255] "Cholesky"                    "coerce"                     
+[257] "colMeans"                    "colSums"                    
+[259] "Compare"                     "condest"                    
+[261] "cov2cor"                     "crossprod"                  
+[263] "det"                         "determinant"                
+[265] "diag"                        "diag<-"                     
+[267] "diagN2U"                     "Diagonal"                   
+[269] "diagU2N"                     "diff"                       
+[271] "drop"                        "drop0"                      
+[273] "expand"                      "expm"                       
+[275] "fac2sparse"                  "fac2Sparse"                 
+[277] "facmul"                      "forceSymmetric"             
+[279] "format"                      "formatSparseM"              
+[281] "formatSpMatrix"              "graph2T"                    
+[283] "head"                        "Hilbert"                    
+[285] "image"                       "invPerm"                    
+[287] "is.null.DN"                  "isDiagonal"                 
+[289] "isLDL"                       "isSymmetric"                
+[291] "isTriangular"                "KhatriRao"                  
+[293] "kronecker"                   "Logic"                      
+[295] "lu"                          "Math"                       
+[297] "Math2"                       "Matrix"                     
+[299] "MatrixClass"                 "mean"                       
+[301] "nearPD"                      "nnzero"                     
+[303] "norm"                        "onenormest"                 
+[305] "Ops"                         "pack"                       
+[307] "print"                       "printSpMatrix"              
+[309] "printSpMatrix2"              "qr"                         
+[311] "qr.coef"                     "qr.fitted"                  
+[313] "qr.Q"                        "qr.qty"                     
+[315] "qr.qy"                       "qr.R"                       
+[317] "qr.resid"                    "qrR"                        
+[319] "rankMatrix"                  "rBind"                      
+[321] "rbind2"                      "rcond"                      
+[323] "readHB"                      "readMM"                     
+[325] "rep2abI"                     "rowMeans"                   
+[327] "rowSums"                     "rsparsematrix"              
+[329] "Schur"                       "show"                       
+[331] "skewpart"                    "solve"                      
+[333] "sparse.model.matrix"         "sparseMatrix"               
+[335] "sparseVector"                "spMatrix"                   
+[337] "summary"                     "Summary"                    
+[339] "symmpart"                    "t"                          
+[341] "T2graph"                     "tail"                       
+[343] "tcrossprod"                  "toeplitz"                   
+[345] "tril"                        "triu"                       
+[347] "uniqTsparse"                 "unname"                     
+[349] "unpack"                      "update"                     
+[351] "updown"                      "which"                      
+[353] "writeMM"                     "zapsmall"
+#+end_example
+
+* クラス
+
+- 疎行列
+  - =dgTMatrix=: ３つ組の原則での保管形式(順序は適当？圧縮していない？)
+  - =dgCMatrix=: csc 順に並び替えて(csc 形式)の疎行列圧縮保管
+  - =dsCMatrix=: 実対称疎行列を csc 形式で圧縮保管
+  - =dtCMatrix=: 三角実疎行列を csc 形式で圧縮保管
+  - =ddiMatrix=: 対角行列の型もある
+
+- 疎行列保管の基礎
+  - 非ゼロのセルを、行・列・値の３つ組で保管
+  - 要素の並べ方は、
+    - 行でのつながりを優先するか (*csr*: compressed sparse row)
+    - 列でのそれを優先するか (*csc*: compressed sparse column)
+  - R と Matlab は密行列の保管において、column 優先システムを採用
+
+- 密行列
+  - =dgeMatrix=: 普通の実数行列を普通に保管
+  - =dsyMatrix=: 実対称行列を圧縮しないで保管
+  - =dspMatrix=: 実対称行列を圧縮保管(三角部分の保管)
+  - =dtrMatrix=: 実三角行列の非圧縮保管
+  - =dtpMatrix=: 実三角行列の圧縮保管(三角部分のみ)
+  - =dpoMatrix=: Positive semi-definite symmetric real を非圧縮保管
+  - =dppMatrix=: Positive semi-definite symmetric real を圧縮保管
+
+* 利用例
+
+- =dgCMatrix= Class
+#+begin_src R
+i <- c(1,3,4)  # 非ゼロ要素の行番号
+j <- c(6,5,2)  # 非ゼロ要素の列番号
+x <- c(10,2,9) # 非ゼロ要素の値
+
+# 6*6 の疎な行列を作成
+sm <- sparseMatrix(i, j, x=x, dims=c(6, 6))
+sm
+class(sm)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+6 x 6 sparse Matrix of class "dgCMatrix"
+                 
+[1,] . . . . . 10
+[2,] . . . . .  .
+[3,] . . . . 2  .
+[4,] . 9 . . .  .
+[5,] . . . . .  .
+[6,] . . . . .  .
+
+[1] "dgCMatrix"
+attr(,"package")
+[1] "Matrix"
+#+end_example
+
+- 対角行列も Sparse に作成できる
+- =ddiMatrix= Class
+#+begin_src R
+d <- Diagonal(nrow(sm), rep_len(c(3, 0), nrow(sm)))
+d
+#+end_src
+
+#+RESULTS:
+: 
+: 6 x 6 diagonal matrix of class "ddiMatrix"
+:      [,1] [,2] [,3] [,4] [,5] [,6]
+: [1,]    3    .    .    .    .    .
+: [2,]    .    0    .    .    .    .
+: [3,]    .    .    3    .    .    .
+: [4,]    .    .    .    0    .    .
+: [5,]    .    .    .    .    3    .
+: [6,]    .    .    .    .    .    0
+
+* 参考
+
+- [[https://cran.r-project.org/web/packages/Matrix/index.html][CRAN]]
+- [[https://cran.r-project.org/web/packages/Matrix/Matrix.pdf][Reference Manual (PDF)]]
+- Vignette
+  - [[https://cran.r-project.org/web/packages/Matrix/vignettes/Introduction.pdf][Introduction to Matrix package (PDF)]]
+  - [[https://cran.r-project.org/web/packages/Matrix/vignettes/sparseModels.pdf][Sparse Model Matrices (PDF)]]
+  - その他
+- Blog
+  - [[http://tomoshige-n.hatenablog.com/entry/2014/08/05/051019][疎な行列をRで扱う -R tips-@Data Science by R and Python]]

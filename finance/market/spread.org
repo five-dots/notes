@@ -1,0 +1,94 @@
+#+STARTUP: showall indent
+
+* Spread の魅力
+- マーケットの変動に影響を受けない = Lower risk
+	-> 証拠金が少なくて済む = Attractive margin rate
+- スプレッドの変動は読みやすい = Increased predictability
+
+** Spread contract
+= Combos or Combinations
+
+「マンガサヤ取り入門」の定義
+- 異銘柄間のサヤ取り = ストラドル
+- 異限月間のサヤ取り = スプレッド
+- 同じ銘柄の異市場間のサヤ取り = アービトラージ
+
+- Risk の度合い
+  Intra-Market < Inter-Exchange < Inter-Commodity
+
+** 値動きに正の相関があるペア (= Legs) を利用 
+= Inter-Commodity Spread
+
+Crack Spread: CL vs. RB, NG, HO
+Spark Spread: NG vs. Electricity
+Crush Spread: Soybean vs. its product (Soy meal or soy oil)
+Other Spread: Brent vs. WTI, London Sugar vs. NY Sugar
+Option Spread: 同じ Underlying で違う Option Contract
+IRS (Interest Rate Swap) Spread: 
+
+- 一般的なスプレッドはそれ自身が取引所で取引されている (ISE Spread)
+  - 一方が約定したが、もう一方はできないなどのリスクを軽減
+- リスクが少ないために、必要証拠金も小さい
+
+** 相関係数
+- 相関係数 = Corrleation Coefficient = r
+- 2 つの連続変数間の線形関係を示す
+- 相関 = 因果関係ではない
+- 一般的に相関係数といえば、ピアソン相関を言う
+	- 他には、スピアマン順位相関などがある
+- R スクエア = R 相関係数の２乗 = 決定係数と呼ばれる
+- %で表し、一方の変数の動きを「%分だけ説明する」働き
+	- r = 0.7 の場合は、0.49(49%) の割合で説明する
+
+** 同一先物の限月違い
+= Intra-Commodity Spread = Calendar Spread
+
+- 期近よりも期先の値段が高い = 順ザヤ = コンタンゴ
+- 期先よりも期近の値段が高い = 逆ザヤ = バックワーデーション
+
+- 保管コスト( = Cost of carry) が掛かる商品はそのコストが上乗せされるため、
+　期先の値段が高い ( = コンタンゴ ) ことが普通
+- 突発的な理由で期近の値段が上がると、バックワーデーション (異常な状態)になる
+- 株価指数先物などでは、コストオブキャリーは発生しない
+
+** FX のスワップアービ
+
+** Intra-Commodity Spreads
+- カレンダースプレッドに影響する要因
+	- Cost of Carry
+		1. Storage and insurance cost
+		2. Real and anticipated interest rate (Financing cost)
+	- Supply and demand
+	
+** Livestocks Futures Spreads
+- スプレッドが需要と供給で決まる唯一の先物
+- 他の先物のように保管できない => 大きく育ったら売るしかない!
+- 金利水準・価格・天候・穀物価格などにより、
+  ブリーディング用になるか販売されるか決定される
+- Plain(平原) -> Feedlot(肥育場) (USDA のレポートで推移を確認可能)
+	
+- Live Cattle = 牛 (= Fat Cattle)
+	- 1,050 - 1,500 lbs
+	- Steer   = 去勢雄牛 = 食肉
+	- Heifers = 未出産の雌牛
+	- Cow     = 出産可能な雌牛
+	- Bull    = 種付け用の雄牛
+
+- Feeder Cattle
+  - 650 - 849 lbs
+- Lean Hog = 豚
+
+** 銘柄の選び方
+- 鞘の収縮幅が大きい
+- 鞘に周期性がある
+- 出来高が大きい
+
+** Exchange
+One Chicago (SSF: Single Stock Future を提供 = 個別株先物？) Held by IB, CBOE and CME
+
+** Terms
+EFPs = Exchange of Futures for Physicals (場外取引の一種)
+
+** 手数料
+- 基本的に倍以上掛かる
+- 売買手数料、貸株料、逆日歩 (= 株の場合)

@@ -1,0 +1,41 @@
+#+STARTUP: showall indent
+
+* Application list
+
+- Acrobat
+- AutoHotKey
+- Changekey
+- Color picker
+- Dropbox
+- Enpass
+- Evernote
+- Everything
+- Google Drive
+- Kindle
+- Launchy
+- Lhaplus
+- MS Office
+- noMeiryoUI
+- Printer Driver
+- putty
+- ScanSnap Driver
+- WinSCP
+- WSL
+- Gvim Kaoriya | Neovim-qt
+
+* Trading application list
+
+- IQFeed client
+- Multicharts.NET
+- Ninjatrader
+- TWS (Latest, Offline, API and Gateway)
+  
+
+* Visual Studio Extensions
+
+- vsvim
+- Markdown editor
+- Code Alignment
+- github
+- RTVS
+- CommentPlus

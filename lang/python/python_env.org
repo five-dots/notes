@@ -1,0 +1,2693 @@
+#+STARTUP: folded indent
+
+* 処理系・インタプリタ
+** list
+
+- Python
+  - オリジナルの python 実装
+  - CPython とも呼ばれる
+
+- anaconda/miniconda
+
+- stackless
+  - C 言語のコールスタックに依存しない実装
+
+- pypy
+  - Python (RPython) で実装された Python 処理系
+  - JIT コンパイル機能 (実行時にコンパイル実行)
+  - C 言語で書かれたライブラリは一部利用できない
+    - numpy など個別に対応済みのものもある
+
+- pyston
+  - Dropbox が開発した python
+  - LLVM JIT
+
+- Jython
+  - Java で書かれた python. JVM 上で動作する
+  - Java のライブラリが利用できる
+   
+- IronPython
+  - C# で書かれた python. .Net や mono で動く
+
+- activepython
+  - ActiveState 社が開発している python
+  - Windows などの複数プラットフォーム向けのパッケージング
+
+** pure python
+** ipython
+
+- 対話的な実行用に強化された REPL
+- jupyter というブランド名の中でコンソールで動作するもののみを ipython と呼ぶ
+
+** jupyter
+
+- jupyter notebook = ブラウザ上で動作する対話的環境
+- [[https://qiita.com/zono_0/items/49eb8605ef4d841b2c26][（備忘録）Ubuntu 18.04 LTS で Jupyter Notebook 環境構築]]
+
+#+begin_src shell
+sudo apt install jupyter-notebook
+sudo apt install jupyter-client
+
+pip install jupyter-contrib-nbextensions
+pip install jupyter-nbextensions-configurator
+
+jupyter contrib nbextension install --user
+jupyter nbextensions_configurator enable --user
+#+end_src
+
+** mypy
+
+- python 3.5 から対応のアノテーション機能を利用した静的構文解析
+- 型チェックを行なう
+
+* Libraries and Search Path
+** Ubuntu + apt
+
+- =/usr/lib/python3/dist-packages/pandas= の形式
+
+#+begin_src shell
+ls /usr/lib/python3/dist-packages
+#+end_src
+
+#+RESULTS:
+| apport                                              |
+| apport_python_hook.py                               |
+| apt                                                 |
+| aptdaemon                                           |
+| apt_inst.cpython-36m-x86_64-linux-gnu.so            |
+| apt_inst.pyi                                        |
+| apt_pkg.cpython-36m-x86_64-linux-gnu.so             |
+| apt_pkg.pyi                                         |
+| aptsources                                          |
+| AptUrl                                              |
+| apturl-0.5.2.egg-info                               |
+| asn1crypto                                          |
+| asn1crypto-0.24.0.egg-info                          |
+| atomicwrites                                        |
+| atomicwrites-1.1.5.egg-info                         |
+| attr                                                |
+| attrs-17.4.0.egg-info                               |
+| beautifulsoup4-4.6.0.egg-info                       |
+| bleach                                              |
+| bleach-2.1.2.egg-info                               |
+| Brlapi-0.6.6.egg-info                               |
+| brlapi.cpython-36m-x86_64-linux-gnu.so              |
+| bs4                                                 |
+| cairo                                               |
+| certifi                                             |
+| certifi-2018.1.18.egg-info                          |
+| _cffi_backend.cpython-36m-x86_64-linux-gnu.so       |
+| chardet                                             |
+| chardet-3.0.4.egg-info                              |
+| CommandNotFound                                     |
+| command_not_found-0.3.egg-info                      |
+| Crypto                                              |
+| cryptography                                        |
+| cryptography-2.1.4.egg-info                         |
+| cups.cpython-36m-x86_64-linux-gnu.so                |
+| cupsext.cpython-36m-x86_64-linux-gnu.so             |
+| cupshelpers                                         |
+| cupshelpers-1.0.egg-info                            |
+| cycler-0.10.0.egg-info                              |
+| cycler.py                                           |
+| dateutil                                            |
+| dbus                                                |
+| _dbus_bindings.cpython-36m-x86_64-linux-gnu.so      |
+| _dbus_glib_bindings.cpython-36m-x86_64-linux-gnu.so |
+| deb822.py                                           |
+| debconf.py                                          |
+| debian                                              |
+| debian_bundle                                       |
+| decorator-4.1.2.egg-info                            |
+| decorator.py                                        |
+| defer                                               |
+| defer-1.0.6.egg-info                                |
+| distro_info-0.18ubuntu0.18.04.1.egg-info            |
+| distro_info.py                                      |
+| distro_info_test                                    |
+| DistUpgrade                                         |
+| easy_install.py                                     |
+| entrypoints.egg-info                                |
+| entrypoints.py                                      |
+| gi                                                  |
+| google                                              |
+| greenlet-0.4.12.egg-info                            |
+| greenlet.cpython-36m-x86_64-linux-gnu.so            |
+| gtweak                                              |
+| hpmudext.cpython-36m-x86_64-linux-gnu.so            |
+| html5lib                                            |
+| html5lib-0.999999999.egg-info                       |
+| httplib2                                            |
+| httplib2-0.9.2.egg-info                             |
+| HweSupportStatus                                    |
+| idna                                                |
+| idna-2.6.egg-info                                   |
+| ipykernel                                           |
+| ipykernel-4.8.2.egg-info                            |
+| ipykernel_launcher.py                               |
+| IPython                                             |
+| ipython-5.5.0.egg-info                              |
+| ipython_genutils                                    |
+| ipython_genutils-0.2.0.egg-info                     |
+| ipywidgets                                          |
+| ipywidgets-6.0.0.egg-info                           |
+| janitor                                             |
+| jinja2                                              |
+| Jinja2-2.10.egg-info                                |
+| joblib                                              |
+| joblib-0.11.egg-info                                |
+| jsonschema                                          |
+| jsonschema-2.6.0.egg-info                           |
+| jupyter_client                                      |
+| jupyter_client-5.2.2.egg-info                       |
+| jupyter_core                                        |
+| jupyter_core-4.4.0.egg-info                         |
+| jupyter.py                                          |
+| keyring                                             |
+| keyring-10.6.0.egg-info                             |
+| keyrings                                            |
+| keyrings.alt-3.0.egg-info                           |
+| LanguageSelector                                    |
+| language_selector-0.1.egg-info                      |
+| language_support_pkgs.py                            |
+| launchpadlib                                        |
+| launchpadlib-1.10.6.egg-info                        |
+| lazr                                                |
+| lazr.restfulclient-0.13.5.egg-info                  |
+| lazr.uri-1.0.3.egg-info                             |
+| louis                                               |
+| louis-3.5.0.egg-info                                |
+| lsb_release.py                                      |
+| lxml                                                |
+| lxml-4.2.1.egg-info                                 |
+| macaroonbakery                                      |
+| macaroonbakery-1.1.3.egg-info                       |
+| mako                                                |
+| Mako-1.0.7.egg-info                                 |
+| markupsafe                                          |
+| MarkupSafe-1.0.egg-info                             |
+| matplotlib                                          |
+| matplotlib-2.1.1.egg-info                           |
+| matplotlib-2.1.1-nspkg.pth                          |
+| mistune-0.8.3.egg-info                              |
+| mistune.py                                          |
+| more_itertools                                      |
+| more_itertools-4.2.0.egg-info                       |
+| mpl_toolkits                                        |
+| msgpack                                             |
+| msgpack-0.5.6.egg-info                              |
+| nacl                                                |
+| nbconvert                                           |
+| nbconvert-5.3.1.egg-info                            |
+| nbformat                                            |
+| nbformat-4.4.0.egg-info                             |
+| neovim                                              |
+| neovim-0.2.6.egg-info                               |
+| netifaces-0.10.4.egg-info                           |
+| netifaces.cpython-36m-x86_64-linux-gnu.so           |
+| nose                                                |
+| nose-1.3.7.egg-info                                 |
+| nose.egg-info                                       |
+| notebook                                            |
+| notebook-5.2.2.egg-info                             |
+| numexpr                                             |
+| numexpr-2.6.4.egg-info                              |
+| numpy                                               |
+| numpy-1.13.3.egg-info                               |
+| NvidiaDetector                                      |
+| oauth                                               |
+| oauth-1.0.1.egg-info                                |
+| olefile                                             |
+| olefile-0.45.1.egg-info                             |
+| orca                                                |
+| pandas                                              |
+| pandas-0.22.0.egg-info                              |
+| pandocfilters-1.4.2.egg-info                        |
+| pandocfilters.py                                    |
+| pcardext.cpython-36m-x86_64-linux-gnu.so            |
+| pexpect                                             |
+| pexpect-4.2.1.egg-info                              |
+| pickleshare-0.7.4.egg-info                          |
+| pickleshare.py                                      |
+| PIL                                                 |
+| Pillow-5.1.0.egg-info                               |
+| pip                                                 |
+| pip-9.0.1.egg-info                                  |
+| pkg_resources                                       |
+| pluggy                                              |
+| pluggy-0.6.0.egg-info                               |
+| problem_report.py                                   |
+| prompt_toolkit                                      |
+| prompt_toolkit-1.0.15.egg-info                      |
+| protobuf-3.0.0.egg-info                             |
+| ptyprocess                                          |
+| py                                                  |
+| py-1.5.2.egg-info                                   |
+| pyatspi                                             |
+| __pycache__                                           |
+| pycairo-1.16.2.egg-info                             |
+| pycrypto-2.6.1.egg-info                             |
+| pycups-1.9.73.egg-info                              |
+| pygments                                            |
+| Pygments-2.2.0.egg-info                             |
+| pygobject-3.26.1.egg-info                           |
+| pygtkcompat                                         |
+| pylab.py                                            |
+| pymacaroons                                         |
+| pymacaroons-0.13.0.egg-info                         |
+| PyNaCl-1.1.2.egg-info                               |
+| pyparsing-2.2.0.egg-info                            |
+| pyparsing.py                                        |
+| pyrfc3339                                           |
+| pyRFC3339-1.0.egg-info                              |
+| _pytest                                             |
+| pytest-3.6.4.egg-info                               |
+| pytest.py                                           |
+| python_apt-1.6.5_ubuntu0.2.egg-info                 |
+| python_dateutil-2.6.1.egg-info                      |
+| python_debian-0.1.32.egg-info                       |
+| python_xlib-0.20.egg-info                           |
+| pytz                                                |
+| pytz-2018.3.egg-info                                |
+| pyxattr-0.6.0.egg-info                              |
+| pyxdg-0.25.egg-info                                 |
+| PyYAML-3.12.egg-info                                |
+| pyzmq-16.0.2.egg-info                               |
+| Quirks                                              |
+| README.txt                                          |
+| reportlab                                           |
+| reportlab-3.4.0.egg-info                            |
+| requests                                            |
+| requests-2.18.4.egg-info                            |
+| requests_unixsocket                                 |
+| requests_unixsocket-0.1.5.egg-info                  |
+| scanext.cpython-36m-x86_64-linux-gnu.so             |
+| scikit_learn-0.19.1.egg-info                        |
+| scipy                                               |
+| scipy-0.19.1.egg-info                               |
+| ScreenResolution                                    |
+| screen_resolution_extra-0.0.0.egg-info              |
+| secretstorage                                       |
+| SecretStorage-2.3.1.egg-info                        |
+| setuptools                                          |
+| setuptools-39.0.1.egg-info                          |
+| simplegeneric-0.8.1.egg-info                        |
+| simplegeneric.py                                    |
+| simplejson                                          |
+| simplejson-3.13.2.egg-info                          |
+| six-1.11.0.egg-info                                 |
+| six.py                                              |
+| sklearn                                             |
+| softwareproperties                                  |
+| speechd                                             |
+| speechd_config                                      |
+| ssh_import_id                                       |
+| ssh_import_id-5.7.egg-info                          |
+| systemd                                             |
+| systemd_python-234.egg-info                         |
+| system_service-0.3.egg-info                         |
+| tables                                              |
+| tables-3.4.2.egg-info                               |
+| terminado                                           |
+| terminado-0.7.egg-info                              |
+| testpath                                            |
+| testpath-0.3.1.egg-info                             |
+| tornado                                             |
+| tornado-4.5.3.egg-info                              |
+| traitlets                                           |
+| traitlets-4.3.2.egg-info                            |
+| UbuntuDrivers                                       |
+| ubuntu_drivers_common-0.0.0.egg-info                |
+| UbuntuSystemService                                 |
+| ufw                                                 |
+| ufw-0.36.egg-info                                   |
+| unattended_upgrades-0.1.egg-info                    |
+| unohelper.py                                        |
+| uno.py                                              |
+| UpdateManager                                       |
+| urllib3                                             |
+| urllib3-1.22.egg-info                               |
+| usbcreator                                          |
+| usb_creator-0.3.3.egg-info                          |
+| wadllib                                             |
+| wadllib-1.3.2.egg-info                              |
+| wcwidth                                             |
+| wcwidth-0.1.7.egg-info                              |
+| webencodings                                        |
+| webencodings-0.5.egg-info                           |
+| wheel                                               |
+| wheel-0.30.0.egg-info                               |
+| xattr.cpython-36m-x86_64-linux-gnu.so               |
+| xdg                                                 |
+| xkit                                                |
+| xkit-0.0.0.egg-info                                 |
+| Xlib                                                |
+| yaml                                                |
+| _yaml.cpython-36m-x86_64-linux-gnu.so               |
+| youtube_dl                                          |
+| youtube_dl-2018.03.14.egg-info                      |
+| zmq                                                 |
+| zope                                                |
+| zope.interface-4.3.2.egg-info                       |
+| zope.interface-4.3.2-nspkg.pth                      |
+
+** pip
+
+- pip = "Pip Installs Package/Python"
+- =pip install --user numpy= で user install すると以下のディレクトリに配置される
+    =~/.local/lib/python3.6/site-packages=
+- =anyenv=, =pyenv= を利用している場合は =PYENV_ROOT= 以下にインストールされる
+
+- 以下のコマンドでインストール先などの情報を入手可能
+#+begin_src shell :results list
+pip3 show numpy
+#+end_src
+
+#+RESULTS:
+
+- 全てをリストアップする
+#+begin_src shell
+ls ~/.local/lib/python3.6/site-packages
+#+end_src
+
+#+RESULTS:
+| absl                                                       |
+| absl_py-0.8.0.dist-info                                    |
+| absl_py-0.9.0.dist-info                                    |
+| appdirs-1.4.3.dist-info                                    |
+| appdirs.py                                                 |
+| astor                                                      |
+| astor-0.8.0.dist-info                                      |
+| astor-0.8.1.dist-info                                      |
+| astroid                                                    |
+| astroid-2.2.5.dist-info                                    |
+| atomicwrites                                               |
+| atomicwrites-1.3.0.dist-info                               |
+| attr                                                       |
+| attrs-19.1.0.dist-info                                     |
+| autoflake-1.3.1.dist-info                                  |
+| autoflake.py                                               |
+| autopep8-1.4.4.dist-info                                   |
+| autopep8.py                                                |
+| babel                                                      |
+| Babel-2.8.0.dist-info                                      |
+| backcall                                                   |
+| backcall-0.1.0.dist-info                                   |
+| bashate                                                    |
+| bashate-2.0.0.dist-info                                    |
+| black-19.3b0.dist-info                                     |
+| blackd.py                                                  |
+| black.py                                                   |
+| bleach                                                     |
+| bleach-3.1.0.dist-info                                     |
+| blib2to3                                                   |
+| cachetools                                                 |
+| cachetools-4.0.0.dist-info                                 |
+| certifi                                                    |
+| certifi-2019.11.28.dist-info                               |
+| certifi-2020.4.5.1.dist-info                               |
+| chainer                                                    |
+| chainer-6.3.0.dist-info                                    |
+| chainermn                                                  |
+| chainerx                                                   |
+| chardet                                                    |
+| chardet-3.0.4.dist-info                                    |
+| click                                                      |
+| Click-7.0.dist-info                                        |
+| clonevirtualenv.py                                         |
+| cv2                                                        |
+| dateutil                                                   |
+| decorator-4.4.0.dist-info                                  |
+| decorator.py                                               |
+| defusedxml                                                 |
+| defusedxml-0.6.0.dist-info                                 |
+| distlib                                                    |
+| distlib-0.3.0.dist-info                                    |
+| easy_install.py                                            |
+| entrypoints-0.3.dist-info                                  |
+| entrypoints.py                                             |
+| enum                                                       |
+| enum34-1.1.6.dist-info                                     |
+| epc                                                        |
+| epc-0.0.5.dist-info                                        |
+| eventkit                                                   |
+| eventkit-0.8.5.dist-info                                   |
+| filelock-3.0.12.dist-info                                  |
+| filelock.py                                                |
+| flake8                                                     |
+| flake8-3.7.8.dist-info                                     |
+| future                                                     |
+| future-0.17.1.dist-info                                    |
+| gast                                                       |
+| gast-0.3.1.dist-info                                       |
+| gast-0.3.3.dist-info                                       |
+| google                                                     |
+| google_auth-1.11.2.dist-info                               |
+| google_auth-1.11.2-py3.8-nspkg.pth                         |
+| google_auth_oauthlib                                       |
+| google_auth_oauthlib-0.4.1.dist-info                       |
+| google_pasta-0.1.7.dist-info                               |
+| google_pasta-0.1.8.dist-info                               |
+| grpc                                                       |
+| grpcio-1.23.0.dist-info                                    |
+| grpcio-1.27.2.dist-info                                    |
+| h5py                                                       |
+| h5py-2.10.0.dist-info                                      |
+| ib_insync                                                  |
+| ib_insync-0.9.56.dist-info                                 |
+| idna                                                       |
+| idna-2.8.dist-info                                         |
+| idna-2.9.dist-info                                         |
+| importlib_metadata                                         |
+| importlib_metadata-0.23.dist-info                          |
+| importlib_metadata-1.6.0.dist-info                         |
+| importlib_resources                                        |
+| importlib_resources-1.4.0.dist-info                        |
+| importmagic                                                |
+| importmagic-0.1.7.dist-info                                |
+| ipykernel                                                  |
+| ipykernel-5.1.2.dist-info                                  |
+| ipykernel_launcher.py                                      |
+| IPython                                                    |
+| ipython-7.8.0.dist-info                                    |
+| ipython_genutils                                           |
+| ipython_genutils-0.2.0.dist-info                           |
+| ipywidgets                                                 |
+| ipywidgets-7.5.1.dist-info                                 |
+| isort                                                      |
+| isort-4.3.21.dist-info                                     |
+| jedi                                                       |
+| jedi-0.14.1.dist-info                                      |
+| jinja2                                                     |
+| Jinja2-2.10.1.dist-info                                    |
+| joblib                                                     |
+| joblib-0.13.2.dist-info                                    |
+| joblib-0.14.1.dist-info                                    |
+| jsonschema                                                 |
+| jsonschema-3.0.2.dist-info                                 |
+| jupyter-1.0.0.dist-info                                    |
+| jupyter_client                                             |
+| jupyter_client-5.3.1.dist-info                             |
+| jupyter_console                                            |
+| jupyter_console-6.0.0.dist-info                            |
+| jupyter_contrib_core                                       |
+| jupyter_contrib_core-0.3.3.dist-info                       |
+| jupyter_contrib_nbextensions                               |
+| jupyter_contrib_nbextensions-0.5.1.dist-info               |
+| jupyter_core                                               |
+| jupyter_core-4.5.0.dist-info                               |
+| jupyter_highlight_selected_word                            |
+| jupyter_highlight_selected_word-0.2.0.dist-info            |
+| jupyter_latex_envs-1.4.6.dist-info                         |
+| jupyter_nbextensions_configurator                          |
+| jupyter_nbextensions_configurator-0.4.1.dist-info          |
+| jupyter.py                                                 |
+| kaggle                                                     |
+| kaggle-1.5.6.dist-info                                     |
+| keras_applications                                         |
+| Keras_Applications-1.0.8.dist-info                         |
+| keras_preprocessing                                        |
+| Keras_Preprocessing-1.1.0.dist-info                        |
+| latex_envs                                                 |
+| lazy_object_proxy                                          |
+| lazy_object_proxy-1.4.2.dist-info                          |
+| libfuturize                                                |
+| libpasteurize                                              |
+| lxml                                                       |
+| lxml-4.4.1.dist-info                                       |
+| markdown                                                   |
+| Markdown-3.1.1.dist-info                                   |
+| Markdown-3.2.1.dist-info                                   |
+| markupsafe                                                 |
+| MarkupSafe-1.1.1.dist-info                                 |
+| mccabe-0.6.1.dist-info                                     |
+| mccabe.py                                                  |
+| mistune-0.8.4.dist-info                                    |
+| mistune.py                                                 |
+| more_itertools                                             |
+| more_itertools-7.2.0.dist-info                             |
+| mypy                                                       |
+| mypy-0.720.dist-info                                       |
+| mypyc_00e854439a9278632958.cpython-36m-x86_64-linux-gnu.so |
+| mypy_extensions-0.4.1.dist-info                            |
+| mypy_extensions.py                                         |
+| nbconvert                                                  |
+| nbconvert-5.6.0.dist-info                                  |
+| nbformat                                                   |
+| nbformat-4.4.0.dist-info                                   |
+| nest_asyncio-1.2.0.dist-info                               |
+| nest_asyncio.py                                            |
+| nose                                                       |
+| nose-1.3.7.dist-info                                       |
+| notebook                                                   |
+| notebook-6.0.1.dist-info                                   |
+| numpy                                                      |
+| numpy-1.17.2.dist-info                                     |
+| numpy-1.18.1.dist-info                                     |
+| oauthlib                                                   |
+| oauthlib-3.1.0.dist-info                                   |
+| opencv_python-4.1.1.26.dist-info                           |
+| packaging                                                  |
+| packaging-19.1.dist-info                                   |
+| pandas                                                     |
+| pandas-0.25.1.dist-info                                    |
+| pandas_ml                                                  |
+| pandas_ml-0.6.1.dist-info                                  |
+| pandocfilters-1.4.2.dist-info                              |
+| pandocfilters.py                                           |
+| parso                                                      |
+| parso-0.5.1.dist-info                                      |
+| past                                                       |
+| pasta                                                      |
+| pbr                                                        |
+| pbr-5.4.5.dist-info                                        |
+| pexpect                                                    |
+| pexpect-4.7.0.dist-info                                    |
+| pickleshare-0.7.5.dist-info                                |
+| pickleshare.py                                             |
+| pip                                                        |
+| pip-20.0.2.dist-info                                       |
+| pipenv                                                     |
+| pipenv-2018.11.26.dist-info                                |
+| pkg_resources                                              |
+| pluggy                                                     |
+| pluggy-0.13.0.dist-info                                    |
+| prometheus_client                                          |
+| prometheus_client-0.7.1.dist-info                          |
+| prompt_toolkit                                             |
+| prompt_toolkit-2.0.9.dist-info                             |
+| protobuf-3.11.3.dist-info                                  |
+| protobuf-3.11.3-py3.6-nspkg.pth                            |
+| protobuf-3.7.1.dist-info                                   |
+| protobuf-3.7.1-py3.6-nspkg.pth                             |
+| ptvsd                                                      |
+| ptvsd-4.3.2.dist-info                                      |
+| ptyprocess                                                 |
+| ptyprocess-0.6.0.dist-info                                 |
+| pvectorc.cpython-36m-x86_64-linux-gnu.so                   |
+| py                                                         |
+| py-1.8.0.dist-info                                         |
+| pyasn1                                                     |
+| pyasn1-0.4.8.dist-info                                     |
+| pyasn1_modules                                             |
+| pyasn1_modules-0.2.8.dist-info                             |
+| __pycache__                                                  |
+| pycodestyle-2.5.0.dist-info                                |
+| pycodestyle.py                                             |
+| pydocstyle                                                 |
+| pydocstyle-4.0.1.dist-info                                 |
+| pyflakes                                                   |
+| pyflakes-2.1.1.dist-info                                   |
+| pygments                                                   |
+| Pygments-2.4.2.dist-info                                   |
+| pylint                                                     |
+| pylint-2.3.1.dist-info                                     |
+| pyls                                                       |
+| pyls_black                                                 |
+| pyls_black-0.4.4.dist-info                                 |
+| pyls_isort                                                 |
+| pyls_isort-0.1.1.dist-info                                 |
+| pyls_jsonrpc                                               |
+| pyls_mypy                                                  |
+| pyls_mypy-0.1.6.dist-info                                  |
+| pyparsing-2.4.2.dist-info                                  |
+| pyparsing.py                                               |
+| pyrsistent                                                 |
+| pyrsistent-0.15.4.dist-info                                |
+| _pyrsistent_version.py                                     |
+| _pytest                                                    |
+| pytest-5.1.2.dist-info                                     |
+| pytest.py                                                  |
+| python_dateutil-2.8.0.dist-info                            |
+| python_dateutil-2.8.1.dist-info                            |
+| python_jsonrpc_server-0.2.0.dist-info                      |
+| python_language_server-0.28.3.dist-info                    |
+| python_slugify-4.0.0.dist-info                             |
+| pytz                                                       |
+| pytz-2019.2.dist-info                                      |
+| pytz-2019.3.dist-info                                      |
+| PyYAML-5.1.2.dist-info                                     |
+| pyzmq-18.1.0.dist-info                                     |
+| qtconsole                                                  |
+| qtconsole-4.5.5.dist-info                                  |
+| requests                                                   |
+| requests-2.22.0.dist-info                                  |
+| requests-2.23.0.dist-info                                  |
+| requests_oauthlib                                          |
+| requests_oauthlib-1.3.0.dist-info                          |
+| rgf                                                        |
+| rgf_python-3.7.0.dist-info                                 |
+| rope                                                       |
+| rope-0.14.0.dist-info                                      |
+| rsa                                                        |
+| rsa-4.0.dist-info                                          |
+| scikit_learn-0.21.3.dist-info                              |
+| scikit_learn-0.22.1.dist-info                              |
+| scipy                                                      |
+| scipy-1.3.1.dist-info                                      |
+| scipy-1.4.1.dist-info                                      |
+| send2trash                                                 |
+| Send2Trash-1.5.0.dist-info                                 |
+| setuptools                                                 |
+| setuptools-41.2.0.dist-info                                |
+| setuptools-45.2.0.dist-info                                |
+| setuptools-46.1.3.dist-info                                |
+| sexpdata-0.0.3.dist-info                                   |
+| sexpdata.py                                                |
+| six-1.12.0.dist-info                                       |
+| six-1.13.0.dist-info                                       |
+| six-1.14.0.dist-info                                       |
+| six.py                                                     |
+| sklearn                                                    |
+| slugify                                                    |
+| snowballstemmer                                            |
+| snowballstemmer-1.9.1.dist-info                            |
+| tensorboard                                                |
+| tensorboard-1.14.0.dist-info                               |
+| tensorboard-2.1.0.dist-info                                |
+| tensorflow                                                 |
+| tensorflow-1.14.0.dist-info                                |
+| tensorflow_estimator                                       |
+| tensorflow_estimator-1.14.0.dist-info                      |
+| termcolor-1.1.0.dist-info                                  |
+| termcolor.py                                               |
+| terminado                                                  |
+| terminado-0.8.2.dist-info                                  |
+| testpath                                                   |
+| testpath-0.4.2.dist-info                                   |
+| tests                                                      |
+| text_unidecode                                             |
+| text_unidecode-1.3.dist-info                               |
+| toml                                                       |
+| toml-0.10.0.dist-info                                      |
+| toml.py                                                    |
+| tornado                                                    |
+| tornado-6.0.3.dist-info                                    |
+| tqdm                                                       |
+| tqdm-4.40.2.dist-info                                      |
+| traitlets                                                  |
+| traitlets-4.3.2.dist-info                                  |
+| typed_ast                                                  |
+| typed_ast-1.4.0.dist-info                                  |
+| typing-3.6.6.dist-info                                     |
+| typing_extensions-3.6.6.dist-info                          |
+| typing_extensions-3.7.4.dist-info                          |
+| typing_extensions.py                                       |
+| typing.py                                                  |
+| urllib3                                                    |
+| urllib3-1.24.3.dist-info                                   |
+| urllib3-1.25.8.dist-info                                   |
+| virtualenv                                                 |
+| virtualenv-20.0.18.dist-info                               |
+| virtualenv_clone-0.5.4.dist-info                           |
+| wcwidth                                                    |
+| wcwidth-0.1.7.dist-info                                    |
+| webencodings                                               |
+| webencodings-0.5.1.dist-info                               |
+| werkzeug                                                   |
+| Werkzeug-0.15.6.dist-info                                  |
+| Werkzeug-1.0.0.dist-info                                   |
+| wheel                                                      |
+| wheel-0.33.6.dist-info                                     |
+| wheel-0.34.2.dist-info                                     |
+| widgetsnbextension                                         |
+| widgetsnbextension-3.5.1.dist-info                         |
+| wrapt                                                      |
+| wrapt-1.11.2.dist-info                                     |
+| wrapt-1.12.0.dist-info                                     |
+| yaml                                                       |
+| yapf                                                       |
+| yapf-0.28.0.dist-info                                      |
+| yapftests                                                  |
+| zipp-0.6.0.dist-info                                       |
+| zipp-3.1.0.dist-info                                       |
+| zipp.py                                                    |
+| zmq                                                        |
+
+** [[Pipenv]]
+** search path
+
+- =sys.path= を先頭から探す
+- =''= はカレントディレクトリ
+  - カレントディレクトリに標準ライブラリと同じ名前のファイルがあるとそちらを読み込んでしまう
+- zip ファイルはパッケージをアーカイブとしてまとめたもの
+
+#+begin_src python :session :results output
+import sys
+import pprint
+pprint.pprint(sys.path)
+#+end_src
+
+#+RESULTS:
+: ['',
+:  '/usr/lib/python36.zip',
+:  '/usr/lib/python3.6',
+:  '/usr/lib/python3.6/lib-dynload',
+:  '/home/shun/.local/lib/python3.6/site-packages',
+:  '/usr/local/lib/python3.6/dist-packages',
+:  '/usr/lib/python3/dist-packages']
+
+- search path の追加方法
+  - =sys.path.append= で単純にリストへ追加する
+  - =PYTHON_PATH= 環境変数に追加する
+  - =.pth= ファイルを用意する
+
+* 環境構築
+** 概要
+
+- [[https://qiita.com/KRiver1/items/c1788e616b77a9bad4dd][pyenv、pyenv-virtualenv、venv、Anaconda、Pipenv。私はPipenvを使う。@Qiita]]
+  |------------------+----------------+--------------+----------------+----------|
+  |                  | バージョン管理 | 仮想環境管理 | パッケージ管理 |          |
+  |                  |      <c>       |     <c>      |      <c>       |          |
+  |------------------+----------------+--------------+----------------+----------|
+  | pyenv            |       ○        |              |                |          |
+  | virtualenv       |                |      ○       |     (pip)      |          |
+  | pip              |                |              |       ○        | Official |
+  | venv (pyvenv)    |                |      ○       |     (pip)      | Official |
+  | pyenv-virtualenv |       ○        |      ○       |     (pip)      |          |
+  | Anaconda         |       ○        |      ○       |       ○        |          |
+  | Pipenv           |                |      ○       |       ○        |          |
+  |------------------+----------------+--------------+----------------+----------|
+
+- keras でインストールされる環境 (reticulate 向け) は、virtualenv を利用
+
+- インストール先まとめ
+  |------------+--------------------------------------+---------------|
+  | pyenv      | =~/.anyenv/envs/pyenv/versions=        | anyenv を利用 |
+  | virtualenv | =~/.virtualenvs=                       |               |
+  | pip        | =~/.local/lib/python3.x/site-packages= |               |
+  | Pipenv     | =~.local/share/virtualenvs=            |               |
+  |------------+--------------------------------------+---------------|
+
+** インタプリタ管理
+*** pyenv
+**** Overview
+
+- https://github.com/pyenv/pyenv
+- Python 本体 (インタプリタ) のバージョン管理システム
+- 複数バージョンの Python の切り替え
+- Linux Package だと、Python2 系, Python3 系それぞれで 1 つのみ
+  しかインストールできない
+- Anaconda に対応
+
+_動作原理_
+- ~$PATH~ の先頭に ~PYENV/shims~ を挿入し、あらゆる Python 系コマンドへ割り込み
+- いま動かすべき Python インタプリタを探す
+- 受け取ったコマンド（例えば python main.py、pip3 install -r）を、
+  その探したインタプリタに投げる
+
+_インタプリタの探し方_ 
+- もし環境変数 ~PYTHON_VERSION~ が設定されていれば、そのバージョンに従う
+- そうでなければ、今のディレクトリから順に親ディレクトリを遡っていく
+  その途中で ~.python_version~ ファイルが見つかれば、そこに書かれているバージョンに従う
+- ルートまで遡っても見つからなければ、グローバルに設定されているバージョンに従う
+- こうすることで、今いるプロジェクトにとって最も適切な Python を起動することができる
+
+_Pyenv を用いる利点_
+- 状況に応じて適切な Python インタプリタを、 _手動で切り替えることなく_ 用いることができる
+- いろいろな Python インタプリタを、コマンド一発でインストール・アンインストールできる
+
+**** Install
+
+$ git clone https://github.com/pyenv/pyenv.git ~/.pyenv
+$ echo 'export PYENV_ROOT="$HOME/.pyenv"' >> ~/.profile
+$ echo 'export PATH="$PYENV_ROOT/bin:$PATH"' >> ~/.profile
+$ echo -e 'if command -v pyenv 1>/dev/null 2>&1; then\n  eval "$(pyenv init -)"\nfi' >> ~/.profile
+
+
+依存関係パッケージ
+$ sudo apt install libffi-dev
+$ sudo apt install tk-dev
+$ sudo apt install python3-tk
+
+**** Version
+
+#+begin_src shell :results output
+pyenv -v
+#+end_src
+
+#+RESULTS:
+: pyenv 1.2.13
+
+**** Help
+
+#+begin_src shell :results output
+pyenv -h
+#+end_src
+
+#+RESULTS:
+#+begin_example
+Usage: pyenv <command> [<args>]
+
+Some useful pyenv commands are:
+   commands    List all available pyenv commands
+   local       Set or show the local application-specific Python version
+   global      Set or show the global Python version
+   shell       Set or show the shell-specific Python version
+   install     Install a Python version using python-build
+   uninstall   Uninstall a specific Python version
+   rehash      Rehash pyenv shims (run this after installing executables)
+   version     Show the current Python version and its origin
+   versions    List all Python versions available to pyenv
+   which       Display the full path to an executable
+   whence      List all Python versions that contain the given executable
+
+See `pyenv help <command>' for information on a specific command.
+For full documentation, see: https://github.com/pyenv/pyenv#readme
+#+end_example
+
+**** Global
+
+#+begin_src shell :results output
+pyenv global
+#+end_src
+
+#+RESULTS:
+: system
+
+**** Local
+
+- ディレクトリ (プロジェクト) 毎に利用されるべきバージョンを指定する
+#+begin_src shell :results output
+pyenv local
+#+end_src
+
+#+RESULTS:
+
+**** All Interpreters
+
+#+begin_src shell :results output
+pyenv install -l
+#+end_src
+
+#+RESULTS:
+#+begin_example
+Available versions:
+  2.1.3
+  2.2.3
+  2.3.7
+  2.4.0
+  2.4.1
+  2.4.2
+  2.4.3
+  2.4.4
+  2.4.5
+  2.4.6
+  2.5.0
+  2.5.1
+  2.5.2
+  2.5.3
+  2.5.4
+  2.5.5
+  2.5.6
+  2.6.6
+  2.6.7
+  2.6.8
+  2.6.9
+  2.7.0
+  2.7-dev
+  2.7.1
+  2.7.2
+  2.7.3
+  2.7.4
+  2.7.5
+  2.7.6
+  2.7.7
+  2.7.8
+  2.7.9
+  2.7.10
+  2.7.11
+  2.7.12
+  2.7.13
+  2.7.14
+  2.7.15
+  2.7.16
+  3.0.1
+  3.1.0
+  3.1.1
+  3.1.2
+  3.1.3
+  3.1.4
+  3.1.5
+  3.2.0
+  3.2.1
+  3.2.2
+  3.2.3
+  3.2.4
+  3.2.5
+  3.2.6
+  3.3.0
+  3.3.1
+  3.3.2
+  3.3.3
+  3.3.4
+  3.3.5
+  3.3.6
+  3.3.7
+  3.4.0
+  3.4-dev
+  3.4.1
+  3.4.2
+  3.4.3
+  3.4.4
+  3.4.5
+  3.4.6
+  3.4.7
+  3.4.8
+  3.4.9
+  3.4.10
+  3.5.0
+  3.5-dev
+  3.5.1
+  3.5.2
+  3.5.3
+  3.5.4
+  3.5.5
+  3.5.6
+  3.5.7
+  3.6.0
+  3.6-dev
+  3.6.1
+  3.6.2
+  3.6.3
+  3.6.4
+  3.6.5
+  3.6.6
+  3.6.7
+  3.6.8
+  3.6.9
+  3.7.0
+  3.7-dev
+  3.7.1
+  3.7.2
+  3.7.3
+  3.7.4
+  3.8-dev
+  3.9-dev
+  activepython-2.7.14
+  activepython-3.5.4
+  activepython-3.6.0
+  anaconda-1.4.0
+  anaconda-1.5.0
+  anaconda-1.5.1
+  anaconda-1.6.0
+  anaconda-1.6.1
+  anaconda-1.7.0
+  anaconda-1.8.0
+  anaconda-1.9.0
+  anaconda-1.9.1
+  anaconda-1.9.2
+  anaconda-2.0.0
+  anaconda-2.0.1
+  anaconda-2.1.0
+  anaconda-2.2.0
+  anaconda-2.3.0
+  anaconda-2.4.0
+  anaconda-4.0.0
+  anaconda2-2.4.0
+  anaconda2-2.4.1
+  anaconda2-2.5.0
+  anaconda2-4.0.0
+  anaconda2-4.1.0
+  anaconda2-4.1.1
+  anaconda2-4.2.0
+  anaconda2-4.3.0
+  anaconda2-4.3.1
+  anaconda2-4.4.0
+  anaconda2-5.0.0
+  anaconda2-5.0.1
+  anaconda2-5.1.0
+  anaconda2-5.2.0
+  anaconda2-5.3.0
+  anaconda2-5.3.1
+  anaconda2-2018.12
+  anaconda2-2019.03
+  anaconda3-2.0.0
+  anaconda3-2.0.1
+  anaconda3-2.1.0
+  anaconda3-2.2.0
+  anaconda3-2.3.0
+  anaconda3-2.4.0
+  anaconda3-2.4.1
+  anaconda3-2.5.0
+  anaconda3-4.0.0
+  anaconda3-4.1.0
+  anaconda3-4.1.1
+  anaconda3-4.2.0
+  anaconda3-4.3.0
+  anaconda3-4.3.1
+  anaconda3-4.4.0
+  anaconda3-5.0.0
+  anaconda3-5.0.1
+  anaconda3-5.1.0
+  anaconda3-5.2.0
+  anaconda3-5.3.0
+  anaconda3-5.3.1
+  anaconda3-2018.12
+  anaconda3-2019.03
+  ironpython-dev
+  ironpython-2.7.4
+  ironpython-2.7.5
+  ironpython-2.7.6.3
+  ironpython-2.7.7
+  jython-dev
+  jython-2.5.0
+  jython-2.5-dev
+  jython-2.5.1
+  jython-2.5.2
+  jython-2.5.3
+  jython-2.5.4-rc1
+  jython-2.7.0
+  jython-2.7.1
+  micropython-dev
+  micropython-1.9.3
+  micropython-1.9.4
+  micropython-1.10
+  miniconda-latest
+  miniconda-2.2.2
+  miniconda-3.0.0
+  miniconda-3.0.4
+  miniconda-3.0.5
+  miniconda-3.3.0
+  miniconda-3.4.2
+  miniconda-3.7.0
+  miniconda-3.8.3
+  miniconda-3.9.1
+  miniconda-3.10.1
+  miniconda-3.16.0
+  miniconda-3.18.3
+  miniconda2-latest
+  miniconda2-3.18.3
+  miniconda2-3.19.0
+  miniconda2-4.0.5
+  miniconda2-4.1.11
+  miniconda2-4.3.14
+  miniconda2-4.3.21
+  miniconda2-4.3.27
+  miniconda2-4.3.30
+  miniconda3-latest
+  miniconda3-2.2.2
+  miniconda3-3.0.0
+  miniconda3-3.0.4
+  miniconda3-3.0.5
+  miniconda3-3.3.0
+  miniconda3-3.4.2
+  miniconda3-3.7.0
+  miniconda3-3.8.3
+  miniconda3-3.9.1
+  miniconda3-3.10.1
+  miniconda3-3.16.0
+  miniconda3-3.18.3
+  miniconda3-3.19.0
+  miniconda3-4.0.5
+  miniconda3-4.1.11
+  miniconda3-4.2.12
+  miniconda3-4.3.11
+  miniconda3-4.3.14
+  miniconda3-4.3.21
+  miniconda3-4.3.27
+  miniconda3-4.3.30
+  pypy-c-jit-latest
+  pypy-c-nojit-latest
+  pypy-dev
+  pypy-stm-2.3
+  pypy-stm-2.5.1
+  pypy-1.5-src
+  pypy-1.5
+  pypy-1.6
+  pypy-1.7
+  pypy-1.8
+  pypy-1.9
+  pypy-2.0-src
+  pypy-2.0
+  pypy-2.0.1-src
+  pypy-2.0.1
+  pypy-2.0.2-src
+  pypy-2.0.2
+  pypy-2.1-src
+  pypy-2.1
+  pypy-2.2-src
+  pypy-2.2
+  pypy-2.2.1-src
+  pypy-2.2.1
+  pypy-2.3-src
+  pypy-2.3
+  pypy-2.3.1-src
+  pypy-2.3.1
+  pypy-2.4.0-src
+  pypy-2.4.0
+  pypy-2.5.0-src
+  pypy-2.5.0
+  pypy-2.5.1-src
+  pypy-2.5.1
+  pypy-2.6.0-src
+  pypy-2.6.0
+  pypy-2.6.1-src
+  pypy-2.6.1
+  pypy-4.0.0-src
+  pypy-4.0.0
+  pypy-4.0.1-src
+  pypy-4.0.1
+  pypy-5.0.0-src
+  pypy-5.0.0
+  pypy-5.0.1-src
+  pypy-5.0.1
+  pypy-5.1-src
+  pypy-5.1
+  pypy-5.1.1-src
+  pypy-5.1.1
+  pypy-5.3-src
+  pypy-5.3
+  pypy-5.3.1-src
+  pypy-5.3.1
+  pypy-5.4-src
+  pypy-5.4
+  pypy-5.4.1-src
+  pypy-5.4.1
+  pypy-5.6.0-src
+  pypy-5.6.0
+  pypy-5.7.0-src
+  pypy-5.7.0
+  pypy-5.7.1-src
+  pypy-5.7.1
+  pypy2-5.3-src
+  pypy2-5.3
+  pypy2-5.3.1-src
+  pypy2-5.3.1
+  pypy2-5.4-src
+  pypy2-5.4
+  pypy2-5.4.1-src
+  pypy2-5.4.1
+  pypy2-5.6.0-src
+  pypy2-5.6.0
+  pypy2-5.7.0-src
+  pypy2-5.7.0
+  pypy2-5.7.1-src
+  pypy2-5.7.1
+  pypy2.7-5.8.0-src
+  pypy2.7-5.8.0
+  pypy2.7-5.9.0-src
+  pypy2.7-5.9.0
+  pypy2.7-5.10.0-src
+  pypy2.7-5.10.0
+  pypy2.7-6.0.0-src
+  pypy2.7-6.0.0
+  pypy2.7-7.0.0-src
+  pypy2.7-7.0.0
+  pypy2.7-7.1.0-src
+  pypy2.7-7.1.0
+  pypy2.7-7.1.1-src
+  pypy2.7-7.1.1
+  pypy3-dev
+  pypy3-2.3.1-src
+  pypy3-2.3.1
+  pypy3-2.4.0-src
+  pypy3-2.4.0
+  pypy3.3-5.2-alpha1-src
+  pypy3.3-5.2-alpha1
+  pypy3.3-5.5-alpha-src
+  pypy3.3-5.5-alpha
+  pypy3.5-c-jit-latest
+  pypy3.5-5.7-beta-src
+  pypy3.5-5.7-beta
+  pypy3.5-5.7.1-beta-src
+  pypy3.5-5.7.1-beta
+  pypy3.5-5.8.0-src
+  pypy3.5-5.8.0
+  pypy3.5-5.9.0-src
+  pypy3.5-5.9.0
+  pypy3.5-5.10.0-src
+  pypy3.5-5.10.0
+  pypy3.5-5.10.1-src
+  pypy3.5-5.10.1
+  pypy3.5-6.0.0-src
+  pypy3.5-6.0.0
+  pypy3.5-7.0.0-src
+  pypy3.5-7.0.0
+  pypy3.6-7.0.0-src
+  pypy3.6-7.0.0
+  pypy3.6-7.1.0-src
+  pypy3.6-7.1.0
+  pypy3.6-7.1.1-src
+  pypy3.6-7.1.1
+  pyston-0.5.1
+  pyston-0.6.0
+  pyston-0.6.1
+  stackless-dev
+  stackless-2.7-dev
+  stackless-2.7.2
+  stackless-2.7.3
+  stackless-2.7.4
+  stackless-2.7.5
+  stackless-2.7.6
+  stackless-2.7.7
+  stackless-2.7.8
+  stackless-2.7.9
+  stackless-2.7.10
+  stackless-2.7.11
+  stackless-2.7.12
+  stackless-2.7.14
+  stackless-3.2.2
+  stackless-3.2.5
+  stackless-3.3.5
+  stackless-3.3.7
+  stackless-3.4-dev
+  stackless-3.4.1
+  stackless-3.4.2
+  stackless-3.4.7
+  stackless-3.5.4
+#+end_example
+
+**** Install 
+
+#+begin_src shell
+pyenv install 2.7.16
+#+end_src
+
+#+begin_src shell :results output
+pyenv versions
+#+end_src
+
+#+RESULTS:
+: * system (set by /home/shun/.pyenv/version)
+:   2.7.16
+:   3.7.4
+
+**** Uninstall 
+
+#+begin_src shell
+pyenv uninstall 2.7.16
+#+end_src
+
+#+begin_src shell :results output
+pyenv versions
+#+end_src
+
+#+RESULTS:
+: * system (set by /home/shun/.pyenv/version)
+
+**** Switch Interpreters
+
+#+begin_src shell :results output
+pyenv global 2.7.16
+pyenv versions
+#+end_src
+
+#+RESULTS:
+:   system
+: * 2.7.16 (set by /home/shun/.pyenv/version)
+:   3.7.4
+
+- デフォルトに戻す
+#+begin_src shell :results output
+pyenv global system
+pyenv versions
+#+end_src
+
+#+RESULTS:
+: * system (set by /home/shun/.pyenv/version)
+:   2.7.16
+:   3.7.4
+
+**** Anaconda 仮想環境
+
+- インストール済みの Anaconda をベースに仮想環境を作成 
+#+begin_src shell
+pyenv global anaconda3-5.3.1
+
+conda create -n test1 python=3.7.4 opencv
+pyenv versions
+#+end_src
+
+- 仮想環境に切り替える
+#+begin_src shell
+pyenv global anaconda3-5.3.1/env/test1
+#+end_src
+
+- 仮想環境を削除
+#+begin_src shell
+pyenv uninstall anaconda3-5.3.1/env/test1
+#+end_src
+
+*** Anaconda
+
+- Continuum Analytics 社が提供するディストリビューション
+- Python 本体と ~conda~ パッケージマネージャーを提供
+- conda コマンドは、仮想環境の管理も可能
+- 科学技術計算向けのパッケージ・ツールを同梱
+- Python パッケージ以外のツールも同梱
+  - NVIDIA GPU の CUDA 環境など
+- Miniconda = Python 本体と conda のみで最小構成のディストリビューション
+
+** 仮想環境管理
+*** virtualenv
+
+- [[https://github.com/pypa/virtualenv][Github]]
+- =virtualenv= 自体を =pip= でインストール可能
+- Python インタプリタとパッケージ群を同時に切り替えられる仮想環境マネージャ
+- ~ENV/~ 以下に Python インタプリタ、インストールされたパッケージなどすべてを保存
+- ~source ENV/bin/activate~ を行うとその仮想環境のフォルダにパスが通る
+  (これ以上のことは何もしない)
+- 仮想環境の場所を探して activate しなければならないという面倒臭さはあるものの、
+  動作は単純明快であり、環境が分離されていることもわかりやすい
+- pyenv とは異なり、新しい Python をインストールしたりはできない
+- あくまでも ~$PATH~ を探して Python を見つけ、そのインタプリタをコピーするだけ
+
+_virtualenv を用いる利点_
+- Python インタプリタとパッケージの組み合わせを好きなだけ作り、分離することができる
+- それらを ~activate~ で切り替えることができる
+
+*** pyenv-virtualenv
+
+- pyenv のシステムに乗っかりつつ、virtualenv を用いることができるツール
+- pyenv とも virtualenv とも別物
+- pyenv と同様のインターフェースで virtualenv を用いることができる
+  しかも、pyenv のように、状況に応じて適切な仮想環境を、手動で切り替えることなく用いることができる
+- virtualenv で用いる Python に、pyenv でインストールした Python を用いることができる
+
+*** venv (旧 pyvenv)
+
+- Python 公式の仮想環境マネージャ
+- virtualenv と挙動はあまり変わらない
+  - virtualenv の機能が python3.3 から公式に取り込まれたもの
+
+- =python3 -m venv testvenv= で仮想環境を作成
+  - testvenv というディレクトリが作成される
+
+*** Pipenv
+
+- https://github.com/pypa/pipenv
+- virtualenv の仕事に加えて、 ~Pipfile~ という次世代のパッケージ管理システムを実装したツール
+- 仮想環境を作成するだけでなく、pip と同じようにパッケージ管理を行うことができる
+- pip とは異なり、「何が要求されたパッケージで、何が依存関係の解決に必要だったパッケージなのか」
+  を記録することができる。
+- パッケージ自体は =~/.local/share/virtualenvs= 以下にインストールされる
+
+- 新プロジェクト作成のステップ
+#+begin_src shell
+# 仮想環境作成
+pipenv install
+
+# 仮想環境に入る
+pipenv shell
+#+end_src
+
+** パッケージ管理
+*** pip (Python Package Index)
+**** Overview
+
+- Python 公式のパッケージ管理ツール
+- venv や pyenv-virtualenv など、多くの仮想環境ツールは pip を使って
+  パッケージをインストールすることを想定
+- pip でインストールしたパッケージは、 ~requirements.txt~ という形で共有することができる
+- ~requirements.txt~ には、必要に駆られてインストールしたパッケージのほか、
+  依存関係の解決に必要だったパッケージ、開発時に必要だった linter パッケージなどもすべて記述されている
+- 別の環境でそのプロジェクトを実行したければ、適当な仮想環境の下で
+  ~pip install -r requirements.txt~ とすれば、それらのパッケージが全てインストールされる
+
+**** pip -h
+
+#+begin_src sh :results output
+pip3 -h
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+Usage:   
+  pip <command> [options]
+
+Commands:
+  install                     Install packages.
+  download                    Download packages.
+  uninstall                   Uninstall packages.
+  freeze                      Output installed packages in requirements format.
+  list                        List installed packages.
+  show                        Show information about installed packages.
+  check                       Verify installed packages have compatible dependencies.
+  search                      Search PyPI for packages.
+  wheel                       Build wheels from your requirements.
+  hash                        Compute hashes of package archives.
+  completion                  A helper command used for command completion.
+  help                        Show help for commands.
+
+General Options:
+  -h, --help                  Show help.
+  --isolated                  Run pip in an isolated mode, ignoring
+                              environment variables and user configuration.
+  -v, --verbose               Give more output. Option is additive, and can be
+                              used up to 3 times.
+  -V, --version               Show version and exit.
+  -q, --quiet                 Give less output. Option is additive, and can be
+                              used up to 3 times (corresponding to WARNING,
+                              ERROR, and CRITICAL logging levels).
+  --log <path>                Path to a verbose appending log.
+  --proxy <proxy>             Specify a proxy in the form
+                              [user:passwd@]proxy.server:port.
+  --retries <retries>         Maximum number of retries each connection should
+                              attempt (default 5 times).
+  --timeout <sec>             Set the socket timeout (default 15 seconds).
+  --exists-action <action>    Default action when a path already exists:
+                              (s)witch, (i)gnore, (w)ipe, (b)ackup, (a)bort.
+  --trusted-host <hostname>   Mark this host as trusted, even though it does
+                              not have valid or any HTTPS.
+  --cert <path>               Path to alternate CA bundle.
+  --client-cert <path>        Path to SSL client certificate, a single file
+                              containing the private key and the certificate
+                              in PEM format.
+  --cache-dir <dir>           Store the cache data in <dir>.
+  --no-cache-dir              Disable the cache.
+  --disable-pip-version-check
+                              Don't periodically check PyPI to determine
+                              whether a new version of pip is available for
+                              download. Implied with --no-index.
+#+end_example
+
+**** pip -V
+
+#+begin_src sh
+pip3 -V
+#+end_src
+
+#+RESULTS:
+: pip 9.0.1 from /usr/lib/python3/dist-packages (python 3.6)
+
+#+begin_src sh
+pip -V
+#+end_src
+
+#+RESULTS:
+: pip 9.0.1 from /usr/lib/python2.7/dist-packages (python 2.7)
+
+**** pip list
+
+#+begin_src sh :results output
+pip3 list
+#+end_src
+
+#+RESULTS:
+#+begin_example
+apturl (0.5.2)
+asn1crypto (0.24.0)
+Brlapi (0.6.6)
+certifi (2018.1.18)
+chardet (3.0.4)
+command-not-found (0.3)
+cryptography (2.1.4)
+cupshelpers (1.0)
+defer (1.0.6)
+distro-info (0.18ubuntu0.18.04.1)
+evdev (1.2.0)
+greenlet (0.4.12)
+httplib2 (0.9.2)
+idna (2.6)
+inotify-simple (1.1.8)
+keyring (10.6.0)
+keyrings.alt (3.0)
+language-selector (0.1)
+launchpadlib (1.10.6)
+lazr.restfulclient (0.13.5)
+lazr.uri (1.0.3)
+louis (3.5.0)
+macaroonbakery (1.1.3)
+Mako (1.0.7)
+MarkupSafe (1.0)
+msgpack (0.5.6)
+neovim (0.2.6)
+netifaces (0.10.4)
+oauth (1.0.1)
+olefile (0.45.1)
+pexpect (4.2.1)
+Pillow (5.1.0)
+pip (9.0.1)
+protobuf (3.0.0)
+pycairo (1.16.2)
+pycrypto (2.6.1)
+pycups (1.9.73)
+pygobject (3.26.1)
+pymacaroons (0.13.0)
+PyNaCl (1.1.2)
+pyRFC3339 (1.0)
+python-apt (1.6.4)
+python-dateutil (2.6.1)
+python-debian (0.1.32)
+python-xlib (0.25)
+pytz (2018.3)
+pyxdg (0.25)
+PyYAML (3.12)
+reportlab (3.4.0)
+requests (2.18.4)
+requests-unixsocket (0.1.5)
+SecretStorage (2.3.1)
+setuptools (39.0.1)
+simplejson (3.13.2)
+six (1.11.0)
+system-service (0.3)
+systemd-python (234)
+ubuntu-drivers-common (0.0.0)
+ufw (0.36)
+unattended-upgrades (0.1)
+urllib3 (1.22)
+usb-creator (0.3.3)
+wadllib (1.3.2)
+wheel (0.30.0)
+xkeysnail (0.2.0)
+xkit (0.0.0)
+zope.interface (4.3.2)
+#+end_example
+
+**** pip show
+
+#+begin_src sh :results output
+pip3 show pip
+#+end_src
+
+#+RESULTS:
+: Name: pip
+: Version: 9.0.1
+: Summary: The PyPA recommended tool for installing Python packages.
+: Home-page: https://pip.pypa.io/
+: Author: The pip developers
+: Author-email: python-virtualenv@groups.google.com
+: License: MIT
+: Location: /usr/lib/python3/dist-packages
+: Requires: 
+
+**** pip search
+
+#+begin_src sh :results output
+pip3 search numpy
+#+end_src
+
+#+RESULTS:
+#+begin_example
+numpy (1.17.0)                         - NumPy is the fundamental package for array computing with Python.
+numpy-cloud (0.0.5)                    - Numpy in the cloud
+numpy-utils (0.1.5.1)                  - NumPy utilities.
+numpy-turtle (0.1)                     - Turtle graphics with NumPy
+numpy-sugar (1.5.0)                    - Missing NumPy functionalities
+root-numpy (4.8.0)                     - The interface between ROOT and NumPy
+msgpack-numpy (0.4.4.3)                - Numpy data serialization using msgpack
+numpy-quaternion (2019.7.23.15.26.49)  - Add built-in support for quaternions to numpy
+numpy-partition (1.18.9)               - SQL PARTITION BY and window functions for NumPy
+mapchete-numpy (0.1)                   - Mapchete NumPy read/write extension
+numpy-posit (1.15.2.0.0.1.dev2)        - posit (unum type III) integrated NumPy.
+numpy-aarch64 (1.16.4)                 - NumPy is the fundamental package for array computing with Python.
+intel-numpy (1.15.1)                   - NumPy optimized with Intel(R) MKL library
+numpy-mkl (1.10.2)                     - NumPy: array processing for numbers, strings, records, and objects.
+ccv-numpy (0.0.2)                      - Wrapper module for ccv using numpy arrays interface
+numpy-syncer (0.0.1)                   - Manage a Numpy data structure using Peewee-Sync
+django-numpy (1.0.1)                   - Application for Django projects that adds some utilities and integration tools with Numpy.
+BSON-NumPy (0.1)                       - Module for converting directly from BSON to NumPy ndarrays and vice versa
+dicom-numpy (0.2.0)                    - Extract image data into a 3D numpy array from a set of DICOM files.
+dl-with-numpy (0.0.3)                  - Simple deep learning with numpy
+numpy-html (0.0.4)                     - A simple table renderer for numpy arrays. Provides a rich display hook for use with Jupyter Lab / Notebook.
+numpy-indexed (0.3.5)                  - This package contains functionality for indexed operations on numpy ndarrays, providing efficient vectorized functionality such as grouping and set operations.
+numpy-image-widget (2019.1.6)          - An easy-to-use Jupyter widget for displaying images from Numpy data arrays
+django-numpy-json-encoder (0.1.3)      - Django JSON encoder with numpy support.
+faster-numpy (0.1.2)                   - 
+numpy-stl (2.10.1)                     - Library to make reading, writing and modifying both binary and ascii STL files easy.
+hypothesis-numpy (2.0.0)               - Adds support for generating datetime to Hypothesis
+deuces-numpy (0.5)                     - 
+numpy-groupies (0.9.9)                 - Optimised tools for group-indexing operations: aggregated sum and more.
+npplus (0.9.8)                         - Enhancements to Numpy
+o243kgmvs924mtvd034mg (0.01)           - NumPy Testing
+np (1.0.2)                             - np = numpy++: numpy with added convenience functionality
+jumpy (0.2.4)                          - Numpy and nd4j interop
+maskedarray (0.1)                      - NumPy Masked Array
+nparray (1.0.0)                        - Numpy Array Helpers
+oldnumeric (1.0.4)                     - The oldnumeric numpy package
+nptyping (0.2.0)                       - Type hints for Numpy
+match-arrays (0.0.1)                   - Matching of Numpy arrays
+vidsrc (2019.1.1)                      - Video Frameserver for Numpy
+numpyro (0.1.0)                        - Pyro PPL on Numpy
+ndarray (0.8)                          - Tools for numpy ndarray
+wrapnumpy3 (0.0.3)                     - Wrapper of Numpy in Python3.
+somber (2.0.1)                         - Self-Organizing Maps in Numpy
+zappy (0.2.0)                          - Distributed processing with NumPy and Zarr.
+sqlite3ndarray (0.3.2)                 - sqlite3 helpers for numpy ndarrays
+axarray (0.1.1)                        - numpy array with labeled axes
+wendelin.core (0.13)                   - Out-of-core NumPy arrays
+sampyl-mcmc (0.3)                      - MCMC Samplers in Python & Numpy
+gsn_numpy_util (0.1.0)                 - Toolbox for working with Numpy arrays.
+homog (0.1.14)                         - Utilities for Homogeneous Coordinates with Numpy
+npstreams (1.6)                        - Streaming operations on NumPy arrays
+sym2num (0.1.dev2)                     - Sympy to numpy code generator.
+blocked-matrix-utils (1.0.1)           - NumPy wrappers for blocked matrices
+dynarray (0.1.3)                       - Dynamically growable numpy arrays.
+PyUblas (2017.1)                       - Seamless Numpy-UBlas interoperability
+pygeos (0.3)                           - GEOS wrapped in numpy ufuncs
+pstar (0.1.9)                          - pstar: numpy for arbitrary data
+permanent (1.1.1)                      - Calculates the permanent of a Numpy matrix
+sompy (0.1.1)                          - Numpy based SOM Library
+spartan (0.06)                         - Distributed Numpy-like arrays.
+fastjet (0.0.3)                        - The interface between FastJet and NumPy
+npdoc (1.0.1)                          - In-notebook NumPy man pages
+numm (0.3)                             - numpy-based multimedia library
+gnuplotlib (0.30)                      - Gnuplot-based plotting for numpy
+multipolyfit (0.0.1)                   - Multivariate Polynomial fitting with NumPy
+nppretty (1.0.0)                       - Pretty printer for numpy arrays.
+numpythia (1.1.0)                      - The interface between PYTHIA and NumPy
+bohrium (0.11.0.post54)                - Bohrium Python/NumPy Backend
+ntype (0.0.1)                          - Type Handler using NumPy
+fastfunc (0.2.2)                       - Fast numpy ufunc operations
+pyjet (1.5.0)                          - The interface between FastJet and NumPy
+snuggs (1.4.6)                         - Snuggs are s-expressions for Numpy
+array_collections (0.1.9)              - A collection of numpy ndarray subclasses.
+pyache (0.1.0)                         - A simple numpy caching library
+opt-einsum (3.0.0)                     - Optimizing numpys einsum function
+arkouda (0.0.0)                        - A numpy replacement backed by Chapel
+fewerbytes (0.0.1)                     - Compression techniques for numpy arrays
+numpy_ringbuffer (0.2.1)               - Ring buffer implementation for numpy
+numphy (0.0.2)                         - Physics objects backed by NumPy and/or TensorFlow.
+zmqnumpy (0.1)                         - numpy array over zmq sockets
+pynetcdf (0.7)                         - Standalone Scientific.IO.NetCDF (2.4.11) built for NumPy
+npcb (0.0.1)                           - Copy NumPy arrays via the clipboard
+afnumpy (1.3)                          - A GPU-ready drop-in replacement for numpy
+ComStats (0.1.0)                       - Do combinatorial statistics on numpy ndarrays
+numpy_display (1.2.0)                  - Formats numpy matrices in an IPython Notebook
+nnlib (0.2)                            - numpy only neural network library
+xcy-Zscore (0.0.5)                     - A small tool of Zscore based on numpy
+marshmallow-numerical (0.0.2)          - Marshmallow Schema generator for pandas and numpy
+numpyx (0.3.1)                         - Utility functions for numpy, written in cython
+sortednp (0.2.1)                       - Merge and intersect sorted numpy arrays.
+numipulator (0.2.1)                    - Numpy-based image manipulation library.
+spacegrids (1.9)                       - numpy array with grids and associated operations
+ndf (0.1.4)                            - NumPy based deep learning framework
+multipletau (0.3.3)                    - A multiple-tau algorithm for Python/NumPy
+seabred (0.0.1)                        - Seaborn-like plots for numpy arrays
+numexpr (2.7.0)                        - Fast numerical expression evaluator for NumPy
+tensorfont (0.0.4)                     - Turn font glyphs into numpy arrays
+autograd (1.3)                         - Efficiently computes derivatives of numpy code.
+matplottery (1.0.6)                    - Nicer histograms with numpy and plotting with matplotlib
+geog (0.0.2)                           - Numpy-based vectorized geospatial functions
+#+end_example
+
+**** pip install
+
+- pip install --upgrade (-U) でアップグレードできる
+
+#+begin_src sh :results output
+pip3 install numpy
+#+end_src
+
+#+RESULTS:
+: Collecting numpy
+:   Downloading https://files.pythonhosted.org/packages/19/b9/bda9781f0a74b90ebd2e046fde1196182900bd4a8e1ea503d3ffebc50e7c/numpy-1.17.0-cp36-cp36m-manylinux1_x86_64.whl (20.4MB)
+: Installing collected packages: numpy
+: Successfully installed numpy-1.17.0
+
+- ~/.local/lib/python3.6/site-packages にインストールされる
+#+begin_src sh :results output
+pip3 show numpy
+#+end_src
+
+#+RESULTS:
+: Name: numpy
+: Version: 1.17.0
+: Summary: NumPy is the fundamental package for array computing with Python.
+: Home-page: https://www.numpy.org
+: Author: Travis E. Oliphant et al.
+: Author-email: None
+: License: BSD
+: Location: /home/shun/.local/lib/python3.6/site-packages
+: Requires: 
+
+**** requirements.txt
+
+- テキストに保存したリストから一括インストール
+$ pip freeze > requirements.txt
+$ pip install -r requirements.txt
+
+*** conda
+**** conda -h
+
+#+begin_src shell :results output
+conda help
+#+end_src
+
+#+RESULTS:
+#+begin_example
+usage: conda [-h] [-V] command ...
+
+conda is a tool for managing and deploying applications, environments and packages.
+
+Options:
+
+positional arguments:
+  command
+    clean        Remove unused packages and caches.
+    config       Modify configuration values in .condarc. This is modeled
+                 after the git config command. Writes to the user .condarc
+                 file (/home/shun/.condarc) by default.
+    create       Create a new conda environment from a list of specified
+                 packages.
+    help         Displays a list of available conda commands and their help
+                 strings.
+    info         Display information about current conda install.
+    install      Installs a list of packages into a specified conda
+                 environment.
+    list         List linked packages in a conda environment.
+    package      Low-level conda package utility. (EXPERIMENTAL)
+    remove       Remove a list of packages from a specified conda environment.
+    uninstall    Alias for conda remove. See conda remove --help.
+    search       Search for packages and display associated information. The
+                 input is a MatchSpec, a query language for conda packages.
+                 See examples below.
+    update       Updates conda packages to the latest compatible version. This
+                 command accepts a list of package names and updates them to
+                 the latest versions that are compatible with all other
+                 packages in the environment. Conda attempts to install the
+                 newest versions of the requested packages. To accomplish
+                 this, it may update some packages that are already installed,
+                 or install additional packages. To prevent existing packages
+                 from updating, use the --no-update-deps option. This may
+                 force conda to install older versions of the requested
+                 packages, and it does not prevent additional dependency
+                 packages from being installed. If you wish to skip dependency
+                 checking altogether, use the '--force' option. This may
+                 result in an environment with incompatible packages, so this
+                 option must be used with great caution.
+    upgrade      Alias for conda update. See conda update --help.
+
+optional arguments:
+  -h, --help     Show this help message and exit.
+  -V, --version  Show the conda version number and exit.
+
+conda commands available from other packages:
+  build
+  convert
+  develop
+  env
+  index
+  inspect
+  metapackage
+  render
+  server
+  skeleton
+#+end_example
+
+**** conda list
+
+#+begin_src shell :results output
+conda list
+#+end_src
+
+#+RESULTS:
+#+begin_example
+# packages in environment at /home/shun/.pyenv/versions/anaconda3-5.3.1:
+#
+# Name                    Version                   Build  Channel
+_ipyw_jlab_nb_ext_conf    0.1.0                    py37_0  
+alabaster                 0.7.11                   py37_0  
+anaconda                  5.3.1                    py37_0  
+anaconda-client           1.7.2                    py37_0  
+anaconda-navigator        1.9.2                    py37_0  
+anaconda-project          0.8.2                    py37_0  
+appdirs                   1.4.3            py37h28b3542_0  
+asn1crypto                0.24.0                   py37_0  
+astroid                   2.0.4                    py37_0  
+astropy                   3.0.4            py37h14c3975_0  
+atomicwrites              1.2.1                    py37_0  
+attrs                     18.2.0           py37h28b3542_0  
+automat                   0.7.0                    py37_0  
+babel                     2.6.0                    py37_0  
+backcall                  0.1.0                    py37_0  
+backports                 1.0                      py37_1  
+backports.shutil_get_terminal_size 1.0.0                    py37_2  
+beautifulsoup4            4.6.3                    py37_0  
+bitarray                  0.8.3            py37h14c3975_0  
+bkcharts                  0.2                      py37_0  
+blas                      1.0                         mkl  
+blaze                     0.11.3                   py37_0  
+bleach                    2.1.4                    py37_0  
+blosc                     1.14.4               hdbcaa40_0  
+bokeh                     0.13.0                   py37_0  
+boto                      2.49.0                   py37_0  
+bottleneck                1.2.1            py37h035aef0_1  
+bzip2                     1.0.6                h14c3975_5  
+ca-certificates           2018.03.07                    0  
+cairo                     1.14.12              h8948797_3  
+certifi                   2018.8.24                py37_1  
+cffi                      1.11.5           py37he75722e_1  
+chardet                   3.0.4                    py37_1  
+click                     6.7                      py37_0  
+cloudpickle               0.5.5                    py37_0  
+clyent                    1.2.2                    py37_1  
+colorama                  0.3.9                    py37_0  
+conda                     4.5.11                   py37_0  
+conda-build               3.15.1                   py37_0  
+conda-env                 2.6.0                         1  
+constantly                15.1.0           py37h28b3542_0  
+contextlib2               0.5.5                    py37_0  
+cryptography              2.3.1            py37hc365091_0  
+curl                      7.61.0               h84994c4_0  
+cycler                    0.10.0                   py37_0  
+cython                    0.28.5           py37hf484d3e_0  
+cytoolz                   0.9.0.1          py37h14c3975_1  
+dask                      0.19.1                   py37_0  
+dask-core                 0.19.1                   py37_0  
+datashape                 0.5.4                    py37_1  
+dbus                      1.13.2               h714fa37_1  
+decorator                 4.3.0                    py37_0  
+defusedxml                0.5.0                    py37_1  
+distributed               1.23.1                   py37_0  
+docutils                  0.14                     py37_0  
+entrypoints               0.2.3                    py37_2  
+et_xmlfile                1.0.1                    py37_0  
+expat                     2.2.6                he6710b0_0  
+fastcache                 1.0.2            py37h14c3975_2  
+filelock                  3.0.8                    py37_0  
+flask                     1.0.2                    py37_1  
+flask-cors                3.0.6                    py37_0  
+fontconfig                2.13.0               h9420a91_0  
+freetype                  2.9.1                h8a8886c_1  
+fribidi                   1.0.5                h7b6447c_0  
+get_terminal_size         1.0.0                haa9412d_0  
+gevent                    1.3.6            py37h7b6447c_0  
+glib                      2.56.2               hd408876_0  
+glob2                     0.6                      py37_0  
+gmp                       6.1.2                h6c8ec71_1  
+gmpy2                     2.0.8            py37h10f8cd9_2  
+graphite2                 1.3.12               h23475e2_2  
+greenlet                  0.4.15           py37h7b6447c_0  
+gst-plugins-base          1.14.0               hbbd80ab_1  
+gstreamer                 1.14.0               hb453b48_1  
+h5py                      2.8.0            py37h989c5e5_3  
+harfbuzz                  1.8.8                hffaf4a1_0  
+hdf5                      1.10.2               hba1933b_1  
+heapdict                  1.0.0                    py37_2  
+html5lib                  1.0.1                    py37_0  
+hyperlink                 18.0.0                   py37_0  
+icu                       58.2                 h9c2bf20_1  
+idna                      2.7                      py37_0  
+imageio                   2.4.1                    py37_0  
+imagesize                 1.1.0                    py37_0  
+incremental               17.5.0                   py37_0  
+intel-openmp              2019.0                      118  
+ipykernel                 4.9.0                    py37_1  
+ipython                   6.5.0                    py37_0  
+ipython_genutils          0.2.0                    py37_0  
+ipywidgets                7.4.1                    py37_0  
+isort                     4.3.4                    py37_0  
+itsdangerous              0.24                     py37_1  
+jbig                      2.1                  hdba287a_0  
+jdcal                     1.4                      py37_0  
+jedi                      0.12.1                   py37_0  
+jeepney                   0.3.1                    py37_0  
+jinja2                    2.10                     py37_0  
+jpeg                      9b                   h024ee3a_2  
+jsonschema                2.6.0                    py37_0  
+jupyter                   1.0.0                    py37_7  
+jupyter_client            5.2.3                    py37_0  
+jupyter_console           5.2.0                    py37_1  
+jupyter_core              4.4.0                    py37_0  
+jupyterlab                0.34.9                   py37_0  
+jupyterlab_launcher       0.13.1                   py37_0  
+keyring                   13.2.1                   py37_0  
+kiwisolver                1.0.1            py37hf484d3e_0  
+lazy-object-proxy         1.3.1            py37h14c3975_2  
+libcurl                   7.61.0               h1ad7b7a_0  
+libedit                   3.1.20170329         h6b74fdf_2  
+libffi                    3.2.1                hd88cf55_4  
+libgcc-ng                 8.2.0                hdf63c60_1  
+libgfortran-ng            7.3.0                hdf63c60_0  
+libpng                    1.6.34               hb9fc6fc_0  
+libsodium                 1.0.16               h1bed415_0  
+libssh2                   1.8.0                h9cfc8f7_4  
+libstdcxx-ng              8.2.0                hdf63c60_1  
+libtiff                   4.0.9                he85c1e1_2  
+libtool                   2.4.6                h544aabb_3  
+libuuid                   1.0.3                h1bed415_2  
+libxcb                    1.13                 h1bed415_1  
+libxml2                   2.9.8                h26e45fe_1  
+libxslt                   1.1.32               h1312cb7_0  
+llvmlite                  0.24.0           py37hdbcaa40_0  
+locket                    0.2.0                    py37_1  
+lxml                      4.2.5            py37hefd8a0e_0  
+lzo                       2.10                 h49e0be7_2  
+markupsafe                1.0              py37h14c3975_1  
+matplotlib                2.2.3            py37hb69df0a_0  
+mccabe                    0.6.1                    py37_1  
+mistune                   0.8.3            py37h14c3975_1  
+mkl                       2019.0                      118  
+mkl-service               1.1.2            py37h90e4bf4_5  
+mkl_fft                   1.0.4            py37h4414c95_1  
+mkl_random                1.0.1            py37h4414c95_1  
+more-itertools            4.3.0                    py37_0  
+mpc                       1.1.0                h10f8cd9_1  
+mpfr                      4.0.1                hdf1c602_3  
+mpmath                    1.0.0                    py37_2  
+msgpack-python            0.5.6            py37h6bb024c_1  
+multipledispatch          0.6.0                    py37_0  
+navigator-updater         0.2.1                    py37_0  
+nbconvert                 5.4.0                    py37_1  
+nbformat                  4.4.0                    py37_0  
+ncurses                   6.1                  hf484d3e_0  
+networkx                  2.1                      py37_0  
+nltk                      3.3.0                    py37_0  
+nose                      1.3.7                    py37_2  
+notebook                  5.6.0                    py37_0  
+numba                     0.39.0           py37h04863e7_0  
+numexpr                   2.6.8            py37hd89afb7_0  
+numpy                     1.15.1           py37h1d66e8a_0  
+numpy-base                1.15.1           py37h81de0dd_0  
+numpydoc                  0.8.0                    py37_0  
+odo                       0.5.1                    py37_0  
+olefile                   0.46                     py37_0  
+openpyxl                  2.5.6                    py37_0  
+openssl                   1.0.2p               h14c3975_0  
+packaging                 17.1                     py37_0  
+pandas                    0.23.4           py37h04863e7_0  
+pandoc                    1.19.2.1             hea2e7c5_1  
+pandocfilters             1.4.2                    py37_1  
+pango                     1.42.4               h049681c_0  
+parso                     0.3.1                    py37_0  
+partd                     0.3.8                    py37_0  
+patchelf                  0.9                  hf484d3e_2  
+path.py                   11.1.0                   py37_0  
+pathlib2                  2.3.2                    py37_0  
+patsy                     0.5.0                    py37_0  
+pcre                      8.42                 h439df22_0  
+pep8                      1.7.1                    py37_0  
+pexpect                   4.6.0                    py37_0  
+pickleshare               0.7.4                    py37_0  
+pillow                    5.2.0            py37heded4f4_0  
+pip                       10.0.1                   py37_0  
+pixman                    0.34.0               hceecf20_3  
+pkginfo                   1.4.2                    py37_1  
+pluggy                    0.7.1            py37h28b3542_0  
+ply                       3.11                     py37_0  
+prometheus_client         0.3.1            py37h28b3542_0  
+prompt_toolkit            1.0.15                   py37_0  
+psutil                    5.4.7            py37h14c3975_0  
+ptyprocess                0.6.0                    py37_0  
+py                        1.6.0                    py37_0  
+pyasn1                    0.4.4            py37h28b3542_0  
+pyasn1-modules            0.2.2                    py37_0  
+pycodestyle               2.4.0                    py37_0  
+pycosat                   0.6.3            py37h14c3975_0  
+pycparser                 2.18                     py37_1  
+pycrypto                  2.6.1            py37h14c3975_9  
+pycurl                    7.43.0.2         py37hb7f436b_0  
+pyflakes                  2.0.0                    py37_0  
+pygments                  2.2.0                    py37_0  
+pylint                    2.1.1                    py37_0  
+pyodbc                    4.0.24           py37he6710b0_0  
+pyopenssl                 18.0.0                   py37_0  
+pyparsing                 2.2.0                    py37_1  
+pyqt                      5.9.2            py37h05f1152_2  
+pysocks                   1.6.8                    py37_0  
+pytables                  3.4.4            py37ha205bf6_0  
+pytest                    3.8.0                    py37_0  
+pytest-arraydiff          0.2              py37h39e3cac_0  
+pytest-astropy            0.4.0                    py37_0  
+pytest-doctestplus        0.1.3                    py37_0  
+pytest-openfiles          0.3.0                    py37_0  
+pytest-remotedata         0.3.0                    py37_0  
+python                    3.7.0                hc3d631a_0  
+python-dateutil           2.7.3                    py37_0  
+pytz                      2018.5                   py37_0  
+pywavelets                1.0.0            py37hdd07704_0  
+pyyaml                    3.13             py37h14c3975_0  
+pyzmq                     17.1.2           py37h14c3975_0  
+qt                        5.9.6                h8703b6f_2  
+qtawesome                 0.4.4                    py37_0  
+qtconsole                 4.4.1                    py37_0  
+qtpy                      1.5.0                    py37_0  
+readline                  7.0                  h7b6447c_5  
+requests                  2.19.1                   py37_0  
+rope                      0.11.0                   py37_0  
+ruamel_yaml               0.15.46          py37h14c3975_0  
+scikit-image              0.14.0           py37hf484d3e_1  
+scikit-learn              0.19.2           py37h4989274_0  
+scipy                     1.1.0            py37hfa4b5c9_1  
+seaborn                   0.9.0                    py37_0  
+secretstorage             3.1.0                    py37_0  
+send2trash                1.5.0                    py37_0  
+service_identity          17.0.0           py37h28b3542_0  
+setuptools                40.2.0                   py37_0  
+simplegeneric             0.8.1                    py37_2  
+singledispatch            3.4.0.3                  py37_0  
+sip                       4.19.8           py37hf484d3e_0  
+six                       1.11.0                   py37_1  
+snappy                    1.1.7                hbae5bb6_3  
+snowballstemmer           1.2.1                    py37_0  
+sortedcollections         1.0.1                    py37_0  
+sortedcontainers          2.0.5                    py37_0  
+sphinx                    1.7.9                    py37_0  
+sphinxcontrib             1.0                      py37_1  
+sphinxcontrib-websupport  1.1.0                    py37_1  
+spyder                    3.3.1                    py37_1  
+spyder-kernels            0.2.6                    py37_0  
+sqlalchemy                1.2.11           py37h7b6447c_0  
+sqlite                    3.24.0               h84994c4_0  
+statsmodels               0.9.0            py37h035aef0_0  
+sympy                     1.2                      py37_0  
+tblib                     1.3.2                    py37_0  
+terminado                 0.8.1                    py37_1  
+testpath                  0.3.1                    py37_0  
+tk                        8.6.8                hbc83047_0  
+toolz                     0.9.0                    py37_0  
+tornado                   5.1              py37h14c3975_0  
+tqdm                      4.26.0           py37h28b3542_0  
+traitlets                 4.3.2                    py37_0  
+twisted                   18.7.0           py37h14c3975_1  
+unicodecsv                0.14.1                   py37_0  
+unixodbc                  2.3.7                h14c3975_0  
+urllib3                   1.23                     py37_0  
+wcwidth                   0.1.7                    py37_0  
+webencodings              0.5.1                    py37_1  
+werkzeug                  0.14.1                   py37_0  
+wheel                     0.31.1                   py37_0  
+widgetsnbextension        3.4.1                    py37_0  
+wrapt                     1.10.11          py37h14c3975_2  
+xlrd                      1.1.0                    py37_1  
+xlsxwriter                1.1.0                    py37_0  
+xlwt                      1.3.0                    py37_0  
+xz                        5.2.4                h14c3975_4  
+yaml                      0.1.7                had09818_2  
+zeromq                    4.2.5                hf484d3e_1  
+zict                      0.1.3                    py37_0  
+zlib                      1.2.11               ha838bed_2  
+zope                      1.0                      py37_1  
+zope.interface            4.5.0            py37h14c3975_0  
+#+end_example
+
+**** conda search
+
+#+begin_src shell :results output
+conda search numpy
+#+end_src
+
+#+RESULTS:
+#+begin_example
+Loading channels: ...working... done
+# Name                  Version           Build  Channel             
+numpy                     1.5.1          py26_1  pkgs/free           
+numpy                     1.5.1          py26_3  pkgs/free           
+numpy                     1.5.1          py26_4  pkgs/free           
+numpy                     1.5.1          py26_6  pkgs/free           
+numpy                     1.5.1        py26_ce0  pkgs/free           
+numpy                     1.5.1         py26_p1  pkgs/pro            
+numpy                     1.5.1         py26_p3  pkgs/pro            
+numpy                     1.5.1         py26_p4  pkgs/pro            
+numpy                     1.5.1         py26_p6  pkgs/pro            
+numpy                     1.5.1       py26_pro0  pkgs/pro            
+numpy                     1.5.1          py27_1  pkgs/free           
+numpy                     1.5.1          py27_3  pkgs/free           
+numpy                     1.5.1          py27_4  pkgs/free           
+numpy                     1.5.1          py27_6  pkgs/free           
+numpy                     1.5.1        py27_ce0  pkgs/free           
+numpy                     1.5.1         py27_p1  pkgs/pro            
+numpy                     1.5.1         py27_p3  pkgs/pro            
+numpy                     1.5.1         py27_p4  pkgs/pro            
+numpy                     1.5.1         py27_p6  pkgs/pro            
+numpy                     1.5.1       py27_pro0  pkgs/pro            
+numpy                     1.6.2          py26_1  pkgs/free           
+numpy                     1.6.2          py26_3  pkgs/free           
+numpy                     1.6.2          py26_4  pkgs/free           
+numpy                     1.6.2          py26_5  pkgs/free           
+numpy                     1.6.2        py26_ce0  pkgs/free           
+numpy                     1.6.2         py26_p1  pkgs/pro            
+numpy                     1.6.2         py26_p3  pkgs/pro            
+numpy                     1.6.2         py26_p4  pkgs/pro            
+numpy                     1.6.2         py26_p5  pkgs/pro            
+numpy                     1.6.2       py26_pro0  pkgs/pro            
+numpy                     1.6.2          py27_1  pkgs/free           
+numpy                     1.6.2          py27_3  pkgs/free           
+numpy                     1.6.2          py27_4  pkgs/free           
+numpy                     1.6.2          py27_5  pkgs/free           
+numpy                     1.6.2        py27_ce0  pkgs/free           
+numpy                     1.6.2         py27_p1  pkgs/pro            
+numpy                     1.6.2         py27_p3  pkgs/pro            
+numpy                     1.6.2         py27_p4  pkgs/pro            
+numpy                     1.6.2         py27_p5  pkgs/pro            
+numpy                     1.6.2       py27_pro0  pkgs/pro            
+numpy                   1.7.0b2        py26_ce0  pkgs/free           
+numpy                   1.7.0b2       py26_pro0  pkgs/pro            
+numpy                   1.7.0b2        py27_ce0  pkgs/free           
+numpy                   1.7.0b2       py27_pro0  pkgs/pro            
+numpy                   1.7.0b2       py33_pro0  pkgs/pro            
+numpy                  1.7.0rc1          py26_0  pkgs/free           
+numpy                  1.7.0rc1         py26_p0  pkgs/pro            
+numpy                  1.7.0rc1          py27_0  pkgs/free           
+numpy                  1.7.0rc1         py27_p0  pkgs/pro            
+numpy                  1.7.0rc1          py33_0  pkgs/free           
+numpy                  1.7.0rc1         py33_p0  pkgs/pro            
+numpy                     1.7.0          py26_0  pkgs/free           
+numpy                     1.7.0         py26_p0  pkgs/pro            
+numpy                     1.7.0          py27_0  pkgs/free           
+numpy                     1.7.0         py27_p0  pkgs/pro            
+numpy                     1.7.0          py33_0  pkgs/free           
+numpy                     1.7.0         py33_p0  pkgs/pro            
+numpy                     1.7.1          py26_0  pkgs/free           
+numpy                     1.7.1          py26_2  pkgs/free           
+numpy                     1.7.1          py26_3  pkgs/free           
+numpy                     1.7.1         py26_p0  pkgs/pro            
+numpy                     1.7.1         py26_p2  pkgs/pro            
+numpy                     1.7.1         py26_p3  pkgs/pro            
+numpy                     1.7.1          py27_0  pkgs/free           
+numpy                     1.7.1          py27_2  pkgs/free           
+numpy                     1.7.1          py27_3  pkgs/free           
+numpy                     1.7.1         py27_p0  pkgs/pro            
+numpy                     1.7.1         py27_p2  pkgs/pro            
+numpy                     1.7.1         py27_p3  pkgs/pro            
+numpy                     1.7.1          py33_0  pkgs/free           
+numpy                     1.7.1          py33_2  pkgs/free           
+numpy                     1.7.1          py33_3  pkgs/free           
+numpy                     1.7.1         py33_p0  pkgs/pro            
+numpy                     1.7.1         py33_p2  pkgs/pro            
+numpy                     1.7.1         py33_p3  pkgs/pro            
+numpy                     1.7.1          py34_3  pkgs/free           
+numpy                     1.7.1         py34_p3  pkgs/pro            
+numpy                     1.8.0          py26_0  pkgs/free           
+numpy                     1.8.0         py26_p0  pkgs/pro            
+numpy                     1.8.0          py27_0  pkgs/free           
+numpy                     1.8.0         py27_p0  pkgs/pro            
+numpy                     1.8.0          py33_0  pkgs/free           
+numpy                     1.8.0         py33_p0  pkgs/pro            
+numpy                     1.8.1          py26_0  pkgs/free           
+numpy                     1.8.1         py26_p0  pkgs/pro            
+numpy                     1.8.1          py27_0  pkgs/free           
+numpy                     1.8.1         py27_p0  pkgs/pro            
+numpy                     1.8.1          py33_0  pkgs/free           
+numpy                     1.8.1         py33_p0  pkgs/pro            
+numpy                     1.8.1          py34_0  pkgs/free           
+numpy                     1.8.1         py34_p0  pkgs/pro            
+numpy                     1.8.2          py26_0  pkgs/free           
+numpy                     1.8.2          py26_1  pkgs/free           
+numpy                     1.8.2         py26_p0  pkgs/pro            
+numpy                     1.8.2         py26_p1  pkgs/pro            
+numpy                     1.8.2          py27_0  pkgs/free           
+numpy                     1.8.2          py27_1  pkgs/free           
+numpy                     1.8.2         py27_p0  pkgs/pro            
+numpy                     1.8.2         py27_p1  pkgs/pro            
+numpy                     1.8.2          py33_0  pkgs/free           
+numpy                     1.8.2          py33_1  pkgs/free           
+numpy                     1.8.2         py33_p0  pkgs/pro            
+numpy                     1.8.2         py33_p1  pkgs/pro            
+numpy                     1.8.2          py34_0  pkgs/free           
+numpy                     1.8.2          py34_1  pkgs/free           
+numpy                     1.8.2         py34_p0  pkgs/pro            
+numpy                     1.8.2         py34_p1  pkgs/pro            
+numpy                     1.9.0          py26_0  pkgs/free           
+numpy                     1.9.0         py26_p0  pkgs/pro            
+numpy                     1.9.0          py27_0  pkgs/free           
+numpy                     1.9.0         py27_p0  pkgs/pro            
+numpy                     1.9.0          py33_0  pkgs/free           
+numpy                     1.9.0         py33_p0  pkgs/pro            
+numpy                     1.9.0          py34_0  pkgs/free           
+numpy                     1.9.0         py34_p0  pkgs/pro            
+numpy                     1.9.1          py26_0  pkgs/free           
+numpy                     1.9.1         py26_p0  pkgs/pro            
+numpy                     1.9.1          py27_0  pkgs/free           
+numpy                     1.9.1         py27_p0  pkgs/pro            
+numpy                     1.9.1          py33_0  pkgs/free           
+numpy                     1.9.1         py33_p0  pkgs/pro            
+numpy                     1.9.1          py34_0  pkgs/free           
+numpy                     1.9.1         py34_p0  pkgs/pro            
+numpy                     1.9.2          py26_0  pkgs/free           
+numpy                     1.9.2         py26_p0  pkgs/pro            
+numpy                     1.9.2          py27_0  pkgs/free           
+numpy                     1.9.2          py27_1  pkgs/free           
+numpy                     1.9.2          py27_2  pkgs/free           
+numpy                     1.9.2         py27_p0  pkgs/pro            
+numpy                     1.9.2         py27_p1  pkgs/pro            
+numpy                     1.9.2         py27_p2  pkgs/pro            
+numpy                     1.9.2          py33_0  pkgs/free           
+numpy                     1.9.2         py33_p0  pkgs/pro            
+numpy                     1.9.2          py34_0  pkgs/free           
+numpy                     1.9.2          py34_1  pkgs/free           
+numpy                     1.9.2          py34_2  pkgs/free           
+numpy                     1.9.2         py34_p0  pkgs/pro            
+numpy                     1.9.2         py34_p1  pkgs/pro            
+numpy                     1.9.2         py34_p2  pkgs/pro            
+numpy                     1.9.2          py35_1  pkgs/free           
+numpy                     1.9.2          py35_2  pkgs/free           
+numpy                     1.9.3          py27_0  pkgs/free           
+numpy                     1.9.3          py27_1  pkgs/free           
+numpy                     1.9.3          py27_2  pkgs/free           
+numpy                     1.9.3          py27_3  pkgs/free           
+numpy                     1.9.3    py27_nomkl_1  pkgs/free           
+numpy                     1.9.3    py27_nomkl_2  pkgs/free           
+numpy                     1.9.3 py27_nomklhbee5d10_3  pkgs/main           
+numpy                     1.9.3         py27_p0  pkgs/pro            
+numpy                     1.9.3  py27h1b885b7_7  pkgs/main           
+numpy                     1.9.3  py27h28100ab_5  pkgs/main           
+numpy                     1.9.3  py27h28100ab_6  pkgs/main           
+numpy                     1.9.3  py27h28100ab_7  pkgs/main           
+numpy                     1.9.3  py27h2aefc1b_7  pkgs/main           
+numpy                     1.9.3  py27h7e35acb_3  pkgs/main           
+numpy                     1.9.3  py27hcd700cb_5  pkgs/main           
+numpy                     1.9.3  py27hcd700cb_6  pkgs/main           
+numpy                     1.9.3  py27hcd700cb_7  pkgs/main           
+numpy                     1.9.3          py34_0  pkgs/free           
+numpy                     1.9.3          py34_1  pkgs/free           
+numpy                     1.9.3          py34_2  pkgs/free           
+numpy                     1.9.3          py34_3  pkgs/free           
+numpy                     1.9.3    py34_nomkl_1  pkgs/free           
+numpy                     1.9.3    py34_nomkl_2  pkgs/free           
+numpy                     1.9.3         py34_p0  pkgs/pro            
+numpy                     1.9.3          py35_0  pkgs/free           
+numpy                     1.9.3          py35_1  pkgs/free           
+numpy                     1.9.3          py35_2  pkgs/free           
+numpy                     1.9.3          py35_3  pkgs/free           
+numpy                     1.9.3    py35_nomkl_1  pkgs/free           
+numpy                     1.9.3    py35_nomkl_2  pkgs/free           
+numpy                     1.9.3 py35_nomklh11ed3e2_3  pkgs/main           
+numpy                     1.9.3         py35_p0  pkgs/pro            
+numpy                     1.9.3  py35h1b885b7_7  pkgs/main           
+numpy                     1.9.3  py35h28100ab_7  pkgs/main           
+numpy                     1.9.3  py35h2aefc1b_7  pkgs/main           
+numpy                     1.9.3  py35hcd700cb_7  pkgs/main           
+numpy                     1.9.3  py35hff6eb55_3  pkgs/main           
+numpy                     1.9.3 py36_nomklh9e07ec8_3  pkgs/main           
+numpy                     1.9.3  py36h1b885b7_7  pkgs/main           
+numpy                     1.9.3  py36h28100ab_5  pkgs/main           
+numpy                     1.9.3  py36h28100ab_6  pkgs/main           
+numpy                     1.9.3  py36h28100ab_7  pkgs/main           
+numpy                     1.9.3  py36h2aefc1b_7  pkgs/main           
+numpy                     1.9.3  py36h35fcb08_3  pkgs/main           
+numpy                     1.9.3  py36hcd700cb_5  pkgs/main           
+numpy                     1.9.3  py36hcd700cb_6  pkgs/main           
+numpy                     1.9.3  py36hcd700cb_7  pkgs/main           
+numpy                     1.9.3  py37h1b885b7_7  pkgs/main           
+numpy                     1.9.3  py37h28100ab_5  pkgs/main           
+numpy                     1.9.3  py37h28100ab_6  pkgs/main           
+numpy                     1.9.3  py37h28100ab_7  pkgs/main           
+numpy                     1.9.3  py37h2aefc1b_7  pkgs/main           
+numpy                     1.9.3  py37hcd700cb_5  pkgs/main           
+numpy                     1.9.3  py37hcd700cb_6  pkgs/main           
+numpy                     1.9.3  py37hcd700cb_7  pkgs/main           
+numpy                    1.10.0          py27_0  pkgs/free           
+numpy                    1.10.0         py27_p0  pkgs/pro            
+numpy                    1.10.0          py34_0  pkgs/free           
+numpy                    1.10.0         py34_p0  pkgs/pro            
+numpy                    1.10.0          py35_0  pkgs/free           
+numpy                    1.10.0         py35_p0  pkgs/pro            
+numpy                    1.10.1          py27_0  pkgs/free           
+numpy                    1.10.1         py27_p0  pkgs/pro            
+numpy                    1.10.1          py34_0  pkgs/free           
+numpy                    1.10.1         py34_p0  pkgs/pro            
+numpy                    1.10.1          py35_0  pkgs/free           
+numpy                    1.10.1         py35_p0  pkgs/pro            
+numpy                    1.10.2          py27_0  pkgs/free           
+numpy                    1.10.2         py27_p0  pkgs/pro            
+numpy                    1.10.2          py34_0  pkgs/free           
+numpy                    1.10.2         py34_p0  pkgs/pro            
+numpy                    1.10.2          py35_0  pkgs/free           
+numpy                    1.10.2         py35_p0  pkgs/pro            
+numpy                    1.10.4          py27_0  pkgs/free           
+numpy                    1.10.4          py27_1  pkgs/free           
+numpy                    1.10.4          py27_2  pkgs/free           
+numpy                    1.10.4    py27_nomkl_0  pkgs/free           
+numpy                    1.10.4    py27_nomkl_1  pkgs/free           
+numpy                    1.10.4    py27_nomkl_2  pkgs/free           
+numpy                    1.10.4          py34_0  pkgs/free           
+numpy                    1.10.4          py34_1  pkgs/free           
+numpy                    1.10.4          py34_2  pkgs/free           
+numpy                    1.10.4    py34_nomkl_0  pkgs/free           
+numpy                    1.10.4    py34_nomkl_1  pkgs/free           
+numpy                    1.10.4    py34_nomkl_2  pkgs/free           
+numpy                    1.10.4          py35_0  pkgs/free           
+numpy                    1.10.4          py35_1  pkgs/free           
+numpy                    1.10.4          py35_2  pkgs/free           
+numpy                    1.10.4    py35_nomkl_0  pkgs/free           
+numpy                    1.10.4    py35_nomkl_1  pkgs/free           
+numpy                    1.10.4    py35_nomkl_2  pkgs/free           
+numpy                    1.11.0          py27_0  pkgs/free           
+numpy                    1.11.0          py27_1  pkgs/free           
+numpy                    1.11.0          py27_2  pkgs/free           
+numpy                    1.11.0    py27_nomkl_0  pkgs/free           
+numpy                    1.11.0    py27_nomkl_1  pkgs/free           
+numpy                    1.11.0    py27_nomkl_2  pkgs/free           
+numpy                    1.11.0          py34_0  pkgs/free           
+numpy                    1.11.0          py34_1  pkgs/free           
+numpy                    1.11.0          py34_2  pkgs/free           
+numpy                    1.11.0    py34_nomkl_0  pkgs/free           
+numpy                    1.11.0    py34_nomkl_1  pkgs/free           
+numpy                    1.11.0    py34_nomkl_2  pkgs/free           
+numpy                    1.11.0          py35_0  pkgs/free           
+numpy                    1.11.0          py35_1  pkgs/free           
+numpy                    1.11.0          py35_2  pkgs/free           
+numpy                    1.11.0    py35_nomkl_0  pkgs/free           
+numpy                    1.11.0    py35_nomkl_1  pkgs/free           
+numpy                    1.11.0    py35_nomkl_2  pkgs/free           
+numpy                    1.11.1          py27_0  pkgs/free           
+numpy                    1.11.1    py27_nomkl_0  pkgs/free           
+numpy                    1.11.1          py34_0  pkgs/free           
+numpy                    1.11.1    py34_nomkl_0  pkgs/free           
+numpy                    1.11.1          py35_0  pkgs/free           
+numpy                    1.11.1    py35_nomkl_0  pkgs/free           
+numpy                    1.11.2          py27_0  pkgs/free           
+numpy                    1.11.2    py27_nomkl_0  pkgs/free           
+numpy                    1.11.2          py34_0  pkgs/free           
+numpy                    1.11.2    py34_nomkl_0  pkgs/free           
+numpy                    1.11.2          py35_0  pkgs/free           
+numpy                    1.11.2    py35_nomkl_0  pkgs/free           
+numpy                    1.11.2          py36_0  pkgs/free           
+numpy                    1.11.2    py36_nomkl_0  pkgs/free           
+numpy                    1.11.3          py27_0  pkgs/free           
+numpy                    1.11.3    py27_nomkl_0  pkgs/free           
+numpy                    1.11.3  py27h1b885b7_8  pkgs/main           
+numpy                    1.11.3  py27h1b885b7_9  pkgs/main           
+numpy                    1.11.3 py27h1d66e8a_10  pkgs/main           
+numpy                    1.11.3  py27h28100ab_7  pkgs/main           
+numpy                    1.11.3  py27h28100ab_8  pkgs/main           
+numpy                    1.11.3  py27h2aefc1b_8  pkgs/main           
+numpy                    1.11.3  py27h2aefc1b_9  pkgs/main           
+numpy                    1.11.3  py27h3b04361_9  pkgs/main           
+numpy                    1.11.3  py27h3dfced4_4  pkgs/main           
+numpy                    1.11.3 py27h7e9f1db_11  pkgs/main           
+numpy                    1.11.3 py27h7e9f1db_12  pkgs/main           
+numpy                    1.11.3 py27h99e49ec_10  pkgs/main           
+numpy                    1.11.3 py27h99e49ec_11  pkgs/main           
+numpy                    1.11.3 py27h99e49ec_12  pkgs/main           
+numpy                    1.11.3 py27hb510916_10  pkgs/main           
+numpy                    1.11.3  py27hcd700cb_7  pkgs/main           
+numpy                    1.11.3  py27hcd700cb_8  pkgs/main           
+numpy                    1.11.3  py27hec00662_9  pkgs/main           
+numpy                    1.11.3          py34_0  pkgs/free           
+numpy                    1.11.3    py34_nomkl_0  pkgs/free           
+numpy                    1.11.3          py35_0  pkgs/free           
+numpy                    1.11.3    py35_nomkl_0  pkgs/free           
+numpy                    1.11.3  py35h1b885b7_8  pkgs/main           
+numpy                    1.11.3  py35h1b885b7_9  pkgs/main           
+numpy                    1.11.3 py35h1d66e8a_10  pkgs/main           
+numpy                    1.11.3  py35h2aefc1b_8  pkgs/main           
+numpy                    1.11.3  py35h2aefc1b_9  pkgs/main           
+numpy                    1.11.3  py35h3b04361_9  pkgs/main           
+numpy                    1.11.3  py35h3dfced4_4  pkgs/main           
+numpy                    1.11.3 py35h99e49ec_10  pkgs/main           
+numpy                    1.11.3 py35hb510916_10  pkgs/main           
+numpy                    1.11.3  py35hec00662_9  pkgs/main           
+numpy                    1.11.3          py36_0  pkgs/free           
+numpy                    1.11.3    py36_nomkl_0  pkgs/free           
+numpy                    1.11.3  py36h1b885b7_8  pkgs/main           
+numpy                    1.11.3  py36h1b885b7_9  pkgs/main           
+numpy                    1.11.3 py36h1d66e8a_10  pkgs/main           
+numpy                    1.11.3  py36h28100ab_7  pkgs/main           
+numpy                    1.11.3  py36h28100ab_8  pkgs/main           
+numpy                    1.11.3  py36h2aefc1b_8  pkgs/main           
+numpy                    1.11.3  py36h2aefc1b_9  pkgs/main           
+numpy                    1.11.3  py36h3b04361_9  pkgs/main           
+numpy                    1.11.3  py36h3dfced4_4  pkgs/main           
+numpy                    1.11.3 py36h7e9f1db_11  pkgs/main           
+numpy                    1.11.3 py36h7e9f1db_12  pkgs/main           
+numpy                    1.11.3 py36h99e49ec_10  pkgs/main           
+numpy                    1.11.3 py36h99e49ec_11  pkgs/main           
+numpy                    1.11.3 py36h99e49ec_12  pkgs/main           
+numpy                    1.11.3 py36hb510916_10  pkgs/main           
+numpy                    1.11.3  py36hcd700cb_7  pkgs/main           
+numpy                    1.11.3  py36hcd700cb_8  pkgs/main           
+numpy                    1.11.3  py36hec00662_9  pkgs/main           
+numpy                    1.11.3  py37h1b885b7_8  pkgs/main           
+numpy                    1.11.3  py37h1b885b7_9  pkgs/main           
+numpy                    1.11.3 py37h1d66e8a_10  pkgs/main           
+numpy                    1.11.3  py37h28100ab_7  pkgs/main           
+numpy                    1.11.3  py37h28100ab_8  pkgs/main           
+numpy                    1.11.3  py37h2aefc1b_8  pkgs/main           
+numpy                    1.11.3  py37h2aefc1b_9  pkgs/main           
+numpy                    1.11.3  py37h3b04361_9  pkgs/main           
+numpy                    1.11.3 py37h7e9f1db_11  pkgs/main           
+numpy                    1.11.3 py37h7e9f1db_12  pkgs/main           
+numpy                    1.11.3 py37h99e49ec_10  pkgs/main           
+numpy                    1.11.3 py37h99e49ec_11  pkgs/main           
+numpy                    1.11.3 py37h99e49ec_12  pkgs/main           
+numpy                    1.11.3 py37hb510916_10  pkgs/main           
+numpy                    1.11.3  py37hcd700cb_7  pkgs/main           
+numpy                    1.11.3  py37hcd700cb_8  pkgs/main           
+numpy                    1.11.3  py37hec00662_9  pkgs/main           
+numpy                    1.12.0          py27_0  pkgs/free           
+numpy                    1.12.0    py27_nomkl_0  pkgs/free           
+numpy                    1.12.0          py35_0  pkgs/free           
+numpy                    1.12.0    py35_nomkl_0  pkgs/free           
+numpy                    1.12.0          py36_0  pkgs/free           
+numpy                    1.12.0    py36_nomkl_0  pkgs/free           
+numpy                    1.12.1          py27_0  pkgs/free           
+numpy                    1.12.1    py27_nomkl_0  pkgs/free           
+numpy                    1.12.1  py27h9378851_1  pkgs/main           
+numpy                    1.12.1          py34_0  pkgs/free           
+numpy                    1.12.1          py35_0  pkgs/free           
+numpy                    1.12.1    py35_nomkl_0  pkgs/free           
+numpy                    1.12.1  py35hca0bb5e_1  pkgs/main           
+numpy                    1.12.1          py36_0  pkgs/free           
+numpy                    1.12.1    py36_nomkl_0  pkgs/free           
+numpy                    1.12.1  py36he24570b_1  pkgs/main           
+numpy                    1.13.0          py27_0  pkgs/free           
+numpy                    1.13.0    py27_nomkl_0  pkgs/free           
+numpy                    1.13.0          py34_0  pkgs/free           
+numpy                    1.13.0          py35_0  pkgs/free           
+numpy                    1.13.0    py35_nomkl_0  pkgs/free           
+numpy                    1.13.0          py36_0  pkgs/free           
+numpy                    1.13.0    py36_nomkl_0  pkgs/free           
+numpy                    1.13.1          py27_0  pkgs/free           
+numpy                    1.13.1    py27_nomkl_0  pkgs/free           
+numpy                    1.13.1  py27hd1b6e02_2  pkgs/main           
+numpy                    1.13.1          py35_0  pkgs/free           
+numpy                    1.13.1    py35_nomkl_0  pkgs/free           
+numpy                    1.13.1  py35h8926d81_2  pkgs/main           
+numpy                    1.13.1          py36_0  pkgs/free           
+numpy                    1.13.1    py36_nomkl_0  pkgs/free           
+numpy                    1.13.1  py36h5bc529a_2  pkgs/main           
+numpy                    1.13.3 py27_nomklh2b20989_4  pkgs/main           
+numpy                    1.13.3 py27_nomklhfe0a00b_0  pkgs/main           
+numpy                    1.13.3  py27h3dfced4_2  pkgs/main           
+numpy                    1.13.3  py27ha266831_3  pkgs/main           
+numpy                    1.13.3  py27hbcc08e0_0  pkgs/main           
+numpy                    1.13.3  py27hdbf6ddf_4  pkgs/main           
+numpy                    1.13.3 py35_nomklh2b20989_4  pkgs/main           
+numpy                    1.13.3 py35_nomklhb7e7d7c_0  pkgs/main           
+numpy                    1.13.3  py35h3dfced4_2  pkgs/main           
+numpy                    1.13.3  py35ha266831_3  pkgs/main           
+numpy                    1.13.3  py35hd829ed6_0  pkgs/main           
+numpy                    1.13.3  py35hdbf6ddf_4  pkgs/main           
+numpy                    1.13.3 py36_nomklh2b20989_4  pkgs/main           
+numpy                    1.13.3 py36_nomklhbef0cb9_0  pkgs/main           
+numpy                    1.13.3  py36h3dfced4_2  pkgs/main           
+numpy                    1.13.3  py36ha12f23b_0  pkgs/main           
+numpy                    1.13.3  py36ha266831_3  pkgs/main           
+numpy                    1.13.3  py36hdbf6ddf_4  pkgs/main           
+numpy                    1.14.0 py27_nomklh7cdd4dd_0  pkgs/main           
+numpy                    1.14.0  py27h3dfced4_0  pkgs/main           
+numpy                    1.14.0  py27h3dfced4_1  pkgs/main           
+numpy                    1.14.0  py27ha266831_2  pkgs/main           
+numpy                    1.14.0 py35_nomklh7cdd4dd_0  pkgs/main           
+numpy                    1.14.0  py35h3dfced4_0  pkgs/main           
+numpy                    1.14.0  py35h3dfced4_1  pkgs/main           
+numpy                    1.14.0  py35ha266831_2  pkgs/main           
+numpy                    1.14.0 py36_nomklh7cdd4dd_0  pkgs/main           
+numpy                    1.14.0  py36h3dfced4_0  pkgs/main           
+numpy                    1.14.0  py36h3dfced4_1  pkgs/main           
+numpy                    1.14.0  py36ha266831_2  pkgs/main           
+numpy                    1.14.1 py27_nomklh5cab86c_2  pkgs/main           
+numpy                    1.14.1 py27_nomklh7cdd4dd_1  pkgs/main           
+numpy                    1.14.1  py27h3dfced4_1  pkgs/main           
+numpy                    1.14.1  py27ha266831_2  pkgs/main           
+numpy                    1.14.1 py35_nomklh5cab86c_2  pkgs/main           
+numpy                    1.14.1 py35_nomklh7cdd4dd_1  pkgs/main           
+numpy                    1.14.1  py35h3dfced4_1  pkgs/main           
+numpy                    1.14.1  py35ha266831_2  pkgs/main           
+numpy                    1.14.1 py36_nomklh5cab86c_2  pkgs/main           
+numpy                    1.14.1 py36_nomklh7cdd4dd_1  pkgs/main           
+numpy                    1.14.1  py36h3dfced4_1  pkgs/main           
+numpy                    1.14.1  py36ha266831_2  pkgs/main           
+numpy                    1.14.2 py27_nomklh2b20989_0  pkgs/main           
+numpy                    1.14.2 py27_nomklh2b20989_1  pkgs/main           
+numpy                    1.14.2  py27hdbf6ddf_0  pkgs/main           
+numpy                    1.14.2  py27hdbf6ddf_1  pkgs/main           
+numpy                    1.14.2 py35_nomklh2b20989_0  pkgs/main           
+numpy                    1.14.2 py35_nomklh2b20989_1  pkgs/main           
+numpy                    1.14.2  py35hdbf6ddf_0  pkgs/main           
+numpy                    1.14.2  py35hdbf6ddf_1  pkgs/main           
+numpy                    1.14.2 py36_nomklh2b20989_0  pkgs/main           
+numpy                    1.14.2 py36_nomklh2b20989_1  pkgs/main           
+numpy                    1.14.2  py36hdbf6ddf_0  pkgs/main           
+numpy                    1.14.2  py36hdbf6ddf_1  pkgs/main           
+numpy                    1.14.3  py27h28100ab_1  pkgs/main           
+numpy                    1.14.3  py27hcd700cb_1  pkgs/main           
+numpy                    1.14.3  py35h28100ab_1  pkgs/main           
+numpy                    1.14.3  py35hcd700cb_1  pkgs/main           
+numpy                    1.14.3  py36h28100ab_1  pkgs/main           
+numpy                    1.14.3  py36hcd700cb_1  pkgs/main           
+numpy                    1.14.4  py27h28100ab_0  pkgs/main           
+numpy                    1.14.4  py27hcd700cb_0  pkgs/main           
+numpy                    1.14.4  py35h28100ab_0  pkgs/main           
+numpy                    1.14.4  py35hcd700cb_0  pkgs/main           
+numpy                    1.14.4  py36h28100ab_0  pkgs/main           
+numpy                    1.14.4  py36hcd700cb_0  pkgs/main           
+numpy                    1.14.5  py27h1b885b7_4  pkgs/main           
+numpy                    1.14.5  py27h28100ab_0  pkgs/main           
+numpy                    1.14.5  py27h28100ab_1  pkgs/main           
+numpy                    1.14.5  py27h28100ab_2  pkgs/main           
+numpy                    1.14.5  py27h28100ab_3  pkgs/main           
+numpy                    1.14.5  py27h2aefc1b_4  pkgs/main           
+numpy                    1.14.5  py27hcd700cb_0  pkgs/main           
+numpy                    1.14.5  py27hcd700cb_1  pkgs/main           
+numpy                    1.14.5  py27hcd700cb_2  pkgs/main           
+numpy                    1.14.5  py27hcd700cb_3  pkgs/main           
+numpy                    1.14.5  py35h1b885b7_4  pkgs/main           
+numpy                    1.14.5  py35h2aefc1b_4  pkgs/main           
+numpy                    1.14.5  py35hcd700cb_0  pkgs/main           
+numpy                    1.14.5  py36h1b885b7_4  pkgs/main           
+numpy                    1.14.5  py36h28100ab_0  pkgs/main           
+numpy                    1.14.5  py36h28100ab_1  pkgs/main           
+numpy                    1.14.5  py36h28100ab_2  pkgs/main           
+numpy                    1.14.5  py36h28100ab_3  pkgs/main           
+numpy                    1.14.5  py36h2aefc1b_4  pkgs/main           
+numpy                    1.14.5  py36hcd700cb_0  pkgs/main           
+numpy                    1.14.5  py36hcd700cb_1  pkgs/main           
+numpy                    1.14.5  py36hcd700cb_2  pkgs/main           
+numpy                    1.14.5  py36hcd700cb_3  pkgs/main           
+numpy                    1.14.5  py37h1b885b7_4  pkgs/main           
+numpy                    1.14.5  py37h28100ab_1  pkgs/main           
+numpy                    1.14.5  py37h28100ab_2  pkgs/main           
+numpy                    1.14.5  py37h28100ab_3  pkgs/main           
+numpy                    1.14.5  py37h2aefc1b_4  pkgs/main           
+numpy                    1.14.5  py37hcd700cb_1  pkgs/main           
+numpy                    1.14.5  py37hcd700cb_2  pkgs/main           
+numpy                    1.14.5  py37hcd700cb_3  pkgs/main           
+numpy                    1.14.6  py27h3b04361_4  pkgs/main           
+numpy                    1.14.6  py27hec00662_4  pkgs/main           
+numpy                    1.14.6  py35h3b04361_4  pkgs/main           
+numpy                    1.14.6  py35hec00662_4  pkgs/main           
+numpy                    1.14.6  py36h3b04361_4  pkgs/main           
+numpy                    1.14.6  py36hec00662_4  pkgs/main           
+numpy                    1.14.6  py37h3b04361_4  pkgs/main           
+numpy                    1.14.6  py37hec00662_4  pkgs/main           
+numpy                    1.15.0  py27h1b885b7_0  pkgs/main           
+numpy                    1.15.0  py27h2aefc1b_0  pkgs/main           
+numpy                    1.15.0  py35h1b885b7_0  pkgs/main           
+numpy                    1.15.0  py35h2aefc1b_0  pkgs/main           
+numpy                    1.15.0  py36h1b885b7_0  pkgs/main           
+numpy                    1.15.0  py36h2aefc1b_0  pkgs/main           
+numpy                    1.15.0  py37h1b885b7_0  pkgs/main           
+numpy                    1.15.0  py37h2aefc1b_0  pkgs/main           
+numpy                    1.15.1  py27h1d66e8a_0  pkgs/main           
+numpy                    1.15.1  py27h3b04361_0  pkgs/main           
+numpy                    1.15.1  py27h99e49ec_0  pkgs/main           
+numpy                    1.15.1  py27hb510916_0  pkgs/main           
+numpy                    1.15.1  py27hec00662_0  pkgs/main           
+numpy                    1.15.1  py35h1d66e8a_0  pkgs/main           
+numpy                    1.15.1  py35h3b04361_0  pkgs/main           
+numpy                    1.15.1  py35h99e49ec_0  pkgs/main           
+numpy                    1.15.1  py35hb510916_0  pkgs/main           
+numpy                    1.15.1  py35hec00662_0  pkgs/main           
+numpy                    1.15.1  py36h1d66e8a_0  pkgs/main           
+numpy                    1.15.1  py36h3b04361_0  pkgs/main           
+numpy                    1.15.1  py36h99e49ec_0  pkgs/main           
+numpy                    1.15.1  py36hb510916_0  pkgs/main           
+numpy                    1.15.1  py36hec00662_0  pkgs/main           
+numpy                    1.15.1  py37h1d66e8a_0  pkgs/main           
+numpy                    1.15.1  py37h3b04361_0  pkgs/main           
+numpy                    1.15.1  py37h99e49ec_0  pkgs/main           
+numpy                    1.15.1  py37hb510916_0  pkgs/main           
+numpy                    1.15.1  py37hec00662_0  pkgs/main           
+numpy                    1.15.2  py27h1d66e8a_0  pkgs/main           
+numpy                    1.15.2  py27h1d66e8a_1  pkgs/main           
+numpy                    1.15.2  py27h99e49ec_0  pkgs/main           
+numpy                    1.15.2  py27h99e49ec_1  pkgs/main           
+numpy                    1.15.2  py35h1d66e8a_0  pkgs/main           
+numpy                    1.15.2  py35h99e49ec_0  pkgs/main           
+numpy                    1.15.2  py36h1d66e8a_0  pkgs/main           
+numpy                    1.15.2  py36h1d66e8a_1  pkgs/main           
+numpy                    1.15.2  py36h99e49ec_0  pkgs/main           
+numpy                    1.15.2  py36h99e49ec_1  pkgs/main           
+numpy                    1.15.2  py37h1d66e8a_0  pkgs/main           
+numpy                    1.15.2  py37h1d66e8a_1  pkgs/main           
+numpy                    1.15.2  py37h99e49ec_0  pkgs/main           
+numpy                    1.15.2  py37h99e49ec_1  pkgs/main           
+numpy                    1.15.3  py27h1d66e8a_0  pkgs/main           
+numpy                    1.15.3  py27h99e49ec_0  pkgs/main           
+numpy                    1.15.3  py36h1d66e8a_0  pkgs/main           
+numpy                    1.15.3  py36h99e49ec_0  pkgs/main           
+numpy                    1.15.3  py37h1d66e8a_0  pkgs/main           
+numpy                    1.15.3  py37h99e49ec_0  pkgs/main           
+numpy                    1.15.4  py27h1d66e8a_0  pkgs/main           
+numpy                    1.15.4  py27h7e9f1db_0  pkgs/main           
+numpy                    1.15.4  py27h99e49ec_0  pkgs/main           
+numpy                    1.15.4  py36h1d66e8a_0  pkgs/main           
+numpy                    1.15.4  py36h7e9f1db_0  pkgs/main           
+numpy                    1.15.4  py36h99e49ec_0  pkgs/main           
+numpy                    1.15.4  py37h1d66e8a_0  pkgs/main           
+numpy                    1.15.4  py37h7e9f1db_0  pkgs/main           
+numpy                    1.15.4  py37h99e49ec_0  pkgs/main           
+numpy                    1.16.0  py27h7e9f1db_0  pkgs/main           
+numpy                    1.16.0  py27h7e9f1db_1  pkgs/main           
+numpy                    1.16.0  py27h99e49ec_0  pkgs/main           
+numpy                    1.16.0  py27h99e49ec_1  pkgs/main           
+numpy                    1.16.0  py36h7e9f1db_0  pkgs/main           
+numpy                    1.16.0  py36h7e9f1db_1  pkgs/main           
+numpy                    1.16.0  py36h99e49ec_0  pkgs/main           
+numpy                    1.16.0  py36h99e49ec_1  pkgs/main           
+numpy                    1.16.0  py37h7e9f1db_0  pkgs/main           
+numpy                    1.16.0  py37h7e9f1db_1  pkgs/main           
+numpy                    1.16.0  py37h99e49ec_0  pkgs/main           
+numpy                    1.16.0  py37h99e49ec_1  pkgs/main           
+numpy                    1.16.1  py27h7e9f1db_0  pkgs/main           
+numpy                    1.16.1  py27h7e9f1db_1  pkgs/main           
+numpy                    1.16.1  py27h99e49ec_0  pkgs/main           
+numpy                    1.16.1  py27h99e49ec_1  pkgs/main           
+numpy                    1.16.1  py36h7e9f1db_0  pkgs/main           
+numpy                    1.16.1  py36h7e9f1db_1  pkgs/main           
+numpy                    1.16.1  py36h99e49ec_0  pkgs/main           
+numpy                    1.16.1  py36h99e49ec_1  pkgs/main           
+numpy                    1.16.1  py37h7e9f1db_0  pkgs/main           
+numpy                    1.16.1  py37h7e9f1db_1  pkgs/main           
+numpy                    1.16.1  py37h99e49ec_0  pkgs/main           
+numpy                    1.16.1  py37h99e49ec_1  pkgs/main           
+numpy                    1.16.2  py27h7e9f1db_0  pkgs/main           
+numpy                    1.16.2  py27h99e49ec_0  pkgs/main           
+numpy                    1.16.2  py36h7e9f1db_0  pkgs/main           
+numpy                    1.16.2  py36h99e49ec_0  pkgs/main           
+numpy                    1.16.2  py37h7e9f1db_0  pkgs/main           
+numpy                    1.16.2  py37h99e49ec_0  pkgs/main           
+numpy                    1.16.3  py27h7e9f1db_0  pkgs/main           
+numpy                    1.16.3  py27h99e49ec_0  pkgs/main           
+numpy                    1.16.3  py36h7e9f1db_0  pkgs/main           
+numpy                    1.16.3  py36h99e49ec_0  pkgs/main           
+numpy                    1.16.3  py37h7e9f1db_0  pkgs/main           
+numpy                    1.16.3  py37h99e49ec_0  pkgs/main           
+numpy                    1.16.4  py27h7e9f1db_0  pkgs/main           
+numpy                    1.16.4  py27h99e49ec_0  pkgs/main           
+numpy                    1.16.4  py36h7e9f1db_0  pkgs/main           
+numpy                    1.16.4  py36h99e49ec_0  pkgs/main           
+numpy                    1.16.4  py37h7e9f1db_0  pkgs/main           
+numpy                    1.16.4  py37h99e49ec_0  pkgs/main           
+#+end_example
+
+*** pipfile
+* emacs
+
+- python
+- cython
+  - flycheck-cython
+- anaconda-mode
+  - company-anaconda
+  - anaconda-eldoc
+- pylookup
+
+- パッケージ管理
+  - pip-requirements
+  - pyimport
+  - py-isort
+
+- 仮想環境
+  - pyenv-mode
+  - pipenv
+  - pyvenv
+  - conda
+
+- テスト
+  - nose
+  - python-pytest
+
+- LSP
+  - lsp-python-ms
+
+- EDA (babel)
+  - ein
+  - jupyter
+  - ob-ipython
+

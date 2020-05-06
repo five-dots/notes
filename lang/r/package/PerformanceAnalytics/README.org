@@ -2,8 +2,6 @@
 #+PROPERTY: header-args:R :session *R:perf* :width 640 :height 480 :results output
 
 * ~{PerformanceAnalytics}~: Econometric Tools for Performance and Risk Analysis :noexport:
-\\
-
 * Libraries
   
 #+begin_src R :results silent
@@ -341,6 +339,7 @@ ETL(ra, p = 0.95, method = "historical")
 
 * Risk Adjusted Performance
 ** Sharpe Ratio
+
 # (リターン - リスクフリーレート) / リターンの標準偏差
 # 3 つの計算バリエーション (StdDev, VaR, ES)
 # ※ VaR, ES に関してもより詳細なオプションを設定可能

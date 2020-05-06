@@ -1,0 +1,776 @@
+#+STARTUP: folded indent inlineimages latexpreview
+#+PROPERTY: header-args:R :results output :session *R:DALEX* :width 640 :height 480 :colnames yes
+
+* ={DALEX}= Descriptive mAchine Learning EXplanations 
+* ライブラリの読み込み
+
+#+begin_src R :results silent
+library(tidyverse)
+library(tidymodels)
+library(DALEX)
+library(randomForest)
+library(ingredients)
+library(iBreakDown)
+#+end_src
+
+* ワークフロー
+
+- *Model adapter*
+  - 複数のモデルを統一的に扱えるように変換する
+  - =DALEX::explain()= for generic interface (parsnip も OK)
+  - =DALEXtra::explain_*()= for scikitlearn, keras, h2o or mlr
+
+- *Model agnostic explainers (モデルに依存しない指標)*
+  - ={ingredients}=
+    - Permutation based Feature Importance
+    - Partial Dependency
+    - Ceteris Paribus (ケテリス・パリブス) / What-If Profiles
+  - ={iBreakDown}=
+    - Break Down/SHAPley
+  - ={auditor}=
+    - residual diagnostic
+    - performance diagnostic
+  - ={vivo}=
+
+- *Model specific explainers (モデル特有の指標)*
+  - ={randomForestExplainer}=
+  - ={EIX}= for xgboost/lightGBM
+  - ={cr19}= for Survival model
+
+- *Automatic exploration*
+  - ={modelStudio}= ダッシュボード
+  - ={modelDown}=
+
+* [[https://modeloriented.github.io/DALEX/articles/vignette_titanic.html][Survival on the RMS Titanic]] の例 (Vignette)
+** データ
+
+- Titanic データセットを使う例
+#+begin_src R
+head(titanic)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+Welcome to DALEX (version: 0.4.9).
+Find examples and detailed introduction at: https://pbiecek.github.io/PM_VEE/
+Additional features will be available after installation of: ALEPlot, factorMerger, ggpubr.
+Use 'install_dependencies()' to get all suggested dependencies
+
+  gender age class    embarked       country  fare sibsp parch survived
+1   male  42   3rd Southampton United States  7.11     0     0       no
+2   male  13   3rd Southampton United States 20.05     0     2       no
+3   male  16   3rd Southampton United States 20.05     1     1       no
+4 female  39   3rd Southampton       England 20.05     1     1      yes
+5 female  16   3rd Southampton        Norway  7.13     0     0      yes
+6   male  25   3rd Southampton United States  7.13     0     0      yes
+#+end_example
+
+** ランダムフォレストモデル
+
+#+begin_src R
+titanic <- na.omit(titanic)
+model_titanic_rf <- randomForest(survived == "yes" ~ gender + age + class + embarked +
+                                 fare + sibsp + parch,  data = titanic)
+model_titanic_rf
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+Warning message:
+In randomForest.default(m, y, ...) :
+  The response has five or fewer unique values.  Are you sure you want to do regression?
+
+Call:
+ randomForest(formula = survived == "yes" ~ gender
+age
+class
+     embarked
+fare
+sibsp
+parch, data = titanic) 
+               Type of random forest: regression
+                     Number of trees: 500
+No. of variables tried at each split: 2
+
+          Mean of squared residuals: 0.1428854
+                    % Var explained: 34.81
+#+end_example
+
+** explain の作成
+
+#+begin_src R :results silent
+explain(
+  model,
+  data = NULL,
+  y = NULL,
+  predict_function = NULL,
+  residual_function = NULL,
+  weights = NULL,
+  ...,
+  label = NULL,
+  verbose = TRUE,
+  precalculate = TRUE,
+  colorize = TRUE,
+  model_info = NULL)
+#+end_src
+
+#+begin_src R
+explain_titanic_rf <- explain(
+  model    = model_titanic_rf, 
+  data     = titanic[,-9],
+  y        = titanic$survived == "yes", 
+  label    = "Random Forest v7",
+  colorize = FALSE)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+Preparation of a new explainer is initiated
+  -> model label       :  Random Forest v7 
+  -> data              :  2099  rows  8  cols 
+  -> target variable   :  2099  values 
+  -> predict function  :  yhat.randomForest  will be used (  default  )
+  -> predicted values  :  numerical, min =  0.009581338 , mean =  0.3242244 , max =  0.9913584  
+  -> residual function :  difference between y and yhat (  default  )
+  -> residuals         :  numerical, min =  -0.7898651 , mean =  0.0002158206 , max =  0.9064359  
+  -> model_info        :  package randomForest , ver. 4.6.14 , task regression (  default  ) 
+  A new explainer has been created!  
+#+end_example
+
+** 変数重要度
+
+- =DALEX::variable_importance()= は Deprecated なので =ingredients::feature_importance()= を使う
+- type
+  - "raw"        results raw drop lossess
+  - "ratio"      returns drop_loss / drop_loss_full_model 
+  - "difference" returns drop_loss - drop_loss_full_model
+
+#+begin_src R :results silent
+ingredients::feature_importance(
+  x, # explainer
+  loss_function = loss_root_mean_square,
+  ...,
+  type = c("raw", "ratio", "difference"),
+  n_sample = NULL,
+  B = 10, # Permutation の回数
+  variables = NULL,
+  variable_groups = NULL,
+  label = NULL
+)
+#+end_src
+
+#+begin_src R :results value
+fi_rf <- feature_importance(explain_titanic_rf)
+fi_rf
+#+end_src
+
+#+RESULTS:
+| variable   | permutation |      dropout_loss | label            |
+|------------+-------------+-------------------+------------------|
+| _full_model_ |           0 | 0.333674714727471 | Random Forest v7 |
+| country    |           0 | 0.333674714727471 | Random Forest v7 |
+| parch      |           0 | 0.345444278820217 | Random Forest v7 |
+| sibsp      |           0 | 0.345831537144008 | Random Forest v7 |
+| embarked   |           0 | 0.350282129692714 | Random Forest v7 |
+| fare       |           0 |  0.37416949033666 | Random Forest v7 |
+| age        |           0 | 0.377467153292173 | Random Forest v7 |
+| class      |           0 | 0.399740617591538 | Random Forest v7 |
+| gender     |           0 | 0.465999260616717 | Random Forest v7 |
+| _baseline_   |           0 | 0.540371923325986 | Random Forest v7 |
+| _full_model_ |           1 | 0.333674714727471 | Random Forest v7 |
+| gender     |           1 | 0.466644702838136 | Random Forest v7 |
+| age        |           1 | 0.379147549013324 | Random Forest v7 |
+| class      |           1 | 0.398132990068507 | Random Forest v7 |
+| embarked   |           1 | 0.350401853410285 | Random Forest v7 |
+| country    |           1 | 0.333674714727471 | Random Forest v7 |
+| fare       |           1 | 0.373483029809897 | Random Forest v7 |
+| sibsp      |           1 | 0.345674395101175 | Random Forest v7 |
+| parch      |           1 | 0.345410471088119 | Random Forest v7 |
+| _baseline_   |           1 | 0.535485702553178 | Random Forest v7 |
+| _full_model_ |           2 | 0.333674714727471 | Random Forest v7 |
+| gender     |           2 | 0.470244765818931 | Random Forest v7 |
+| age        |           2 | 0.379483943793529 | Random Forest v7 |
+| class      |           2 | 0.399725563667634 | Random Forest v7 |
+| embarked   |           2 | 0.350475006091793 | Random Forest v7 |
+| country    |           2 | 0.333674714727471 | Random Forest v7 |
+| fare       |           2 | 0.372778105055225 | Random Forest v7 |
+| sibsp      |           2 | 0.346506463723727 | Random Forest v7 |
+| parch      |           2 | 0.346580492625967 | Random Forest v7 |
+| _baseline_   |           2 | 0.541566201629252 | Random Forest v7 |
+| _full_model_ |           3 | 0.333674714727471 | Random Forest v7 |
+| gender     |           3 | 0.463590895604961 | Random Forest v7 |
+| age        |           3 | 0.375673699359907 | Random Forest v7 |
+| class      |           3 | 0.400131969677585 | Random Forest v7 |
+| embarked   |           3 | 0.348005900076059 | Random Forest v7 |
+| country    |           3 | 0.333674714727471 | Random Forest v7 |
+| fare       |           3 | 0.374021999354969 | Random Forest v7 |
+| sibsp      |           3 | 0.344813428769386 | Random Forest v7 |
+| parch      |           3 | 0.345817772991686 | Random Forest v7 |
+| _baseline_   |           3 | 0.544964915781637 | Random Forest v7 |
+| _full_model_ |           4 | 0.333674714727471 | Random Forest v7 |
+| gender     |           4 | 0.472023138566531 | Random Forest v7 |
+| age        |           4 | 0.378720239129687 | Random Forest v7 |
+| class      |           4 | 0.402068954720188 | Random Forest v7 |
+| embarked   |           4 | 0.351502097744058 | Random Forest v7 |
+| country    |           4 | 0.333674714727471 | Random Forest v7 |
+| fare       |           4 |  0.37616777063001 | Random Forest v7 |
+| sibsp      |           4 | 0.345280872020762 | Random Forest v7 |
+| parch      |           4 | 0.345601246422813 | Random Forest v7 |
+| _baseline_   |           4 | 0.535587738514482 | Random Forest v7 |
+| _full_model_ |           5 | 0.333674714727471 | Random Forest v7 |
+| gender     |           5 | 0.470741497501417 | Random Forest v7 |
+| age        |           5 | 0.377286047938931 | Random Forest v7 |
+| class      |           5 | 0.394722933749858 | Random Forest v7 |
+| embarked   |           5 | 0.349908984629428 | Random Forest v7 |
+| country    |           5 | 0.333674714727471 | Random Forest v7 |
+| fare       |           5 |  0.37430433700915 | Random Forest v7 |
+| sibsp      |           5 | 0.346480157140786 | Random Forest v7 |
+| parch      |           5 | 0.345321664005419 | Random Forest v7 |
+| _baseline_   |           5 | 0.543435836554436 | Random Forest v7 |
+| _full_model_ |           6 | 0.333674714727471 | Random Forest v7 |
+| gender     |           6 | 0.461751610408397 | Random Forest v7 |
+| age        |           6 |  0.37368531120055 | Random Forest v7 |
+| class      |           6 | 0.399508267080253 | Random Forest v7 |
+| embarked   |           6 | 0.349221743202758 | Random Forest v7 |
+| country    |           6 | 0.333674714727471 | Random Forest v7 |
+| fare       |           6 | 0.373962714164144 | Random Forest v7 |
+| sibsp      |           6 |  0.34570862334781 | Random Forest v7 |
+| parch      |           6 |  0.34528988378358 | Random Forest v7 |
+| _baseline_   |           6 | 0.535172953514474 | Random Forest v7 |
+| _full_model_ |           7 | 0.333674714727471 | Random Forest v7 |
+| gender     |           7 |   0.4662671514995 | Random Forest v7 |
+| age        |           7 | 0.376598026719851 | Random Forest v7 |
+| class      |           7 | 0.399268003613133 | Random Forest v7 |
+| embarked   |           7 | 0.352109246188967 | Random Forest v7 |
+| country    |           7 | 0.333674714727471 | Random Forest v7 |
+| fare       |           7 | 0.375675908289705 | Random Forest v7 |
+| sibsp      |           7 | 0.346252321950626 | Random Forest v7 |
+| parch      |           7 | 0.345290019798021 | Random Forest v7 |
+| _baseline_   |           7 | 0.533963570436807 | Random Forest v7 |
+| _full_model_ |           8 | 0.333674714727471 | Random Forest v7 |
+| gender     |           8 | 0.457492897253213 | Random Forest v7 |
+| age        |           8 | 0.378105976007799 | Random Forest v7 |
+| class      |           8 | 0.401301798080307 | Random Forest v7 |
+| embarked   |           8 | 0.349553430582263 | Random Forest v7 |
+| country    |           8 | 0.333674714727471 | Random Forest v7 |
+| fare       |           8 | 0.373556869876039 | Random Forest v7 |
+| sibsp      |           8 | 0.345971552576386 | Random Forest v7 |
+| parch      |           8 | 0.345683895432431 | Random Forest v7 |
+| _baseline_   |           8 | 0.543175893267789 | Random Forest v7 |
+| _full_model_ |           9 | 0.333674714727471 | Random Forest v7 |
+| gender     |           9 | 0.458031255084112 | Random Forest v7 |
+| age        |           9 | 0.376848959262221 | Random Forest v7 |
+| class      |           9 | 0.402411509365279 | Random Forest v7 |
+| embarked   |           9 | 0.350335614970966 | Random Forest v7 |
+| country    |           9 | 0.333674714727471 | Random Forest v7 |
+| fare       |           9 | 0.373730911534114 | Random Forest v7 |
+| sibsp      |           9 | 0.345901574518587 | Random Forest v7 |
+| parch      |           9 | 0.344871835267595 | Random Forest v7 |
+| _baseline_   |           9 | 0.548956454147513 | Random Forest v7 |
+| _full_model_ |          10 | 0.333674714727471 | Random Forest v7 |
+| gender     |          10 | 0.473204691591979 | Random Forest v7 |
+| age        |          10 | 0.379121780495934 | Random Forest v7 |
+| class      |          10 | 0.400134185892639 | Random Forest v7 |
+| embarked   |          10 | 0.351307420030561 | Random Forest v7 |
+| country    |          10 | 0.333674714727471 | Random Forest v7 |
+| fare       |          10 | 0.374013257643348 | Random Forest v7 |
+| sibsp      |          10 | 0.345725982290832 | Random Forest v7 |
+| parch      |          10 |  0.34457550678654 | Random Forest v7 |
+| _baseline_   |          10 | 0.541409966860296 | Random Forest v7 |
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+plot(fi_rf)
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-m6KNWW.png]]
+
+** Partial Dependency
+*** Age
+
+- =DALEX::variable_response()= は Deprecated なので =ingredients::partial_dependency()= を使う
+#+begin_src R :results silent
+ingredients::partial_dependency(
+  x, # explainer
+  variables = NULL,
+  N = 500,
+  variable_splits = NULL,
+  grid_points = 101,
+  ...,
+  variable_type = "numerical" # or "categorical"
+)
+#+end_src
+
+#+begin_src R
+pd_age <- partial_dependency(explain_titanic_rf, variables = "age")
+pd_age
+#+end_src
+
+#+RESULTS:
+: Top profiles    : 
+:   _vname_          _label_        _x_    _yhat_ _ids_
+: 1     age Random Forest v7  0.1666667 0.5062371     0
+: 2     age Random Forest v7  2.0000000 0.5410419     0
+: 3     age Random Forest v7  4.0000000 0.5461622     0
+: 4     age Random Forest v7  7.0000000 0.5104437     0
+: 5     age Random Forest v7  9.0000000 0.5103144     0
+: 6     age Random Forest v7 13.0000000 0.4505226     0
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+plot(pd_age)
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-79LjUH.png]]
+
+*** Class
+
+#+begin_src R
+pd_class <- partial_dependency(explain_titanic_rf, variables = "class")
+pd_class
+#+end_src
+
+#+RESULTS:
+: 'variable_type' changed to 'categorical' due to lack of numerical variables.
+: Top profiles    : 
+:   _vname_          _label_              _x_    _yhat_ _ids_
+: 1   class Random Forest v7              1st 0.4694228     0
+: 2   class Random Forest v7              2nd 0.3628604     0
+: 3   class Random Forest v7              3rd 0.2550720     0
+: 4   class Random Forest v7        deck crew 0.5552065     0
+: 5   class Random Forest v7 engineering crew 0.2874435     0
+: 6   class Random Forest v7 restaurant staff 0.2369804     0
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+plot(pd_class)
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-J5UFvm.png]]
+
+** Break Down 
+
+- =DALEX::single_prediction()= は Deprecated なので =iBreakDown::break_down()= を使う
+#+begin_src R :results silent
+break_down(
+  x, # explainer
+  new_observation,
+  ...,
+  interactions = FALSE)
+#+end_src
+
+- 架空の新データで変数の影響を見る
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+new_passanger <- data.frame(
+  class = factor("1st", levels = c("1st", "2nd", "3rd", "deck crew", "engineering crew", "restaurant staff", "victualling crew")),
+  gender = factor("male", levels = c("female", "male")),
+  age = 8,
+  sibsp = 0,
+  parch = 0,
+  fare = 72,
+  embarked = factor("Southampton", levels = c("Belfast", "Cherbourg", "Queenstown", "Southampton"))
+)
+
+bd_rf <- break_down(explain_titanic_rf, new_passanger)
+plot(bd_rf)
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-zl9Dll.png]]
+
+* [[https://dropout009.hatenablog.com/entry/2019/11/17/112655][tidymodelsとDALEXによるtidyで解釈可能な機械学習@Dropout]] の例
+** シミュレーション 1
+*** ライブラリ＋関数
+
+#+begin_src R :results silent
+library(tidymodels)
+library(DALEX) #解釈
+library(ingredients) #解釈
+
+library(distributions3) #シミュレーション用
+library(colorblindr) #可視化用
+
+set.seed(42)
+
+theme_scatter = function() {
+  theme_minimal(base_size = 12) %+replace%
+    theme(panel.grid.minor = element_blank(),
+          panel.grid.major = element_line(color = "gray", size = 0.1),
+          legend.position = "top",
+          axis.title = element_text(size = 15, color = "black"),
+          axis.title.x = element_text(margin = margin(10, 0, 0, 0), hjust = 1),
+          axis.title.y = element_text(margin = margin(0, 10, 0, 0), angle = 90, hjust = 1),
+          axis.text = element_text(size = 12, color = "black"),
+          strip.text = element_text(size = 15, color = "black", margin = margin(5, 5, 5, 5)),
+          plot.title = element_text(size = 15, color = "black", margin = margin(0, 0, 18, 0)))
+}
+#+end_src
+
+*** データ
+
+- シミュレーションデータ
+  - Y = X1 - 5X2 + e
+  - X1, X2, X3 があるが、X3 は影響しないデータ
+#+begin_src R :results value
+N = 1000 #サンプルサイズ
+
+U = Uniform(-1, 1) # 分布を指定
+Z = Normal(mu = 0, sigma = 0.1)
+
+X1 = random(U, N) # 分布から乱数を生成
+X2 = random(U, N)
+X3 = random(U, N)
+E = random(Z, N)
+
+Y = X1 - 5*X2 + E 
+
+df = tibble(Y, X1, X2, X3) # データフレームに
+head(df)
+#+end_src
+
+#+RESULTS:
+|                 Y |                 X1 |                   X2 |                X3 |
+|-------------------+--------------------+----------------------+-------------------|
+| -2.71345843766068 |  0.829612086992711 |    0.696586444973946 | 0.979931170586497 |
+|  5.23310589499586 |  0.874150826595724 |   -0.874507336411625 | -0.12301277462393 |
+| -3.72489908485358 | -0.427720930427313 |    0.639690175186843 | 0.399806435219944 |
+| 0.350484812411242 |  0.660895252134651 |   0.0787205882370472 | 0.778153911232948 |
+| 0.213784096730452 |  0.283491037786007 | -0.00195980211719871 | 0.668318946380168 |
+|  4.84996515126092 | 0.0381918982602656 |   -0.955545358359814 | 0.468842920847237 |
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+df %>% 
+  sample_n(200) %>% 
+  pivot_longer(cols = contains("X"), values_to = "X") %>% 
+  ggplot(aes(X, Y)) +
+  geom_point(size = 3, 
+             shape = 21,
+             color = "white", fill = palette_OkabeIto[5], 
+             alpha = 0.7) +
+  facet_wrap(~name) + 
+  theme_scatter()
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-oSspG1.png]]
+
+*** ランダムフォレストモデル (={parsnip}=)
+
+#+begin_src R
+fitted = rand_forest(mode = "regression", 
+                     trees = 1000,
+                     mtry = 3,
+                     min_n = 1) %>% 
+  set_engine(engine = "ranger", 
+             num.threads = parallel::detectCores(), 
+             seed = 42) %>% 
+  fit(Y ~ ., data = df)
+fitted
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+parsnip model object
+
+Fit time:  511ms 
+Ranger result
+
+Call:
+ ranger::ranger(formula = formula, data = data, mtry = ~3, num.trees = ~1000,      min.node.size = ~1, num.threads = ~parallel::detectCores(),      seed = ~42, verbose = FALSE) 
+
+Type:                             Regression 
+Number of trees:                  1000 
+Sample size:                      1000 
+Number of independent variables:  3 
+Mtry:                             3 
+Target node size:                 1 
+Variable importance mode:         none 
+Splitrule:                        variance 
+OOB prediction error (MSE):       0.01850549 
+R squared (OOB):                  0.9979697
+#+end_example
+
+*** ={DALEX}= による explain オブジェクト
+
+#+begin_src R
+explainer = explain(fitted, # 学習済みモデル
+                    data = df %>% select(-Y), # インプット
+                    y = df %>% pull(Y), # ターゲット
+                    label = "Random Forest") # ラベルをつけておくことができる（なくてもいい）
+explainer
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+Preparation of a new explainer is initiated
+  -
+model label       :  Random Forest 
+  -
+data              :  1000  rows  3  cols 
+  -
+data              :  tibbble converted into a data.frame 
+  -
+target variable   :  1000  values 
+  -
+predict function  :  yhat.model_fit  will be used (  default  )
+  -
+predicted values  :  numerical, min =  -5.887845 , mean =  0.008321329 , max =  5.806882  
+  -
+residual function :  difference between y and yhat (  default  )
+  -
+residuals         :  numerical, min =  -0.1718801 , mean =  0.0002699037 , max =  0.1884416  
+  -
+model_info        :  package parsnip , ver. 0.0.4.9000 , task regression (  default  ) 
+  A new explainer has been created!
+
+Model label:  Random Forest 
+Model class:  _ranger,model_fit 
+Data head  :
+         X1         X2         X3
+1 0.8296121  0.6965864  0.9799312
+2 0.8741508 -0.8745073 -0.1230128
+#+end_example
+
+*** 変数重要度 (Permutation)
+
+#+begin_src R
+fi = feature_importance(explainer, 
+                        loss_function = loss_root_mean_square, # 精度の評価関数
+                        type = "raw") # "ratio"にするとフルモデルと比べて何倍悪化するかが出る
+fi
+#+end_src
+
+#+RESULTS:
+: 
+:       variable mean_dropout_loss         label
+: 1 _full_model_        0.05008037 Random Forest
+: 2           X3        0.06905448 Random Forest
+: 3           X1        0.80981496 Random Forest
+: 4           X2        4.16894250 Random Forest
+: 5   _baseline_        4.26477225 Random Forest
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+plot(fi)
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-07Z6AT.png]]
+
+*** PDP
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+pdp = partial_dependency(explainer)
+
+pdp %>% 
+  plot() + # ggplot2のレイヤーや設定を重ねていくことができる
+  scale_y_continuous(breaks = seq(-6, 6, 2)) + 
+  theme_scatter() +
+  theme(legend.position = "none")
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-7WTikq.png]]
+
+** シミュレーション 2
+*** データ
+
+- X3 をダミー変数として、X2 との交互作用項をもたせる
+- Y = X1 - 5X2 + 10X1X2 + e
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+N = 1000
+
+U = Uniform(-1, 1)
+B = Bernoulli(p = 0.5)
+Z = Normal(mu = 0, sigma = 0.1)
+
+X1 = random(U, N)
+X2 = random(U, N)
+X3 = random(B, N)
+E = random(Z, N)
+
+Y = X1 - 5*X2 + 10*X2*X3 + E
+
+df = tibble(Y, X1, X2, X3)
+
+
+df %>% 
+  sample_n(200) %>% 
+  pivot_longer(cols = contains("X"), values_to = "X") %>% 
+  ggplot(aes(X, Y)) +
+  geom_point(size = 3, 
+             shape = 21,
+             color = "white", fill = palette_OkabeIto[5], 
+             alpha = 0.7) +
+  facet_wrap(~name) + 
+  theme_scatter()
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-MyI4rn.png]]
+
+*** ランダムフォレストモデル
+
+#+begin_src R
+fitted = rand_forest(mode = "regression", 
+                     trees = 1000,
+                     mtry = 3,
+                     min_n = 1) %>% 
+  set_engine(engine = "ranger", 
+             num.threads = parallel::detectCores(), 
+             seed = 42) %>% 
+  fit(Y ~ ., data = df)
+
+
+explainer = DALEX::explain(fitted,
+                           data = df %>% select(-Y),
+                           y = df %>% pull(Y),
+                           label = "Random Forest")
+fitted
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+Preparation of a new explainer is initiated
+  -
+model label       :  Random Forest 
+  -
+data              :  1000  rows  3  cols 
+  -
+data              :  tibbble converted into a data.frame 
+  -
+target variable   :  1000  values 
+  -
+predict function  :  yhat.model_fit  will be used (  default  )
+  -
+predicted values  :  numerical, min =  -5.497322 , mean =  -0.08967919 , max =  5.503949  
+  -
+residual function :  difference between y and yhat (  default  )
+  -
+residuals         :  numerical, min =  -1.514178 , mean =  -0.002682127 , max =  1.318171  
+  -
+model_info        :  package parsnip , ver. 0.0.4.9000 , task regression (  default  ) 
+  A new explainer has been created!
+
+parsnip model object
+
+Fit time:  467ms 
+Ranger result
+
+Call:
+ ranger::ranger(formula = formula, data = data, mtry = ~3, num.trees = ~1000,      min.node.size = ~1, num.threads = ~parallel::detectCores(),      seed = ~42, verbose = FALSE) 
+
+Type:                             Regression 
+Number of trees:                  1000 
+Sample size:                      1000 
+Number of independent variables:  3 
+Mtry:                             3 
+Target node size:                 1 
+Variable importance mode:         none 
+Splitrule:                        variance 
+OOB prediction error (MSE):       0.1777299 
+R squared (OOB):                  0.9793649
+#+end_example
+
+*** PDP
+
+- PDP では交互作用項を表現できない
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+pdp = partial_dependency(explainer, variables = "X2") #変数を限定
+
+pdp %>% 
+  plot() + 
+  geom_abline(slope = -5, color = "gray70", size = 1) + 
+  geom_abline(slope = 5, color = "gray70", size = 1) + 
+  scale_y_continuous(breaks = seq(-6, 6, 2),
+                     limits = c(-6, 6)) + 
+  theme_scatter() +
+  theme(legend.position = "none")
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-K5oAXQ.png]]
+
+*** ICE
+
+- 線が多すぎるとわけがわからなくなるので 100 サンプルだけ抜き出す
+- tibble のまま渡すと警告が出るので data.frame にしている。
+- 警告の内容を見るとうまく動かなさそうだが、いまのところ tibble のままでもうまく動いているように思う
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+ice = ceteris_paribus(explainer, 
+                      variables = "X2",
+                      new_observation = df %>% sample_n(100) %>% as.data.frame()) 
+
+ice %>% 
+  plot(alpha = 0.5, size = 0.5, color = colors_discrete_drwhy(1)) + 
+  geom_abline(slope = -5, color = "gray70", size = 1) + 
+  geom_abline(slope = 5, color = "gray70", size = 1) +
+  scale_y_continuous(breaks = seq(-6, 6, 2),
+                     limits = c(-6, 6)) + 
+  theme_scatter() +
+  theme(legend.position = "none")
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-ikjD7f.png]]
+
+*** Conditional PDP
+
+- ICE を与える。グループを指定すると PDP をグループごとに求めることができる。
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+conditional_pdp = aggregate_profiles(ice, groups = "X3") 
+
+conditional_pdp %>% 
+  plot() + 
+  geom_abline(slope = -5, color = "gray70", size = 1) + 
+  geom_abline(slope = 5, color = "gray70", size = 1) +
+  scale_y_continuous(breaks = seq(-6, 6, 2),
+                     limits = c(-6, 6)) + 
+  theme_scatter() +
+  theme(legend.position = "none")
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-rP3ukD.png]]
+
+*** Clustered ICE Plot
+
+- ICE を与える。クラスター数を指定する。
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+clustered_ice = cluster_profiles(ice, k = 2)
+
+clustered_ice %>% 
+  plot() + 
+  geom_abline(slope = -5, color = "gray70", size = 1) + 
+  geom_abline(slope = 5, color = "gray70", size = 1) +
+  scale_y_continuous(breaks = seq(-6, 6, 2),
+                     limits = c(-6, 6)) + 
+  theme_scatter() +
+  theme(legend.position = "none")
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-FRm0wj.png]]
+
+* Reference
+
+#+begin_src R
+#+end_src
+
+* 参考
+
+- [[https://modeloriented.github.io/DALEX/][公式サイト]]
+- [[https://cran.r-project.org/web/packages/DALEX/index.html][CRAN]]
+- [[https://github.com/ModelOriented/DALEX][Github repo]]
+- [[https://cran.r-project.org/web/packages/DALEX/DALEX.pdf][Reference Manual (PDF)]]
+- [[https://github.com/ModelOriented/DrWhy/blob/master/README.md][Collection of tools for Visual Exploration, Explanation and Debugging of Predictive Models]]
+
+- Vignette
+  - [[https://modeloriented.github.io/DALEX/articles/vignette_titanic.html][Survival on the RMS Titanic]]
+
+- Blog
+  - [[https://dropout009.hatenablog.com/entry/2019/11/17/112655][tidymodelsとDALEXによるtidyで解釈可能な機械学習@Dropout]]

@@ -1,0 +1,80 @@
+#+STARTUP: folded indent inlineimages latexpreview
+
+* rustup
+
+- [[https://github.com/rust-lang/rustup][Github]]
+
+- 以下のスクリプトで =~/.cargo/bin= に rustup, rustc, carge が配置される
+#+begin_src shell
+curl https://sh.rustup.rs -sSf | sh
+#+end_src
+
+#+begin_src shell :results output
+rustup --version
+rustc --version
+cargo --version
+#+end_src
+
+#+RESULTS:
+: rustup 1.21.1 (7832b2ebe 2019-12-20)
+: rustc 1.43.0 (4fb7144ed 2020-04-20)
+: cargo 1.43.0 (3532cf738 2020-03-17)
+
+* Cargo
+
+- [[https://doc.rust-jp.rs/book/second-edition/ch01-03-hello-cargo.html][Hello, Cargo]]
+- [[https://github.com/rust-lang/cargo][Github]]
+
+- 主な役割
+  - プロジェクトの作成
+    - =Cargo.toml= がプロジェクトの設定ファイル
+  - build/run/test project
+  - 依存関係の解決
+  - Rust 製ツールのインストール (=~/.cargo/bin=)
+    - https://crates.io/ で管理されている
+
+- =~/.cargo/bin= に配置されている
+#+begin_src shell
+which cargo
+#+end_src
+
+#+RESULTS:
+: /home/shun/.cargo/bin/cargo
+
+- build     プロジェクトのビルドをする
+- check     ビルドできるかのチェックをする
+- clean     プロジェクトのクリーンをする
+- doc       ドキュメントを作成する
+- new       プロジェクトの作成
+- init      既存のディレクトリでプロジェクトの作成
+- run       実行ファイルを実行する
+- test      テストを実行する
+- bench     ベンチマークを実行する
+- update    Cargo.lock に記述された依存をアップデートする
+- search    crate.io からパッケージを探します
+- public    パッケージを create.io に公開します
+- install   rust 製のバイナリをインストールする
+- uninstall rust 製のバイナリアンインストールします
+
+
+- crates.io のパッケージをインストール
+#+begin_src shell
+cargo install fd-find
+#+end_src
+
+* LSP
+
+- [[https://github.com/rust-lang/rls][RLS@Github]]
+  - rust 公式 LSP
+  - 2.9k stars
+
+- [[https://github.com/rust-analyzer/rust-analyzer][rust-analyzer@Github]]
+  - 3.1k stars
+
+[[https://www.reddit.com/r/rust/comments/d59c41/rls_vs_rustanalyzer/][RLS vs rust-analyzer@reddit]] の議論では rust-analyzer の方が優勢
+
+* REPL (evcxr)
+
+- [[https://github.com/google/evcxr][Github]]
+- Google 製の REPL/Jupyter Kernel
+- emacs からは [[https://github.com/SerialDev/evcxr-mode][evcxr-mode]] で利用できる

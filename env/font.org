@@ -1,0 +1,134 @@
+#+STARTUP: content indent inlineimages
+
+* 書体
+
+- アルファベット
+　Sans-Serif, Serif
+
+- 日本語
+　ゴシック体(Sans-Serif)・明朝体(Serif)
+
+- 幅
+　等幅 (Monospace)・プロポーショナル
+  P がつくフォントは、プロポーショナルフォント
+  
+- フォントファミリー
+  複数のバリエーションの書体を１つにまとめたもの
+  - bold/thin/light
+  - italic/oblique
+  - condensed/extenteded
+
+* Format
+** TrueType
+
+- =.ttc= = TrueType コレクションフォントファイル (Meiryo, Meiryo UI etc)
+- =.ttf= = TrueType フォントファイル (ほとんどの Windows Font. Consolas)
+- TrueType の方が古い形式
+- Windows アプリによっては、TrueType のみしかサポートしないものもある
+
+** OpenType
+
+- =.otf= = OpenType フォントファイル
+- Windows: SourceHanCodeJP
+- OpenType は TrueType の弱点を補完
+- Windows と Mac の互換性を維持
+- 収録文字数が多いため、マイナーな漢字を収録しているフォントもある
+- Windows UI フォント
+  - メイリオと Meiryo UI の違い
+  - UI 用に使うため、幅が狭い
+
+* consolas + meiryoke 
+
+- [[http://d.hatena.ne.jp/amachang/20111226/1324874731][Windows7 搭載マシンを買ってきてやったことまとめ]]
+
+* Windows font を Linux で使う
+** 必要なフォントのみ使う
+
+- C:\Windows\Fonts から必要な ttf,ttc を ~/.fonts へ移動
+#+begin_src shell
+fc-cache -v -f # verbose, force
+fc-list
+#+end_src
+
+** Windows フォントをまとめて使う from WSL
+
+#+begin_src shell
+sudo ln -s /mnt/c/Windows/Fonts /usr/share/fonts/windows
+sudo fc-cache -fv
+#+end_src
+
+* フォントスケールの変更
+
+- 高解像度のディスプレイを使う場合
+#+begin_src shell
+gsettings set org.gnome.desktop.interface text-scaling-factor 1.5
+#+end_src
+
+* Font Glyph
+
+- Nerd Font
+
+* Ubuntu Fonts
+** Default
+
+#+begin_src sh
+fc-match
+#+end_src
+
+#+RESULTS:
+: DejaVu Sans" "Book
+
+** Sans
+
+#+begin_src sh
+fc-match sans
+#+end_src
+
+#+RESULTS:
+: DejaVu Sans" "Book
+
+** Serif
+
+#+begin_src sh
+fc-match serif
+#+end_src
+
+#+RESULTS:
+: DejaVu Serif" "Book
+
+** Monospace
+
+#+begin_src sh
+fc-match monospace
+#+end_src
+
+#+RESULTS:
+: DejaVu Sans Mono" "Book
+
+** "Ubuntu" を指定した際に利用されるフォント
+
+優先度の高いものから表示される
+#+begin_src sh :results output
+fc-match -a "Ubuntu" | head
+#+end_src
+
+#+RESULTS:
+#+begin_example
+Ubuntu-R.ttf: "Ubuntu" "Regular"
+Ubuntu-M.ttf: "Ubuntu" "Medium"
+Ubuntu-L.ttf: "Ubuntu" "Light"
+Ubuntu-B.ttf: "Ubuntu" "Bold"
+Ubuntu-RI.ttf: "Ubuntu" "Italic"
+Ubuntu-MI.ttf: "Ubuntu" "Medium Italic"
+Ubuntu-LI.ttf: "Ubuntu" "Light Italic"
+Ubuntu-BI.ttf: "Ubuntu" "Bold Italic"
+DejaVuSans.ttf: "DejaVu Sans" "Book"
+DejaVuSansCondensed.ttf: "DejaVu Sans" "Condensed"
+#+end_example
+
+** fonts.conf
+
+- =~/.config/fontconfig/fonts.conf=
+
+- [[https://linuxfan.info/ubuntu-18-04-change-ja-font][Ubuntu 18.04 LTS の日本語フォントを変更する！【詳細解説】]]
+- [[https://endaaman.me/-/fontconfig][俺の fonts.conf を見てくれ]]

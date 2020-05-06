@@ -1,0 +1,123 @@
+#+STARTUP: folded indent inlineimages latexpreview
+#+PROPERTY: header-args:R :results output :exports both :session *R:xml2*
+
+* ライブラリの読み込み
+
+#+begin_src R :results silent
+library(tidyverse)
+library(xml2)
+#+end_src
+
+* 特徴
+
+- XML パッケージと比べたメリット
+  - メモリ管理
+  - クラス階層がシンプル
+  - Xpath が容易？
+
+#+begin_quote
+xml2 takes care of memory management for you. It will automatically free the memory used by an XML document as soon as the last reference to it goes away.
+
+xml2 has a very simple class hierarchy so don't need to think about exactly what type of object you have, xml2 will just do the right thing.
+
+More convenient handling of namespaces in Xpath expressions - see xml_ns() and xml_ns_strip() to get started.
+#+end_quote
+
+* 全関数
+
+#+begin_src R
+pacman::p_funs(xml2)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+ [1] ".__C__xml_document" ".__C__xml_missing"  ".__C__xml_node"    
+ [4] ".__C__xml_nodeset"  "as_list"            "as_xml_document"   
+ [7] "download_html"      "download_xml"       "html_structure"    
+[10] "read_html"          "read_xml"           "url_absolute"      
+[13] "url_escape"         "url_parse"          "url_relative"      
+[16] "url_unescape"       "write_html"         "write_xml"         
+[19] "xml_add_child"      "xml_add_parent"     "xml_add_sibling"   
+[22] "xml_attr"           "xml_attr<-"         "xml_attrs"         
+[25] "xml_attrs<-"        "xml_cdata"          "xml_child"         
+[28] "xml_children"       "xml_comment"        "xml_contents"      
+[31] "xml_double"         "xml_dtd"            "xml_find_all"      
+[34] "xml_find_chr"       "xml_find_first"     "xml_find_lgl"      
+[37] "xml_find_num"       "xml_find_one"       "xml_has_attr"      
+[40] "xml_integer"        "xml_length"         "xml_missing"       
+[43] "xml_name"           "xml_name<-"         "xml_new_document"  
+[46] "xml_new_root"       "xml_ns"             "xml_ns_rename"     
+[49] "xml_ns_strip"       "xml_parent"         "xml_parents"       
+[52] "xml_path"           "xml_remove"         "xml_replace"       
+[55] "xml_root"           "xml_serialize"      "xml_set_attr"      
+[58] "xml_set_attrs"      "xml_set_name"       "xml_set_namespace" 
+[61] "xml_set_text"       "xml_siblings"       "xml_structure"     
+[64] "xml_text"           "xml_text<-"         "xml_type"          
+[67] "xml_unserialize"    "xml_url"            "xml_validate"      
+[70] "xml2_example"
+#+end_example
+
+- read_xml, read_html
+- write_xml, write_html
+- url_xxx
+- xml_xxx
+
+* Example
+** Basics
+
+#+begin_src R
+x <- read_xml("<foo> <bar> text <baz/> </bar> </foo>")
+x
+class(x)
+#+end_src
+
+#+RESULTS:
+: 
+: {xml_document}
+: <foo>
+: [1] <
+: text <baz/
+: </bar>
+: 
+: [1] "xml_document" "xml_node"
+
+- 3 つのクラス
+  - ~xml_document~ (xml ドキュメント全体)
+  - ~xml_node~     (xml の 1 つのノード)
+  - ~xml_nodeset~  (xml node の ベクトル化されたもの)
+
+** Utilty
+
+#+begin_src R
+xml_name(x)
+xml_children(x)
+xml_text(x)
+xml_find_all(x, ".//baz")
+#+end_src
+
+#+RESULTS:
+#+begin_example
+[1] "foo"
+
+{xml_nodeset (1)}
+[1] <
+text <baz/
+</bar>
+
+[1] " text  "
+
+{xml_nodeset (1)}
+[1] <baz/>
+#+end_example
+
+** Sample
+
+- サンプルとして、mozc のキーマップデータ
+#+begin_src R
+path <- "~/Dropbox/repos/github/google/mozc/src/gui/config_dialog/keymap_ja.ts"
+mozc <- read_xml("<foo> <bar> text <baz/> </bar> </foo>")
+
+source <- xml_find_all(mozc, ".//source") %>% xml_text()
+translation <- xml_find_all(mozc, ".//translation") %>% xml_text()
+mapping <- data.frame(en = source, ja = translation)
+#+end_src

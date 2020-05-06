@@ -1,0 +1,22 @@
+#+STARTUP: showall indent
+
+* github
+
+- IBC は ib-controller から フォークしたプロジェクト
+- 今後は、IBC を使う
+
+** IBC
+
+- [[https://github.com/IbcAlpha/IBC][Github repo]]
+
+- 注意点 
+  - IBCLinux-x.x.x/scripts 配下のスクリプトに実効権限を付けておく
+  - ini ファイルは、ディレクトリ構成が違うので、Windows/Linux で分割する
+
+- ini ファイル 
+  - Linux:   IbDir=/home/shun/Jts/DU324132
+  - Windows: IbDir=C:\\jts\\DU324132
+
+** ib-controller
+
+- [[https://github.com/ib-controller/ib-controller][Github Repo]]

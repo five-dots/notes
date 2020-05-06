@@ -1,0 +1,640 @@
+#+STARTUP: folded indent inlineimages
+#+PROPERTY: header-args:R :session *R:ggplot2*
+
+* ={ggplot2}= Package
+** Grammer of Graphics
+
+- ggplot2 は、R の =grid= を利用した描画システム
+- ~plot()~ などは =graphics= を利用したシステム
+- _9 つの項目で統一的にグラフを作成する_
+  - ggplot(data = =<DATA>=)    利用するデータを指定
+  - =<GEOM_FUNCTION>= (        グラフ要素(点や線)を追加
+    - aes(=<MAPPINGS>=),       データとグラフ要素をマッピング
+    - stat = =<STAT>=,         データの変形・計算
+    - position = =<POSITION>=) データの並べ方を指定
+  - =<COORDINATE_FUNCTION>=    X/Y 軸の調整
+  - =<FACET_FUNCTION>=         グラフを並べる・分割する
+  - =<SCALE_FUNCTION>=         aes 毎の見た目をカスタマイズ
+  - =<THEME_FUNCTION>=         グラフ全体の見た目をカスタマイズ
+
+#+begin_src R :results output graphics :file (my/get-babel-file)
+ggplot(data = mpg, aes(hwy, cty)) +
+  geom_point(aes(color = cyl)) +
+  geom_smooth(method = "lm") +
+  coord_cartesian() +
+  scale_color_gradient() +
+  theme_bw()
+#+end_src
+
+#+RESULTS:
+
+** Aesthetic Mapping
+
+詳細 https://ggplot2.tidyverse.org/articles/ggplot2-specs.html
+
+- color     線の色
+- fill      塗りつぶし
+- alpha     透明度
+- size
+- shape
+- linetype
+- gruop
+- label     データ点をテキストにする
+
+** Sample Data and Base Plots
+
+#+begin_src R
+# データセット 
+data(mpg)
+data(economics)
+data(seals)
+seals$z <- with(seals, sqrt(delta_long ^ 2 + delta_lat ^ 2))
+
+# 独自データ
+df   <- data.frame(grp = c("A", "B"), fit = 4:5, se = 1:2)
+data <- data.frame(murder = USArrests$Murder, state <- tolower(rownames(USArrests)))
+map  <- map_data("state")
+
+# ベースプロット
+a  <- ggplot(economics, aes(date, unemploy)) # 時間 x, 連続 y
+b  <- ggplot(seals, aes(long, lat))          # 連続 x, 連続 y
+c  <- ggplot(mpg, aes(hwy))                  # 連続 x
+d  <- ggplot(mpg, aes(fl))                   # 離散 x
+e  <- ggplot(mpg, aes(cty, hwy))             # 連続 x, 連続 y
+f  <- ggplot(mpg, aes(class, hwy))           # 離散 x, 連続 y
+g  <- ggplot(diamonds, aes(cut, color))      # 離散 x, 離散 y
+h  <- ggplot(diamonds, aes(carat, price))    # 連続 x, 連続 y
+i  <- ggplot(economics, aes(date, unemploy)) # 時間 x, 連続 y
+j  <- ggplot(df, aes(grp, fit, ymin = fit - se, ymax = fit + se))
+k  <- ggplot(data, aes(fill = murder))
+l  <- ggplot(seals, aes(long, lat))
+c2 <- ggplot(mpg)
+#+end_src
+
+#+RESULTS:
+
+** Geoms Functions
+*** Basic Plots
+**** geom_blank()
+
+#+BEGIN_SRC R :results graphics :file (get-babel-file)
+a + geom_blank()
+#+END_SRC
+
+#+RESULTS:
+[[file:~/Dropbox/memo/img/babel/fig-8etsmX.png]]
+
+**** geom_curve()
+
+#+BEGIN_SRC R :results graphics :file (get-babel-file)
+b + geom_curve(aes(yend = lat + 1, xend = long + 1))
+#+END_SRC
+
+#+RESULTS:
+[[file:~/Dropbox/memo/img/babel/fig-UtIH7a.png]]
+
+**** geom_path()
+
+#+BEGIN_SRC R :results graphics :file (get-babel-file)
+a + geom_path(lineend = "butt", linejoin = "round", linemitre = 1)
+#+END_SRC
+
+#+RESULTS:
+[[file:~/Dropbox/memo/img/babel/fig-J3VjyZ.png]]
+
+**** geom_rect()
+
+#+BEGIN_SRC R :results graphics :file (get-babel-file)
+b + geom_rect(aes(xmin = long, ymin = lat, xmax = long + 1, ymax = lat + 1))
+#+END_SRC
+
+#+RESULTS:
+[[file:~/Dropbox/memo/img/babel/fig-AytbrG.png]]
+
+**** geom_ribbon()
+
+#+BEGIN_SRC R :results graphics :file (get-babel-file)
+a + geom_ribbon(aes(ymin = unemploy - 900, ymax = unemploy + 900))
+#+END_SRC
+
+#+RESULTS:
+[[file:~/Dropbox/memo/img/babel/fig-BMRuFl.png]]
+
+*** Continuous X (_Histogram Family_)
+**** geom_histogram()
+
+#+BEGIN_SRC R :results graphics :file (get-babel-file)
+c + geom_histogram(binwidth = 5)
+#+END_SRC
+
+#+RESULTS:
+[[file:~/Dropbox/memo/img/babel/fig-Aummew.png]]
+
+**** geom_dotplot()
+
+ヒストグラムのドット版
+
+#+BEGIN_SRC R :results graphics :file (get-babel-file)
+c + geom_dotplot()
+#+END_SRC
+
+#+RESULTS:
+[[file:~/Dropbox/memo/img/babel/fig-7gpx63.png]]
+
+**** geom_freqpoly()
+
+ヒストグラムの線グラフ版
+
+#+BEGIN_SRC R :results graphics :file (get-babel-file)
+c + geom_freqpoly()
+#+END_SRC
+
+#+RESULTS:
+[[file:~/Dropbox/memo/img/babel/fig-gCdKQf.png]]
+
+**** geom_area()
+
+エリアの塗りつぶし
+
+#+BEGIN_SRC R :results graphics :file (get-babel-file)
+c + geom_area(stat = "bin")
+#+END_SRC
+
+#+RESULTS:
+[[file:~/Dropbox/memo/img/babel/fig-w5GIRG.png]]
+
+**** geom_density()
+
+カーネル密度
+
+#+BEGIN_SRC R :results graphics :file (get-babel-file)
+c + geom_density(kernel = "gaussian")
+#+END_SRC
+
+#+RESULTS:
+[[file:~/Dropbox/memo/img/babel/fig-6E62iL.png]]
+
+*** Discrete X (_Bar Plot Family_)
+**** geom_bar()
+
+デフォルトで、stat = "count" なので、縦軸はカウントデータになる
+
+#+BEGIN_SRC R :results graphics :file (get-babel-file)
+d + geom_bar()
+#+END_SRC
+
+#+RESULTS:
+[[file:~/Dropbox/memo/img/babel/fig-cLJeu3.png]]
+
+*** Continuous X, Continuous Y (_Scatter Plot Family_)
+**** geom_point()
+
+#+BEGIN_SRC R :results graphics :file (get-babel-file)
+e + geom_point()
+#+END_SRC
+
+#+RESULTS:
+[[file:~/Dropbox/memo/img/babel/fig-aCx827.png]]
+
+**** geom_jitter()
+
+#+BEGIN_SRC R :results graphics :file (get-babel-file)
+# geom_point(position = "jitter") のショートカット
+e + geom_jitter(height = 2, width = 2)
+#+END_SRC
+
+#+RESULTS:
+[[file:~/Dropbox/memo/img/babel/fig-LIADbP.png]]
+
+**** geom_quantile()
+
+#+BEGIN_SRC R :results graphics :file (get-babel-file)
+e + geom_quantile()
+#+END_SRC
+
+#+RESULTS:
+[[file:~/Dropbox/memo/img/babel/fig-QgqcqM.png]]
+
+**** geom_rug()
+
+1 次元のデータをバーコードで表現
+他の形式のプロットと組み合わせて表現力を向上させる
+
+#+BEGIN_SRC R :results graphics :file (get-babel-file)
+e + geom_rug(sides = "bl")
+#+END_SRC
+
+#+RESULTS:
+[[file:~/Dropbox/memo/img/babel/fig-SCnUf3.png]]
+
+**** geom_smooth()
+
+回帰線を追加する
+
+#+BEGIN_SRC R :results graphics :file (get-babel-file)
+e + geom_smooth(method = lm)
+#+END_SRC
+
+#+RESULTS:
+[[file:~/Dropbox/memo/img/babel/fig-yWljYd.png]]
+
+**** geom_label()
+
+ポイントをテキストに変換してプロット
+
+#+BEGIN_SRC R :results graphics :file (get-babel-file)
+e + geom_label(aes(label = cty))
+#+END_SRC
+
+#+RESULTS:
+[[file:~/Dropbox/memo/img/babel/fig-Nyaxr6.png]]
+
+**** geom_text()
+
+ポイントをテキストに変換してプロット
+
+#+BEGIN_SRC R :results graphics :file (get-babel-file)
+e + geom_text(aes(label = cty))
+#+END_SRC
+
+#+RESULTS:
+[[file:~/Dropbox/memo/img/babel/fig-pfNFcs.png]]
+
+*** Discrete X, Continuous Y (_Box Plot/Violin Plot Family_)
+**** geom_boxplot()
+
+#+BEGIN_SRC R :results graphics :file (get-babel-file)
+f + geom_boxplot()
+#+END_SRC
+
+#+RESULTS:
+[[file:~/Dropbox/memo/img/babel/fig-EzHfRS.png]]
+
+**** geom_violin()
+
+#+BEGIN_SRC R :results graphics :file (get-babel-file)
+f + geom_violin(scale = "area")
+#+END_SRC
+
+#+RESULTS:
+[[file:~/Dropbox/memo/img/babel/fig-a5jy5Z.png]]
+
+**** geom_dotplot()
+
+バイオリンプロットのドット版
+
+#+BEGIN_SRC R :results graphics :file (get-babel-file)
+f + geom_dotplot(binaxis = "y", stackdir = "center")
+#+END_SRC
+
+#+RESULTS:
+[[file:~/Dropbox/memo/img/babel/fig-pc7xtL.png]]
+
+**** geom_col()
+
+Y 軸は、値の合計値（カウントではない）
+
+#+BEGIN_SRC R :results graphics :file (get-babel-file)
+f + geom_col()
+# f + geom_bar(stat = "identity") # 上記と同じ
+#+END_SRC
+
+#+RESULTS:
+[[file:~/Dropbox/memo/img/babel/fig-xdE1KT.png]]
+
+*** Discrete X (Date/Time), Continuous Y (_Time Series Family_) 
+**** geom_area()
+
+#+BEGIN_SRC R :results graphics :file (get-babel-file)
+i + geom_area()
+#+END_SRC
+
+#+RESULTS:
+[[file:~/Dropbox/memo/img/babel/fig-MJHV3u.png]]
+
+**** geom_line()
+
+#+BEGIN_SRC R :results graphics :file (get-babel-file)
+i + geom_line()
+#+END_SRC
+
+#+RESULTS:
+[[file:~/Dropbox/memo/img/babel/fig-7fACRo.png]]
+
+**** geom_step()
+
+#+BEGIN_SRC R :results graphics :file (get-babel-file)
+i + geom_step(direction = "hv")
+#+END_SRC
+
+#+RESULTS:
+[[file:~/Dropbox/memo/img/babel/fig-nxLOUH.png]]
+
+*** Discrete X, Discrete Y
+**** geom_count()
+
+#+BEGIN_SRC R :results graphics :file (get-babel-file)
+g + geom_count()
+#+END_SRC
+
+#+RESULTS:
+[[file:~/Dropbox/memo/img/babel/fig-8WAXHW.png]]
+
+**** geom_jitter()
+
+#+BEGIN_SRC R :results graphics :file (get-babel-file)
+g + geom_jitter()
+#+END_SRC
+
+#+RESULTS:
+[[file:~/Dropbox/memo/img/babel/fig-BzwwwY.png]]
+
+*** 3 Variables
+**** geom_bin2d()
+
+#+BEGIN_SRC R :results graphics :file (get-babel-file)
+h + geom_bin2d(binwidth = c(0.25, 500))
+#+END_SRC
+
+#+RESULTS:
+[[file:~/Dropbox/memo/img/babel/fig-odeOnF.png]]
+
+**** geom_hex()
+
+#+BEGIN_SRC R :results graphics :file (get-babel-file)
+h + geom_hex()
+#+END_SRC
+
+#+RESULTS:
+[[file:~/Dropbox/memo/img/babel/fig-dcNp2g.png]]
+
+**** geom_density2d()
+
+2 次元の確率密度
+
+#+BEGIN_SRC R :results graphics :file (get-babel-file)
+h + geom_density2d()
+#+END_SRC
+
+#+RESULTS:
+[[file:~/Dropbox/memo/img/babel/fig-r4072l.png]]
+
+**** gome_contour()
+
+等高線
+
+#+BEGIN_SRC R :results graphics :file (get-babel-file)
+l + geom_contour(aes(z = z))
+#+END_SRC
+
+#+RESULTS:
+[[file:~/Dropbox/memo/img/babel/fig-QZHrAY.png]]
+
+**** geom_raster()
+
+グラデーション
+
+#+BEGIN_SRC R :results graphics :file (get-babel-file)
+l + geom_raster(aes(fill = z))
+#+END_SRC
+
+#+RESULTS:
+[[file:~/Dropbox/memo/img/babel/fig-cDcyh4.png]]
+
+**** geom_tile()
+
+#+BEGIN_SRC R :results graphics :file (get-babel-file)
+l + geom_tile(aes(fill = z))
+#+END_SRC
+
+#+RESULTS:
+[[file:~/Dropbox/memo/img/babel/fig-NKM17u.png]]
+
+*** Visualize Errors
+**** geom_crossbar()
+
+#+BEGIN_SRC R :results graphics :file (get-babel-file)
+j + geom_crossbar(fatten = 2)
+#+END_SRC
+
+#+RESULTS:
+[[file:~/Dropbox/memo/img/babel/fig-5SIaoK.png]]
+
+**** geom_errorbar()
+
+#+BEGIN_SRC R :results graphics :file (get-babel-file)
+j + geom_errorbar()
+#+END_SRC
+
+#+RESULTS:
+[[file:~/Dropbox/memo/img/babel/fig-F1HAN9.png]]
+
+**** geom_linerange() 
+
+#+BEGIN_SRC R :results graphics :file (get-babel-file)
+j + geom_linerange()
+#+END_SRC
+
+#+RESULTS:
+[[file:~/Dropbox/memo/img/babel/fig-VaeQb3.png]]
+
+**** geom_pointrange()
+
+#+BEGIN_SRC R :results graphics :file (get-babel-file)
+j + geom_pointrange()
+#+END_SRC
+
+#+RESULTS:
+[[file:~/Dropbox/memo/img/babel/fig-TeuXYP.png]]
+
+*** Map
+**** geom_map()
+
+#+BEGIN_SRC R :results graphics :file (get-babel-file)
+k + geom_map(aes(map_id = state), map = map) +
+  expand_limits(x = map$long, y = map$lat)
+#+END_SRC
+
+#+RESULTS:
+[[file:~/Dropbox/memo/img/babel/fig-8zsXLG.png]]
+** TODO Stat Functions
+
+元データを変形(Summarize したり)して、プロットに利用するための関数群
+新たな変数列を作り出して、geom map する (..name..)
+Help の Computed variables の項目の変数名が ..name.. でアクセスできるもの
+..name.. には、今後は、stat(name) でアクセスする（推奨）
+https://notchained.hatenablog.com/entry/2015/06/27/215316
+
+stat <=> geom は相互に変換可能
+stat_bin(geom = "bar") == geom_bar(stat = "bin")
+
+1D distribution
+ヒストグラム: x 軸 を binwidth 幅で集計(カウント)
+a + stat_bin(binwidth = 1)
+
+確率密度: x 軸を kernel density でスムージング
+a + stat_density(kernel = "gaussian")
+
+2d distribution
+2 値の密度を集計し、濃淡で表示
+f + stat_bin2d(bins = 30, drop = TRUE)
+f + stat_binhex(bins = 30)
+
+2 値の密度を集計し、等高線で表示
+f + stat_density2d(contour = TRUE, n = 100)
+
+3 variables
+等高線
+m + stat_contour(aes(z = z))
+m + stat_spoke(aes(radius = z, angle = z))
+m + stat_summary_hex(aes(z = z), bins = 30, fun = mean)
+m + stat_summary2d(aes(z = z), bins = 30, fun = mean)
+
+Comparisons
+箱ひげ図
+g + stat_boxplot(coef = 1.5)
+
+バイオリンプロット
+g + stat_ydensity(adjust = 1, kernel = "gaussian", scale = "area")
+
+Functions
+Empirical Cumulative Distribution Function
+f + stat_ecdf(n = 40)
+
+四分位数のライン (25%, 50%, 75%)
+f + stat_quantile(quantiles = c(0.25, 0.5, 0.75),
+                  formula = y ~ log(x), method = "rq")
+
+回帰線
+f + stat_smooth(method = "auto", formula = y ~ x,
+                se = TRUE, n = 80, fullrange = FALSE, level = 0.95)
+** TODO Position
+Position (= aes 要素の並べ方)
+
+s <- ggplot(mpg, aes(fl, fill = drv))
+s + geom_bar(position = "dodge")
+s + geom_bar(position = "fill")
+e + geom_point(position = "jitter")
+e + geom_label(position = "nudge")
+s + geom_bar(position = "stack")
+** TODO Scale
+Scale (= aes 毎の見た目を変更)
+aes の要素の詳細を再定義
+- scale_*_continuous()
+- scale_*_discrete()
+- scale_*_identity()
+- scale_*_manual()
+- scale_*_date()
+- scale_*_datetime()
+
+(n <- d + geom_bar(aes(fill = fl)))
+n + scale_fill_manual(
+ values = c("skyblue", "royalblue", "blue", "navy"), # 色を個別指定
+ limits = c("d", "e", "p", "r"),                     # 値の範囲
+ breaks = c("d", "e", "p", "r"),                     # 軸の名前
+ name   = "fuel",                                    # 凡例のタイトル
+ labels = c("D", "E", "P", "R"))                     # 凡例の各要素
+
+- x and y
+scale_x_log10()
+scale_x_reverse()
+scale_x_sqrt()
+
+- color (連続値)
+(n <- d + geom_bar(aes(fill = fl)))
+n + scale_fill_brewer(palette = "Blues")
+n + scale_fill_grey(start = 0.2, end = 0.8, na.value = "red")
+
+- color (離散値)
+(o <- c + geom_dotplot(aes(fill = ..x..)))
+o + scale_fill_distiller(palette = "Blues")
+o + scale_fill_gradient(low = "red", high = "yellow")
+o + scale_fill_gradient2(low = "red", high = "blue", mid = "white", midpoint = 25)
+o + scale_fill_gradientn(colours = topo.colors(6))
+
+- shape/size
+(p <- e + geom_point(aes(shape = fl, size = cyl)))
+p + scale_shape() + scale_size()
+p + scale_shape_manual(values = c(3:7))
+** TODO Coordinate
+Coordinate (= x, y 軸の操作)
+
+(r <- d + geom_bar())
+
+- default
+r + coord_cartesian(xlim = c(0, 5))
+r + coord_fixed(ratio = 1 / 2)
+
+- X, Y の入れ替え
+r + coord_flip()
+r + coord_polar(theta = "x", direction = 1)
+r + coord_trans(y = "sqrt")
+
+** TODO Facet
+(t <- ggplot(mpg, aes(cty, hwy)) + geom_point())
+
+# rows, cols を vars() で指定
+t + facet_grid(cols = vars(fl))
+t + facet_grid(rows = vars(year))
+t + facet_grid(rows = vars(year), cols = vars(fl))
+t + facet_wrap(vars(fl))
+
+# rows ~ cols 表記でも OK
+t + facet_grid(year ~ fl)
+
+# scales = fixed, free, free_x, free_y
+t + facet_grid(rows = vars(drv), cols = vars(fl), scales = "free")
+
+# labeller で Facet label を制御
+t + facet_grid(cols = vars(fl), labeller = label_both)
+
+** TODO Theme
+
+r + theme_gray()    # Default (Grey background)
+r + theme_bw()      # White background with grid lines
+r + theme_dark()    # dark for contrast
+r + theme_classic()
+r + theme_light()
+r + theme_linedraw()
+r + theme_minimal()
+r + theme_void()
+
+** TODO Labels
+
+t + labs(x        = "New x axis label",
+         y        = "New y axis label",
+         title    = "Add a title above the plot",
+         subtitle = "Add a subtitle below title",
+         caption  = "Add a caption below plot")
+
+t + annotate(geom = "text", x = 8, y = 9, label = "A")
+
+** TODO Legends
+n + theme(legend.position = "bottom")
+n + guides(fill = "none")
+n + scale_fill_discrete(name = "Title", labels = c("A", "B", "C", "D", "E"))
+** 参考
+
+- [[http://www.sthda.com/english/wiki/be-awesome-in-ggplot2-a-practical-guide-to-be-highly-effective-r-software-and-data-visualization][Be Awesome in ggplot2: A Practical Guide to be Highly Effective - R software and data visualization
+]]
+* TODO ={grid}= Package
+
+ggplot2 や lattice が利用している描画システム
+
+viewport = 枠, 中に grob が入る
+grob     = grid graphical object
+gTree    = grob が複数組み合わされたもの
+gtable   = grob をテーブル上に整然と並べたもの. ggplot で利用される。
+
+class(e)
+grobs <- ggplotGrob(e)  # grob を抜き出す
+class(grobs)            # gtable, gTree, grob, gDesc class
+
+* TODO ={gridExtra}= Package
+* TODO ={patchwork}= Package
+
+- https://qiita.com/nozma/items/4512623bea296ccb74ba
+
+devtools::install_github("thomasp85/patchwork")
+
+* TODO ={ggforce}= pacakge

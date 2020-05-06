@@ -1,0 +1,13 @@
+#+STARTUP: folded indent
+#+PROPERTY: header-args:R :results value :colnames yes :session *R:readxl*
+
+* readxl package
+read_excel() # xls, xlsx 両対応
+read_xls()
+read_xlsx()
+
+# シートをリストアップ
+excel_sheets()
+
+# ファイル形式を確認 xls? xlsx?
+excel_format()

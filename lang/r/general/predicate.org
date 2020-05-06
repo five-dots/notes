@@ -1,0 +1,784 @@
+#+STARTUP: folded indent inlineimages latexpreview
+#+PROPERTY: header-args:R :results output :session *R:predicate* :width 640 :height 480 :colnames yes
+
+* ライブラリの読み込み
+
+#+begin_src R :results silent
+library(tidyverse)
+library(rlang)      # base R を拡張
+library(assertthat) # 関数の入力アサーション
+library(assertr)    # data.frame のアサーション
+#+end_src
+
+* 型の確認
+** 基本的なベクトル型
+
+- ={base}=
+  - =is.vector()= 
+    - attribute が無いものだけ
+    - list や expression でも TRUE
+  - =is.atomic()= 
+    - list や expression では FALSE
+    - character や numeric の vector に対しては通常はこちらを使う
+
+- ={rlang}=
+  - vector で n(length) を指定できる
+  - =is.atomic()= と違い NULL に TRUE を返さない
+  - =is.vector()= と違い attributes 有無をチェックしない
+
+#+begin_src R :results silent
+is.atomic()
+is.character()
+is.double()
+is.integer()
+is.list()
+is.logical()
+is.null()
+is.numeric()
+is.raw()
+is.vector()
+
+rlang::is_atomic()
+rlang::is_bytes()
+rlang::is_character()
+rlang::is_double()
+rlang::is_integer()
+rlang::is_list()
+rlang::is_logical()
+rlang::is_null()
+rlang::is_raw()
+rlang::is_vector()
+## rlang::is_numeric() は存在しない
+
+## スカラー値
+rlang::is_scalar_atomic()
+rlang::is_scalar_bytes()
+rlang::is_scalar_character()
+rlang::is_scalar_double()
+rlang::is_scalar_integer()
+rlang::is_scalar_list()
+rlang::is_scalar_logical()
+rlang::is_scalar_raw()
+rlang::is_scalar_vector()
+
+rlang::is_bool()
+rlang::is_string()
+
+## スカラー値 (NA = TRUE, NA/NaN/Inf = FALSE)
+assertthat::is.scalar()
+assertthat::is.number() # int or double
+assertthat::is.flag()
+assertthat::is.string()
+assertthat::is.count() # 正の整数
+
+## bare = attributes がないもの
+rlang::is_bare_atomic
+rlang::is_bare_bytes
+rlang::is_bare_character
+rlang::is_bare_double
+rlang::is_bare_env
+rlang::is_bare_environment
+rlang::is_bare_formula
+rlang::is_bare_integer
+rlang::is_bare_list
+rlang::is_bare_logical
+rlang::is_bare_numeric
+rlang::is_bare_raw
+rlang::is_bare_string
+rlang::is_bare_vector
+#+end_src
+
+** 整数型
+
+#+begin_src R
+is.integer(10) # FALSE
+
+## 明示的に L をつけなくても整数かを判断してくれる
+rlang::is_integerish(10L)
+rlang::is_integerish(10)
+rlang::is_integerish(10.0)
+
+rlang::is_scalar_integerish(1.0)
+rlang::is_bare_integerish(1.0)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+[1] FALSE
+
+[1] TRUE
+
+[1] TRUE
+
+[1] TRUE
+
+[1] TRUE
+
+[1] TRUE
+#+end_example
+
+** 文字列型
+
+#+begin_src R
+is.character("hoge")
+is.character(NULL)
+is.character(c("hoge", NA_character_))
+
+rlang::is_string(c("hoge"))
+rlang::is_string(c("hoge", "fuga"))
+
+rlang::is_character(c("hoge"))
+rlang::is_scalar_character(c("hoge"))
+#+end_src
+
+#+RESULTS:
+#+begin_example
+[1] TRUE
+
+[1] FALSE
+
+[1] TRUE
+
+[1] TRUE
+
+[1] FALSE
+
+[1] TRUE
+
+[1] TRUE
+#+end_example
+
+** 論理型
+
+- ={base}=
+  - スカラーで返す
+  - *ベクトルに NULL が含まれていても Logical が含まれていれば TRUE*
+#+begin_src R
+logicals <- c(TRUE, FALSE, NA, NULL)
+is.logical(logicals)
+is.logical(NA)
+is.logical(NULL)
+#+end_src
+
+#+RESULTS:
+: 
+: [1] TRUE
+: 
+: [1] TRUE
+: 
+: [1] FALSE
+: 
+: [1] TRUE
+
+- ={rlang}=
+#+begin_src R
+logicals <- c(TRUE, FALSE, NA, NULL)
+rlang::is_logical(logicals)
+rlang::is_logical(NA)
+rlang::is_logical(NULL)
+
+rlang::is_true(TRUE)
+rlang::is_false(FALSE)
+
+## スカラー値
+rlang::is_bool(TRUE)
+rlang::is_bool(c(TRUE, FALSE)) # スカラー出ない場合は FALSE
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+[1] TRUE
+
+[1] TRUE
+
+[1] FALSE
+
+[1] TRUE
+
+[1] TRUE
+
+[1] TRUE
+
+[1] FALSE
+#+end_example
+
+** 日時型 (Date, POSIXct)
+
+- ={base}= では、直接日時を検査する関数はない
+- ={assetthat}=, ={lubridate}= を使う
+#+begin_src R
+inherits(Sys.Date(), "Date")    # base で確認するならこの方法
+inherits(Sys.time(), "POSIXct") # base で確認するならこの方法
+
+dates <- c(Sys.Date(), Sys.Date())
+times <- c(Sys.time(), Sys.time())
+
+assertthat::is.date(Sys.Date()) # Date 型
+assertthat::is.date(dates)      # Date 型 (戻り値はスカラー)
+assertthat::is.time(Sys.time()) # POSIXct 型
+assertthat::is.time(times)      # POSIXct 型 (戻り値はスカラー)
+
+lubridate::is.Date(dates) # 戻り値はスカラー
+lubridate::is.POSIXct(times) # 戻り値はスカラー
+## lubridate::is.difftime()
+## lubridate::is.duration()
+## lubridate::is.instant()
+## lubridate::is.interval()
+## lubridate::is.period()
+## lubridate::is.POSIXlt()
+## lubridate::is.POSIXt()
+## lubridate::is.timepoint()
+## lubridate::is.timespan()
+#+end_src
+
+#+RESULTS:
+#+begin_example
+[1] TRUE
+
+[1] TRUE
+
+[1] TRUE
+
+[1] TRUE
+
+[1] TRUE
+
+[1] TRUE
+
+[1] TRUE
+
+[1] TRUE
+#+end_example
+
+** Formula, Definition
+
+#+begin_src R
+rlang::is_formula(y ~ x)
+rlang::is_definition(y ~ x)
+rlang::is_definition(quote(a := b))
+
+## formula, definition の両方にマッチ
+rlang::is_formulaish(y ~ x)
+rlang::is_formulaish(quote(a := b))
+#+end_src
+
+#+RESULTS:
+: [1] TRUE
+: 
+: [1] FALSE
+: 
+: [1] TRUE
+: 
+: [1] TRUE
+: 
+: [1] TRUE
+
+** 関数
+
+#+begin_src R
+is.function(mean)
+is.primitive(sum)
+
+rlang::is_closure(mean)
+rlang::is_function(sum)
+
+f <- as_function(~ .x + 1) # rlang_lambda_function class
+rlang::is_lambda(f)
+
+rlang::is_primitive(sum)
+rlang::is_primitive_eager(sum)
+rlang::is_primitive_lazy(sum)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+[1] TRUE
+
+[1] TRUE
+
+[1] TRUE
+
+[1] TRUE
+
+[1] TRUE
+
+[1] TRUE
+
+[1] TRUE
+
+[1] FALSE
+#+end_example
+
+** 環境
+
+#+begin_src R
+base::is.environment(env())
+
+rlang::is_environment(env())
+## rlang::is_env(env()) # Deprecated
+rlang::is_namespace(env())
+
+## Search path に読み込まれているか
+rlang::is_attached("package:base")
+#+end_src
+
+#+RESULTS:
+: [1] TRUE
+: 
+: [1] TRUE
+: 
+: [1] TRUE
+: 
+: [1] FALSE
+: 
+: [1] TRUE
+
+** 例外
+
+#+begin_src R
+rlang::is_condition()
+
+c <- try(stop("!!"))
+assertthat::is.error(c)
+#+end_src
+
+#+RESULTS:
+: Error in rlang::is_condition(stop("!!")) : !!
+: 
+: Error in try(stop("!!")) : !!
+: 
+: [1] FALSE
+: 
+: [1] TRUE
+
+** Splice
+
+#+begin_src R
+rlang::is_spliced()
+rlang::is_spliced_bare()
+#+end_src
+
+** Zap
+
+#+begin_src R
+rlang::is_zap
+#+end_src
+
+** Box
+
+#+begin_src R
+rlang::is_box()
+rlang::is_done_box()
+#+end_src
+
+** Stack
+
+- Soft deprecated
+#+begin_src R
+rlang::is_stack()
+rlang::is_call_stack()
+rlang::is_eval_stack()
+#+end_src
+
+** その他の R 組み込み型 / Language 型関連
+
+#+begin_src R :results silent
+rlang::is_call()
+rlang::is_callable()
+rlang::is_copyable() # いくつかの Internal type はコピーできず参照が作成されるので、そのチェックに使う
+rlang::is_frame()
+
+rlang::is_expr()
+rlang::is_expression()
+rlang::is_syntactic_literal()
+rlang::is_symbol()
+rlang::is_symbolic()
+
+rlang::is_pairlist()  # parilist
+rlang::is_node()      # parilist or language
+rlang::is_node_list() # parilist or NULL
+
+rlang::is_quosure()
+rlang::is_quosures()
+
+## bare
+rlang::is_bare_env()
+rlang::is_bare_environment()
+rlang::is_bare_formula()
+
+## Deprecated, use is_call()
+is_lang()
+is_unary_lang()
+is_binary_lang()
+quo_is_lang()
+#+end_src
+
+* 同値
+** =identical()=
+
+- =identical(x, y, num.eq = TRUE, single.NA = TRUE, attrib.as.set = TRUE, ignore.bytecode = TRUE, ignore.environment = FALSE, ignore.srcref = TRUE)=
+
+- 比較対象が =NULL= だった場合も =TRUE= / =FALSE= で返してくれる
+- =integer= と =double= などの型も厳密に比較
+- vector の順番も考慮してくれる
+
+#+begin_src R
+1 == NULL # logical(0)
+identical(1, NULL)
+identical(1, 1.) # 1 も double として扱われている
+identical(1, as.integer(1))
+#+end_src
+
+#+RESULTS:
+: logical(0)
+: 
+: [1] FALSE
+: 
+: [1] TRUE
+: 
+: [1] FALSE
+
+- 環境の比較は ==== ではできない
+- =identical()= を使う
+#+begin_src R :exports both
+identical(environment(), globalenv())
+#+end_src
+
+#+RESULTS:
+: [1] TRUE
+
+** =all()=
+
+- =all(..., na.rm = FALSE)=
+#+begin_src R
+all(TRUE, TRUE, FALSE)
+all(TRUE, TRUE, TRUE)
+#+end_src
+
+#+RESULTS:
+: [1] FALSE
+: 
+: [1] TRUE
+
+** =all.equal()=, =assetthat::are_equal()=
+
+- =all.equal(target, current, ...)=
+- S3 for numeric (tolerance が設定されている)
+- =all.equal(target, current, tolerance = sqrt(.Machine$double.eps), scale = NULL, countEQ = FALSE, formatFUN = function(err, what) format(err), ..., check.attributes = TRUE)=
+
+- =all.equal()= オブジェクトが *Nearly equal* かを調べる
+- =numeric=, =list=, =enviroment= など向けの S3 メソッド
+#+begin_src R :exports both
+x <- 1.0
+y <- 0.99999999999
+.Machine$double.eps
+
+all.equal(x, y)
+#+end_src
+
+#+RESULTS:
+: 
+: [1] 2.220446e-16
+: 
+: [1] TRUE
+
+- =assetthat::are_equal()= は =all.eqaul()= のラッパー
+#+begin_src R
+x <- 1.0
+y <- 0.99999999999
+
+assertthat::are_equal(x, y)
+#+end_src
+
+#+RESULTS:
+: 
+: [1] TRUE
+  
+** =isTRUE(x)=, =isFALSE(x)=
+** =dplyr::near()=
+
+- =dplyr::near(x, y, tol = .Machine$double.eps^0.5)=
+
+- Vectorized ~all.equal()~
+#+begin_src R :exports both
+x <- rep(1, 10)
+y <- rep(0.999999999999, 10)
+dplyr::near(x, y)
+#+end_src
+
+#+RESULTS:
+: 
+:  [1] TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE
+
+* 属性
+
+#+begin_src R
+names(attributes(iris))
+attr(iris, "class")
+
+assertthat::has_attr(iris, "class")
+iris %has_attr% "class"
+#+end_src
+
+#+RESULTS:
+: [1] "names"     "class"     "row.names"
+: 
+: [1] "data.frame"
+: 
+: [1] TRUE
+: 
+: [1] TRUE
+
+* 引数
+** デフォルト引数がない引数が省略されていないか確認
+
+#+begin_src R
+f <- function(x) base::missing(x)
+f()
+
+f <- function(x) rlang::is_missing(x)
+f()
+
+f <- function(x = 1) rlang::is_missing(x)
+f()
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+[1] TRUE
+
+[1] TRUE
+
+[1] FALSE
+
+[1] FALSE
+
+[1] FALSE
+#+end_example
+
+** 関数が指定した引数名を持つか確認
+
+#+begin_src R
+f <- function(a, b) a + b
+
+assertthat::has_args(f, c("a", "b"))
+f %has_args% "a"
+#+end_src
+
+#+RESULTS:
+: 
+: [1] TRUE
+: 
+: [1] TRUE
+
+* 名前 (=names()=, =colnames()=)
+
+#+begin_src R
+any(names(iris) %in% c("Sepal.Length"))
+
+rlang::is_named(iris)
+rlang::has_name(iris, "Sepal.Length")
+
+rlang::is_dictionaryish(iris)
+rlang::is_dictionaryish(list(a=10, 20)) # 全てに名前が必要
+
+assertthat::has_name(iris, "Sepal.Length")
+iris %has_name% "Sepal.Length"
+#+end_src
+
+#+RESULTS:
+#+begin_example
+[1] TRUE
+
+[1] TRUE
+
+[1] TRUE
+
+[1] TRUE
+
+[1] FALSE
+
+[1] TRUE
+
+[1] TRUE
+#+end_example
+
+* 欠損値
+
+#+begin_src R
+is.na(NA)
+is.na(c(NA, NA)) # vector で返す
+anyNA(c(NA, 1))  # scalar で返す
+
+## Vectorized (入力と同じ長さで返す)
+rlang::are_na(c(NA, NA))
+rlang::is_lgl_na(NA)
+rlang::is_int_na(NA_integer_)
+rlang::is_dbl_na(NA_real_)
+rlang::is_chr_na(NA_character_)
+rlang::is_cpl_na(NA) # ?
+
+# スカラー値
+rlang::is_na(NA)
+rlang::is_na(c(NA, NA)) # FALSE
+
+assertthat::noNA(NA)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+[1] TRUE
+
+[1] TRUE TRUE
+
+[1] TRUE
+
+[1] TRUE TRUE
+
+[1] TRUE
+
+[1] TRUE
+
+[1] TRUE
+
+[1] TRUE
+
+[1] FALSE
+
+[1] TRUE
+
+[1] FALSE
+
+[1] FALSE
+#+end_example
+
+* 次元・サイズ
+
+- NULL もしくは、長さ 0 をチェック
+#+begin_src R
+empty_vec <- vector("numeric")
+
+rlang::is_empty(empty_vec)
+rlang::is_empty(NULL)
+
+assertthat::not_empty(empty_vec)
+assertthat::not_empty(NULL)
+#+end_src
+
+#+RESULTS:
+: 
+: [1] TRUE
+: 
+: [1] TRUE
+: 
+: [1] FALSE
+: 
+: [1] FALSE
+
+* パッケージ
+
+#+begin_src R
+rlang::is_installed("dplyr")
+
+## Search path に読み込まれているか
+rlang::is_attached("package:base")
+
+## Deprecated, use is_attached
+## rlang::is_scoped(nm)
+#+end_src
+
+#+RESULTS:
+: [1] TRUE
+: 
+: [1] TRUE
+
+* Interactive
+
+- インタラクティブに実行されているか、バッチ実行か
+#+begin_src R
+interactive()
+is_interactive()
+#+end_src
+
+#+RESULTS:
+: [1] TRUE
+: 
+: [1] TRUE
+
+* ファイル
+
+- ={base}= では存在確認の関数くらいしかない
+- ={fs}=, もしくは ={assertion}= を使う
+#+begin_src R
+file <- "~/.secret.R"
+dir <- "~/"
+file.exists(file)
+dir.exists(dir)
+
+assertthat::is.dir(dir)
+assertthat::is.writeable(file)
+assertthat::is.readable(file)
+assertthat::has_extension(file, "R") # 拡張子
+
+## {fs}
+fs::is_absolute_path(file)
+fs::is_dir(dir)
+fs::is_file(file)
+fs::is_file_empty(file)
+fs::is_link(file)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+[1] TRUE
+
+[1] TRUE
+
+[1] TRUE
+
+[1] TRUE
+
+[1] TRUE
+
+[1] TRUE
+
+[1] TRUE
+
+   ~ 
+TRUE
+
+~/.secret.R 
+      FALSE
+
+~/.secret.R 
+      FALSE
+
+~/.secret.R 
+       TRUE
+#+end_example
+
+* 参照
+
+#+begin_src R
+env <- env()
+ref <- env
+rlang::is_reference(ref, env)
+## rlang::is_weakref(env)
+
+## Due to copy-on-write optimisation, a copied vector can
+## temporarily reference the original vector:
+vec <- 1:10
+copy <- vec
+rlang::is_reference(copy, vec)
+#+end_src
+
+#+RESULTS:
+: 
+: [1] TRUE
+: 
+: [1] TRUE
+
+* 参考

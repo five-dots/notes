@@ -1,0 +1,367 @@
+#+STARTUP: folded indent inlineimages latexpreview
+#+PROPERTY: header-args:R :results value :colnames yes :session *R:rsample*
+
+* ~{rsample}~: General Resampling Infrastructure                     :noexport:
+
+~{rsample}~ は R の ~data.frame~ を訓練データとテストデータに分割するためのパッケージ。 ~{tidymodels}~ のパッケージ群に含まれる。単純な分割から、交差検証のための分割、時系列データの分割までサポートしている。
+\\
+
+* 目次                                                            :quote:toc:
+#+BEGIN_QUOTE
+- [[#ライブラリの読み込みとバージョンの確認][ライブラリの読み込みとバージョンの確認]]
+- [[#全関数][全関数]]
+- [[#対応手法][対応手法]]
+- [[#関数リスト][関数リスト]]
+  - [[#-initial_splitdata-prop--34-strata--null-breaks--4-][★★★ ~initial_split(data, prop = 3/4, strata = NULL, breaks = 4, ...)~.]]
+  - [[#-initial_time_splitdata-prop--34-][★★☆ ~initial_time_split(data, prop = 3/4, ...)~.]]
+  - [[#-trainingx][★★☆ ~training(x)~.]]
+  - [[#-testingx][★★☆ ~testing(x)~.]]
+  - [[#-vfold_cvdata-v--10-repeats--1-strata--null-breaks--4-][★★★ ~vfold_cv(data, v = 10, repeats = 1, strata = NULL, breaks = 4, ...)~.]]
+  - [[#-analysisx-][★★☆ ~analysis(x, ...)~.]]
+  - [[#-assessmentx-][★★☆ ~assessment(x, ...)~.]]
+  - [[#-rolling_origindata-initial--5-assess--1-cumulative--true-skip--0-][★★★ ~rolling_origin(data, initial = 5, assess = 1, cumulative = TRUE, skip = 0, ...)~.]]
+  - [[#-bootstrapsdata-times--25-strata--null-breaks--4-apparent--false-][★☆☆ ~bootstraps(data, times = 25, strata = NULL, breaks = 4, apparent = FALSE, ...)~.]]
+- [[#参考リンク][参考リンク]]
+#+END_QUOTE
+
+* ライブラリの読み込みとバージョンの確認
+
+#+begin_src R :results silent
+library(rsample)
+#+end_src
+\\
+
+- バージョン
+#+begin_src R :results output :exports both
+packageVersion("rsample")
+#+end_src
+
+#+RESULTS:
+: [1] ‘0.0.5’
+\\
+
+* 全関数
+
+#+begin_src R :results output
+pacman::p_funs(rsample)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+ [1] "add_resample_id"       "analysis"              "apparent"             
+ [4] "assessment"            "bootstraps"            "caret2rsample"        
+ [7] "complement"            "form_pred"             "gather.rset"          
+[10] "group_vfold_cv"        "initial_split"         "initial_time_split"   
+[13] "int_bca"               "int_pctl"              "int_t"                
+[16] "loo_cv"                "make_strata"           "mc_cv"                
+[19] "nested_cv"             "populate"              "pretty.apparent"      
+[22] "pretty.bootstraps"     "pretty.group_vfold_cv" "pretty.loo_cv"        
+[25] "pretty.mc_cv"          "pretty.nested_cv"      "pretty.rolling_origin"
+[28] "pretty.vfold_cv"       "rolling_origin"        "rsample2caret"        
+[31] "testing"               "tidy"                  "training"             
+[34] "vfold_cv"
+#+end_example
+
+* 対応手法
+
+- =rsplit=
+  - Hold-out
+    - =initial_splits()=
+- =rset=
+  - Bootstrap (splits)
+    - =bootstraps()=
+    - カラム名 "splits", "id"
+  - Cross-validation (splits)
+    - =vfold_cv()=
+    - =group_vfold_cv()= 同じグループ単位で分割
+    - カラム名 "splits", "id"
+    - カラム名 "splits", "id", "id2" (repeats)
+  - Nested CV (splits, innner_resamples)
+    - =nested_cv()=
+    - カラム名 "splits", "id", "inner_resamples"
+  - 時系列 CV (splits)
+    - =rolling_origin()=
+    - カラム名 "splits", "id"
+  - LOO CV (splits)
+    - =loo_cv()=
+    - カラム名 "splits", "id"
+  - モンテカルロ CV (splits)
+    - =mc_cv()=    
+    - カラム名 "splits", "id"
+  - Apparent (splits)
+    - =apparent()=
+
+* 関数リスト
+** ★★★ ~initial_split(data, prop = 3/4, strata = NULL, breaks = 4, ...)~.
+
+- ~rsplit~, ~mc_split~ class
+#+begin_src R :results output :exports both
+splits <- initial_split(iris, prop = 0.8)
+splits
+class(splits)
+#+end_src
+
+#+RESULTS:
+: 
+: <121/29/150>
+: 
+: [1] "rsplit"   "mc_split"
+
+- ~strata~ 引数で指定した変数は、均等な割合で抽出される
+- Stratified Sampling (層化抽出法) :: データに含まれる出身地や性別などの属性を「層」として扱い、層ごとに抽出を行う方法。層化抽出法は母集団の各層の比率を反映して抽出を行う方法で、無作為抽出よりもサンプル数が少ない層を抽出可能にする。
+ 
+** ★★☆ ~initial_time_split(data, prop = 3/4, ...)~.
+
+#+begin_src R :results output :exports both
+splits2 <- initial_time_split(iris, prop = 0.8)
+splits2
+class(splits2)
+#+end_src
+
+#+RESULTS:
+: <120/30/150>
+: [1] "rsplit"
+\\
+
+** ★★☆ ~training(x)~.
+
+- ~rsplit~ class から訓練データを抽出する
+#+begin_src R
+train <- training(splits)
+head(train )
+#+end_src
+
+#+RESULTS:
+| Sepal.Length | Sepal.Width | Petal.Length | Petal.Width | Species |
+|--------------+-------------+--------------+-------------+---------|
+|          5.1 |         3.5 |          1.4 |         0.2 | setosa  |
+|          4.9 |           3 |          1.4 |         0.2 | setosa  |
+|          4.6 |         3.1 |          1.5 |         0.2 | setosa  |
+|            5 |         3.6 |          1.4 |         0.2 | setosa  |
+|          5.4 |         3.9 |          1.7 |         0.4 | setosa  |
+|          4.6 |         3.4 |          1.4 |         0.3 | setosa  |
+\\
+
+- 80% のデータを訓練データとして抽出できた
+#+begin_src R :results output :exports both
+str(train)
+#+end_src
+
+#+RESULTS:
+: 'data.frame':	121 obs. of  5 variables:
+:  $ Sepal.Length: num  5.1 4.9 4.6 5 5.4 4.6 5 4.4 4.9 5.4 ...
+:  $ Sepal.Width : num  3.5 3 3.1 3.6 3.9 3.4 3.4 2.9 3.1 3.7 ...
+:  $ Petal.Length: num  1.4 1.4 1.5 1.4 1.7 1.4 1.5 1.4 1.5 1.5 ...
+:  $ Petal.Width : num  0.2 0.2 0.2 0.2 0.4 0.3 0.2 0.2 0.1 0.2 ...
+:  $ Species     : Factor w/ 3 levels "setosa","versicolor",..: 1 1 1 1 1 1 1 1 1 1 ...
+\\
+
+** ★★☆ ~testing(x)~.
+
+- ~rsplit~ class からテストデータを抽出する
+#+begin_src R
+test <- testing(splits)
+head(test)
+#+end_src
+
+#+RESULTS:
+| Sepal.Length | Sepal.Width | Petal.Length | Petal.Width | Species |
+|--------------+-------------+--------------+-------------+---------|
+|          4.7 |         3.2 |          1.3 |         0.2 | setosa  |
+|          4.3 |           3 |          1.1 |         0.1 | setosa  |
+|          5.7 |         3.8 |          1.7 |         0.3 | setosa  |
+|          5.1 |         3.7 |          1.5 |         0.4 | setosa  |
+|            5 |         3.5 |          1.3 |         0.3 | setosa  |
+|          5.1 |         3.8 |          1.9 |         0.4 | setosa  |
+\\
+
+- 20% のデータをテストデータとして抽出できた
+#+begin_src R :results output :exports both
+str(test)
+#+end_src
+
+#+RESULTS:
+: 'data.frame':	29 obs. of  5 variables:
+:  $ Sepal.Length: num  4.7 4.3 5.7 5.1 5 5.1 7 5.5 6 6.2 ...
+:  $ Sepal.Width : num  3.2 3 3.8 3.7 3.5 3.8 3.2 2.3 2.2 2.2 ...
+:  $ Petal.Length: num  1.3 1.1 1.7 1.5 1.3 1.9 4.7 4 4 4.5 ...
+:  $ Petal.Width : num  0.2 0.1 0.3 0.4 0.3 0.4 1.4 1.3 1 1.5 ...
+:  $ Species     : Factor w/ 3 levels "setosa","versicolor",..: 1 1 1 1 1 1 2 2 2 2 ...
+\\
+
+** ★★★ ~vfold_cv(data, v = 10, repeats = 1, strata = NULL, breaks = 4, ...)~.
+
+- k 分割交差検証 (k-fold cross validation) :: 学習データを k 個に分割、そのうち k-1 個を学習用に、残りの 1 個をモデル精度を評価するために用いる
+
+- 訓練データを交差検証のために更に分割する
+- 1000 件のデータを v = 4 で分割する例
+| Fold  | 1 - 250 | 251 - 500 | 501 - 750 | 751 - 1000 |
+|-------+---------+-----------+-----------+------------|
+| Fold1 | Train   | Train     | Train     | *Test*       |
+| Fold2 | Train   | Train     | *Test*      | Train      |
+| Fold3 | Train   | *Test*      | Train     | Train      |
+| Fold4 | *Test*    | Train     | Train     | Train      |
+\\
+
+- 120 件の訓練データを 90 + 30 件に分割できた
+#+begin_src R :results output :exports both
+train_fold <- vfold_cv(train, v = 4)
+train_fold
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+#  4-fold cross-validation 
+# A tibble: 4 x 2
+  splits          id   
+  
+  <named list>    <chr>
+1 <split [90/31]> Fold1
+2 <split [91/30]> Fold2
+3 <split [91/30]> Fold3
+4 <split [91/30]> Fold4
+#+end_example
+\\
+
+- ~vfold_cv~, ~rset~ class
+#+begin_src R :results output :exports both
+class(train_fold)
+#+end_src
+
+#+RESULTS:
+: [1] "vfold_cv"   "rset"       "tbl_df"     "tbl"        "data.frame"
+\\
+
+** ★★☆ ~analysis(x, ...)~.
+
+- ~rsplit~ class から分析用データを抽出する
+#+begin_src R
+analysis(train_fold$splits[[1]]) %>% head()
+#+end_src
+
+#+RESULTS:
+| Sepal.Length | Sepal.Width | Petal.Length | Petal.Width | Species |
+|--------------+-------------+--------------+-------------+---------|
+|          4.6 |         3.1 |          1.5 |         0.2 | setosa  |
+|            5 |         3.6 |          1.4 |         0.2 | setosa  |
+|          5.4 |         3.9 |          1.7 |         0.4 | setosa  |
+|          4.4 |         2.9 |          1.4 |         0.2 | setosa  |
+|          5.4 |         3.7 |          1.5 |         0.2 | setosa  |
+|          4.8 |           3 |          1.4 |         0.1 | setosa  |
+\\
+ 
+** ★★☆ ~assessment(x, ...)~.
+
+- ~rsplit~ class から検証用データを抽出する
+#+begin_src R
+assessment(train_fold$splits[[1]]) %>% head()
+#+end_src
+
+#+RESULTS:
+| Sepal.Length | Sepal.Width | Petal.Length | Petal.Width | Species |
+|--------------+-------------+--------------+-------------+---------|
+|          5.1 |         3.5 |          1.4 |         0.2 | setosa  |
+|          4.9 |           3 |          1.4 |         0.2 | setosa  |
+|          4.6 |         3.4 |          1.4 |         0.3 | setosa  |
+|            5 |         3.4 |          1.5 |         0.2 | setosa  |
+|          4.9 |         3.1 |          1.5 |         0.1 | setosa  |
+|          4.8 |         3.4 |          1.6 |         0.2 | setosa  |
+\\
+
+** ★★★ ~rolling_origin(data, initial = 5, assess = 1, cumulative = TRUE, skip = 0, ...)~.
+
+- 時系列データの分割に便利な関数
+- 指定期間をずらしながらローリングで分割
+- データを取り出す際は ~analysis()~, ~assessment()~
+
+#+begin_src R
+dates <- seq.Date(lubridate::ymd("2019-01-01"), lubridate::ymd("2019-12-31"), by = 1)
+df <- data.frame(date = dates, x = rnorm(length(dates)))
+head(df)
+#+end_src
+
+#+RESULTS:
+|       date |                  x |
+|------------+--------------------|
+| 2019-01-01 |   1.04848768119105 |
+| 2019-01-02 |  -1.04183356813381 |
+| 2019-01-03 | -0.380536255327849 |
+| 2019-01-04 | -0.202288417334334 |
+| 2019-01-05 |  0.158633472181737 |
+| 2019-01-06 |  0.129119199498163 |
+\\
+
+- 訓練データ 90 日、テストデータ 30 日、30 日スライドで分割
+- 末尾の収まらなかった部分は削除される
+#+begin_src R :results output :exports both
+df_rolled <- rolling_origin(df, initial = 90, assess = 30, skip = 30, cumulative = FALSE)
+df_rolled
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+# Rolling origin forecast resampling 
+# A tibble: 8 x 2
+  splits          id    
+  <list>          <chr> 
+1 <split [90/30]> Slice1
+2 <split [90/30]> Slice2
+3 <split [90/30]> Slice3
+4 <split [90/30]> Slice4
+5 <split [90/30]> Slice5
+6 <split [90/30]> Slice6
+7 <split [90/30]> Slice7
+8 <split [90/30]> Slice8
+#+end_example
+\\
+
+- ~rolling_origin~ class
+#+begin_src R :results output :exports both
+class(df_rolled)
+#+end_src
+
+#+RESULTS:
+: [1] "rolling_origin" "rset"           "tbl_df"         "tbl"           
+: [5] "data.frame"
+\\
+
+- cumulative = TRUE でデータの起点を変えずに、データを増やしていける
+#+begin_src R :results output :exports both
+df_rolled <- rolling_origin(df, initial = 90, assess = 30, skip = 30, cumulative = TRUE)
+df_rolled
+#+end_src
+
+#+RESULTS:
+#+begin_example
+# Rolling origin forecast resampling 
+# A tibble: 8 x 2
+  splits           id    
+  <list>           <chr> 
+1 <split [90/30]>  Slice1
+2 <split [121/30]> Slice2
+3 <split [152/30]> Slice3
+4 <split [183/30]> Slice4
+5 <split [214/30]> Slice5
+6 <split [245/30]> Slice6
+7 <split [276/30]> Slice7
+8 <split [307/30]> Slice8
+#+end_example
+\\
+
+** ★☆☆ ~bootstraps(data, times = 25, strata = NULL, breaks = 4, apparent = FALSE, ...)~.
+\\
+* 参考リンク
+
+- [[https://tidymodels.github.io/rsample/][公式サイト]]
+- [[https://cran.r-project.org/web/packages/rsample/index.html][CRAN]]
+- [[https://cran.r-project.org/web/packages/rsample/rsample.pdf][Reference Manual]]
+- [[https://github.com/tidymodels/rsample][Github Repo]]
+- Vignette
+  - [[https://cloud.r-project.org/web/packages/rsample/vignettes/Basics.html][Basics]]
+  - [[https://cloud.r-project.org/web/packages/rsample/vignettes/Working_with_rsets.html][Working with rsets]]
+- Blog
+  - [[https://blog.hoxo-m.com/entry/2019/06/08/220307][Rでのナウなデータ分割のやり方: rsampleパッケージによる交差検証@株式会社ホクソエムのブログ]]
+  - [[https://dropout009.hatenablog.com/entry/2019/01/06/124932][tidymodelsによるtidyな機械学習フロー（その1）@Dropout]]
+  - [[https://dropout009.hatenablog.com/entry/2019/01/09/214233][tidymodelsによるtidyな機械学習フロー（その2：Cross Varidation）@Dropout]]

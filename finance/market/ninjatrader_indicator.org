@@ -1,0 +1,139 @@
+#+STARTUP: showall indent
+
+* Moving Average
+- [ ] DEMA: Double EMA
+- [ ] EMA: Exponential Moving Average
+- [ ] HMA: Hull Moving Average
+	- 2 本の線形加重移動平均。価格への反応が早い。
+- [ ] KAMA: Kaufman's Adaptative Moving Average
+	- 計算期間をボラティリティによって変動させる。ダマシを少なくする。
+- [ ] MA envelopes
+	- 移動平均乖離率
+- [ ] MAMA: MESA Adaptive Moving Average
+	- MESA: Maximum Entropy Spectral Analysis (=ロケット工学？)
+- [ ] SMA: Simple Moving Average
+- [ ] T3: Triple Exponential Moving Average
+	- 従来の MA よりも平滑化された MA
+- [ ] TEMA: Triple Exponential Moving Average
+	- 反応速度が早い MA
+- [ ] TMA: Triangle Moving Average 三角移動平均線
+- [ ] VMA: Variable Moving Average
+- [ ] VOLMA: Volume Moving Average
+- [ ] VWMA: Volume Weighted Moving Average
+	- 出来高の大きい価格により重みを持たせる
+- [ ] WMA: Weighted Moving Average
+	- 加重移動平均
+- [ ] ZLEMA: Zero Lag Exponential Moving Average
+
+* Others
+- [ ] ADL: Accumulation Distribution Line
+- [ ] ADX: Average Directional Movement Index 平均方向性指標
+	- トレンド相場かレンジ相場かを見分ける。
+- [ ] ADXR: Average Directional Movement Rating
+	- ADX との差べ比べる。
+- [ ] APZ: Adaptive Price Zone
+	- バンド幅を値幅の 2 重指数移動平均で計算したボリンジャーバンド。
+- [ ] Aroon
+	- 新しいトレンドの始まりの見極め。トレンドの強弱の判断。
+- [ ] Aroon Oscillator
+	- -100 - + 100. プラス圏は上昇トレンド、マイナス圏は下落トレンド。
+- [ ] ATR: Average True Range
+	- 変動率から相場の過熱感を見極める。
+
+- [ ] Bollinger Band
+- [ ] BOP: Balance of Power
+	- 強気か弱気かの強弱を測定。
+- [ ] Buy sell pressure
+	- Ask/Bid の差を見ている？
+- [ ] Buy sell volume
+
+- [x] Candlestick pattern
+	- Price Action をまとめたもの
+- [ ] CCI: Commodity Channel Index
+	- オシレーター。買われすぎ・売られすぎ
+- [ ] Chaikin money flow (CMF)
+	- 売り買い圧力を見る
+- [ ] Chaikin oscillator
+- [ ] Chaikin volatility
+- [ ] CMO: Chande Momentum Oscillator
+	- オシレーター。買われすぎ・売られすぎ
+
+- [ ] Darvas
+- [ ] DM
+- [ ] DM Index
+- [ ] DMI
+- [ ] Donchan channel
+	- 指定した期間の高値・安値をバンドで表示
+- [ ] Double Stochastics
+
+- [x] Ease of movement
+	- 価格と出来高の関係　「努力と結果」
+- [ ] Fisher transform
+	- トレンド転換
+- [ ] FOSC: Forecast Oscillator
+- [ ] Keltner channle
+	- 移動平均線 + 値幅移動平均線のバンド
+- [ ] Key revarsal down
+	- 前日の高値を更新したが、前日の安値を下回って引ける -> 翌日下落
+- [ ] Key reversal up
+	- 前日の安値を更新したが、前日の高値を上回って引ける -> 翌日上昇
+
+- [ ] Lin. reg: Linear Regression
+- [ ] Lin. reg. intercept
+- [ ] Lin. reg. slope
+- [ ] MACD: Moving Average Convergence/Divergence
+	- 2 本の移動平均
+- [ ] MAX
+- [ ] MFI: Money Flow Index
+	- 価格と出来高から資金が売り買いどちらに向かっているかを示す
+- [ ] Momentum
+	- Oscillator
+
+- [ ] OBV: On Balance Volume
+	- 上昇時の出来高・下落時の出来高を差し引き
+- [ ] Parabolic SAR (Stop and Reverse)
+	- トレンドの転換点を計る
+- [ ] PFE: Polarized Fractal Efficiency
+	- Oscillator
+- [x] Pivots
+- [ ] PPO: Percent Price Oscillator
+	- 2 つの移動平均の差
+- [ ] Price oscillator
+
+- [ ] R squared
+	- 決定係数
+- [ ] Regression channel
+- [ ] RIND: Range Indicator
+- [ ] ROC: Rate of Change 変化率
+- [ ] RSI: Relative Strength Index
+	- 上昇・下落どちらの勢いが強いか
+- [ ] RSS
+- [ ] RVI: Relative Volatility Index
+	- ボラティリティが拡大しているか、縮小しているか
+
+- [ ] Std. dev.: Standard Deviation
+- [ ] Std. error
+- [ ] Stoch RSI
+- [ ] Stochastics
+- [ ] Stochastics fast
+- [ ] SUM
+	- 指定期間の終値の合計
+- [x] Swing
+
+- [ ] TRIX: Triple Exponential Average
+- [ ] TSF: Time Series Forecast
+- [ ] TSI: True Strength Index
+	- 真力指数　モメンタムの強さ
+- [ ] Ultimate Oscillator
+- [ ] Volume oscillator
+	- 出来高の EMA の引き算
+- [x] Volume profile
+- [x] Volume zone
+- [ ] VROC: Volume Rate of Change
+	- 出来高変化率
+
+- [ ] Williams R
+	- Oscillator 買われすぎ・売られすぎ
+- [ ] Woodies CCI
+- [ ] Woodies pivots
+- [ ] Zig zag

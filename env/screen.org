@@ -1,0 +1,21 @@
+#+STARTUP: showall indent
+
+* コマンド
+
+- 新規セッション
+#+begin_src shell
+screen
+#+end_src
+
+- デタッチ
+ctrl-a d
+
+- 一覧
+#+begin_src shell
+screen -ls
+#+end_src
+
+- 接続
+#+begin_src shell
+screen -r
+#+end_src

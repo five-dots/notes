@@ -1,0 +1,66 @@
+#+STARTUP: folded indent
+
+* Tool まとめ
+
+- ghc    コンパイラ
+- ghci   REPL
+- runghc スクリプト実行
+- stack  GHC その他のツール、プロジェクトのセットアップ
+- Cabal
+
+- Hackage
+  - パッケージのアーカイブ
+  - R でいう CRAN
+
+- Stackage
+  - Stable Hackage のこと
+  - 依存関係でエラーが起きないように調整されたパッケージ群
+  - 長期サポート =lts= と =nightly= がある
+    - [[https://www.stackage.org/][Stackage]] GHC 毎に lts
+
+- Hoogle
+  - Haskell API の検索エンジン
+
+* stack
+
+- 主な役割
+  - ghc のインストール
+  - haskell 製ツールのビルド・インストール
+  - プロジェクトの作成
+
+- Install
+  - =~/.local/bin/stack= に配置される
+#+begin_src shell
+curl -sSL https://get.haskellstack.org/ | sh
+#+end_src
+
+#+begin_src shell :results output
+stack --version
+#+end_src
+
+#+RESULTS:
+: Version 2.1.3, Git revision 636e3a759d51127df2b62f90772def126cdf6d1f (7735 commits) x86_64 hpack-0.31.2
+
+- 新規プロジェクト
+#+begin_src shell
+stack new new-project       # プロジェクディレクトリを作成
+cd new-project
+stack setup                 # プロジェクトのコンパイラを用意
+stack build                 # プロジェクトをビルド
+stack exec new-project.exe  # コマンドを実行
+#+end_src
+
+
+- ツールのインストール
+#+begin_src shell
+stack install hlint
+#+end_src
+
+* LSP
+
+- [[https://github.com/haskell/haskell-ide-engine][haskell-ide-engie (hie) @Github]]
+  - 2.3k stars
+  - haskell 公式
+
+- [[https://github.com/digital-asset/ghcide][ghcide@Github]]
+  - 400 stars

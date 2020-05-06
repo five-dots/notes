@@ -1,0 +1,70 @@
+#+STARTUP: folded indent inlineimages latexpreview
+#+PROPERTY: header-args:R :results output :colnames yes :session *R:profiling*
+
+* Library
+
+#+begin_src R :results silent
+library(profvis)
+library(bench)
+#+end_src
+
+* utils::Rprof()
+
+#+begin_src R :results silent
+f <- function() {
+  pause(0.1)
+  g()
+  h()
+}
+g <- function() {
+  pause(0.1)
+  h()
+}
+h <- function() {
+  pause(0.1)
+}
+
+## utils::Rprof()
+tmp <- tempfile()
+Rprof(tmp, interval = 0.1)
+f()
+Rprof(NULL)
+writeLines(readLines(tmp))
+#+end_src
+
+* {profvis} package
+
+- source() code before profiling
+#+begin_src R :results silent
+source(glue("{repos}/Workspace/R/memo/R/profiling.R",
+            repos = Sys.getenv()["REPOS"]))
+#+end_src
+
+- Run browser
+#+begin_src R
+profvis(f())
+#+end_src
+
+
+- GC use case
+#+begin_src R
+profvis({
+  x <- integer()
+  for (i in 1:1e4) {
+    x <- c(x, i)
+  }
+})
+#+end_src
+
+* {bench} package
+
+#+begin_src R
+x <- runif(100)
+(lb <- bench::mark(
+  sqrt(x),
+  x ^ 0.5
+))
+
+class(lb) # => bench_mark class (+ tibble)
+plot(lb)
+#+end_src

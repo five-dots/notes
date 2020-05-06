@@ -1,0 +1,2 @@
+#+STARTUP: folded indent inlineimages latexpreview
+#+PROPERTY: header-args:python :session :results output

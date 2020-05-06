@@ -1,0 +1,173 @@
+#+STARTUP: folded indent inlineimages latexpreview
+#+PROPERTY: header-args:python :session :results output
+
+* array
+** Create array
+
+#+begin_src python
+import numpy as np
+x = np.array([1.0, 2.0, 3.0])
+y = np.array([4.0, 5.0, 6.0])
+print(x)
+print(y)
+#+end_src
+
+#+RESULTS:
+: [1. 2. 3.]
+: [4. 5. 6.]
+
+#+begin_src python
+type(x)
+#+end_src
+
+#+RESULTS:
+: <class 'numpy.ndarray'>
+
+** subset
+
+- R のベクトルと同様の subset 方法
+#+begin_src python
+a = np.arange(1, 10, 1)
+print(a)
+
+print(a[a > 5])
+print(a[a == 5])
+print(a[1:5])
+print(a[a == 5])
+print(a[0:])
+#+end_src
+
+#+RESULTS:
+: [1 2 3 4 5 6 7 8 9]
+: [6 7 8 9]
+: [5]
+: [2 3 4 5]
+: [5]
+: [1 2 3 4 5 6 7 8 9]
+
+** Element-Wise
+
+#+begin_src python
+x + y
+#+end_src
+
+#+RESULTS:
+: array([5., 7., 9.])
+
+#+begin_src python
+x - y
+#+end_src
+
+#+RESULTS:
+: array([-3., -3., -3.])
+
+#+begin_src python
+x * y
+#+end_src
+
+#+RESULTS:
+: array([ 4., 10., 18.])
+
+#+begin_src python
+x / y
+#+end_src
+
+#+RESULTS:
+: array([0.25, 0.4 , 0.5 ])
+
+** Scalar
+
+- スカラー倍
+#+begin_src python
+x * 2
+#+end_src
+
+#+RESULTS:
+: array([2., 4., 6.])
+
+** 2x2
+*** Create
+
+- 1 次元 ベクトル
+- 2 次元 行列
+- 3 次元 テンソル
+#+begin_src python
+A = np.array([[1, 2], [3, 4]])
+B = np.array([[3, 0], [6, 0]])
+print(A)
+print(B)
+
+print(A.shape)
+print(A.dtype)
+#+end_src
+
+#+RESULTS:
+: [[1 2]
+:  [3 4]]
+: [[3 0]
+:  [6 0]]
+: (2, 2)
+: int64
+
+*** Subset
+
+- 最初のインデックスは行を表す
+#+begin_src python
+A[0]
+#+end_src
+
+#+RESULTS:
+: array([1, 2])
+
+- 行 + 列 のインデックス
+#+begin_src python
+A[0][1]
+#+end_src
+
+#+RESULTS:
+: 2
+
+- for では行毎の処理
+#+begin_src python
+for i in A:
+    print(i)
+#+end_src
+
+#+RESULTS:
+: [1 2]
+: [3 4]
+
+*** 行列計算
+
+#+begin_src python
+A + B
+#+end_src
+
+#+RESULTS:
+: array([[4, 2],
+:        [9, 4]])
+
+#+begin_src python
+A - B
+#+end_src
+
+#+RESULTS:
+: array([[-2,  2],
+:        [-3,  4]])
+
+#+begin_src python
+A * B
+#+end_src
+
+#+RESULTS:
+: array([[ 3,  0],
+:        [18,  0]])
+
+- スカラー倍
+#+begin_src python
+A * 2
+#+end_src
+
+#+RESULTS:
+: array([[2, 4],
+:        [6, 8]])

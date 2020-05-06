@@ -1,0 +1,1691 @@
+#+STARTUP: folded indent inlineimages latexpreview
+#+PROPERTY: header-args:python :session :results output
+
+* データ型
+** 基本
+
+- int
+- float
+- complex
+- str
+- bool
+
+#+begin_src python
+type(1)
+#+end_src
+
+#+RESULTS:
+: <class 'int'>
+
+#+begin_src python
+type(1.0)
+#+end_src
+
+#+RESULTS:
+: <class 'float'>
+
+#+begin_src python
+type(2+3j)
+#+end_src
+
+#+RESULTS:
+: <class 'complex'>
+
+#+begin_src python
+type("hoge")
+#+end_src
+
+#+RESULTS:
+: <class 'str'>
+
+- TRUE や true ではダメ
+#+begin_src python
+type(True)
+#+end_src
+
+#+RESULTS:
+: <class 'bool'>
+
+** 変換 
+
+- int(), float(), bool(), str()
+#+begin_src python
+print(int(True))
+print(int(False))
+print(float(1))
+print(bool(1))
+print(bool(10))
+print(bool(0)) # 0 以外はTrue
+print(str(10))
+#+end_src
+
+#+RESULTS:
+: 1
+: 0
+: 1.0
+: True
+: True
+: False
+: 10
+
+** 整数の範囲
+
+- 任意のサイズ
+- オーバーフローが起きない
+#+begin_src python
+10**100
+#+end_src
+
+#+RESULTS:
+: 10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+
+* 算術計算
+
+#+begin_src python
+1 + 2
+#+end_src
+
+#+RESULTS:
+: 3
+
+- 整数 => 実数への変換
+#+begin_src python
+1 + 2.0
+#+end_src
+
+#+RESULTS:
+: 3.0
+
+#+begin_src python
+10 - 3
+#+end_src
+
+#+RESULTS:
+: 7
+
+#+begin_src python
+2 * 5
+#+end_src
+
+#+RESULTS:
+: 10
+
+- 整数の割り算は、小数で返る
+#+begin_src python
+10 / 3
+#+end_src
+
+#+RESULTS:
+: 3.3333333333333335
+
+- // は整数除算
+#+begin_src python
+10 // 3
+#+end_src
+
+#+RESULTS:
+: 3
+
+- ** は累乗
+#+begin_src python
+3 ** 2
+#+end_src
+
+#+RESULTS:
+: 9
+
+- % は剰余
+#+begin_src python
+10 % 3
+#+end_src
+
+#+RESULTS:
+: 1
+
+* 論理演算
+** 基本
+
+#+begin_src python
+a = 10
+b = 20
+c = 20
+print(b == c)
+#+end_src
+
+#+RESULTS:
+: True
+
+- 比較は連結できる
+#+begin_src python
+a < b == c
+#+end_src
+
+#+RESULTS:
+: True
+
+#+begin_src python
+5 <= a <= 15
+#+end_src
+
+#+RESULTS:
+: True
+
+** and / or
+
+- and/or は short circuit
+#+begin_src python
+5 <= a and a <= 15
+#+end_src
+
+#+RESULTS:
+: True
+
+#+begin_src python
+5 <= a and not a >= 15
+#+end_src
+
+#+RESULTS:
+: True
+
+#+begin_src python
+5 <= a or 6 <= a
+#+end_src
+
+#+RESULTS:
+: True
+
+** in / not in
+
+#+begin_src python
+chars = ["a", "b", "c"]
+print("a" in chars)
+#+end_src
+
+#+RESULTS:
+: True
+
+#+begin_src python
+print("d" not in chars)
+#+end_src
+
+#+RESULTS:
+: True
+
+** is / is not
+
+- is は object の Identity (同一性)
+- == は object の Equality (同値性)
+#+begin_src python
+a = [1, 2, 3]
+b = a
+print(a is b)
+#+end_src
+
+#+RESULTS:
+: True
+
+#+begin_src python
+print(a is not b)
+#+end_src
+
+#+RESULTS:
+: False
+
+* シーケンス
+** シーケンス
+
+- sequence 型
+- str, list, tuple, dict, set, range など
+- シーケンスの関数は遅延評価
+
+- =enumerate()=
+- シーケンスのインデックスと要素を同時に取り出す
+#+begin_src python
+for i, v in enumerate(['tic', 'tac', 'toe']):
+    print(i, v)
+#+end_src
+
+#+RESULTS:
+: 0 tic
+: 1 tac
+: 2 toe
+
+- zip()
+- リストを結合する
+#+begin_src python
+questions = ['name', 'quest', 'favorite color']
+answers = ['lancelot', 'the holy grail', 'blue']
+for q, a in zip(questions, answers):
+    print('What is your {0}?  It is {1}.'.format(q, a))
+#+end_src
+
+#+RESULTS:
+: What is your name?  It is lancelot.
+: What is your quest?  It is the holy grail.
+: What is your favorite color?  It is blue.
+
+- reverse() 
+- 逆順にする
+#+begin_src python
+for i in reversed(range(1, 10, 2)):
+    print(i)
+#+end_src
+
+#+RESULTS:
+: 9
+: 7
+: 5
+: 3
+: 1
+
+- sorted() 
+- 並び替える + 重複削除
+#+begin_src python
+basket = ['apple', 'orange', 'apple', 'pear', 'orange', 'banana']
+for f in sorted(set(basket)):
+    print(f)
+#+end_src
+    
+** リスト (配列) =[]=
+*** 作成
+
+#+begin_src python
+a = [1, 2, 3, 4, 5]
+print(a)
+#+end_src
+
+#+RESULTS:
+: [1, 2, 3, 4, 5]
+
+#+begin_src python
+type(a)
+#+end_src
+
+#+RESULTS:
+: <class 'list'>
+
+- 同じ型でなくでもよい
+#+begin_src python
+print([1, 2.4, "hoge", True])
+#+end_src
+
+#+RESULTS:
+: [1, 2.4, 'hoge', True]
+
+*** スライシング
+
+#+begin_src python
+a[1:3]
+#+end_src
+
+#+RESULTS:
+: [2, 3]
+
+#+begin_src python
+a[:3]
+#+end_src
+
+#+RESULTS:
+: [1, 2, 3]
+
+#+begin_src python
+a[1:]
+#+end_src
+
+#+RESULTS:
+: [2, 3, 4, 5]
+
+#+begin_src python
+a[1:-1]
+#+end_src
+
+#+RESULTS:
+: [2, 3, 4]
+
+- Shallow Copy (参照先のデータは同じ)
+#+begin_src python
+b = a[:]
+print(b)
+#+end_src
+
+#+RESULTS:
+: [1, 2, 3, 4, 5, 6, 7, 8]
+
+*** 要素の追加
+
+#+begin_src python
+a = a + [6, 7]
+print(a)
+#+end_src
+
+#+RESULTS:
+: [1, 2, 3, 4, 5, 6, 7]
+
+- 末尾に追加
+#+begin_src python
+a.append(8)
+print(a)
+#+end_src
+
+#+RESULTS:
+: [1, 2, 3, 4, 5, 6, 7, 8]
+
+*** 要素の削除
+
+#+begin_src python
+del a[4]
+print(a)
+#+end_src
+
+#+RESULTS:
+: [1, 2, 3, 4, 6, 7, 8]
+
+- 空にする
+#+begin_src python
+del a[:]
+print(a)
+#+end_src
+
+#+RESULTS:
+: []
+
+- 変数自体を削除
+#+begin_src python
+del a
+print(a)     # => error
+#+end_src
+
+#+RESULTS:
+: Traceback (most recent call last):
+:   File "<stdin>", line 1, in <module>
+:   File "/tmp/babel-ak4iwY/python-OHsslz", line 2, in <module>
+:     print(a)     # => error
+: NameError: name 'a' is not defined
+
+- 指定範囲の削除
+#+begin_src python
+a = list(range(10))
+a[3:4] = []
+print(a)
+#+end_src
+
+#+RESULTS:
+: [0, 1, 2, 4, 5, 6, 7, 8, 9]
+
+*** 内包表記
+
+- 以下の 2 つは等価
+#+begin_src python
+a2 = list(map(lambda x: x ** 2, range(10)))
+a3 = [x ** 2 for x in range(10)] # 内包表記
+
+print(a2)
+print(a3)
+#+end_src
+
+#+RESULTS:
+: [0, 1, 4, 9, 16, 25, 36, 49, 64, 81]
+: [0, 1, 4, 9, 16, 25, 36, 49, 64, 81]
+
+*** List Class Methods
+**** All
+
+- append, clear, copy, count, extend, index, insert, pop, remove, reverse, sort
+#+begin_src python
+object_methods = [method_name for method_name in dir(a)
+                  if callable(getattr(a, method_name))]
+
+print(object_methods)                 
+#+end_src
+
+#+RESULTS:
+: ['__add__', '__class__', '__contains__', '__delattr__', '__delitem__', '__dir__', '__eq__',
+:  '__format__', '__ge__', '__getattribute__', '__getitem__', '__gt__', '__iadd__', '__imul__',
+:  '__init__', '__init_subclass__', '__iter__', '__le__', '__len__', '__lt__', '__mul__', '__ne__',
+: '__new__', '__reduce__', '__reduce_ex__', '__repr__', '__reversed__', '__rmul__', '__setattr__', 
+: '__setitem__', '__sizeof__', '__str__', '__subclasshook__', 
+: 'append', 'clear', 'copy', 'count', 'extend', 'index', 'insert', 'pop', 'remove', 'reverse', 'sort']
+
+**** append()
+
+- mutable なデータ構造を操作する関数は、None を返す原則
+#+begin_src python
+print(a.append(10))
+#+end_src
+
+#+RESULTS:
+: None
+
+**** extend() 
+
+- リストを拡張
+- 長さ 1 以上を連結
+- 普通に =+= で連結してもよい
+#+begin_src python
+a.extend([6, 7]) 
+print(a)
+#+end_src
+
+#+RESULTS:
+: [1, 2, 3, 6, 7, 8, 10, 6, 7]
+
+**** insert(), remove()
+
+#+begin_src python
+a.insert(6, 6) # index, value
+print(a)
+
+a.remove(6)
+print(a)
+#+end_src
+
+#+RESULTS:
+: [1, 2, 3, 6, 7, 8, 6, 10, 6, 7]
+: [1, 2, 3, 7, 8, 6, 10, 6, 7]
+
+**** pop() 
+
+- 指定 index を削除して、その値を返す (index を省略すると最後の値)
+#+begin_src python
+a.pop()
+a.pop(2)
+print(a)
+#+end_src
+
+#+RESULTS:
+: [1, 2, 7, 8, 6, 10, 6]
+
+#? stack (last-in, first-out) として使える
+#? queue (first-in, first-out) としては、collections.deque を使うとよい
+l.pop()
+l.pop(2)
+l
+
+**** clear()
+
+#+begin_src python
+#+end_src
+l.clear() # del a[:]
+
+**** index()
+
+- 要素とマッチする index を返す
+#+begin_src python
+a = [1, 2, 3, 4, 5]
+print(a.index(2))
+#+end_src
+
+#+RESULTS:
+: 1
+
+**** count()
+
+- 要素にマッチする数
+#+begin_src python
+a = [1, 2, 3, 3, 3]
+print(a.count(3))
+#+end_src
+
+#+RESULTS:
+: 3
+
+**** sort() 
+
+- 並び替え
+#+begin_src python
+l = [3, 6, 1, 10, 4]
+l.sort()
+print(l)
+#+end_src
+
+#+RESULTS:
+: [1, 3, 4, 6, 10]
+
+**** reverse()
+
+- 逆順にする
+#+begin_src python
+l.reverse()
+print(l)
+#+end_src
+
+#+RESULTS:
+: [10, 6, 4, 3, 1]
+
+**** copy() 
+
+- shallow copy
+#+begin_src python
+l.copy()
+#+end_src
+
+** タプル =()=
+
+- Immutable object (list との一番の違い)
+- 大抵は、アンパック操作やインデックスで要素のアクセスする
+  => イテレートでアクセスする場合は、list を使うことが多い
+- メソッドは =count, =index= のみ
+
+#+begin_src python
+t = 12345, 54321, "Hello!"
+print(t)
+print(t[0])
+print(t[2])
+print(type(t))
+#+end_src
+
+#+RESULTS:
+: (12345, 54321, 'Hello!')
+: 12345
+: Hello!
+: <class 'tuple'>
+
+- 入れ子にする
+#+begin_src python
+u = t, (1, 2, 3, 4)
+print(u)
+#+end_src
+
+#+RESULTS:
+: ((12345, 54321, 'Hello!'), (1, 2, 3, 4))
+
+- 空のタプル
+#+begin_src python
+empty = ()
+print(type(empty))
+#+end_src
+
+#+RESULTS:
+: <class 'tuple'>
+
+- 要素 1 のタプル
+- 末尾にカンマ
+#+begin_src python
+singleton = "Hello", 
+print(type(singleton))
+#+end_src
+
+#+RESULTS:
+: <class 'tuple'>
+
+** ディクショナリ ={}=
+*** 作成
+
+#+begin_src python
+d = {"height": 185}
+print(d)
+#+end_src
+
+#+RESULTS:
+: {'height': 185}
+
+#+begin_src python
+type(d)
+#+end_src
+
+#+RESULTS:
+: <class 'dict'>
+
+- dict() でも OK
+#+begin_src python
+dict(shun=36, shiori=37, tamaki=5, ryo=2)
+#+end_src
+
+#+RESULTS:
+: {'shun': 36, 'shiori': 37, 'tamaki': 5, 'ryo': 2}
+
+*** 要素の取得
+
+#+begin_src python
+d["height"]
+#+end_src
+
+#+RESULTS:
+: 185
+
+*** 要素の追加
+
+#+begin_src python
+d["weight"] = 90
+print(d)
+#+end_src
+
+#+RESULTS:
+: {'height': 185, 'weight': 90}
+
+*** 要素の削除 (del)
+
+#+begin_src python
+del d["weight"]
+print(d)
+#+end_src
+
+#+RESULTS:
+: {'height': 185}
+
+*** キーを list へ変換
+
+#+begin_src python
+list(d)
+#+end_src
+
+#+RESULTS:
+: ['height', 'weight']
+
+#+begin_src python
+sorted(d)
+#+end_src
+
+#+RESULTS:
+: ['height', 'weight']
+
+*** items()
+
+- key-value pair を取り出す
+#+begin_src python
+for k, v in d.items():
+    print(k, v)
+#+end_src
+
+#+RESULTS:
+: height 185
+: weight 90
+
+*** dict class methods
+
+- clear, copy, fromkeys, get, items, keys, pop, popitem, setdefault, update, values
+#+begin_src python
+object_methods = [method_name for method_name in dir(d)
+                  if callable(getattr(d, method_name))]
+
+print(object_methods)                 
+#+end_src
+
+#+RESULTS:
+: ['__class__', '__contains__', '__delattr__', '__delitem__', '__dir__', '__eq__', '__format__',
+:  '__ge__', '__getattribute__', '__getitem__', '__gt__', '__init__', :  '__init_subclass__',
+:  '__iter__', '__le__', '__len__', '__lt__', '__ne__', '__new__', :  '__reduce__', '__reduce_ex__',
+:  '__repr__', '__setattr__', '__setitem__', '__sizeof__', :  '__str__', '__subclasshook__',
+:  'clear', 'copy', 'fromkeys', 'get', 'items', 'keys', 'pop', 'popitem', 'setdefault', 'update', 'values']
+
+** 文字列
+*** 基本
+
+- str 型のオブジェクト
+#+begin_src python
+"hoge"
+'hoge'
+"'hoge'"
+"don\'t" # エスケープ
+r"C:\User\shun" # エスケープを特殊文字として解釈されるのを阻止
+"I " + "don\'t " + "know." # 連結
+"Py" "thon" # 自動で連結される
+"hoge " * 3 # 反復
+#+end_src
+
+#+RESULTS:
+
+#+begin_src python
+print("""\
+Usage: thingy [OPTIONS]
+     -h                        Display this usage message
+     -H hostname               Hostname to connect to
+""")
+#+end_src
+
+#+RESULTS:
+: Usage: thingy [OPTIONS]
+:      -h                        Display this usage message
+:      -H hostname               Hostname to connect to
+
+*** char 文字 = (長さ 1 の文字列）
+
+#+begin_src python
+var = "hoge"
+var[1] # => 'o'
+var[-1]
+var[0:2] # 開始地点は含まれ、終了地点は含まれない
+var[:2] + var[2:] # 省略すると 最初と最後
+#+end_src
+
+#+RESULTS:
+
+# インデックスの覚え方 (文字と文字の間の仕切りにインデックスがあると考える)
+#  +---+---+---+---+---+---+
+#  | P | y | t | h | o | n |
+#  +---+---+---+---+---+---+
+#  0   1   2   3   4   5   6
+# -6  -5  -4  -3  -2  -1
+
+#+begin_src python
+var[1] = "i" # 文字列は不変 (immutable)
+#+end_src
+
+#+RESULTS:
+: Traceback (most recent call last):
+:   File "<stdin>", line 1, in <module>
+: TypeError: 'str' object does not support item assignment
+
+*** len()
+
+#+begin_src python
+len("hoge")
+#+end_src
+
+#+RESULTS:
+: 4
+
+*** print() 
+
+- 要素間にスペースが自動追加される
+#+begin_src python
+print("hoge", "fuga", "piyo")
+#+end_src
+
+#+RESULTS:
+: hoge fuga piyo
+
+*** str class functions
+
+- split(), join()
+- startswith(), endswith()
+- find(), rfind()
+- count()
+- replace()
+- isalnum()
+- capitalize(), title(), upper(), lower(), swapcase()
+- center(), ljust()
+
+**** split()
+
+- 区切り文字で list 作成
+#+begin_src python
+"hoge, fuga, piyo".split(sep = ",")
+#+end_src
+
+#+RESULTS:
+: ['hoge', ' fuga', ' piyo']
+
+** セット (集合)
+*** 作成
+
+- 重複が削除される
+#+begin_src python
+basket = {"apple", "orange", "apple", "pear", "orange", "banana"}
+print(basket)
+print(type(basket))
+#+end_src
+
+#+RESULTS:
+: {'apple', 'pear', 'banana', 'orange'}
+: <class 'set'>
+
+#+begin_src python
+print("orange" in basket)
+print("crabgrass" in basket)
+#+end_src
+
+#+RESULTS:
+: True
+: False
+
+- 空の集合
+#+begin_src python
+set()
+print(type(set()))
+print(type({})) # これは、dict class になる
+#+end_src
+
+#+RESULTS:
+: <class 'set'>
+: <class 'dict'>
+
+*** 集合演算
+
+#+begin_src python
+a = set("abracadabra")
+b = set("alacazam")
+a
+
+# 差集合 (setdiff)
+print(a - b)
+
+# 和集合 (union)
+print(a | b)
+
+# 積集合 (intersect)
+print(a & b)
+
+# letters in a or b but not both
+print(a ^ b)                              
+#+end_src
+
+#+RESULTS:
+: {'b', 'r', 'd'}
+: {'r', 'l', 'm', 'z', 'c', 'a', 'b', 'd'}
+: {'a', 'c'}
+: {'b', 'r', 'l', 'm', 'z', 'd'}
+
+* 制御構文
+** if
+
+#+begin_src python
+hungry = True
+if hungry:
+    print("I'm hungry")
+#+end_src
+
+#+RESULTS:
+: I'm hungry
+
+#+begin_src python
+hungry = False
+if hungry:
+    print("I'm hungry")
+else:
+    print("I'm not hungry")
+    print("I'm sleepy")
+#+end_src
+
+#+RESULTS:
+: I'm not hungry
+: I'm sleepy
+
+#+begin_src python
+a = [1, 2, 3]
+if 1 in a:
+    print("1 included")
+elif 2 in a:
+    print("2 included")
+else:
+    print("nothing included")
+#+end_src
+
+#+RESULTS:
+: 1 included
+
+** for
+
+#+begin_src python
+for i in range(1, 5):
+    print(i)
+#+end_src
+
+#+RESULTS:
+: 1
+: 2
+: 3
+: 4
+
+- break
+#+begin_src python
+for i in [1, 2, 3]:
+    if i == 3: break
+    print(i)
+#+end_src
+
+#+RESULTS:
+: 1
+: 2
+
+- continue
+#+begin_src python
+for i in [1, 2, 3]:
+    if i == 2: continue
+    print(i)
+#+end_src
+
+#+RESULTS:
+: 1
+: 3
+
+** while
+
+#+begin_src python
+a = 1
+while a < 10:
+    print("a is ", a)
+    a += 1
+#+end_src
+
+#+RESULTS:
+: a is  1
+: a is  2
+: a is  3
+: a is  4
+: a is  5
+: a is  6
+: a is  7
+: a is  8
+: a is  9
+
+- pass
+- 何もしない（構文上なにか書かないと行けないが、何もしたくないとき）
+#+begin_src python
+while True:
+    pass
+#+end_src
+
+** interable
+
+- list を返すわけではない (iterabel, 遅延評価)
+#+begin_src python
+rng = range(10)       
+print(rng)
+#+end_src
+
+#+RESULTS:
+: range(0, 10)
+
+- list() 関数で評価する
+#+begin_src python
+list(rng)
+#+end_src
+
+#+RESULTS:
+: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+
+* クラス
+** 基本
+
+- クラス名は大文字で始める (CamelCase)
+- メソッドの第 1 引数は、self
+- コンストラクタ ~__init__(self, args)~
+- デストラクタ ~__del__(self)~
+- _(Underscore) の使い方
+  - [[https://medium.com/lsc-psd/pythonic%E8%89%B2%E3%80%85-python%E3%81%AE%E3%82%A2%E3%83%B3%E3%83%80%E3%83%BC%E3%82%B9%E3%82%B3%E3%82%A2-%E3%82%92%E4%BD%BF%E3%81%84%E3%81%93%E3%81%AA%E3%81%9D%E3%81%86-3c132842eeef][Pythonのアンダースコア( _ )を使いこなそう！]]
+  - =_var= は簡易的な private variable (アクセスは可能)
+  - =__var= にすると外からは見えなくなる. =_Class__filed= でアクセスが可能になる
+
+#+begin_src python
+class Man:
+    def __init__(self, first, last):
+        self.__first = first
+        self.last = last 
+        print("Initialized.")
+
+    def hello(self):
+        print("Hello " + self.__first + " " + self.last + "!")
+
+m = Man("Shun", "Asai")
+m.hello()
+print(m.last)
+# m.__first # private にはアクセスできない
+#+end_src
+
+#+RESULTS:
+: Initialized.
+: Hello Shun Asai!
+: Asai
+
+** 継承
+
+- 親には =super()= でアクセス
+- super のコンストラクタにアクセスする際に =super(Child, self).__init__()= とするのは python2 系の作法
+
+#+begin_src python
+class Man:
+    def __init__(self, first, last):
+        self.__first = first
+        self.last = last
+        print("Initialized.")
+    def hello(self):
+        print("Hello " + self.__first + " " + self.last + "!")
+
+
+class Employee(Man):
+    def __init__(self, first, last, company):
+        super().__init__(first, last)
+        self.__company = company
+    def hello(self):
+        print("I'm {0} {1}, working for {2}.".format(self._Man__first, self.last, self.__company))
+
+
+m = Employee("Shun", "Asai", "Black Company")
+m.hello()
+#+end_src
+
+#+RESULTS:
+: Initialized.
+: I'm Shun Asai, working for Black Company.
+
+** 多重継承
+
+- 多重継承の際に、親クラスのコンストラクタを呼び出す手法がややこしい
+  - 親クラスの指定方法は、一つずれている
+- =super().__init__()=, もしくは =super(Child, self).__init__()= とした場合は、一番左の親のコンストラクタが呼び出される
+- =super(Parent1, self).__init__()= とした場合には、2番目の親のコンストラクタが呼び出される
+
+#+begin_src python
+class P1:
+    def __init__(self, p1_var):
+        self.p1_var = p1_var
+        print("init P1.")
+
+
+class P2:
+    def __init__(self, p2_var):
+        self.p2_var = p2_var
+        print("init P2.")
+
+
+class C1(P1, P2):
+    def __init__(self, p1_var, p2_var):
+        super(C1, self).__init__(p1_var) # P1 のコンストラクタ
+        super(P1, self).__init__(p2_var) # P2 のコンストラクタ
+
+
+c1 = C1("P1", "P2")
+#+end_src
+
+#+RESULTS:
+: init P1.
+: init P2.
+
+** プロパティ
+
+- field を =property()= で指定して getter/setter を付けることができる
+#+begin_src python
+class A:
+    def __init__(self):
+        self.__var = "hidden_var"
+    def get_var(self):
+        print("getter!")
+        return self.__var
+    def set_var(self, input):
+        print("setter!")
+        self.__var = input
+    var = property(get_var, set_var)
+
+
+a = A()
+a.var = "not hidden"
+print(a.var)
+#+end_src
+
+#+RESULTS:
+: setter!
+: getter!
+: not hidden
+
+- デコレータを使って以下のように書くこともできる
+#+begin_src python
+class A:
+    def __init__(self):
+        self.__var = "hidden var"
+
+    # getter 指定
+    @property
+    def var(self):
+        print("getter!")
+        return self.__var
+
+    # setter 指定
+    @var.setter
+    def var(self, input):
+        print("setter")
+        self.__var = input
+
+a = A()
+a.var = "not hidden"
+print(a.var)
+#+end_src
+
+#+RESULTS:
+: setter
+: getter!
+: not hidden
+
+** クラスフィールド・クラスメソッド
+
+- フィールドをクラス名でアクセスするとクラスフィールドとして扱うことができる
+  - インスタンスではなく、クラス全体の状態を保持できる
+- =@classmethod= デコレータを付けると、クラスメソッドを宣言できる
+  - =self= ではなく =cls= でクラスフィールドにアクセスする
+#+begin_src python
+class A:
+    count = 0
+    def __init__(self):
+        A.count += 1
+    def exclaim(self):
+        print("I'm an A!")
+    @classmethod
+    def kids(cls):
+        print("A has", cls.count, "little objects.")
+
+A.count
+a1 = A()
+a2 = A()
+a3 = A()
+
+A.kids()
+#+end_src
+
+** スタティックメソッド
+
+- =@staticmethod= デコレーター
+- 静的メソッドなので =self=, =cls= を引数に取らない
+#+begin_src python
+class A:
+    @staticmethod
+    def static_print():
+        print("Static!!")
+
+
+A.static_print()
+#+end_src
+
+** マジックメソッド
+
+- =__hoge__()= の形式のメソッド
+
+- =__eq__()= を定義する例
+#+begin_src python
+class A:
+    def __init__(self):
+        self.a = "hoge"
+    def __eq__(self, value):
+        return self.a.lower == value.a.lower
+
+
+a1 = A()
+a2 = A()
+
+print(a1 == a2)
+
+a1.a = "fuga"
+
+print(a1 == a2)
+#+end_src
+
+#+RESULTS:
+: True
+: False
+
+** Abstract Base Class (ABC)
+
+- C# のインターフェースのようなことができる
+
+#+begin_src python
+from abc import *
+
+class AbstractHello(metaclass=ABCMeta):
+    @abstractmethod
+    def hello(self):
+        pass
+
+
+# 抽象クラスの、インスタンスは作ることができない
+# abc = AbstractHello()
+
+
+class Hello(AbstractHello):
+    pass
+
+# hello() を実装していないのでエラーになる
+# h = Hello()
+
+
+class Hello(AbstractHello):
+    def hello(self):
+        print("Hello.")
+
+
+h = Hello()
+h.hello()
+#+end_src
+
+#+RESULTS:
+: Hello.
+
+* 関数
+** 基本
+
+#+begin_src python
+def hello(object):
+    print("Hello " + object + " !")
+    
+hello("cat")
+#+end_src
+
+#+RESULTS:
+: Hello cat !
+
+#+begin_src python
+def fib(n):
+    """Print fib number."""
+    a, b = 0, 1
+    while a < n:
+        print(a, end = " ")
+        a, b = b, a + b
+    print()
+
+fib(2000)
+#+end_src
+
+#+RESULTS:
+: 0 1 1 2 3 5 8 13 21 34 55 89 144 233 377 610 987 1597
+
+- return 文を持たない関数も None を返している (もしくは、引数がない return)
+#+begin_src python
+print(fib(2000))
+#+end_src
+
+#+RESULTS:
+: 0 1 1 2 3 5 8 13 21 34 55 89 144 233 377 610 987 1597 
+: None
+
+- 明示的に値を返すバージョン
+#+begin_src python
+def fib2(n):
+    """Print fib number."""
+    result = []
+    a, b = 0, 1
+    while a < n:
+        result.append(a)
+        a, b = b, a + b
+    return result # 明示的に値を返す
+
+print(fib2(2000))
+#+end_src
+
+#+RESULTS:
+: [0, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233, 377, 610, 987, 1597]
+
+** 引数
+
+- デフォルト引数、キーワード引数
+#+begin_src python
+def hoge(value, arg1 = "hoge1", arg2 = "hoge2"):
+    print(value, arg1, arg2)
+
+hoge("fuga")
+hoge("fuga", arg2 = "chome")
+#+end_src
+
+#+RESULTS:
+: fuga hoge1 hoge2
+: fuga hoge1 chome
+
+- 可変長引数リスト *args (タプル), *kwargs (辞書)
+- * = starred expression, iterable unpacking operator
+#+begin_src python
+def concat(*args, sep="/"):
+    return sep.join(args)
+
+print(concat("earth", "mars", "venus"))
+print(concat("earth", "mars", "venus", sep="."))
+#+end_src
+
+#+RESULTS:
+: earth/mars/venus
+: earth.mars.venus
+
+- 引数リストのアンパック
+#+begin_src python
+args = [3, 6]
+print(list(range(*args))) # すでに list で用意された引数をアンパックして渡す
+#+end_src
+
+#+RESULTS:
+: [3, 4, 5]
+
+** 高階関数
+
+- Python の関数は第一級オブジェクト
+#+begin_src python
+f = fib
+f(2000)
+#+end_src
+
+#+RESULTS:
+: 0 1 1 2 3 5 8 13 21 34 55 89 144 233 377 610 987 1597
+
+- ラムダ式
+- 無名関数をつくる
+#+begin_src python
+lambda a, b: a + b
+#+end_src
+
+#+RESULTS:
+: <function <lambda> at 0x7f6de9075e60>
+
+- ラムダ式で関数を返す関数 (Function Factory)
+#+begin_src python
+def make_incrementor(n):
+    return lambda x: x + n
+
+f = make_incrementor(10)
+print(f(1))
+#+end_src
+
+#+RESULTS:
+: 11
+
+- ラムダ式を引数に渡す
+#+begin_src python
+pairs = [(1, 'one'), (2, 'two'), (3, 'three'), (4, 'four')]
+pairs.sort(key=lambda pair: pair[1])
+print(pairs)
+#+end_src
+
+#+RESULTS:
+: [(4, 'four'), (1, 'one'), (3, 'three'), (2, 'two')]
+
+** レキシカルスコーピング
+
+- Python は レキシカルスコーピング
+#+begin_src python
+a = 20
+def lex_test1():
+    a = 10 # こちらが使われる
+    print(a)
+
+lex_test1()
+#+end_src
+
+#+RESULTS:
+: 10
+
+- グローバルの値は書き換わらない
+#+begin_src python
+def lex_test2():
+    print(a) # グローバル変数の a が使われる
+    
+lex_test2()
+#+end_src
+
+#+RESULTS:
+: 20
+: 20
+
+- global keyword
+#+begin_src python
+def lex_test3():
+    global a
+    a = 30 # グローバル変数の a が使われる
+    print(a)
+
+lex_test3()
+print(a) # グローバルの値が書き換わる
+#+end_src
+
+#+RESULTS:
+: 30
+: 30
+
+** 関数アノテーション
+
+- Type Hint (from Python 3.5-)
+- 引数のあとに : xxx
+- 関数の戻り値 -> xxx
+- 単に期待する情報なので、 _従わなくてもエラーにならない_
+#+begin_src python
+def add(a: int = 10, b: int = 20) -> int:
+    return(a + b)
+
+print(add(20, 40))
+print(add(20.5, 40))
+#+end_src
+
+#+RESULTS:
+: 60
+: 60.5
+
+** [[https://docs.python.org/ja/3/library/functions.html][組み込み関数]]
+*** [[https://qiita.com/ichi_taro3/items/cd71a8e43040abb446a1][Pythonの組み込み関数69個を制覇する 第1回 a～b@Qiita]]
+*** 型・データ構造
+
+- 関数というよりは、コンストラクタ群
+- =object()=
+
+#+begin_src python
+obj = object()
+obj
+#+end_src
+
+#+RESULTS:
+: <object at 0x7f7aa8dee3e0>
+
+#+begin_src python
+print(bool())       # False
+print(bool(1))      # True
+print(bool(0))      # False
+print(bool(-1))     # True
+print(bool("hoge")) # True
+print(bool(1.5))    # True
+print(bool(0.0))    # False
+#+end_src
+
+#+RESULTS:
+: False
+: True
+: False
+: True
+: True
+: True
+: False
+
+- =complex()=
+- =float()=
+#+begin_src python
+print(float(1.1))
+print(float("1.5"))
+#+end_src
+
+#+RESULTS:
+: 1.1
+: 1.5
+
+- =int()=
+#+begin_src python
+print(int("1"))
+print(int("5"))
+#+end_src
+
+#+RESULTS:
+: 1
+: 5
+
+- =str()=
+#+begin_src python
+print(str(123))
+print(True)
+#+end_src
+
+#+RESULTS:
+: 123
+: True
+
+- =super()=
+
+*** 数学
+
+- =abs()=
+- =divmod()=
+- =max()=
+- =min()=
+- =pow()=
+- =round()=
+- =sum()=
+
+*** 論理
+
+- =all()=
+#+begin_src python
+all([True, True, True])  # True
+all([True, False, True]) # False
+all((True, False, True)) # False
+#+end_src
+
+#+RESULTS:
+
+- =any()=
+#+begin_src python
+any([True, True, False])   # True
+any([False, False, False]) # False
+#+end_src
+
+- =callable()=
+- =isinstance()=
+- =issubclass()=
+
+*** iterable
+
+データ構造
+- =list()=
+- =dict()=
+- =tuple()=
+- =set()=
+- =frozenset()=
+- =iter()=
+
+操作関数
+- =enumerate()=
+- =filter()=
+- =len()=
+- =map()=
+- =next()=
+- =range()=
+- =reversed()=
+- =slice()=
+- =sorted()=
+- =zip()=
+
+*** 文字列
+
+- =ascii()=
+- =bin()=
+- =chr()=
+- =format()=
+- =hex()=
+- =oct()=
+- =repr()=
+
+*** 属性
+
+- =delattr()=
+- =getattr()=
+- =hasattr()=
+- =setattr()=
+
+*** デコレータ
+
+- =classmethod()=
+- =property()=
+- =staticmethod()=
+
+*** ユーティリティ
+
+- =dir()=
+- =eval()=
+- =exec()=
+- =globals()=
+- =hash()=
+- =help()=
+- =id()=
+- =input()=
+- =locals()=
+- =memoryview()=
+- =open()=
+- =ord()=
+- =print()=
+- =type()=
+- =vars()=
+
+*** その他
+
+- =breakpoint()=
+- =bytearray()=
+- =bytes()=
+- =compile()=
+- =__import__()=
+
+* モジュール
+
+- モジュールを読み込む
+#+begin_src python
+import import_test
+import_test.fib(2000)
+#+end_src
+
+#+RESULTS:
+: 0 1 1 2 3 5 8 13 21 34 55 89 144 233 377 610 987 1597
+
+- モジュール名の別名を指定して読み込む
+#+begin_src python
+import import_test as fib
+fib.fib(2000)
+#+end_src
+
+#+RESULTS:
+: 0 1 1 2 3 5 8 13 21 34 55 89 144 233 377 610 987 1597
+
+- 個別に取り込む
+#+begin_src python
+from import_test import fib, fib2
+fib(2000)
+#+end_src
+
+#+RESULTS:
+: 0 1 1 2 3 5 8 13 21 34 55 89 144 233 377 610 987 1597
+
+#+begin_src python
+from import_test import fib as fibbonacci
+fibbonacci(2000)
+#+end_src
+
+#+RESULTS:
+: 0 1 1 2 3 5 8 13 21 34 55 89 144 233 377 610 987 1597
+
+- すべて取り込む
+- _で始まるものは取り込まれない
+- あまり推奨されない
+#+begin_src python
+from import_test import *
+fib(2000)
+#+end_src
+
+#+RESULTS:
+: 0 1 1 2 3 5 8 13 21 34 55 89 144 233 377 610 987 1597
+
+#+begin_src python
+if __name__ == "__main__":
+    import sys
+    fib(int(sys.argv[1]))
+#+end_src
+
+- モジュールの検索パス
+1. スクリプトのディレクトリ or カレントディレクトリ
+2. $PYTHONPATH
+3. インストール毎のデフォルト
+#+begin_src python
+sys.path
+#+end_src
+
+#+RESULTS:
+: ['',
+:  '/home/shun/.pyenv/versions/3.7.4/lib/python37.zip',
+:  '/home/shun/.pyenv/versions/3.7.4/lib/python3.7',
+:  '/home/shun/.pyenv/versions/3.7.4/lib/python3.7/lib-dynload',
+:  '/home/shun/.pyenv/versions/3.7.4/lib/python3.7/site-packages']
+
+- 標準ライブラリ
+#+begin_src python
+import sys
+print(sys.ps1)
+#+end_src
+
+#+RESULTS:
+: 
+
+- 環境変数
+#+begin_src python
+import os
+print(os.environ["HOME"]) 
+print(dir())
+#+end_src
+
+#+RESULTS:
+: /home/shun
+: ['Employee', 'Man', '__PYDOC_get_help', '__PYTHON_EL_native_completion_setup', '__annotations__', '__builtins__', '__code', '__doc__', '__loader__', '__name__', '__org_babel_python_fh', '__org_babel_python_fname', '__package__', '__pyfile', '__spec__', '__warningregistry__', 'a', 'a2', 'a3', 'add', 'args', 'b', 'basket', 'codecs', 'concat', 'd', 'empty', 'f', 'fib', 'fib2', 'fibbonacci', 'hoge', 'import_test', 'k', 'l', 'lex_test1', 'lex_test2', 'lex_test3', 'm', 'make_incrementor', 'num', 'object_methods', 'os', 'pairs', 'sep', 'singleton', 'sys', 't', 'u', 'v', 'var']

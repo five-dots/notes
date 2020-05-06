@@ -1,0 +1,1490 @@
+#+STARTUP: folded indent inlineimages latexpreview
+#+PROPERTY: header-args:R :results output :colnames yes :session *R:nse*
+
+* ライブラリ
+
+#+begin_src R :results silent
+library(tidyverse)
+library(rlang)
+library(pryr)
+library(lobstr)
+#+end_src
+
+* 概要
+
+- 重要概念
+  - *quote*
+    - 評価しないこと, 評価しないで表現式のみをとらえること
+  - *symbol*
+    - オブジェクトのラベル
+  - *call*
+    - 関数呼び出しの表現
+  - *expression*
+    - 表現式 (評価される = *unquote* とその値になる)
+  - *eval*
+    - call や expression を評価して実際の結果を得る
+    - 評価される環境がどこかを常に意識する
+  - *quosures*
+    - (expression or formula) + enviroment
+    - 評価されないが、評価されるべき環境を知っている
+    - Quote + Closure の造語
+  - *quasiquotation*
+  - *dynamic dots*
+
+- 3 pillars of tidy evaluation
+  1. quosure
+  2. data mask
+  3. quasiquotation
+  ※ tidy_eval は ={rlang}= に含まれるツールキットのこと
+
+* 言語型の概要
+
+- [[file:type.org][R のオブジェクトの型]]
+
+| =typeof()=   | =mode()=     | =class()=    |
+|------------+------------+------------|
+| symbol     | name       | name       |
+| language   | call       | name       |
+|            |            | fomula     |
+|            |            | quosure    |
+| expression | expression | expression |
+
+- language 型の class は具体的な実装によってバリエーションがある
+
+言語オブジェクトの階層構造
+- =language= 型の構成要素
+  - =symbol= (=name=) = オブジェクトのラベル  (+ =missing_arguments=)
+  - =call= = 関数呼び出し
+    - =formula=
+- その他の構成要素
+  - =constant= = =NULL= もしくは、scalar 値
+  - =pairlist= = 関数の引数
+- =expression= (上記の構成要素が集まって式となったもの. =language= 型でもある)
+
+- どんな表現を Quote するかによって、作成されるオブジェクトが異なる
+#+begin_src R
+quote(hoge) %>% class()
+quote(round(10.5)) %>% class()
+
+expression(hoge) %>% class()
+expression(a <- round(10.5)) %>% class()
+#+end_src
+
+#+RESULTS:
+: [1] "name"
+: 
+: [1] "call"
+: 
+: [1] "expression"
+: 
+: [1] "expression"
+
+* ={base}= vs. ={rlang}= functions
+
+- =en*= がついた関数は、引数を遅延評価で受け取るので、関数内で利用できる
+
+| Type        | base                   | rlang                        | Note                          |
+|-------------+------------------------+------------------------------+-------------------------------|
+| expression  | =expression()=           | NA                           |                               |
+|             | =parse()=                |                              |                               |
+|-------------+------------------------+------------------------------+-------------------------------|
+| symbol/name | =as.symbol()=            | =sym()= / =syms()=               | 文字列から symbol を作成      |
+|             |                        | =ensym()= / =ensyms()=           | 関数内で利用                  |
+|             | =quote()= / =substitute()= |                              | expression から symbol を作成 |
+|-------------+------------------------+------------------------------+-------------------------------|
+| call        | =call()=                 | =call2()=                      |                               |
+|             | =quote()= / =substitute()= | =expr()=                       |                               |
+|             | =alist()=                | =exprs()=                      |                               |
+|             |                        | =enexpr()= / =enexprs()=         | 関数内で利用                  |
+|             |                        | =parse_expr()= / =parse_exprs()= |                               |
+|-------------+------------------------+------------------------------+-------------------------------|
+| quosures    | NA                     | =quo()= / =quos()=               |                               |
+|             |                        | =enquo()= / =enquos()=           | 関数内で利用                  |
+|-------------+------------------------+------------------------------+-------------------------------|
+| character   | =deprse()=               | =as_name()=                    |                               |
+|             |                        | =as_label()=                   |                               |
+|-------------+------------------------+------------------------------+-------------------------------|
+| eval        | =eval()=                 | =eval_tidy()=                  |                               |
+|-------------+------------------------+------------------------------+-------------------------------|
+| predicate   | =is.language()=          |                              |                               |
+|             | =is.expression()=        | =is_expression()=              |                               |
+|             | =is.symbol()=            | =is_symbol()= / =is_symbolic()=  |                               |
+|             | =is.call()=              | =is_call()=                    |                               |
+|             | =is.parilist()=          | =is_pailist()=                 |                               |
+
+* expression
+** 概要
+
+- 表現式 = AST (Abstract Syntax Tree)
+  - 評価されるべき式
+  - 表現式を変数に格納することを捕獲 (Capture) という
+  - ={base}=: =expression()=, =quote()=, =substitute()= で捕獲できる
+  - ={rlang}=: =expr()= で捕獲できる
+
+- Reference
+#+begin_src R :results silent
+?expression
+expression(...)
+#+end_src
+
+#+begin_src R
+a <- 10
+
+expr_var1 <- expression(a > 5)  # expression
+expr_var2 <- quote(a > 5)       # call
+expr_var3 <- substitute(a > 5)  # call
+expr_var4 <- rlang::expr(a > 5) # call
+
+## 文字列から作成
+expr_var5 <- parse(text = "a > 5")
+expr_var6 <- rlang::parse_expr("a > 5")
+
+eval(expr_var1)
+eval(expr_var2)
+eval(expr_var3)
+eval(expr_var4)
+eval(expr_var5)
+eval(expr_var6)
+#+end_src
+
+#+RESULTS:
+: [1] TRUE
+: [1] TRUE
+: [1] TRUE
+: [1] TRUE
+: [1] TRUE
+: [1] TRUE
+
+#+begin_src R
+typeof(expr_var1) # expression type
+mode(expr_var1)   # expression mode
+class(expr_var1)  # expression class
+
+is.expression(expr_var1) # TRUE
+is.language(expr_var1)   # TRUE
+is.call(expr_var1)       # FALSE
+is.list(expr_var1)       # FALSE
+#+end_src
+
+#+RESULTS:
+: [1] "expression"
+: [1] "expression"
+: [1] "expression"
+: [1] TRUE
+: [1] TRUE
+: [1] FALSE
+: [1] FALSE
+
+** いろいろな Expression
+
+- =name= も =expression= 表現できる
+#+begin_src R
+num_var <- 10
+expr_var2 <- expression(num_var)
+
+class(expr_var2) # expression class
+eval(expr_var2)  # => 10
+#+end_src
+
+#+RESULTS:
+: 
+: [1] "expression"
+: 
+: [1] 10
+
+- =call= も表現できる
+#+begin_src R
+expr_var3 <- expression(round(10.5))
+eval(expr_var3)
+#+end_src
+
+#+RESULTS:
+: 
+: [1] 10
+
+- =formula= も表現できる
+#+begin_src R
+expr_var4 <- expression(Sepal.Length ~ Sepal.Width)
+lm(eval(expr_var4), iris)
+#+end_src
+
+#+RESULTS:
+: 
+: Call:
+: lm(formula = eval(expr_var4), data = iris)
+: 
+: Coefficients:
+: (Intercept)  Sepal.Width  
+:      6.5262      -0.2234
+
+** =rlang::expr()= vs. =rlang::enexpr()=
+
+#+begin_src R
+expr(a + b) # => a + b
+
+capture1 <- function(x) {
+  enexpr(x)
+}
+capture1(a + b) # => x
+
+capture2 <- function(x) {
+  enexpr(x)
+}
+capture2(a + b) # => a + b
+#+end_src
+
+** 式木
+
+#+begin_src R
+expr_var <- expr(f(x=1, y=2))
+expr_var
+
+## list のようにアクセスできる
+expr_var[[1]]
+
+## $ で要素を変数できる
+expr_var$x <- 3
+expr_var
+#+end_src
+
+#+RESULTS:
+: f(x = 1, y = 2)
+: f
+: f(x = 3, y = 2)
+
+- AST (Expression を ツリー形式で表現)
+#+begin_src R
+ast(y <- x * 10) # pryr::ast よりも lobstr::ast のほうが見やすい
+#+end_src
+
+#+RESULTS:
+: █─`<-` 
+: ├─y 
+: └─█─`*` 
+:   ├─x 
+:   └─10
+
+#+begin_src R
+ast("a")                  # constant
+ast(x)                    # name
+ast(f(a, b))              # call (constant, name を含む)
+ast(f1(f2(a), f3(b)))
+ast(function(x = 1, y) x) # pairlist = formal args ([] から始まる部分)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+"a"
+
+x
+
+█─f 
+├─a 
+└─b
+
+█─f1 
+├─█─f2 
+│ └─a 
+└─█─f3 
+  └─b
+
+█─`function` 
+├─█─x = 1 
+│ └─y = `` 
+├─x 
+└─<inline
+#+end_example
+
+* constant
+
+- 定数
+- =NULL= もしくは、1 length atomic vector
+#+begin_src R
+TRUE
+1L
+2.5
+"x"
+
+rlang::is_syntactic_literal(NULL)    # TRUE
+rlang::is_syntactic_literal("x")     # TRUE
+rlang::is_syntactic_literal(letters) # FALSE
+#+end_src
+
+#+RESULTS:
+: [1] TRUE
+: [1] 1
+: [1] 2.5
+: [1] "x"
+: [1] TRUE
+: [1] TRUE
+: [1] FALSE
+
+- リテラル = Expression
+#+begin_src R
+identical(expr(TRUE), TRUE)
+identical(expr(10), 10)
+#+end_src
+
+#+RESULTS:
+: [1] TRUE
+: [1] TRUE
+
+* symbol (name)
+** 概要
+
+- R object のラベル
+- =name= class (= =symbol= class)
+- 必ず、長さは 1 (だから複数あるときは list にする)
+
+#+begin_src R
+name_var1 <- as.symbol("hoge")  # 文字列から作成 as.name() よりも as.symbol() が推奨される
+name_var2 <- rlang::sym("hoge") # 文字列から作成
+
+name_var3 <- quote(hoge)       # expression から作成
+name_var4 <- substitute(hoge)  # expression から作成
+name_var5 <- rlang::expr(hoge) # expression から作成
+
+name_var1
+name_var2
+name_var3
+name_var4
+name_var5
+
+rlang::as_name(name_var1) # 文字列に戻す (基本的にこれを使う)
+rlang::as_label(name_var1)
+
+as.character(name_var1)     # 文字列に戻す
+rlang::as_string(name_var1) # 長さ1が保証される
+#+end_src
+
+#+RESULTS:
+: hoge
+: hoge
+: hoge
+: hoge
+: hoge
+: [1] "hoge"
+: [1] "hoge"
+: [1] "hoge"
+: [1] "hoge"
+
+#+begin_src R
+typeof(name_var1) # 全て symbol
+typeof(name_var2)
+typeof(name_var3)
+typeof(name_var4)
+typeof(name_var5)
+
+mode(name_var1)  # name
+class(name_var1) # name
+#+end_src
+
+#+RESULTS:
+: [1] "symbol"
+: [1] "symbol"
+: [1] "symbol"
+: [1] "symbol"
+: [1] "symbol"
+: [1] "name"
+: [1] "name"
+
+- language, symbol(=name) ではあるが、expression ではない
+#+begin_src R
+is.language(name_var1)   # TRUE
+is.name(name_var1)       # TRUE
+is.symbol(name_var1)     # TRUE
+is.expression(name_var1) # TRUE
+
+identical(quote(hoge), as.name("hoge")) # TRUE
+#+end_src
+
+#+RESULTS:
+: [1] TRUE
+: [1] TRUE
+: [1] TRUE
+: [1] FALSE
+: [1] FALSE
+: [1] TRUE
+
+- =rlang::syms()= は list of name を作成する
+- 引数として、変数名のリストを受け取りたいときなどに使う
+#+begin_src R
+name_var_list <- syms(c("hoge", "fuga", "chome"))
+name_var_list
+
+is.list(name_var_list)
+#+end_src
+
+#+RESULTS:
+: [[1]]
+: hoge
+: 
+: [[2]]
+: fuga
+: 
+: [[3]]
+: chome
+: [1] TRUE
+
+** Missing argument
+
+- 実態は =symbol=, =name=
+- プログラムから意図的に missing args の関数を作成するケースが有る
+#+begin_src R
+f <- function(x) 10
+formals(f)$x # => 空
+is.name(formals(f)$x)
+rlang::is_missing(formals(f)$x)
+
+## missing arg と NULL は異なる 
+f <- function(x = NULL) 10
+formals(f)$x # NULL
+is.name(formals(f)$x)
+rlang::is_missing(formals(f)$x)
+#+end_src
+
+#+RESULTS:
+: 
+: [1] TRUE
+: Error in missing(formals(f)$x) : invalid use of 'missing'
+: [1] TRUE
+: NULL
+: [1] FALSE
+: [1] FALSE
+
+- Empty name を作るなら
+#+begin_src R
+missing_arg() # symbol class
+expr()
+quote(expr =)
+
+is_missing(missing_arg()) # TRUE
+#+end_src
+
+#+RESULTS:
+: 
+: 
+: 
+: [1] TRUE
+
+- 既存の関数の引数を missing に書き換える
+#+begin_src R
+g <- function(x = 20, y) {
+  x + y
+}
+formals(g) <- list(x = missing_arg(), y = 10) # x のデフォルト値を消してしまう
+formals(g)
+#+end_src
+
+#+RESULTS:
+: $x
+: 
+: 
+: $y
+: [1] 10
+
+* call
+** 概要
+
+- =call= class (= =language= class, =`(`= class)
+- 関数呼び出しの表現式 (Every operation is a function call !!)
+- list に似た形式 (実際は、 =pairlist=) 1 番目が関数、2番目以降が引数
+
+#+begin_src R :results silent
+call(
+  name, # 関数名を文字列で指定
+  ...   # 関数の引数 (引数は評価される)
+)
+
+rlang::call2(
+  .fn, 	     # string, symbol, call, or a function (Collable object)
+  ...,       # Dynamic dots
+  .ns = NULL # Namespace with which to prefix .fn. Must be a string or symbol.
+)
+#+end_src
+
+** 新規作成
+
+#+begin_src R
+
+## 様々な作成方法
+call_var1 <- call("round", 10.5)     # 関数文字列から
+call_var2 <- quote(round(10.5))      # expression から
+call_var3 <- substitute(round(10.5)) # expression から
+
+call_var4 <- as.call(list(round, 10.5)) # list から
+call_var5 <- alist(round(10.5))[[1]]    # list から
+
+call_var6 <- rlang::call2("round", 10.5)      # 関数文字列から
+call_var7 <- rlang::call2(quote(round), 10.5) # symbolから
+call_var8 <- rlang::call2(round, 10.5)        # functionから
+
+call_var9 <- rlang::expr(round(10.5)) # expressionから
+
+## 全て call class
+call_var1
+call_var2
+call_var3
+call_var4
+call_var5
+call_var6
+call_var7
+call_var8
+call_var9
+
+eval(call_var1) # eval で評価
+as.character(call_var1) # 文字列に変換
+
+rlang::call_fn(call_var1)   # call から関数のみを抽出
+rlang::call_args(call_var1) # call から引数を抽出
+#+end_src
+
+#+RESULTS:
+#+begin_example
+round(10.5)
+round(10.5)
+round(10.5)
+.Primitive("round")(10.5)
+round(10.5)
+round(10.5)
+round(10.5)
+.Primitive("round")(10.5)
+round(10.5)
+[1] 10
+[1] "round" "10.5"
+function (x, digits = 0)  .Primitive("round")
+[[1]]
+[1] 10.5
+#+end_example
+
+- language, call class
+#+begin_src R
+typeof(call_var1)
+mode(call_var1)
+class(call_var1)
+#+end_src
+
+#+RESULTS:
+: [1] "language"
+: [1] "call"
+: [1] "call"
+
+#+begin_src R
+is.language(call_var1)   # TRUE
+is.call(call_var1)       # TRUE
+is.expression(call_var1) # FALSE
+#+end_src
+
+#+RESULTS:
+: [1] TRUE
+: [1] TRUE
+: [1] FALSE
+
+- ネストさせる
+- 引数に call を指定する
+#+begin_src R
+rlang::call2("+", 1, call2("*", 2, 3))
+#+end_src
+
+- 複雑な式を組み立てるときは、!!(Unquote, bang-bang) を使うと簡便
+#+begin_src R
+xx <- rlang::expr(x + x)
+yy <- rlang::expr(y + y)
+rlang::expr(!!xx / !!yy) # => (x + x)/(y + y)
+#+end_src
+
+#+RESULTS:
+: (x
+: x)/(y
+: y)
+
+** call を編集する
+
+- call オブジェクトには =$= で関数の引数にアクセスできる
+#+begin_src R
+y <- quote(read.csv("important.csv", row.names = FALSE))
+y$row.names <- TRUE
+y$col.names <- FALSE
+y
+
+## インデックスでアクセスできる
+y[1] # 関数本体
+y[2] # 引数1
+y[3] # 引数2
+y[-3]
+#+end_src
+
+#+RESULTS:
+: read.csv("important.csv", row.names = TRUE, col.names = FALSE)
+: read.csv()
+: "important.csv"()
+: TRUE()
+: read.csv("important.csv", col.names = FALSE)
+
+- 引数の書き方を標準化することで、扱いやすくする
+#+begin_src R
+y2 <- rlang::call_standardise(y) # base::match.call() と似た関数
+y2
+
+as.list(y2) # list で関数と引数を取得できる
+#+end_src
+
+#+RESULTS:
+#+begin_example
+read.csv(file = "important.csv", row.names = TRUE, col.names = FALSE)
+[[1]]
+read.csv
+
+$file
+[1] "important.csv"
+
+$row.names
+[1] TRUE
+
+$col.names
+[1] FALSE
+#+end_example
+
+** ={rlang}= の call 関連関数
+
+#+begin_src R
+pacman::p_funs(rlang) %>% str_subset("^call_")
+#+end_src
+
+#+RESULTS:
+:  [1] "call_args"        "call_args_names"  "call_depth"       "call_fn"         
+:  [5] "call_frame"       "call_inspect"     "call_modify"      "call_name"       
+:  [9] "call_ns"          "call_stack"       "call_standardise"
+
+* parilist
+
+- 関数の引数が =pairlist= class
+  - 昔の名残として残っている
+  - 基本的に =list= で置き換えられている
+#+begin_src R
+f <- expr(function(x, y = 10) x + y)
+args <- f[[2]]
+
+typeof(args) # parrlist
+mode(args)   # pairlist
+class(args)  # pairlist
+
+is.language(args) # 
+is_pairlist(args)
+is.expression(args)
+#+end_src
+
+#+RESULTS:
+: [1] "pairlist"
+: [1] "pairlist"
+: [1] "pairlist"
+: [1] FALSE
+: [1] TRUE
+: [1] FALSE
+
+* quosure
+** =quo(expr)=
+
+- expression + enviroment を同時に持っている
+- expression が評価されるべき環境をもっていると考える
+#+begin_src R
+x <- 1
+y <- 2
+q1 <- quo(x + y)
+q1
+class(q1)
+#+end_src
+
+#+RESULTS:
+: 
+: <quosure>
+: expr: ^x + y
+: env:  global
+: 
+: [1] "quosure" "formula"
+
+- それぞれを取得可能
+#+begin_src R
+quo_get_expr(q1)
+quo_get_env(q1)
+#+end_src
+
+#+RESULTS:
+: x + y
+: 
+: <environment: R_GlobalEnv>
+
+- R_GlobalEnv の値で評価される
+#+begin_src R
+eval_tidy(q1)
+#+end_src
+
+#+RESULTS:
+: [1] 3
+
+- 関数内で使えば、関数内の環境になる
+#+begin_src R
+add1 <- function(x, y) {
+  quo(x + y)
+}
+
+q2 <- add1(2, 4)
+q2
+#+end_src
+
+#+RESULTS:
+: 
+: <quosure>
+: expr: ^x + y
+: env:  0x55f61aeedcd8
+
+- 関数内の環境が同梱されているのが確認できる
+#+begin_src R
+add2 <- function(x, y) {
+  qsr <- quo(x + y)
+  env <- current_env()
+  list(qsr = qsr, env = env)
+}
+
+res1 <- add2(2, 4)
+identical(quo_get_env(res1$qsr), res1$env)
+#+end_src
+
+#+RESULTS:
+: 
+: [1] TRUE
+
+#+begin_src R
+
+#+end_src
+
+** 概要
+
+- =quo()=
+- expression + formula + enviroment
+- =quos()= で list of quosure を作成
+#+begin_src R
+quo_var1 <- quo(hoge == 10)
+quo_var1
+
+typeof(quo_var1) # language
+mode(quo_var1)   # call
+class(quo_var1)  # quosure, formula
+#+end_src
+
+#+RESULTS:
+: <quosure>
+: expr: ^hoge == 10
+: env:  global
+: [1] "language"
+: [1] "call"
+: [1] "quosure" "formula"
+
+- quosure を使う意味 = 表現式に環境をバンドルして渡せる
+#+begin_src R
+df <- data.frame(x = 1:3)
+with2 <- function(df, expr) {
+  a <- 1000            # <= ここが使われる (1 + 1000, 2 + 1000, 3 + 1000)
+  expr <- enexpr(expr) # enexpr で引数としての表現式を受け取る
+  
+  ## 評価をする環境 (data) にdfを指定. a は存在しないので、関数内の環境のa を利用する
+  eval_tidy(expr, data = df)
+}
+a <- 10          # <= ここを使ってほしい
+with2(df, x + a) # 意図しない結果
+#+end_src
+
+#+RESULTS:
+: [1] 1001 1002 1003
+
+- =enquo()= を使うと環境もバンドルして渡せる
+#+begin_src R
+with3 <- function(df, expr) {
+  a <- 1000
+  expr <- enquo(expr)
+  print(expr)          # 環境が global になっている
+  eval_tidy(expr, df)
+}
+a <- 10
+with3(df, x + a)
+#+end_src
+
+#+RESULTS:
+: <quosure>
+: expr: ^x
+: a
+: env:  global
+: [1] 11 12 13
+
+** quasiquotation
+
+- Quote された Expression を選択的に Unquote すること
+  - ={rlang}= の関数で Quote すると Quasiquotation になるので =!!= が自動的に利用できる
+- パッケージ開発者のコードとパッケージ利用者のコードを融合させるのが目的
+  - _パッケージ関数にユーザーコードを渡すことでより柔軟な仕事をさせる_
+- Quoting function = 引数が Quote  されている関数
+  - 関数には、引数が Evaluated なものと、Quoted なものの 2 種類がある
+
+- 主な機能
+  - =!!= (bang-bang), =!!!= (bang-bang-bang) で選択的に Unquote
+  - =...= を利用する際に =!!!= を利用
+  - := 動的に引数の名前を変更
+
+#+begin_src R
+expr(a + b) # => a + b
+
+a <- 10
+expr(!!a + b) # => 10 + b
+
+f <- function(x) {
+  enexpr(x)
+}
+
+f <- function(x) {
+  enexpr(x)
+}
+
+f(!!a + b) # => 10 + b
+#+end_src
+
+#+RESULTS:
+: a
+: b
+: 10
+: b
+
+** dplyr
+
+- =quo()=
+- _quasiquotation context 内のみで unquote できる_
+#+begin_src R
+x <- 10
+quo(x)
+quo(x) %>% class() # quosure class
+qs <- quo(x)
+
+# unquote
+!!qs
+UQ(qs)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+<quosure>
+expr: ^x
+env:  global
+[1] "quosure" "formula"
+Error: Quosures can only be unquoted within a quasiquotation context.
+
+  # Bad:
+  list(!!myquosure)
+
+  # Good:
+  dplyr::mutate(data, !!myquosure)
+Error: `UQ()` can only be used within a quasiquoted argument
+#+end_example
+
+- =enquo()=
+#+begin_src R
+df1 <- tibble(x = 1:3)
+mutate_y <- function(df) {
+  mutate(df, y = a + x)
+}
+a <- 10
+mutate_y(df1)
+
+mutate_y <- function(df) {
+  mutate(df, y = .data$a + .data$x)
+}
+
+df <- tibble(
+  g1 = c(1, 1, 2, 2, 2),
+  g2 = c(1, 2, 1, 2, 1),
+  a = sample(5),
+  b = sample(5)
+)
+
+my_summarise <- function(df, group_var) {
+  #group_var <- quo(group_var)
+  #print(group_var)
+  group_var <- enquo(group_var)
+  print(group_var)
+
+  df %>%
+    group_by(!!group_var) %>%
+    summarise(a = mean(a))
+}
+
+my_summarise(df, g1)
+my_summarise(df, quo(g1))
+#+end_src
+
+* =substitute()=
+
+- =quote()= の環境対応版
+- 表現式内の symbol を環境の値と置き換える
+#+begin_src R
+a <- 10.5
+e <- new.env()
+e$a <- 20.5
+
+call_var10 <- quote(round(a))         # GlobalEnv の a が使われる
+call_var11 <- substitute(round(a), e) # 指定した環境の a が使われる
+
+eval(call_var10)
+eval(call_var11)
+#+end_src
+
+#+RESULTS:
+: [1] 10
+: [1] 20
+
+- 表現式自体の値も書き換わる
+#+begin_src R
+e <- new.env()
+e$a <- 10
+e$b <- 20
+
+substitute(a + b, e) # => 10 + 20
+substitute(c + d, e) # => c + d (環境内にシンボルがなければそのまま)
+#+end_src
+
+#+RESULTS:
+: 
+: 10
+: 20
+: 
+: c
+: d
+
+#+begin_src R
+a <- 10
+b <- 20
+substitute(c + d, .GlobalEnv) # => c + d (.GlobalEnv の場合は、書き変わらない)
+#+end_src
+
+#+RESULTS:
+: 
+: c
+: d
+
+- rlang::expr()/exprs()
+#+begin_src R
+expr(hoge == 10) %>% class() # call
+exprs(hoge == 10, fuga == 20) %>% class() # list
+#+end_src
+
+#+RESULTS:
+: [1] "call"
+: [1] "list"
+
+- 関数内では、使えない
+#+begin_src R
+capture_it <- function(x) rlang::expr(x)
+capture_it(1 + 2) # => x
+#+end_src
+
+#+RESULTS:
+: x
+
+- 関数内では =enexpr()= / =enexprs()= を使う 
+- 遅延評価された引数を受け取れる
+#+begin_src R
+capture_it2 <- function(x) rlang::enexpr(x)
+capture_it2(1 + 2) # => 1 + 2
+#+end_src
+
+#+RESULTS:
+: 1
+: 2
+
+* =eval()=
+
+- 表現式を評価する
+#+begin_src R :results silent
+eval(expr, envir = parent.frame(), enclos = if (is.list(envir) || is.pairlist(envir)) parent.frame() else baseenv())
+evalq(expr, envir, enclos)
+eval.parent(expr, n = 1)
+local(expr, envir = new.env())
+#+end_src
+
+- quote の皮を一枚づつ剥いで行く
+#+begin_src R
+quote(1:10)
+quote(quote(1:10))
+eval(quote(quote(1:10)))
+eval(eval(quote(quote(1:10))))
+#+end_src
+
+#+RESULTS:
+: 1:10
+: quote(1:10)
+: 1:10
+:  [1]  1  2  3  4  5  6  7  8  9 10
+
+- 評価する環境を指定できる
+  - 表現式内の symbol をどの環境の value に紐付けるか
+  - 関数の挙動を微調整できるメリットがある
+
+#+begin_src R
+e <- new.env()
+e$x <- 100
+e$y <- 200
+eval(quote(x + y), envir = e)
+#+end_src
+
+#+RESULTS:
+: [1] 300
+
+- 関数内で、base 関数を書き換える
+#+begin_src R
+string_math <- function(x) {
+  e <- env(
+    caller_env(),
+    `+` = function(x, y) paste0(x, y), #? 文字列を連結
+    `*` = function(x, y) strrep(x, y)  #? 文字列をリピート
+  )
+  eval(enexpr(x), e)
+}
+name <- "Hadley"
+string_math("Hello " + name)
+string_math(("x" * 2 + "-y") * 3)
+#+end_src
+
+#+RESULTS:
+: [1] "Hello Hadley"
+: [1] "xx-yxx-yxx-y"
+
+- list/data.frame で与えても良い
+#+begin_src R
+eval(quote(x + y), list(x = 1000, y = 2000))
+eval(quote(x + y), data.frame(x = 1:3, y = 4:6))
+#+end_src
+
+#+RESULTS:
+: [1] 3000
+: [1] 5 7 9
+
+- eval と subset を使って、data.frame を subset する
+#+begin_src R
+sample_df <- data.frame(a = 1:5, b = 5:1, c = c(5, 3, 1, 4, 1))
+subset2 <- function(x, condition) {
+  condition_call <- substitute(condition)
+  r <- eval(condition_call, x, parent.frame())
+  x[r, ]
+}
+subset2(sample_df, a >= 4)
+
+#?
+dots <- function(...) {
+  eval(substitute(alist(...)))
+}
+#+end_src
+
+#+RESULTS:
+:   a b c
+: 4 4 2 4
+: 5 5 1 1
+
+* =rlang::eval_tidy()=
+
+- Evaluate an expression with quosures and pronoun(= .data, .env) support
+- environment/list だけでなく、data mask を評価する環境として渡せる
+- =base::eval()= は data.frame を enviroment に変換するが =eval_tidy()= は =data mask= に変換する
+  - data mask は特殊な環境の一種
+#+begin_src R
+eval_tidy(expr, data = NULL, env = caller_env())
+#+end_src
+
+- df のカラム名で評価, df$x, df$y と書かなくてよい
+- 曖昧さをさけるために、.data, .env を使う必要はある
+#+begin_src R
+df <- data.frame(x = 1:5, y = sample(5))
+eval_tidy(expr(x + y), df)
+eval_tidy(expr(.data$x + .data$y), df)
+#+end_src
+
+#+RESULTS:
+: [1]  2  5  7  6 10
+: [1]  2  5  7  6 10
+
+* [[https://cran.r-project.org/web/packages/dplyr/vignettes/programming.html][Programming with dplyr (Vignette)]]
+** 導入
+
+NSE を dplyr で使うメリット
+- 1. data.frame 名を記述しないでもカラムを指定できる
+- 2. DB のフロントエンドとして
+
+デメリット
+- Most dplyr arguments are not referentially transparent.(明示的に透過)
+- That means you can’t replace a value with a
+- seemingly equivalent object that you’ve defined elsewhere.
+
+#+begin_src R :results value
+df <- tibble(x = 1:3, y = 3:1)
+filter(df, x == 1)
+#+end_src
+
+#+RESULTS:
+| x | y |
+|---+---|
+| 1 | 3 |
+
+- 以下は間違い
+#+begin_src R
+my_var <- "x"
+filter(df, my_var == 1)
+#+end_src
+
+#+RESULTS:
+: 
+: # A tibble: 0 x 2
+: # … with 2 variables: x <int>, y <int>
+
+- 一般的にどんな変数が環境にあるかで挙動が変わる
+#+begin_src R
+df[df$x == df$y, ] # Ok
+
+df[df$x == y, ] # y not found
+y <- 1
+df[df$x == y, ] # Ok
+#+end_src
+
+#+RESULTS:
+#+begin_example
+# A tibble: 1 x 2
+      x     y
+  <
+<int>
+1     2     2
+
+# A tibble: 0 x 2
+# … with 2 variables: x <int>, y <int>
+Warning message:
+In df$x == y :
+  longer object length is not a multiple of shorter object length
+
+# A tibble: 1 x 2
+      x     y
+  <
+<int>
+1     1     3
+#+end_example
+
+** .data 代名詞
+
+#+begin_src R :results value
+df1 <- tibble(x = 1:3, y = 2:4)
+
+# こういう関数
+mutate_y <- function(df) {
+  mutate(df, a = x + y)
+}
+
+# 以下は問題無い
+mutate_y(df1)
+#+end_src
+
+#+RESULTS:
+| x | y | a |
+|---+---+---|
+| 1 | 2 | 3 |
+| 2 | 3 | 5 |
+| 3 | 4 | 7 |
+
+- このケースだと、global 変数の a が使われる
+- df 無いに カラム y が無いため
+#+begin_src R :results value
+df2 <- tibble(x = 1:3)
+y <- 10
+mutate_y(df2)
+#+end_src
+
+#+RESULTS:
+| x |  a |
+|---+----|
+| 1 | 11 |
+| 2 | 12 |
+| 3 | 13 |
+
+- .data を使って、明示的にカラム名であることを指定
+#+begin_src R
+mutate_y <- function(df) {
+  mutate(df, a = .data$x + .data$y)
+}
+mutate_y(df1)
+mutate_y(df2) #=> カラムが無いとエラーになる
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+# A tibble: 3 x 3
+      x     y     a
+  <
+<
+<int>
+1     1     2     3
+2     2     3     5
+3     3     4     7
+
+Error: Column `y` not found in `.data`
+Run `rlang::last_error()` to see where the error occurred.
+#+end_example
+
+** quosures
+
+# こんな df
+df <- tibble(
+  g1 = c(1, 1, 2, 2, 2),
+  g2 = c(1, 2, 1, 2, 1),
+  a = sample(5),
+  b = sample(5)
+)
+
+## グループごとにサマライズしたい
+df %>%
+  group_by(g1) %>%
+  summarise(a = mean(a))
+
+# こんな関数
+my_summarise <- function(df, group_var) {
+  df %>%
+    group_by(group_var) %>%
+    summarise(a = mean(a))
+}
+
+# でも動かない
+my_summarise(df, g1)
+my_summarise(df, "g1")
+
+#? 動作させるためには、2つのことが必要
+#? 1. 自分で quote する => quo(), enquo()
+#? 2. group_by には quote しなくてよいと伝える => !!
+
+#? base R の quote 機能
+base::quote(g1)
+base::quote(a + b)
+base::quote(g1) %>% class()    # name class
+base::quote(a + b) %>% class() # call class
+
+~g1
+disp ~ cyl + drat
+(~g1) %>% class() # formula class
+
+#? dplyr の quote 機能
+dplyr::quo(g1)
+dplyr::quo(a + b + c)
+dplyr::quo("a")
+dplyr::quo(g1) %>% class() # quosure, formula class
+
+#? quosures の評価
+abc <- function(a, b, c) quo(a + b + c)
+x <- abc(1, 2, 3)
+
+x # 1, 2, 3 の情報が消えてしまったように見えるが、、、
+eval_tidy(x) #  ちゃんと環境に残っている
+eval_tidy(x, data = list(a = 1, b = 1, c =1)) # 別途 data を指定できる
+eval_tidy(quo(Sepal.Length), data = iris)
+
+
+my_summarise <- function(df, group_var) {
+  df %>%
+    #? !! を使って、unquote して評価してほしいと伝える
+    group_by(!!group_var) %>%
+    summarise(a = mean(a))
+}
+
+#? 関数の引数に quosures を渡す
+my_summarise(df, quo(g1))
+
+# これでは動かない
+my_summarise(df, g1)
+
+# 関数内で quo を使ってみる
+my_summarise <- function(df, group_var) {
+  quo_group_var <- quo(group_var)
+  print(quo_group_var)
+
+  df %>%
+    group_by(!!quo_group_var) %>%
+    summarise(a = mean(a))
+}
+
+my_summarise(df, g1)
+# ^group_var が quote されてしまっている, ^g1 が quote されてほしい
+#? quo() は常に実行された expression が中に入る
+
+#? enquo を使う (= base::substitute)
+
+my_summarise <- function(df, group_var) {
+  group_var <- enquo(group_var)
+  print(group_var)
+
+  df %>%
+    group_by(!!group_var) %>%
+    summarise(a = mean(a))
+}
+my_summarise(df, g1)
+
+## ことなる入力
+summarise(df, mean = mean(a), sum = sum(a), n = n())
+summarise(df, mean = mean(a * b), sum = sum(a * b), n = n())
+
+#? 事前に quo して渡す
+my_var <- quo(a)
+summarise(df, mean = mean(!!my_var), sum = sum(!!my_var), n = n())
+
+my_var <- quo(a * b)
+summarise(df, mean = mean(!!my_var), sum = sum(!!my_var), n = n())
+
+#? 全体を quo するとデバッグに便利
+quo(summarise(df, mean = mean(!!my_var), sum = sum(!!my_var), n = n()))
+
+#? もちろん関数にするなら、enquo する
+my_summarise2 <- function(df, expr) {
+  expr <- enquo(expr)
+  summarise(df, mean = mean(!!expr), sum = sum(!!expr), n = n())
+}
+my_summarise2(df, a)
+
+
+## ことなる入力と出力
+mutate(df, mean_a = mean(a), sum_a = sum(a))
+mutate(df, mean_b = mean(b), sum_b = sum(b))
+
+#? quo_name で expr を文字列に変換
+quo_name(quo(hoge))
+quo_name(quo(hoge)) %>% class() # character
+
+#? := を使って 変数名のカラムを作る
+my_mutate <- function(df, expr) {
+  expr <- enquo(expr)
+  mean_name <- paste0("mean_", quo_name(expr))
+  sum_name <- paste0("sum_", quo_name(expr))
+
+  mutate(df,
+    !!mean_name := mean(!!expr),
+    !!sum_name := sum(!!expr)
+  )
+}
+my_mutate(df, a)
+my_mutate(df, a + b)
+
+## 複数の入力
+
+#? ... で複数の引数を受け取る
+#? quos(), enquos() で ... を list として受け取る
+#? !!! quote した表現式を解いて使う
+my_summarise <- function(df, ...) {
+  group_var <- enquos(...)
+  print(group_var)
+
+  df %>%
+    group_by(!!!group_var) %>%
+    summarise(a = mean(a))
+}
+
+my_summarise(df, g1, g2)
+
+#? !!! 詳細
+args <- list(na.rm = TRUE, trim = 0.25)
+quo(mean(x, !!!args))
+
+args <- list(quo(x), na.rm = TRUE, trim = 0.25)
+quo(mean(!!!args))
+
+quo(list(!!!letters[1:5])) # ベクトルが分解される
+quo(list(!!letters[1:5])) # ベクトルのまま扱われる
+
+select_vars <- list(quo(cyl), quo(vs), quo(am))
+select_vars2 <- quos(cyl, vs, am) # 上記と同じ
+
+mtcars %>% select(!!! select_vars)
+mtcars %>% select(!!! select_vars2)
+
+
+#? quo, enquo の違い => environment
+f <- function(x) {
+  quo(x)
+}
+
+x1 <- f(10)
+x1
+x2 <- f(100)
+x2
+
+# formula の環境がちがう
+library(rlang)
+get_env(x1)
+get_env(x2)
+
+# formula を評価すると異なる値
+#? 同じ名前でも異なる環境の異なる値を参照することができる
+eval_tidy(x1)
+eval_tidy(x2)
+
+#? オブジェクトが環境を持っているときに closure と呼ばれる
+typeof(mean)
+
+#? quosure = expression + environment
+var <- ~toupper(letters[1:5])
+var
+# You can extract its expression:
+get_expr(var)
+# Or inspect its enclosure:
+get_env(var)
+
+
+#? quasiquotation
+quo(toupper(letters[1:5])) # 全体を expr として捉える
+quo(toupper(!!letters[1:5])) # 値を expr として捉える
+quo(toupper(UQ(letters[1:5]))) # !! は UQ()のシンタックスシュガー
+
+var1 <- quo(letters[1:5])
+quo(toupper(!!var1))
+
+#? quosures は環境を保持しているので、安全に unquote できる
+my_mutate <- function(x) {
+  print(get_env(x))
+  mtcars %>%
+    select(cyl) %>%
+    slice(1:4) %>%
+    mutate(cyl2 = cyl + (!!x))
+}
+
+f <- function(x) quo(x)
+expr1 <- f(100)
+expr2 <- f(10)
+
+my_mutate(expr1) # 値が環境内に保持されている
+my_mutate(expr2)
+
+#? 関数を埋め込んだ quosures
+my_fun <- quo(fun)
+quo(!!my_fun(x, y, z)) # Error
+quo(UQ(my_fun)(x, y, z))
+
+#? 変数を埋め込んだ quosures
+my_var <- quo(x)
+quo(filter(df, !!my_var == 1))
+quo(filter(df, UQ(my_var) == 1))
+
+my_var <- quo(cty)
+my_expr <- quo(filter(mpg, UQ(my_var) == 18))
+my_expr
+!!my_expr
+
+#? 関数への 名前 = expr の組み合わせを list で渡す
+args <- list(mean = quo(mean(cyl)), count = quo(n()))
+args
+mtcars %>%
+  group_by(am) %>%
+  summarise(!!!args)
+
+* 参考
+
+ - [[https://adv-r.hadley.nz/][Advanced R 2nd]]
+ - [[https://advanced-r-solutions.rbind.io/][Advanced R Solutions]]
+ - [[https://tidyeval.tidyverse.org/index.html][Tidy evaluation]]
+ - [[https://rlang.hatenablog.jp/entry/2019/08/03/154351][RのTidy evaluation_04@Rのこと。]]

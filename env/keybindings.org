@@ -1,0 +1,546 @@
+#+STARTUP: fold indent inlineimages
+
+* Linux
+** ツールまとめ
+
+- *xmodmap*
+  - キーコード変換ツール
+  - Mode_switch を使った挙動を制御できる
+  - [[https://askubuntu.com/questions/54157/how-do-i-set-xmodmap-on-login][How do I set Xmodmap on login?]]
+    - ubuntu では xmodmap の設定は startup で xkb によって上書きされてしまうので注意が必要
+    - スタートアップに設定する場合は、遅延時間を設定する
+
+- *xcape*
+  - 修飾キーが単体で押された場合の挙動を設定可能
+
+- *xkb*
+  - 未使用
+
+- *gsettings*
+  - GNOME app から簡単にキー設定を変更可能
+  - Ubuntu の GUI での利用からのみで考えれば、最も単純でよい
+
+- *xkeysnail*
+  - root 権限を利用
+  - アプリ毎の設定、SandS なども可能
+  - Hyper を修飾キーとして利用できない
+  - xmodmap と共存が難しい (設定が上書きされる)
+
+- *xremap*
+  - アプリのランチャーとしても利用できる
+  - window のスイッチャー としての使い方が便利
+  - Hyper を修飾キーとして利用できない
+
+- *AutoKey*
+  - Windows の AutoHotKey の Linux 版
+  - =~/.config/autokey/data/= 以下に設定が保存される
+  - key に python script を割り当てることが可能
+
+** xmodmap
+*** Keycode
+
+- keyboard のキーに割り当てられた番号
+- =$ xmodmap .Xmodmap= で設定を読み込む
+
+- =xev= アプリでキーコードを調べることが可能
+- xmodmap -pke
+  - [[https://bearmini.hatenablog.com/entry/2013/07/12/161637][Xmodmap でお好みのキーバインド]]
+  - 例えば =a= は =keycode 38 = a A a A= となっている (ひとつのキーで 4 つの意味を持たせる)
+  - 普通に押せば、a, Shift+a = A, Mode_switch+a = a, Shift+Mode_switch+a = A という意味になる
+  - =Mode_switch= のような記述を keysym と言う
+
+#+begin_src shell
+xmodmap -pke | rg Mode_switch
+#+end_src
+
+#+RESULTS:
+: keycode 203 = Mode_switch NoSymbol Mode_switch
+
+*** Modifier keys
+
+- [[https://superuser.com/questions/417568/setting-hyper-and-super-modifiers-for-certain-keys-with-setxkbmap-or-xmodmap][Setting Hyper and Super modifiers for certain keys with setxkbmap or xmodmap@stackoverflow]]
+- =xmodmap= コマンドを実行することで Modifier key の一覧を表示できる
+- 括弧内が keycode (16 進数)
+- Thinkpad keyboard
+
+| Key       | Decimal |  Hex | Note        |
+|-----------+---------+------+-------------|
+| Control_L |      37 | 0x25 |             |
+| Control_R |     105 | 0x69 |             |
+| Shift_L   |      50 | 0x32 |             |
+| Shift_R   |      62 | 0x3e |             |
+| Alt_L     |      64 | 0x40 |             |
+| Alt_R     |     108 | 0x6c |             |
+| Caps_Lock |      66 | 0x42 |             |
+| Num_Lock  |      77 | 0x4d | ?           |
+| Super_L   |     133 | 0x85 | Windows key |
+| Super_R   |     134 | 0x86 | ?           |
+| Hyper_L   |     207 | 0xcf | ?           |
+
+- 修飾キーは Real Modifier と Virtual Modifier に分かれる
+  - Real Modifier は、以下の 8 種類
+  - shift, lock, control, mod1-5
+  - mod3 は通常使われていない
+#+begin_src shell :results output
+xmodmap
+#+end_src
+
+#+RESULTS:
+#+begin_example
+xmodmap:  up to 4 keys per modifier, (keycodes in parentheses):
+
+shift       Shift_L (0x32),  Shift_R (0x3e)
+lock        Caps_Lock (0x42)
+control     Control_L (0x25),  Control_L (0x42),  Control_R (0x69)
+mod1        Alt_L (0x40),  Alt_R (0x6c),  Meta_L (0xcd)
+mod2        Num_Lock (0x4d)
+mod3      
+mod4        Super_L (0x85),  Super_R (0x86),  Super_L (0xce),  Hyper_L (0xcf)
+mod5        ISO_Level3_Shift (0x5c),  Mode_switch (0xcb)
+
+#+end_example
+
+- 一般的には、以下のキーが用いられる
+  - Control "C-"
+  - Meta    "M-"
+  - Super   "s-"
+  - Hyper   "H-"
+  - Alt     "A-"
+
+** xcape
+
+- [[https://qiita.com/ychubachi@github/items/95830219f1bdf912280b][UbuntuでSandSをxcape+xmodmapで実現する@Qiita]]
+- apt でインストール可能
+- =~/.xprofile= に記載する
+
+- SandS の例
+  - 一旦、space を shift に割り当てる
+  - SandS となるキーに事前に 255 を割り当てる
+  - xcape で単体で押された場合のキーを設定
+  - なぜか space が二度押しされてしまう
+#+begin_src shell
+xmodmap -e 'keycode 255=space'; xmodmap -e 'keycode 65=Shift_L'; xcape -e '#65=space'
+#+end_src
+
+- Control を単体で押した場合 Escape にする
+#+begin_src shell
+xcape -e 'Control_L=Escape'
+#+end_src
+
+** xkb
+
+- =/usr/share/X11/xkb= 以下に設定ファイルが存在している
+  - compat   シンボルに対してアクションを追加する
+  - geometry 
+  - keycodes keycode と keyname (<AE12> などの部分) を関連付ける
+  - rules
+  - *symbols*  keyname 毎に利用する symbol, type, action, group を指定する
+  - types    どの修飾キーの組み合わせが、どの Shift-Level になるか決定する
+
+- 用語の整理
+  - keycode デバイスが X に送信する数値 (例 22)
+  - keyname キーを表わす名前 (例 <AE22>)
+  - keysym  キーの役割りを表わす名前 (例 BackSpace)
+
+- [[https://stackoverflow.com/questions/28527938/xkb-configuration-for-emacs][Xkb configuration for emacs@stackoverflow]]
+- [[https://wiki.archlinux.jp/index.php/X_KeyBoard_extension][X KeyBoard extension@archlinux]] 
+
+- 現在の設定を確認
+- symbols の部分がキー設定に関する部分
+  - pc->us という順番で設定が上書きされていく
+#+begin_src shell :results raw
+setxkbmap -print
+#+end_src
+
+#+RESULTS:
+xkb_keymap {
+	xkb_keycodes  { include "evdev+aliases(qwerty)"	};
+	xkb_types     { include "complete"	};
+	xkb_compat    { include "complete"	};
+	xkb_symbols   { include "pc+us+us:2+inet(evdev)"	};
+	xkb_geometry  { include "pc(pc105)"	};
+};
+
+- 基本的なフロー
+- =~/.xinitrc= から =~/.Xkeymap= として読み込むのが一般的
+#+begin_src shell
+# 現在の設定を出力
+xkbcomp $DISPLAY output.xkb
+
+# 設定を編集した後、再度システムに読み込み
+xkbcomp output.xkb $DISPLAY 
+#+end_src
+
+** gsettings (caps-ctrl 入れ替え)
+
+- [[https://linuxfan.info/capslock-ctrl][コマンド一発でCapsLockをCtrlに変える方法]]
+
+- Gnome アプリでの変更方法
+#+begin_src shell
+gsettings set org.gnome.desktop.input-sources xkb-options "['ctrl:nocaps']"
+# gsettings set org.gnome.desktop.input-sources xkb-options "['ctrl:swapcaps']"
+
+# 初期状態にリセットする
+gsettings reset org.gnome.desktop.input-sources xkb-options
+#+end_src
+
+- コンソールも含めて変更
+#+begin_src shell
+sudo vi /etc/default/keyboard
+XKBOPTIONS="ctrl:nocaps"
+# もしくは 
+# XKBOPTIONS="ctrl:swapcaps"
+
+sudo systemctl restart console-setup
+#+end_src
+
+** xkeysnail
+
+- [[https://qiita.com/mooz@github/items/c5f25f27847333dd0b37][xkeysnail - もうひとつの Linux 向けキーリマッパ@qiita, by auther]]
+- *super user* として実行する必要あり (その分、設定が柔軟)
+
+#+begin_src shell
+sudo pip3 install xkeysnail
+# dotfiles/.xkeysnail.py を ~/.xkeysnail.py へリンク
+# dotfiles/systemd/xkeysnail.service を /etc/systemd/system へリンク
+
+sudo systemctl enable xkeysnail
+sudo systemctl start xkeysnail
+#+end_src
+
+** xremap
+
+#+begin_src 
+dotfiles/systemd/xremap.service を ~/.config/systemd/user へリンク
+
+systemctl --user enable xremap
+systemctl --user start xremap
+#+end_src
+
+** 要件まとめ
+
+- 押しやすいキーを積極的に利用
+  - Caps_Lock => Control + Escape
+  - Alt_L => Hyper + Henkan
+  - Super_L (Win) => Alt
+  - Alt_R => Super (Win)
+  - Space => Space + Shift (SandS)
+
+** 方針
+
+- 修飾キーの入れ替え
+  - xmodmap
+- Multi-purpose キーの設定
+  - xcape
+    - SandS
+    - Ctrl + Escape
+    - Hyper + Henkan
+- hjkl 等の汎用ナビゲーション
+  - autokey
+    - Hyper + hjkl
+- アプリのランチャー、スイッチャー
+  - xremap
+    - Super (Win) + x
+- Emacs 内では、Hyper 修飾キーを利用
+
+* Mac
+** karabiner-element
+* Emacs
+** Vim/Evil
+*** Keymap
+
+- [[file::http://michael.peopleofhonoronly.com/vim/][Vim Cheatsheet]]
+- [[https://bitbucket.org/lyro/evil/src/master/evil-maps.el][evil-map.el]]
+
+- Operator
+| key | operation |
+|-----+-----------|
+| c   | change    |
+| d   | delete    |
+| y   | yank      |
+| <   | undent    |
+| >   | indent    |
+
+*** Vim/Evil motion
+
+- [[http://haya14busa.com/mastering-vim-easymotion/][Vim-EasyMotionでカーソル移動を爆速にして生産性をもっと向上させる]]
+
+*** Evil states
+
+- =normal=
+  - =normal= で定義したものは =visual= でも利用できる
+- =insert=
+- =visual=
+- =operator=
+  - operator を入力してから次のキーが入力されるまでの待機状態
+- =replace=
+  - =R= したときのステート
+- =motion=
+  - read-only buffer で有効になるモード
+  - =motion= で定義したキーは =normal=, =visual= でも利用できる
+- =emacs=
+
+- [[https://tarao.hatenablog.com/entry/20130304/evil_config][Evil: EmacsをVimのごとく使う - 設定編]]
+
+*** Evil keymap
+
+- ステート以外の keymap (これ以外のも拡張機能から追加されたものもある)
+  - =evil-window-map=
+    - =C-w= 後の keymap
+  - =evil-outer-text-objects-map=
+    - =OP a= 後の keymap (=daw= の =w= を定義)
+  - =evil-inner-text-objects-map=
+    - =OP i= 後の keymap (=vib= の =b= を定義)
+  - =evil-ex-search-keymap=
+    - =/=, =?= のミニバッファの keymap
+  - =evil-ex-completion-map=
+    - =:= での keymap
+  - =evil-read-key-map=
+    - =f= など後続の文字を読み取る keymap
+
+** Setting
+*** =define-key=
+**** =(define-key KEYMAP KEY DEF)=
+
+- =[f5]= はベクター表記と呼ばれる (実際には、できるだけ =(kbd)= を使ったほうが良い)
+- =C-z= などは =\C-z= と表記する
+#+begin_src emacs-lisp :results silent
+(define-key global-map [f5] 'counsel-recentf)
+#+end_src
+
+- lambda 式を使う
+- キーに割り当てる場合は =(interactive)= を指定する
+#+begin_src emacs-lisp :results silent
+(define-key global-map [f5] '(lambda () (interactive) (counsel-recentf)))
+#+end_src
+
+- =(kbd KEYS)= を使う
+- 文字列を Emacs の内部表記に変換してくれる
+#+begin_src emacs-lisp :results silent
+(define-key global-map (kbd "<f5>") 'counsel-recentf)
+#+end_src
+
+- =[remap command]= でそのコマンドが割り当てられているキーを上書きできる
+#+begin_src emacs-lisp :results silent
+(define-key global-map [remap counsel-recentf] 'counsel-find-file)
+#+end_src
+
+- Reset
+#+begin_src emacs-lisp :results silent
+(define-key global-map [f5] nil)
+(define-key global-map [remap counsel-recentf] 'counsel-recentf)
+#+end_src
+
+**** =(global-set-key KEY COMMAND)=
+
+- =(define-key global-map hoge..)= のシンタックスシュガー
+#+begin_src emacs-lisp :results silent
+(global-set-key [f5] 'counsel-recentf)
+#+end_src
+
+- Reset binding
+#+begin_src emacs-lisp :results silent
+(global-set-key [f5] nil)
+#+end_src
+
+*** =bind-key= from use-package
+**** =(bind-key KEY-NAME COMMAND &optional KEYMAP PREDICATE)=
+
+- use-package で定義されたマクロ
+#+begin_src emacs-lisp :results silent
+(bind-key "<f5>" 'counsel-recentf global-map)
+#+end_src
+
+#+begin_src emacs-lisp :results silent
+(bind-key "<f5>" nil global-map)
+#+end_src
+
+**** =(bind-keys &rest ARGS)=
+
+- 複数のキーを同時に割り当てできる
+
+Accepts keyword arguments:
+- =:map= MAP               - a keymap into which the keybindings should be added
+- =:prefix= KEY            - prefix key for these bindings
+- =:prefix-map= MAP        - name of the prefix map that should be created for these bindings
+- =:prefix-docstring= STR  - docstring for the prefix-map variable
+- =:menu-name= NAME        - optional menu string for prefix map
+- =:filter= FORM          
+
+#+begin_src emacs-lisp :results silent
+(bind-keys :map global-map ("<f5>" . counsel-recentf))
+#+end_src
+
+#+begin_src emacs-lisp :results silent
+(bind-keys :map global-map ("<f5>" . nil))
+#+end_src
+
+*** =evil-define-key= from evil
+**** =(evil-define-key STATE KEYMAP KEY DEF &rest BINDINGS)=
+
+- evil-core.el で定義されているマクロ
+- STATE: =normal, insert, visual, replace, operator, motion, emacs=
+- State はリストで定義できる
+
+#+begin_src emacs-lisp :results silent
+(evil-define-key '(normal visual) org-mode-map
+  "P" 'counsel-recentf)
+#+end_src
+
+#+begin_src emacs-lisp :results silent
+(evil-define-key '(normal visual) org-mode-map
+  "P" nil)
+#+end_src
+
+**** =(evil-global-set-key STATE KEY DEF)=
+**** evil-leader-key
+*** =general-define-key= from general.el
+**** Overview
+
+- Evil + Non-Evil user 向け
+- =general-define-key= のラッパーがいくつか存在する
+  - ラッパーを使うことが推奨される =general-def=
+  - =general-create-definer= で自分用のデフォルト値を持ったラッパーを定義できる
+- =general-describe-keybindings= で一覧表示
+- which-key との連携
+  - =which-key-replacement-alist= の設定を自動化
+- keychord との連携
+- use-package との連携
+  - =(use-package hoge :general fuga)=
+  - =:general= 以下で =general-def= と同じ書式で書くことができる
+- time-out 設定 (jk を実現するような機能)
+- コマンドは sharp quoted されるべき
+  - =#'= は =function= のショートカット (明示的に関数として渡す.)
+  - ='= は =quote= のショートカット
+- use-package の =:config= の後に書くと起動時間が短くできる 
+
+**** =general-define-key=
+
+- keywords
+  - =:states nil '(normal insert visual operator replace motion emacs)=
+  - =:keymaps global=
+  - =:prefix nil=
+  - =:non-normal-prefix=
+  - =:prefix-command=
+  - =:prefix-map=
+  - =:predicate=
+
+#+begin_src emacs-lisp :results silent
+(general-define-key
+ :states 'motion
+ ;; swap ; and :
+ ";" 'evil-ex
+ ":" 'evil-repeat-find-char)
+#+end_src
+
+**** =general-def=
+
+- Positional arguments wrapper
+  - 引数の位置で keywords を省略
+
+#+begin_src emacs-lisp :results silent
+(general-def 'motion
+  ";" 'evil-ex
+  ":" 'evil-repeat-find-char)
+
+(general-def 'normal emacs-lisp-mode-map
+  "K" 'elisp-slime-nav-describe-elisp-thing-at-point)
+#+end_src
+
+**** =general-swap-key=
+
+#+begin_src emacs-lisp :results silent
+
+;; alternative using `general-translate-key'
+;; swap ; and : in `evil-motion-state-map'
+(general-swap-key nil 'motion
+  ";" ":")
+#+end_src
+
+**** =general-create-definer=
+
+- リーダーキーを省略したバージョンを定義
+
+#+begin_src emacs-lisp :results silent
+(defconst my-leader "C-c")
+
+(general-create-definer my-leader-def
+  ;; :prefix my-leader
+  ;; or without a variable
+  :prefix "C-c")
+
+(my-leader-def
+  "a" 'org-agenda
+  "b" 'counsel-bookmark
+  "c" 'org-capture)
+
+(my-leader-def clojure-mode-map
+  "C-l" 'cider-load-file
+  "C-z" 'cider-switch-to-repl-buffer)
+#+end_src
+
+**** =general-unbind=
+
+- 一括でキーを無効化
+#+begin_src emacs-lisp :results silent
+(general-unbind 'insert
+  "C-v"
+  "C-k"
+  "C-y"
+  "C-e")
+#+end_src
+
+**** use-package integration
+
+- =:general=
+- =:ghook=
+- =:gfhook=
+
+#+begin_src emacs-lisp :results silent
+(use-package org
+  :general
+  ("C-c c" 'org-capture) ; global
+  (:keymaps 'org-mode-map
+   "TAB" 'org-cycle)
+  ;; uses `general-def' not `general-define-key', so this is fine
+  (org-mode-map
+   "TAB" 'org-cycle))
+#+end_src
+
+**** which-key integration
+
+- =:which-key= (= =:wk=)
+#+begin_src emacs-lisp :results silent
+(general-define-key
+ :prefix "SPC"
+ :keymaps 'normal
+ ;; unbind SPC and give it a title for which-key (see echo area)
+ "" '(nil :which-key "my lieutenant general prefix")
+ ;; bind nothing but give SPC f a description for which-key
+ "f" '(:ignore t :which-key "file prefix")
+ ;; use a cons as a replacement
+ "g" '(:ignore t :wk ("g-key" . "git prefix"))
+ ;; toggle lispy; use a function as a replacement to show if currently on
+ "l" '(lispy-mode :wk my-lispy-which-key-display)
+ ;; for a keymap, only the keys will be matched;
+ ;; :no-match-binding is not necessary
+ "p" '(:keymap projectile-command-map :wk "projectile prefix")
+ ;; don't display this keybinding at all
+ "z" '(hidden-command :wk t)
+ ...)
+#+end_src
+
+*** spacemacs
+**** =(evilified-state-evilify-map MAP &rest PROPS)=
+**** =(spacemacs/set-leader-keys KEY DEF &rest BINDINGS)= 
+**** =(spacemacs/set-leader-keys-for-major-mode MODE KEY DEF &rest BINDINGS)= 
+*** doom map!
+*** key-chord.el
+
+- 複数キーの同時押しにコマンドを割り当てる機能
+- [[https://qiita.com/zk_phi/items/e70bc4c69b5a4755edd6][Emacs key-chord.el を改良してキーバインドし放題になった話]]
+
+* Reference
+
+- [[https://github.com/noctuid/evil-guide#keybindings-and-states][evil-guide:Keybindings and States]]
+- [[https://github.com/syl20bnr/spacemacs/wiki/Keymaps-guide][spacemacs keymaps guide]]

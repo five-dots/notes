@@ -1,0 +1,808 @@
+#+STARTUP: folded indent inlineimages latexpreview
+#+PROPERTY: header-args:R :results output :colnames yes :session *R:purrr*
+
+* ={purrr}=                                                          :noexport:
+* ライブラリの読み込み
+
+#+begin_src R :results silent
+library(tidyverse)
+#+end_src
+
+* 全関数
+
+#+begin_src R
+pacman::p_funs(purrr)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+  [1] "%@%"                 "%>%"                 "%||%"               
+  [4] "accumulate"          "accumulate_right"    "accumulate2"        
+  [7] "array_branch"        "array_tree"          "as_function"        
+ [10] "as_mapper"           "as_vector"           "assign_in"          
+ [13] "at_depth"            "attr_getter"         "auto_browse"        
+ [16] "chuck"               "compact"             "compose"            
+ [19] "cross"               "cross_d"             "cross_df"           
+ [22] "cross_n"             "cross2"              "cross3"             
+ [25] "detect"              "detect_index"        "discard"            
+ [28] "done"                "every"               "exec"               
+ [31] "flatten"             "flatten_chr"         "flatten_dbl"        
+ [34] "flatten_df"          "flatten_dfc"         "flatten_dfr"        
+ [37] "flatten_int"         "flatten_lgl"         "flatten_raw"        
+ [40] "has_element"         "head_while"          "imap"               
+ [43] "imap_chr"            "imap_dbl"            "imap_dfc"           
+ [46] "imap_dfr"            "imap_int"            "imap_lgl"           
+ [49] "imap_raw"            "imodify"             "insistently"        
+ [52] "invoke"              "invoke_map"          "invoke_map_chr"     
+ [55] "invoke_map_dbl"      "invoke_map_df"       "invoke_map_dfc"     
+ [58] "invoke_map_dfr"      "invoke_map_int"      "invoke_map_lgl"     
+ [61] "invoke_map_raw"      "is_atomic"           "is_bare_atomic"     
+ [64] "is_bare_character"   "is_bare_double"      "is_bare_integer"    
+ [67] "is_bare_list"        "is_bare_logical"     "is_bare_numeric"    
+ [70] "is_bare_vector"      "is_character"        "is_double"          
+ [73] "is_empty"            "is_formula"          "is_function"        
+ [76] "is_integer"          "is_list"             "is_logical"         
+ [79] "is_null"             "is_numeric"          "is_rate"            
+ [82] "is_scalar_atomic"    "is_scalar_character" "is_scalar_double"   
+ [85] "is_scalar_integer"   "is_scalar_list"      "is_scalar_logical"  
+ [88] "is_scalar_numeric"   "is_scalar_vector"    "is_vector"          
+ [91] "iwalk"               "keep"                "lift"               
+ [94] "lift_dl"             "lift_dv"             "lift_ld"            
+ [97] "lift_lv"             "lift_vd"             "lift_vl"            
+[100] "list_along"          "list_merge"          "list_modify"        
+[103] "lmap"                "lmap_at"             "lmap_if"            
+[106] "map"                 "map_at"              "map_call"           
+[109] "map_chr"             "map_dbl"             "map_depth"          
+[112] "map_df"              "map_dfc"             "map_dfr"            
+[115] "map_if"              "map_int"             "map_lgl"            
+[118] "map_raw"             "map2"                "map2_chr"           
+[121] "map2_dbl"            "map2_df"             "map2_dfc"           
+[124] "map2_dfr"            "map2_int"            "map2_lgl"           
+[127] "map2_raw"            "modify"              "modify_at"          
+[130] "modify_depth"        "modify_if"           "modify_in"          
+[133] "modify2"             "negate"              "partial"            
+[136] "pluck"               "pluck<-"             "pmap"               
+[139] "pmap_chr"            "pmap_dbl"            "pmap_df"            
+[142] "pmap_dfc"            "pmap_dfr"            "pmap_int"           
+[145] "pmap_lgl"            "pmap_raw"            "possibly"           
+[148] "prepend"             "pwalk"               "quietly"            
+[151] "rate_backoff"        "rate_delay"          "rate_reset"         
+[154] "rate_sleep"          "rbernoulli"          "rdunif"             
+[157] "reduce"              "reduce_right"        "reduce2"            
+[160] "reduce2_right"       "rep_along"           "rerun"              
+[163] "safely"              "set_names"           "simplify"           
+[166] "simplify_all"        "slowly"              "some"               
+[169] "splice"              "tail_while"          "transpose"          
+[172] "update_list"         "vec_depth"           "walk"               
+[175] "walk2"               "when"                "zap"
+#+end_example
+
+* [[file:../base.org][ ={base}= ]]
+* Apply functions
+** 概要
+
+- 基本形
+#+begin_src R
+map(.x, .f, ...) 
+#+end_src
+
+- =.x=
+  - 第 1 引数はデータ
+  - list, vector, data.frame
+- =.f=
+  - function
+  - formula
+  - character vector
+  - numeric vector
+  - list
+- vector の場合は、その文字列やインデックスで要素の subset ができる
+- 関数の引数へのアクセス方法
+  - Only one = .
+  - Two = =.x=, =.y=
+  - More =  =..1=, =..2=, =..3=
+
+** =map()=        データの各要素に関数を適応
+
+- list で返す (引数の取り方でバリエーションあり)
+#+begin_src R :results silent
+
+## = base::lapply
+map(.x, .f, ...) 
+
+## predicate を引数, 一致する要素のみ関数適応
+map_if(.x, .p, .f, ..., .else = NULL)
+
+## at で関数を適応する位置を指定 (名前を文字列 or 位置をインデックス or tidyselect)
+map_at(.x, .at, .f, ...)
+
+## list の階層の深さを指定
+map_depth(.x, .depth, .f, ..., .ragged = FALSE)
+
+## 2 変数バージョン
+map2(.x, .y, .f, ...)
+
+## .x[[i]] ではなく、.x[i] を参照する亜種
+lmap(.x, .f, ...)
+
+## 決まった型で返す亜種 (map, map2, pmap, imap, invoke_map)
+map_lgl()
+map_dbl()
+map_int()
+map_chr()
+map_dfr(.x, .f, ..., id = NULL) # rbind
+map_dfc(.x, .f, ...) # cbind
+#+end_src
+
+- =map_if()= の例
+- 偶数だけ x2 する
+#+begin_src R
+x <- 1:10
+map_if(x, ~ . %% 2 == 0, ~ . * 2) %>% unlist()
+#+end_src
+
+#+RESULTS:
+:  [1]  1  4  3  8  5 12  7 16  9 20
+
+- =map_at()= の例
+- インデックス 1:5 だけ x2 する
+#+begin_src R
+map_at(x, 1:5, ~ . * 2) %>% unlist()
+#+end_src
+
+#+RESULTS:
+:  [1]  2  4  6  8 10  6  7  8  9 10
+
+- =map_depth()= の例
+- 2 階層目の list 要素に関数を適応
+#+begin_src R
+x <- list(a = list(foo = 1:2, bar = 3:4), b = list(baz = 5:6))
+str(x)
+map_depth(x, 2, paste, collapse = "/")
+#+end_src
+
+#+RESULTS:
+#+begin_example
+List of 2
+ $ a:List of 2
+  ..$ foo: int [1:2] 1 2
+  ..$ bar: int [1:2] 3 4
+ $ b:List of 1
+  ..$ baz: int [1:2] 5 6
+$a
+$a$foo
+[1] "1/2"
+
+$a$bar
+[1] "3/4"
+
+
+$b
+$b$baz
+[1] "5/6"
+#+end_example
+
+** =pmap()=       list, data.frame の全要素にアクセス
+
+- list の中身へ要素名でアクセス
+- data.frame も list なので、OK
+- =.f= で受け取る引数は、全て名前をつけるか =...= で受け流す
+#+begin_src R
+pmap(.l, .f, ...)
+#+end_src
+
+- pmap sample
+#+begin_src R
+l <- list(a = 1:3, b = 4:6)
+pmap(l, function(a, b) a * b)
+map(l, print)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+[[1]]
+[1] 4
+
+[[2]]
+[1] 10
+
+[[3]]
+[1] 18
+
+[1] 1 2 3
+[1] 4 5 6
+$a
+[1] 1 2 3
+
+$b
+[1] 4 5 6
+#+end_example
+
+** =imap()=       データのインデックス・名前にアクセス
+
+- Indexed map
+- =map(x, names(x), .f)= と同じ, 要素のインデックス・名前にアクセス
+#+begin_src R :results silent
+imap(.x, .f, ...)
+#+end_src
+
+#+begin_src R
+imap_chr(sample(10), ~ paste0(.y, ": ", .x))
+#+end_src
+
+#+RESULTS:
+:  [1] "1: 9"  "2: 1"  "3: 10" "4: 4"  "5: 7"  "6: 8"  "7: 3"  "8: 6"  "9: 5" 
+: [10] "10: 2"
+
+** =walk()=       副作用目的
+
+- 副作用目的 (input .x を invisible でそのまま返す)
+#+begin_src R :results silent
+walk(.x, .f, ...)
+walk2(.x, .y, .f, ...)
+pwalk(.l, .f, ...)
+iwalk(.x, .f, ...)
+#+end_src
+
+** =modify()=     入力と同じ型で出力する
+
+#+begin_src R
+modify(.x, .f, ...)
+
+## 以下のショートカット
+x[[i]] <- f(x[[i]])
+return(x)
+#+end_src
+
+#+begin_src R
+modify_if(iris, is.numeric, round)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+    Sepal.Length Sepal.Width Petal.Length Petal.Width    Species
+1              5           4            1           0     setosa
+2              5           3            1           0     setosa
+3              5           3            1           0     setosa
+4              5           3            2           0     setosa
+5              5           4            1           0     setosa
+6              5           4            2           0     setosa
+7              5           3            1           0     setosa
+8              5           3            2           0     setosa
+9              4           3            1           0     setosa
+10             5           3            2           0     setosa
+11             5           4            2           0     setosa
+12             5           3            2           0     setosa
+13             5           3            1           0     setosa
+14             4           3            1           0     setosa
+15             6           4            1           0     setosa
+16             6           4            2           0     setosa
+17             5           4            1           0     setosa
+18             5           4            1           0     setosa
+19             6           4            2           0     setosa
+20             5           4            2           0     setosa
+21             5           3            2           0     setosa
+22             5           4            2           0     setosa
+23             5           4            1           0     setosa
+24             5           3            2           0     setosa
+25             5           3            2           0     setosa
+26             5           3            2           0     setosa
+27             5           3            2           0     setosa
+28             5           4            2           0     setosa
+29             5           3            1           0     setosa
+30             5           3            2           0     setosa
+31             5           3            2           0     setosa
+32             5           3            2           0     setosa
+33             5           4            2           0     setosa
+34             6           4            1           0     setosa
+35             5           3            2           0     setosa
+36             5           3            1           0     setosa
+37             6           4            1           0     setosa
+38             5           4            1           0     setosa
+39             4           3            1           0     setosa
+40             5           3            2           0     setosa
+41             5           4            1           0     setosa
+42             4           2            1           0     setosa
+43             4           3            1           0     setosa
+44             5           4            2           1     setosa
+45             5           4            2           0     setosa
+46             5           3            1           0     setosa
+47             5           4            2           0     setosa
+48             5           3            1           0     setosa
+49             5           4            2           0     setosa
+50             5           3            1           0     setosa
+51             7           3            5           1 versicolor
+52             6           3            4           2 versicolor
+53             7           3            5           2 versicolor
+54             6           2            4           1 versicolor
+55             6           3            5           2 versicolor
+56             6           3            4           1 versicolor
+57             6           3            5           2 versicolor
+58             5           2            3           1 versicolor
+59             7           3            5           1 versicolor
+60             5           3            4           1 versicolor
+61             5           2            4           1 versicolor
+62             6           3            4           2 versicolor
+63             6           2            4           1 versicolor
+64             6           3            5           1 versicolor
+65             6           3            4           1 versicolor
+66             7           3            4           1 versicolor
+67             6           3            4           2 versicolor
+68             6           3            4           1 versicolor
+69             6           2            4           2 versicolor
+70             6           2            4           1 versicolor
+71             6           3            5           2 versicolor
+72             6           3            4           1 versicolor
+73             6           2            5           2 versicolor
+74             6           3            5           1 versicolor
+75             6           3            4           1 versicolor
+76             7           3            4           1 versicolor
+77             7           3            5           1 versicolor
+78             7           3            5           2 versicolor
+79             6           3            4           2 versicolor
+80             6           3            4           1 versicolor
+81             6           2            4           1 versicolor
+82             6           2            4           1 versicolor
+83             6           3            4           1 versicolor
+84             6           3            5           2 versicolor
+85             5           3            4           2 versicolor
+86             6           3            4           2 versicolor
+87             7           3            5           2 versicolor
+88             6           2            4           1 versicolor
+89             6           3            4           1 versicolor
+90             6           2            4           1 versicolor
+91             6           3            4           1 versicolor
+92             6           3            5           1 versicolor
+93             6           3            4           1 versicolor
+94             5           2            3           1 versicolor
+95             6           3            4           1 versicolor
+96             6           3            4           1 versicolor
+97             6           3            4           1 versicolor
+98             6           3            4           1 versicolor
+99             5           2            3           1 versicolor
+100            6           3            4           1 versicolor
+101            6           3            6           2  virginica
+102            6           3            5           2  virginica
+103            7           3            6           2  virginica
+104            6           3            6           2  virginica
+105            6           3            6           2  virginica
+106            8           3            7           2  virginica
+107            5           2            4           2  virginica
+108            7           3            6           2  virginica
+109            7           2            6           2  virginica
+110            7           4            6           2  virginica
+111            6           3            5           2  virginica
+112            6           3            5           2  virginica
+113            7           3            6           2  virginica
+114            6           2            5           2  virginica
+115            6           3            5           2  virginica
+116            6           3            5           2  virginica
+117            6           3            6           2  virginica
+118            8           4            7           2  virginica
+119            8           3            7           2  virginica
+120            6           2            5           2  virginica
+121            7           3            6           2  virginica
+122            6           3            5           2  virginica
+123            8           3            7           2  virginica
+124            6           3            5           2  virginica
+125            7           3            6           2  virginica
+126            7           3            6           2  virginica
+127            6           3            5           2  virginica
+128            6           3            5           2  virginica
+129            6           3            6           2  virginica
+130            7           3            6           2  virginica
+131            7           3            6           2  virginica
+132            8           4            6           2  virginica
+133            6           3            6           2  virginica
+134            6           3            5           2  virginica
+135            6           3            6           1  virginica
+136            8           3            6           2  virginica
+137            6           3            6           2  virginica
+138            6           3            6           2  virginica
+139            6           3            5           2  virginica
+140            7           3            5           2  virginica
+141            7           3            6           2  virginica
+142            7           3            5           2  virginica
+143            6           3            5           2  virginica
+144            7           3            6           2  virginica
+145            7           3            6           2  virginica
+146            7           3            5           2  virginica
+147            6           2            5           2  virginica
+148            6           3            5           2  virginica
+149            6           3            5           2  virginica
+150            6           3            5           2  virginica
+#+end_example
+
+** =reduce()=     2 変数関数を順次適応する
+
+- 2 変数関数を順々に適応して、1つの値を返す (高階関数)
+- .init = 開始位置
+#+begin_src R :results silent
+reduce(.x, .f, ..., .init, .dir = c("forward", "backward"))
+reduce_right(.x, .f, ..., init)
+reduce2(.x, .y, .f, ..., .init)
+reduce2_right(.x, .y, .f, ..., .init)
+#+end_src
+
+#+begin_src R
+reduce(1:3, `+`) # 1:1+2=3, 2:3+3=6, answer= 6
+reduce(1:4, `*`) # 1:1*2=2, 2:2*3=6, 3:6*4=24, answer=24
+reduce(1:3, sum)
+#+end_src
+
+#+RESULTS:
+: [1] 6
+: 
+: [1] 24
+: 
+: [1] 6
+
+** =accumulate()= 2 変数関数を順次適応する (過程も含めて返す)
+
+#+begin_src R :results silent
+accumulate(.x, .f, ..., .init, .dir = c("forward", "backward")) 
+#+end_src
+
+#+begin_src R
+purrr::accumulate(1:3, `+`) # 1:1+2=3, 2:3+3=6, answer= 6
+purrr::accumulate(1:4, `*`) # 1:1*2=2, 2:2*3=6, 3:6*4=24, answer=24
+purrr::accumulate(1:3, sum)
+#+end_src
+
+#+RESULTS:
+: [1] 1 3 6
+: 
+: [1]  1  2  6 24
+: 
+: [1] 1 3 6
+
+- Sample
+#+begin_src R
+mtcars %>%
+  split(.$cyl) %>%
+  map(~lm(mpg ~ wt, data = .x)) %>%
+  map(summary) %>%
+  map_dbl("r.squared") # summary オブジェクトから subset
+#+end_src
+
+#+RESULTS:
+: 
+:         4         6         8 
+: 0.5086326 0.4645102 0.4229655
+
+** =invoke()=     引数を list にまとめて渡す (purrr 版 =do.call()=)
+
+- =invoke()=, =invoke_map()= は *Deprecated !!*
+  - =rlang::exces(fn, !!!args)= で置き換える
+
+- 関数の引数を list にしてまとめて渡す
+- =do.call= をパイプラインで利用しやすいようにラップしたもの
+#+begin_src R :results silent
+invoke(.fn, .args = list(), ..., env = caller_env(), .bury = c(".fn", ""))
+
+do.call(what, args, quote = FALSE, envir = parent.frame())
+#+end_src
+
+#+begin_src R
+params <- list(n = 6L, size = 10L, replace = TRUE)
+## sample.int(n, size = n, replace = FALSE, prob = NULL,
+##            useHash = (!replace && is.null(prob) && size <= n/2 && n > 1e7))
+invoke(sample.int, params)
+#+end_src
+
+#+RESULTS:
+:  [1] 3 2 3 4 2 4 4 5 3 4
+
+- 複数の関数を list にまとめた引数で一度に実行
+#+begin_src R :results silent
+invoke_map(.f, .x = list(NULL), ..., env = NULL)
+#+end_src
+
+#+begin_src R
+args <- list(c(n = 3, 0, 1))
+invoke_map(list(runif, rnorm), args)
+## invoke(runif, args)
+## invoke(rnorm, args)
+#+end_src
+
+#+RESULTS:
+: [[1]]
+: [1] 0.50502524 0.80987738 0.08237001
+: 
+: [[2]]
+: [1] -0.3361638  0.3741813 -0.4675373
+
+- 型指定の亜種もある
+#+begin_src R :results silent
+invoke_map_lgl()
+invoke_map_chr()
+invoke_map_int()
+invoke_map_dbl()
+invoke_map_dfr()
+invoke_map_dfc()
+#+end_src
+
+* Create list
+** =list_along()=  空リストを作る
+
+#+begin_src R :results silent
+list_along(.x)
+#+end_src
+
+#+begin_src R
+x <- 1:5
+list_along(x)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+[[1]]
+NULL
+
+[[2]]
+NULL
+
+[[3]]
+NULL
+
+[[4]]
+NULL
+
+[[5]]
+NULL
+#+end_example
+
+** =cross()=       list 各要素の組み合わせを作る (list 版の =expand.grid()=)
+
+#+begin_src R :results silent
+cross(.l, .filter = NULL)
+cross2(.x, .y, .filter = NULL)
+cross3(.x, .y, .z, .filter = NULL)
+#+end_src
+
+** =cross_df()=    cross の deta.frame を返すバージョン (*list -> data.frame 変換*)
+
+- list in => data.frame out
+#+begin_src R :results silent
+cross_df(.l, .filter = NUL)
+#+end_src
+
+** =transpose()=   list の転置 (data.frame -> list 変換)
+
+- data.frame in => list out
+#+begin_src R
+mtcars_list <- purrr::transpose(mtcars)
+#+end_src
+
+#+begin_src R :results silent
+array_tree()
+set_names()
+#+end_src
+
+* Filter list
+** =keep()=, =discard()=
+
+- =dplyr::filter()= に近い
+#+begin_src R :results silent
+keep(.x, .p, ...)
+rep(10, 10) %>%
+  map(sample, 5) %>%
+  keep(function(x) mean(x) > 6)
+discard(.x, .p, ...)
+#+end_src
+
+** =compact()=
+
+- NULL もしくは、length = 0 を削除
+#+begin_src R :results silent
+compact(.x, .p = identity)
+list(a = "a", b = NULL, c = integer(0), d = NA, e = list()) %>%
+  compact()
+#+end_src
+
+** =tail_while()=, =head_while()=
+
+- tail/head
+#+begin_src R :results silent
+tail_while(.x, .p, ...)
+head_while(.x, .p, ...)
+#+end_src
+
+#+begin_src R
+pos <- function(x) x >= 0
+head_while(5:-5, pos)
+tail_while(5:-5, pos)
+tail_while(5:-5, negate(pos))
+#+end_src
+
+#+RESULTS:
+: [1] 5 4 3 2 1 0
+: integer(0)
+: [1] -1 -2 -3 -4 -5
+
+** =pluck()=
+
+- pluck ([[ の強力版 (list のサブセット))
+#+begin_src R :results silent
+pluck(.x, ..., .default = NULL)
+#+end_src
+
+#+begin_src R
+hoge <- list(list(aa = 1:3, ab = 4:6), list(ba = 7:9, bb = 10:12))
+pluck(hoge, 1, "aa") #? 左から右に読むことができて簡潔にサブセットできる
+#+end_src
+
+#+RESULTS:
+: [1] 1 2 3
+
+- attribute で選択
+#+begin_src R
+obj1 <- structure("obj", obj_attr = "foo")
+obj2 <- structure("obj", obj_attr = "bar")
+x <- list(obj1, obj2)
+
+pluck(x, 1, attr_getter("obj_attr")) # From first object
+pluck(x, 2, attr_getter("obj_attr")) # From second object
+#+end_src
+
+#+RESULTS:
+: [1] "foo"
+: [1] "bar"
+
+* Reshape list
+** =flatten()= 階層を 1 段削除する
+
+#+begin_src R
+flatten(x)
+flatten_lgl() # _dbl, _int, _chr, _dfr etc.
+#+end_src
+
+#+begin_src R
+hoge <- list(list(aa = 1:3, ab = 4:6), list(ba = 7:9, bb = 10:12))
+flatten(hoge)
+flatten_int(hoge)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+$aa
+[1] 1 2 3
+
+$ab
+[1] 4 5 6
+
+$ba
+[1] 7 8 9
+
+$bb
+[1] 10 11 12
+Error: Can't coerce element 1 from a list to a integer
+#+end_example
+
+** =transpose()= list の転置
+
+#+begin_src R :results silent
+transpose(.l)
+#+end_src
+
+- data.frame に適応すると list of rows になる (=> df は list of columns だから)
+#+begin_src R
+df <- data.frame(a = 1:3, b = 4:6)
+list_of_rows <- purrr::transpose(df)
+#+end_src
+
+#+RESULTS:
+
+* Summarize list
+** =every()=, =some()=
+
+- List の内容が、predicate にマッチするか、length1 の logical で返す
+#+begin_src R :results silent
+every(.x, .p, ...)
+some(.x, .p, ...)
+#+end_src
+
+#+begin_src R
+y <- list(0:10, 5.5)
+y %>% every(is.numeric)
+y %>% every(is.integer)
+y %>% some(is.integer)
+#+end_src
+
+#+RESULTS:
+: [1] TRUE
+: [1] FALSE
+: [1] TRUE
+
+** =has_element()=
+
+- 指定した要素を持っているか
+#+begin_src R :results silent
+has_element(.x, .y)
+#+end_src
+
+#+begin_src R
+x <- list(1:10, 5, 9.9)
+x %>% has_element(1:10)
+x %>% has_element(3)
+#+end_src
+
+#+RESULTS:
+: [1] TRUE
+: [1] FALSE
+
+** =detect()=
+
+- 最初にマッチした要素を返す
+#+begin_src R :results silent
+detect(.x, .f, ..., .dir = c("forward", "backward"), .right = NULL, .default = NULL)
+#+end_src
+
+- 最初にマッチした index を返す
+detect_index(.x, .f, ..., .dir = c("forward", "backward"), .right = NULL)
+
+** =vec_depth()=
+
+#+begin_src R :results silent
+vec_depth(x)
+#+end_src
+
+- list の深さを調べる
+#+begin_src R
+x <- list(
+  list(),
+  list(list()),
+  list(list(list(1)))
+)
+vec_depth(x)
+x %>% map_int(vec_depth)
+#+end_src
+
+#+RESULTS:
+: [1] 5
+: [1] 1 2 4
+
+* Join lists
+** =prepend()=, =splice()=
+
+#+begin_src R
+base::append(x, values, after = length(x))
+prepend(x, values, before = 1)
+splice(...)
+#+end_src
+
+#+RESULTS:
+: Error in base::append(x, values, after = length(x)) : 
+:   object 'values' not found
+: Error in prepend(x, values, before = 1) : object 'values' not found
+: Error: '...' used in an incorrect context
+
+* ={purrrlyr}= package
+
+- data.frame への関数適応
+- 近いうちの deprecated となる模様
+- tidyr::nest -> purrr -> dplyr のフローがモダン
+- df or grouped_df の列ごとに関数を適応 (mutate or summarize の方が推奨)
+dmap(.d, .f, ...)
+
+- 指定した列でグループ化して、grouped_df を返す (= dplyr::group_by_(.dots =.cols))
+slice_rows(.d, .cols = NULL)
+
+- grouped_df 毎に関数を適応 (= dplyr::do(), dplyr::group_map())
+by_slice(.d, ..f, ..., .collate = c("list", "rows", "cols"), .to = ".out", .labels = TRUE)
+
+- 1 行毎に関数を適応
+by_row(.d, .f, ..., .collate = c("list", "rows", "cols"), .to = ".out", .labels = TRUE)
+invoke_rows(.f, .d, ..., .collate = c("list", "rows", "cols"), .to = ".out", .labels = TRUE)
+
+* 参考
+
+- [[https://purrr.tidyverse.org/][公式サイト]]
+- [[https://cran.r-project.org/web/packages/purrr/index.html][CRAN]]
+- [[https://github.com/tidyverse/purrr][Github repo]]
+- [[https://cran.r-project.org/web/packages/purrr/purrr.pdf][Reference Manual (PDF)]]
+- Vignette
+  - [[https://cran.r-project.org/web/packages/purrr/vignettes/other-langs.html][Functional programming in other languages]]
+- Blog
+  - [[https://heavywatal.github.io/rstats/purrr.html][purrr ― ループ処理やapply系関数の決定版@Heavy Watal]]

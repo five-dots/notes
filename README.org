@@ -1,15 +1,16 @@
-#+STARTUP: content indent
+#+STARTUP: folded indent inlineimages latexpreview
 
-* org-mode + babel による技術ノート集                              :noexport:
+* Tech Notes by Org-mode + Babel :noexport:
 
-個人の技術ノートをまとめたリポジトリです。すべてのノートを Emacs の [[https://orgmode.org/ja/][org-mode]] で記載しています。ソースコードは、[[https://orgmode.org/worg/org-contrib/babel/][Babel]] を利用して実際に実行したものを掲載していますので、clone をして手元で試していただくことが可能です。(各ノートの末尾に実行環境を掲載するようにしています。)
+個人の技術ノートをまとめたリポジトリです。すべてのノートを Emacs の [[https://orgmode.org/ja/][Org-mode]] で記載しています。ソースコードは、[[https://orgmode.org/worg/org-contrib/babel/][Babel]] を利用して実際に実行したものを掲載していますので、clone をしてご自身の環境で試していただくことが可能です。
+
+できるだけ、各ノートの末尾に実行環境を掲載するようにしています。ただし、外部の依存関係の問題で実行できないものもあるかもしれません。
 
 #+begin_src shell
 git clone https://github.com/five-dots/notes.git
 #+end_src
 
 Babel の実行には適切な ~org-babel-load-language~ の設定が必要です。このノートでは、以下の言語を利用しています。
-
 #+begin_src emacs-lisp
 (org-babel-do-load-languages 'org-babel-load-languages
   '((emacs-lisp . t)
@@ -20,16 +21,18 @@ Babel の実行には適切な ~org-babel-load-language~ の設定が必要で�
     (python . t)))
 #+end_src
 
-* 目次                                                          :toc_2:quote:
+* Table of Contents :toc_2:quote:
 #+BEGIN_QUOTE
-- [[#プログラミング言語][プログラミング言語]]
+- [[#programming-language][Programming Language]]
   - [[#r][R]]
   - [[#python][Python]]
   - [[#emacs-lisp][Emacs Lisp]]
-- [[#トレーディング戦略][トレーディング戦略]]
+- [[#development-environment][Development Environment]]
+- [[#finance][Finance]]
+- [[#trading-strategy][Trading Strategy]]
 #+END_QUOTE
 
-* プログラミング言語
+* Programming Language
 ** R
 
 |------------------------+----------------------------------------------------------------------------|
@@ -67,7 +70,12 @@ Babel の実行には適切な ~org-babel-load-language~ の設定が必要で�
 - 関数型まとめ vector, list, data.frame それぞれに対して
 - データ構造変換まとめ (list <-> data.frame など)
 
+*** Package
+
 ** Python
 ** Emacs Lisp
-* トレーディング戦略 
+* Development Environment
+* Finance
+* Trading Strategy
+
 - [[https://github.com/five-dots/etf-gmv-strat][ETF GMV Allocation]]

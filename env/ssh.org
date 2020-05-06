@@ -1,0 +1,96 @@
+#+STARTUP:  folded indent
+
+* =~/.ssh/= 設定ファイル
+** 設定ファイルの種類
+
+- config
+  - 設定ファイル
+- authorized_keys
+  - サーバー側の公開鍵リスト
+- known_hosts
+  - 接続したことのあるホストの公開鍵リスト
+
+** 公開鍵認証
+
+- 公開鍵、秘密鍵のペアで認証する
+  - =ssh-keygen -t rsa= で RSA 暗号鍵を生成
+  - =~/.ssh/= に =id_rsa= (秘密鍵) と =id_rsa.pub= (公開鍵) が生成される
+  - 秘密鍵にパスフレーズをつけるべきか？ -> つけなくても良い
+    - [[https://freak-da.hatenablog.com/entry/20100901/p1][SSH秘密鍵のパスフレーズは（つけるなら）11文字以上にしましょうねという話]]
+  - scp などで公開鍵をサーバー側へコピー
+    - mac であれば =ssh-copy-id= コマンドでコピーできる
+      - ただしサーバー側で一時的にパスワード認証を有効化する必要がある
+  - パーミッションを変更
+    - クライアント側 =$ chmod 700 ~/.ssh=
+    - サーバ側 =$ chmod 600 ~/.ssh/authorized_keys=
+
+** .ssh/config
+
+- 全体への設定はファイルの先頭に書く
+- サーバーへ定期的(今回は 60 秒毎)に生きている報告をする
+#+begin_quote
+ServerAliveInterval 60
+#+end_quote
+
+- 個別に有効にしたい場合は、個別の設定に行を開けないで追記しておく
+#+begin_quote
+Host 任意の接続名
+    HostName ホスト名/IP
+    User ユーザー名
+    Port ポート番号 (デフォルトの 22 でない場合)
+    IdentityFile public key への PATH (例えば~/.ssh/hoge.key)
+    ServerAliveInterval 60
+    ForwardX11 yes
+#+end_quote
+* Windows
+
+- Windows10 Fall Update から標準機能になった
+- Putty を使わなくてもよい
+- [[http://www.freia.jp/taka/blog/windows-native-ssh-client/index.html][PuTTYを卒業してWindows 10標準のssh client（ベータ）に切り替えた]]
+
+* SSH server
+** Install (Ubuntu)
+
+#+begin_src shell
+sudo apt install openssh-server
+#+end_src
+
+** SSH Server Settings
+
+- [[https://qiita.com/mukoya/items/f20def019e25dc162ca8][公開鍵暗号を用いてのSSH接続（きほん）@Qiita]]
+- Ubuntu の GUI 設定画面で、IP アドレスを固定
+
+- =/etc/ssh/sshd_config=
+#+begin_quote
+# Security
+Port 2222
+PermitRootLogin no
+PasswordAuthentication no
+PermitEmptyPasswords no
+ChallengeResponseAuthentication no
+
+# Logging
+SyslogFacility AUTHPRIV
+LogLevel VERBOSE
+#+end_quote
+
+** Key settings
+
+- [[https://qiita.com/mukoya/items/f20def019e25dc162ca8][公開鍵暗号を用いてのSSH接続（きほん）@Qiita]]
+
+#+begin_src shell
+
+# 鍵の作成
+ssh-keygen -t rsa
+
+# 公開鍵をリモートへコピー
+scp -P 22 ~/.ssh/id_rsa.pub <ユーザ名>@<IP アドレス>:~/.ssh/authorized_keys
+#+end_src
+
+** Log
+
+- 最近のもの
+=/var/rog/auth.log=
+
+- 古いもの
+=/var/rog/auth.1.log=

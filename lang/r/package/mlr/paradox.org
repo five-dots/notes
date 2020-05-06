@@ -1,0 +1,285 @@
+#+STARTUP: folded indent inlineimages latexpreview
+#+PROPERTY: header-args:R :session *R:paradox* :results output :width 640 :height 480 :colnames yes
+
+* ライブラリ
+
+#+begin_src R :results silent
+library(mlr3)
+library(mlr3learners)
+library(paradox)
+library(tidyverse)
+library(data.table)
+#+end_src
+
+* 全関数
+
+#+begin_src R
+pacman::p_funs(paradox)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+ [1] "assert_param"           "assert_param_set"       "CondAnyOf"             
+ [4] "CondEqual"              "Condition"              "Design"                
+ [7] "generate_design_grid"   "generate_design_lhs"    "generate_design_random"
+[10] "NO_DEF"                 "NoDefault"              "Param"                 
+[13] "ParamDbl"               "ParamFct"               "ParamInt"              
+[16] "ParamLgl"               "ParamSet"               "ParamSetCollection"    
+[19] "ParamUty"               "Sampler"                "Sampler1D"             
+[22] "Sampler1DCateg"         "Sampler1DNormal"        "Sampler1DRfun"         
+[25] "Sampler1DUnif"          "SamplerHierarchical"    "SamplerJointIndep"     
+[28] "SamplerUnif"
+#+end_example
+
+* 階層構造
+
+- R6 オブジェクトで実装されている
+
+- ParamSetCollection
+- ParamSet
+  - Param
+    - ParamDbl
+    - ParamInt
+    - ParamFac
+    - ParamLgl
+    - ParamUty
+
+* =Param=
+** Constructor
+
+#+begin_src R :results silent
+ParamDbl$new(
+  id,
+  lower = -Inf,
+  upper = Inf,
+  special_vals = list(),
+  default = NO_DEF,
+  tags = character() # tags=c("required")
+)
+
+ParamInt$new(id, lower = -Inf, upper = Inf, special_vals = list(), default = NO_DEF, tags = character())
+ParamFct$new(id, levels, special_vals = list(), default = NO_DEF, tags = character())
+ParamLgl$new(id, special_vals = list(), default = NO_DEF, tags = character())
+
+## Untyped
+ParamUty$new(id, default = NO_DEF, tags = character(), custom_check = NULL)
+#+end_src
+
+#+begin_src R
+dpar <- ParamDbl$new("dpar", lower = -5, upper = 5, default = 0)
+dpar
+class(dpar)
+#+end_src
+
+#+RESULTS:
+:      id    class lower upper levels default
+: 1: dpar ParamDbl    -5     5              0
+: [1] "ParamDbl" "Param"    "R6"
+
+- data.table へ変換 
+#+begin_src R
+as.data.table(dpar)
+#+end_src
+
+#+RESULTS:
+:      id    class lower upper levels nlevels is_bounded special_vals default
+: 1: dpar ParamDbl    -5     5            Inf       TRUE       <
+:       0
+:    storage_type tags
+: 1:      numeric hoge
+
+** Field
+
+#+begin_src R
+dpar$class
+dpar$is_number
+dpar$is_categ
+dpar$has_default
+dpar$storage_type
+#+end_src
+
+#+RESULTS:
+: [1] "ParamDbl"
+: [1] TRUE
+: [1] FALSE
+: [1] TRUE
+: [1] "numeric"
+
+** Method
+
+#+begin_src R
+dpar$test(0)
+dpar$check(0)
+dpar$assert(0)
+print("---")
+
+## Fail
+dpar$test(-10) # TRUE/FALSE を返す
+dpar$check(-10) # メッセージを返す
+dpar$assert(-10) # エラー + メッセージ
+#+end_src
+
+#+RESULTS:
+: [1] TRUE
+: [1] TRUE
+: [1] "---"
+: [1] FALSE
+: [1] "Element 0 is not >= -5"
+: Error in dpar$assert(-10) : 
+:   Assertion on 'x' failed: Element 0 is not >= -5.
+
+#+begin_src R
+dpar$qunif(c(0, 0.1, 0.2)) # 0~1 のベクトルを受け取って、サンプリングする
+dpar$rep(3) # 繰り返し
+#+end_src
+
+#+RESULTS:
+: [1] -5 -4 -3
+: ParamSet: 
+:            id    class lower upper levels default value
+: 1: dpar_rep_1 ParamDbl    -5     5              0      
+: 2: dpar_rep_2 ParamDbl    -5     5              0      
+: 3: dpar_rep_3 ParamDbl    -5     5              0
+
+* =ParamSet=
+
+#+begin_src R
+ps <- ParamSet$new(
+  params = list(
+    ParamDbl$new("d", lower = -5, upper = 5, default = 0),
+    ParamFct$new("f", levels = letters[1:3])
+  )
+)
+ps
+#+end_src
+
+#+RESULTS:
+: ParamSet: 
+:    id    class lower upper levels     default value
+: 1:  d ParamDbl    -5     5                  0      
+: 2:  f ParamFct    NA    NA  a,b,c <
+
+#+begin_src R
+as.data.table(ps)
+#+end_src
+
+#+RESULTS:
+:    id    class lower upper levels nlevels is_bounded special_vals     default
+: 1:  d ParamDbl    -5     5            Inf       TRUE       <
+:           0
+: 2:  f ParamFct    NA    NA  a,b,c       3       TRUE       <
+: <NoDefault>
+:    storage_type tags
+: 1:      numeric     
+: 2:    character
+
+- ={mlr3}=, ={mlr3learners}= に設定されている param_set を抜き出す
+#+begin_src R
+rpart <- mlr3::lrn("classif.rpart")
+rpart$param_set
+#+end_src
+
+#+RESULTS:
+: ParamSet: 
+:              id    class lower upper levels default value
+: 1:     minsplit ParamInt     1   Inf             20      
+: 2:           cp ParamDbl     0     1           0.01      
+: 3:   maxcompete ParamInt     0   Inf              4      
+: 4: maxsurrogate ParamInt     0   Inf              5      
+: 5:     maxdepth ParamInt     1    30             30      
+: 6:         xval ParamInt     0   Inf             10     0
+
+* =Design=
+
+- =ParamSet= から =Design= R6 を作成
+- =transpose()= で list に変換
+#+begin_src R :results silent
+generate_design_grid(
+  param_set,
+  resolution = NULL, # 各パラメタから何個つづ抜き出すか (ファクターは無視。全て抽出される)
+  param_resolutions = NULL  # Named integer パラメタ毎に抽出数を指定したい場合はこっちを使う
+)
+
+## n 個をランダムに抽出
+generate_design_random(
+  param_set,
+  n
+)
+
+## Latin Hypercube Sampling
+generate_design_lhs(
+  param_set,
+  n,
+  lhs_fun = NULL
+)
+#+end_src
+
+#+begin_src R
+ps = ParamSet$new(list(
+  ParamDbl$new("ratio", lower = 0, upper = 1),
+  ParamFct$new("letters", levels = letters[1:3])
+))
+generate_design_grid(ps, 10)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+<
+with 30 rows:
+        ratio letters
+ 1: 0.0000000       a
+ 2: 0.0000000       b
+ 3: 0.0000000       c
+ 4: 0.1111111       a
+ 5: 0.1111111       b
+ 6: 0.1111111       c
+ 7: 0.2222222       a
+ 8: 0.2222222       b
+ 9: 0.2222222       c
+10: 0.3333333       a
+11: 0.3333333       b
+12: 0.3333333       c
+13: 0.4444444       a
+14: 0.4444444       b
+15: 0.4444444       c
+16: 0.5555556       a
+17: 0.5555556       b
+18: 0.5555556       c
+19: 0.6666667       a
+20: 0.6666667       b
+21: 0.6666667       c
+22: 0.7777778       a
+23: 0.7777778       b
+24: 0.7777778       c
+25: 0.8888889       a
+26: 0.8888889       b
+27: 0.8888889       c
+28: 1.0000000       a
+29: 1.0000000       b
+30: 1.0000000       c
+        ratio letters
+#+end_example
+
+* =Sampler=
+
+確率分布に従って、パラメタをサンプリングするクラス群
+
+- =Sampler=
+  - =Sampler1D=
+    - =Sampler1DCateg=    Sampling from a discrete distribution, for a ParamFct or ParamLgl
+    - =Sampler1DNormal=   Normal sampling (potentially truncated) for ParamDbl
+    - =Sampler1DRfun=     Arbitrary sampling from 1D RNG functions from R
+    - =Sampler1DUnif=     Uniform random sampler for arbitrary (bounded) parameters
+  - =SamplerHierarchical=
+  - =SamplerJointIndep=
+  - =SamplerUnif=
+
+#+begin_src R
+
+#+end_src
+
+* =Condition=
+
+- =Condition=
+  - =CondEqual=
+  - =CondAnyOf=

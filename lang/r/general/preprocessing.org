@@ -1,0 +1,462 @@
+#+STARTUP: folded indent inlineimages latexpreview
+#+PROPERTY: header-args:R :session *R:preprocess* :width 560 :height 420 :results output
+
+* ライブラリの読み込み
+  
+#+begin_src R :results silent
+library(tidyverse)
+library(tidymodels)
+#+end_src
+
+* 欠損値
+
+- *欠損のまま分析する*
+  - GBDT などのモデルは欠損があっても問題ない
+  - -9999 などのありえない数字を入れて、実質的に欠損のままとする手法もある
+
+- *代表値で埋める*
+  - 平均
+  - 中央値 (外れ値がある場合)
+  - Bayesian Average (データ数が極端にすくない場合)
+  - 別のカテゴリ変数でグループ分けして、グループ毎の代表値で埋める
+
+- *欠損を補完するためのモデルを作成する*
+  - 本来の目的変数は除外し、テストデータも含めてモデル化する
+  - =step_knnimpute()= や =step_bagimpute()= など
+
+- *欠損かどうか自体を特徴量に変換する*
+  - 最も簡単なのは、二値変数に変換
+
+* 外れ値
+* 変換
+** 数値変数
+*** 概要
+
+- *標準化*
+  - 平均=0, SD=1 に変換する (中心化 + 正規化)
+  - ニューラルネットでは、変数同士にスケール差があるとうまく学習ができないため
+  - 線形モデルでも、スケールを揃えないと正則化がかかりにくい
+  - 訓練データの平均・標準偏差を利用してテストセットを標準化する
+  - =step_normalize()=
+  - =base::scale()=
+
+- *Min-Max スケーリング*
+  - 0 ~ 1 の範囲に変換する
+  - 外れ値の影響を受けやすく、平均がゼロにならないため、標準化の方がよく使われる
+  - =step_range()=
+
+- *非線形変換* (正規分布に近づける目的が主)
+  - 対数変換 log(1+x) (ゼロを対数変換すると Inf になるので +1 する)
+  - Box-Cox / Yeo-Johnson 変換
+  - Generalized Log Transformation
+  - その他 (絶対値、平方根、二乗、正負の二値、四捨五入など)
+  - 一般的に、分布は偏っていないほうがモデル化には望ましい
+  - =step_log()=, =step_BoxCox()=, =step_YeoJohnson(),= etc
+
+- *Clipping*
+  - 外れ値が多い場合などで、上限・下限(1% など) の値に変換する
+
+- *Binning*
+  - 数値データを離散化して、カテゴリ変数に変換する
+  - 等分する、区間を指定するなど (区間指定に前提知識を反映させることもできる)
+  - =step_discretize()=
+
+- *順位への変換*
+  - スケール情報を捨てて、大小関係のみを抽出する
+  - *RankGauss*: 順位に変換した後に、さらに正規分布になるように変換する
+    - ニューラルネットでは、標準化よりも性能が良いことがある
+  - =dplyr::row_number()=
+
+- *差分/変化率*
+  - 時系列データの非定常 -> 定常過程への変換
+
+*** Box-Cox 変換
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+library(car)
+hist(Wool$cycle)
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-3nf5fh.png]]
+
+- =car::powerTransform()= で lambda を計算
+#+begin_src R
+p1 <- powerTransform(Wool$cycles)
+summary(p1)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+bcPower Transformation to Normality 
+            Est Power Rounded Pwr Wald Lwr Bnd Wald Upr Bnd
+Wool$cycles   -0.0473           0      -0.4259       0.3313
+
+Likelihood ratio test that transformation parameter is equal to 0
+ (log transformation)
+                             LRT df    pval
+LR test, lambda = (0) 0.05994796  1 0.80658
+
+Likelihood ratio test that no transformation is needed
+                           LRT df       pval
+LR test, lambda = (1) 27.29886  1 1.7431e-07
+#+end_example
+
+- 計算された lambda を使って、変換
+- lambda はそのまま利用せず、キリのいい数字にして利用する (過学習対策)
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+hist(bcPower(Wool$cycles, p1$roundlam))
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-CdtPpR.png]]
+
+** カテゴリ変数
+
+- *one-hot encoding*
+  - 最も一般的な変換方法
+  - 水準数の二値変数を作成する
+    - 多重共線性が問題にならないモデルでは、n-1 にする必要はない
+  - カテゴリ数が多いと、値が 0 の特徴量が大量に生成されるのが欠点
+    - 事前にグループ化して、カテゴリを減らす
+    - 頻度が少ないカテゴリを「その他」にしてしまう
+  - [[https://stackoverflow.com/questions/43515877/should-binary-features-be-one-hot-encoded][Should binary features be one-hot encoded?@CrossValidated]]
+    - 1/0 の 1 列にするか、(1/0),(0/1) の 2 列にするかの選択がある
+    - 1 列であれば、その変数そのものの重要度が把握しやすい
+    - 2 列にすれば、(0/0) で欠損を表現可能
+  - =step_dummy(one_hot = TRUE)=
+  - =dummies::dummy.data.frame()=
+
+- *label encoding*
+  - カテゴリを整数に変換する
+  - *ordinal encoding* とも呼ばれる
+  - 決定木をベースとしたモデルであれば、学習に用いることができる
+    - 逆に、決定木以外のモデルでは one-hot を用いる
+  - =step_ordinalscore()=
+
+- *target encoding*
+  - 目的変数を使って、カテゴリ変数を数値に変換する
+    - 1 に近い変数が目的変数に寄与しやすい
+  - GBDT では、label encoding よりも有効なことが多い
+  - 出現するカテゴリが時間によって変化しない場合に用いると良い
+  - リークの危険性がある (自身の目的変数を含んでしまうとリーク)
+    - fold してから自身の fold 以外のデータを使って平均する
+  - =embed::step_lencode_mixed()= 
+
+- *embedding*
+  - 離散的なデータを実数ベクトルに変換することを Embedding という
+  - 自然言語処理などに利用される手法 (単語を実数ベクトルで表現: Word2Vec 等)
+  - ニューラルネットで有効 (GBDT や線形モデルでも有効)
+  - =recipe(y ~ x, data = d) %>% step_embed(x, outcome = vars(y), options = embed_control(epochs = 10))=
+  - =keras::layer_embedding()=
+
+- *feature hashing*
+  - one-hot のように特徴量数が増えすぎないようにするアルゴリズム
+  - 変換後の特徴量数を指定し、ハッシュ関数を用いて変換する
+
+- *frequency encoding*
+  - カテゴリの出現頻度・回数をベースに変換するアルゴリズム
+
+※テストデータのみに存在する水準は学習できないので、有無を事前にチェックする
+
+** 日付・時刻変数
+
+- *年を抽出する*
+  - 将来予測タスクだった場合、学習データに将来の「年」は存在しない
+    - テストデータの年を学習データの年の最終に合わせる
+  - 長期データである場合、あまりに昔のデータは除外したほうが精度がよい場合がある
+    - データの途中で何らかのレジームスイッチが起きている場合など
+
+- *月・曜日・日を抽出する*
+  - 周期的な変動を捉える目的
+  - 周期を捉えるための十分なデータがあるか
+  - 月を 1-12 の数値にしてしまって良いか
+    - 12 -> 1 などの連なりを表現できない (GBDT なら可能)
+    - one-hot や target encoding を使う等
+  - 特定の日 (給料日・月初・月末・クリスマス) などに特徴が現れることもある
+    - そのための特徴量を別途作成することも検討
+    - 日付を 0 ~ 1 のレンジに変換するなど (月初=0, 月末=1 になる)
+  - 特定のイベントとの時間差を特徴量にする (不動産の築年数など)
+
+* 新たな特徴量の作成
+** 変数の組み合わせ
+
+- 数値 x カテゴリ
+  - カテゴリごとの平均数値を追加するなど
+
+- 数値 x 数値
+  - 数値同士の割り算値など
+  - GBDT では加減よりも、乗除の関係を捉えるのが難しいため
+
+- カテゴリ x カテゴリ
+  - カテゴリ x カテゴリで作成した新変数を target encoding で数値変換するなど
+
+- 行単位の統計量
+  - 行 (レコード) 毎に平均などを算出して新たな統計量とする
+
+- 別テーブルとの結合
+  - 1 対 他 のマッピング (なんらかの集約をしてマッピング)
+
+** 時系列データ
+
+- 予測時点で過去の情報のみを利用する
+
+- ラグ特徴量
+  - 単純なラグ
+  - 移動平均
+
+- リード特徴量
+  - 将来の値 (の予測) が特徴量になりえる
+  - たとえば、明日の天気 (予報) や将来のイベントの有無など
+
+* 次元の削減
+
+- *相関係数*
+  - 相関の大きい変数はどちらか一方を削除する
+  - 線形関係のみしか捉えられない
+  - 連続値はピアソン、順位関係のみに着目する場合はスピアマンを利用する
+
+- *カイ二乗統計量*
+  - カイ二乗検定の統計量が大きいものから変数を選択する
+  - 値のスケールに影響されるので、予めスケーリングする
+
+- *相互情報量*
+
+- *主成分分析 (PCA)*
+  - 分散の大きい方向から順に軸を取り出す手法
+  - 正規分布を仮定している
+  - 全変数ではなく、特定の変数群に対してのみ適応することもできる
+
+- *カーネル主成分分析*
+  - カーネル法を用いた主成分分析
+  - =kernlab::kpca()=
+
+- *VIF 統計量*
+  - Variance Inflation Factor = 分散拡大係数
+  - 重回帰分析の多重共線性を数値化
+  - 複数の変数の関係に利用できる (一方、相関係数は 1:1)
+  - 1 / (1 - rho^2) が 10 を超えると多重共線性が疑われる
+  - =car::vif(lm_or_glm_fit)= で計算
+
+- *Lasso 回帰*
+  - L1 正則化による変数削減
+
+- *Importance から選択*
+  - 決定木系のモデルの Importance を利用
+  - Importance は Gain をメインに見る
+  - Permutation Importance であればモデルに依存せずに比較ができる
+    - 当該の変数をシャッフルした場合にどのくらい精度が落ちるか
+
+- *Greedy Foward Selection*
+  - 特徴量の組を変えて繰り返し学習させる
+
+- *非負値行列因子分解 (NMF; Non-Negative Matrix Factrization)*
+  - 非負の行列データをより少ない次元の行列の積で近似する手法
+
+- *Latent Dirichlet Allocation (LDA)*
+
+- *線形判別分析 (LDA; Linear Discriminant Analysis)*
+  - 分類タスクを教師ありで次元削減
+
+- *t-SNE (t-Distributed Neighbor Embedding)*
+  - 高次元のデータを 2 次元に圧縮して可視化する手法
+
+- *UMAP (Uniform Manifold Approximation and Projection)*
+  - t-SNE 同様に次元圧縮・可視化するための手法
+  - t-SNE よりも高速
+
+- *オートエンコーダ*
+  - ニューラルネットの中間層を入力層よりも少なくする
+  - より低次元で元データを表現できるようになる
+
+- *クラスタリング*
+  - データをいくつかのグループに分けて行う教師なし学習
+  - いくつかのアルゴリズム
+    - k-Means (Mini-Batch k-Means)
+    - DBSCAN
+    - Agglomerative Clustering (凝集型階層クラスタリング)
+
+- *Isomap*
+
+* モデルごとの前処理手法
+** GBDT
+
+- *基本的な方針*
+  - _数値データは、大小関係のみ考慮 (大小関係が変わらない変換は無意味)_
+  - 欠損値があっても実行可能なので、基本は埋めずに実行 (欠損値を埋めてもよい)
+  - カテゴリ変数は one-hot でなく、単に label encoding でもよい
+  - target encoding が有効な場合がある
+  - _相互作用項や非線形関係を決定木の繰り返しで反映できる_
+    - 明示的に相互作用の特徴量を作成したりする必要はない
+    - 対数変換などの非線形の変換は必要ない
+  - [参考] 一方、ニューラルネットでは、数値=標準化 + カテゴリ=one-hot が基本
+  - *データには明示的に存在しない・読み取りづらいデータを特徴量として追加するのが基本方針*
+
+- ={xgboost}=
+  - アウトカム
+    - 分類タスク: _factor ラベルでは NG_, 0:1 のラベルにする (多クラスの場合は 0 ~ N のラベル)
+  - 特徴量
+
+- ={parsnip}= + ={xgboost}=
+  - アウトカム
+    - 分類タスク: _因子型のラベルでなくてはならない_
+  - 特徴量
+    - *欠損はあってもよい*
+    - =factor= / =ordered factor=
+      - 数値 (0:1 など) に変換しなくても OK
+      - 2 値ファクターは数値 (0, 1 など) に変換しても *結果は変わらない*
+      - *one_hot でなく、label encoding でも結果は変わらない*
+        - _ただし nominal = one hot, ordical = label が木構造のモデルの基本_
+      - 多クラスラベルは factor と数値では若干結果が異なる (大差はない)
+    - =numeric=
+      - 標準化などの変換をしなくても OK (ただし、結果は若干変わる. 大差はない.)
+    - =logical=
+      - lgl のままでも 0:1 に変換しても結果は変わらず
+
+*結論*
+- 基本的に GBDT は数値のみを扱うため、parsnip を利用する場合でも全て数値に変換してしまっても OK
+- 欠損は埋めないでも利用可能だが、他のモデルでは欠損処理が必要になるため、欠損処理有無で比較すると良い
+
+** ランダムフォレスト
+
+- ={ranger}=
+
+- ={parsnip}= + ={ranger}=
+  - アウトカム
+    - 分類タスク: _因子型のラベルでなくてはならない_
+  - 特徴量
+    - *欠損はあってはならない* (エラーになり学習できない)
+    - =factor= / =ordered factor=
+      - 数値 (0:1 など) に変換しなくても OK
+      - ファクターは数値 (0, 1 等や 1 < 2 < 3) に変換しても *結果は変わらない*
+      - *順序ファクターでない場合は、one hot encoding*
+      - 順序ファクターの場合は label encoding
+    - =numeric=
+      - 標準化などの変換をしなくても OK (大小関係が変わらない変換は影響ないはず)
+      - ただし、結果は若干変わる (大差はない)
+    - =logical=
+      - lgl のままでも 0:1 に変換しても結果は変わらず
+
+** 決定木 (CART)
+
+- ={rpart}=
+
+- ={parsnip}= + ={rpart}=
+  - アウトカム
+    - 分類タスク: _因子型のラベルでなくてはならない_
+  - 特徴量
+    - *欠損はあってもよい (CART アルゴリズムなら)*
+    - =factor= / =ordered factor=
+      - 数値 (0:1 など) に変換しなくても OK
+      - ファクターは数値 (0, 1 等や 1 < 2 < 3) に変換しても *結果は変わらない*
+      - 順序ファクターの場合は label encoding/one hot encoding でも結果は変わらない
+    - =numeric=
+      - 標準化などの変換をしなくても OK (大小関係が変わらない変換は影響ない)
+      - 標準化しても結果は変わらない
+    - =logical=
+      - lgl のままでも 0:1 に変換しても結果は変わらず
+
+** 線形モデル
+
+- ={lm}=, ={glm}=
+  - 特徴量
+    - factor
+      - test データに train データには存在しない level があると predict() ができない
+      - model.matrix で変換すると水準が自動で削減されてしまう
+      - 対策
+        - 明示的に test データの水準を削除する
+        - 事前に one-hot などに変換する
+
+  - アウトカム
+    - 分類タスク: _因子型のラベルでなくてはならない_
+    - 回帰タスク: 数値のまま (標準化はしなくてよい)
+      - [[https://stats.stackexchange.com/questions/155996/lasso-normalization-of-response-variable-needed][LASSO - normalization of response variable needed?@CrossValidated]]
+  - 特徴量
+    - numeric: normalization
+      - ただし =standardize=TRUE= で標準化してくれる (default)
+    - factor: one-hot / ordinal(ordered): one-hot
+      - [[https://stats.stackexchange.com/questions/69568/whether-to-rescale-indicator-binary-dummy-predictors-for-lasso][whether to rescale indicator / binary / dummy predictors for LASSO]]
+        - one-hot 変換した後に 標準化するか否か (両方の意見がある模様)
+        - Lasso の変数選択を公平にするためには、標準化する
+        - 一方、0/1 の方が係数の解釈はしやすい
+      - [[https://stats.stackexchange.com/questions/136085/can-glmnet-logistic-regression-directly-handle-factor-categorical-variables-wi][Can glmnet logistic regression directly handle factor (categorical) variables without needing dummy variables?@CrossValidated]]
+
+- ={parsnip}= + ={glmnet}=
+  - アウトカム
+    - 分類タスク: _因子型のラベルでなくてはならない_
+  - 特徴量
+    - *欠損はあってはならない*
+      - 欠損があってもモデルの学習はできるが、予測データにも NA があると予測が NA になる
+    - =factor= / =ordered factor=
+      - 数値 (0:1 など) に変換しなくても OK
+      - 2 値ファクターは数値 (0, 1 等) に変換しても結果はほぼ変わらない
+      - 2 値以上のファクターは、ordinal でも one hot encoding にする (label encoding とは若干結果が異なる)
+    - =numeric=
+      - 正則化を効かせるためには、標準化が必須 (正則化を利用しないなら結果は変わらない)
+    - =logical=
+      - lgl のままでも 0:1 に変換しても結果はほぼ変わらず
+
+** SVM
+
+- ={kernlab}=
+  - =scaled=TRUE= で二値データでないものはスケールされる
+
+- ={parsnip}= + ={kernlab}=
+  - アウトカム
+    - 分類タスク: _因子型のラベルでなくてはならない_
+  - 特徴量
+    - *欠損はあってはならない* (学習はできるが、予測でエラーになる)
+    - =factor= / =ordered factor=
+      - 数値 (0:1 など) に変換しなくても OK
+      - 2 値ファクターは数値 (0, 1 等) に変換しても結果はほぼ変わらない
+      - 2 値以上のファクターは、ordinal でも one hot encoding にする
+    - =numeric=
+      - 標準化が必須 (SVM は特徴量間のスケーリングバイアスを受けやすい)
+    - =logical=
+      - lgl のままでも 0:1 に変換しても結果はほぼ変わらず
+
+** MLP
+
+- ={keras}=
+
+- ={parsnip}= + ={keras}=
+  - アウトカム
+    - 分類タスク: _因子型のラベルでなくてはならない_
+  - 特徴量
+    - *欠損はあってはならない*
+      - 欠損があってもモデルの学習はできるが、予測データにも NA があると予測が NA になる
+    - =factor= / =ordered factor=
+      - 数値 (0:1 など) に変換しなくても OK
+      - 2 値ファクターは数値 (0, 1 等) に変換しても結果はほぼ変わらない
+      - 2 値以上のファクターは、ordinal でも one hot encoding にする
+    - =numeric=
+      - 標準化が必須
+    - =logical=
+      - lgl のままでも 0:1 に変換しても結果はほぼ変わらず
+
+** kNN
+
+- ={kknn}=
+  - =train.kknn()= の =scale = TRUE= で標準化をデフォルトで行ってくれる
+
+- ={parsnip}= + ={kknn}=
+  - アウトカム
+    - 分類タスク: _因子型のラベルでなくてはならない_
+  - 特徴量
+    - *欠損はあってはならない*
+      - 欠損があると予測にデータ数が欠落してしまう
+    - =factor= / =ordered factor=
+      - 数値 (0:1 など) に変換しなくても OK
+      - 2 値ファクターは数値 (0, 1 等) に変換しても結果はほぼ変わらない
+      - 2 値以上のファクターは、ordinal でも one hot encoding にする
+    - =numeric=
+      - 標準化が必須 (Titanic Age では効果はでなかったが、絶対値の大きい数値に影響されすぎないようにするため)
+    - =logical=
+      - lgl のままでも 0:1 に変換しても結果はほぼ変わらず
+
+* [[file:../package/tidymodels/recipes.org][ ={recipes}= ]]
+* 参考
+
+- [[https://ishitonton.hatenablog.com/entry/2019/02/24/184253][モデリングのための特徴量の前処理について整理した]]
+- [[https://stats.stackexchange.com/questions/155996/lasso-normalization-of-response-variable-needed][LASSO - normalization of response variable needed?@CrossValidated]]

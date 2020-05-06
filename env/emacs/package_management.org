@@ -1,0 +1,228 @@
+#+STARTUP: content indent
+
+* use-package
+** Basic config
+
+- =:config=  
+  - ロード後に読み込む設定
+  - ライブラリが存在する場合のみ読み込まれる
+    - =(when (require 'hoge nil t) ..)= のようにしなくて良い
+
+- =:init= 
+  - ロード前に読み込む設定
+  - 遅延ロードキーワードと同時に利用された場合
+    - =:init= は読み込まれる
+    - =:config= は =autoloads= が評価されるまで読み込まれない
+
+- =:ensure=
+  - パッケージが存在しない場合 =pacakge.el= を使ってインストールする
+
+#+begin_src emacs-lisp :results silent
+(use-package magit
+  :ensure t)
+
+(setq use-package-always-ensure t)
+#+end_src
+
+- =:if=         
+  - ライブラリをロードする条件を指定
+    - =executable-find=, =window-system=, =system-name= などがよく使われる
+
+#+begin_src emacs-lisp :results silent
+(use-package cygwin-mount
+  :if (eq system-type 'windows-nt)
+  :config
+  ;; cygwin-mountの設定
+  )
+#+end_src
+
+- =:after=
+  - 指定したパッケージがロードされるまでロードしない設定
+  - パッケージの依存関係を指定できる
+
+#+begin_src emacs-lisp :results silent
+(use-package hydra
+  :load-path "site-lisp/hydra")
+
+(use-package ivy
+  :load-path "site-lisp/swiper")
+
+(use-package ivy-hydra
+  :after (ivy hydra))
+#+end_src
+
+- =:requires=
+  - 指定したパッケージが読み込まれていた場合のみ読み込む
+  - =:after= とは違い、評価された時点で指定したパッケージがない場合は読み込まれない
+#+begin_src emacs-lisp :results silent
+(use-package abbrev
+  :requires (foo bar baz))
+#+end_src
+
+- =:defines=, =:functions=
+  - byte-compiler 向けにダミーの変数・関数を定義できる
+
+#+begin_src emacs-lisp :results silent
+(use-package ruby-mode
+  :mode "\\.rb\\'"
+  :interpreter "ruby"
+  :functions inf-ruby-keys
+  :config
+  (defun my-ruby-mode-hook ()
+    (require 'inf-ruby)
+    (inf-ruby-keys))
+  (add-hook 'ruby-mode-hook 'my-ruby-mode-hook))
+#+end_src
+
+- =:load-path=
+  - パッケージの場所を指定
+#+begin_src emacs-lisp :results silent
+(use-package ess-site
+  :load-path "site-lisp/ess/lisp/"
+  :commands R)
+#+end_src
+
+- =:disabled=
+  - 一時的に無効化したい場合などで使う
+
+** Lazy loads 
+
+- =:defer=
+  - パッケージ内で =autoloads= が設定されているものに使う
+  - =:defer t= せずに =:config= してしまうと即座にロードされてしまうため
+
+#+begin_src emacs-lisp :results silent
+(use-package info
+  :defer t
+  :config
+  ;; infoの設定
+  )
+#+end_src
+
+- =:commands=
+  - 遅延ロードするコマンドを指定
+  - =autoloads= するコマンドをリスト指定
+  - ※ キー割り当てを伴う場合は =:bind= を使う
+
+#+begin_src emacs-lisp :results silent
+(use-package winner
+  :commands (winner-undo winner-redo)
+  :config
+  ;; winnerの設定
+  )
+#+end_src
+
+- =:bind=, =:bind*=, =:bind-keymap=, =:bind-keymap*=
+  - 遅延ロードするコマンドをキー割り当てとともに設定
+  - =:bind= では =global-map= に対するキー割り当て
+    - パッケージの keymap への割当は =:map= キーワードを合わせて使う
+  - =:bind*= では Major mode の他の設定を上書き
+  - =:bind_keymap= はコマンドではなく、キーマップを指定する
+
+#+begin_src emacs-lisp :results silent
+(use-package multiple-cursors
+  :bind (("C->" . mc/mark-next-like-this)
+         ("C-<" . mc/mark-previous-like-this)
+         ("M-R" . mc/mark-all-dwim))
+  :config
+  ;; multiple-cursorsの設定
+  )
+
+(use-package helm
+  :bind (:map helm-command-map
+         ("C-c h" . helm-execute-persistent-action)))
+
+(use-package projectile
+  :bind-keymap
+  ("C-c p" . projectile-command-map))
+#+end_src
+
+- =:mode=
+  - 遅延ロードするモードを設定
+  - =auto-mode-alist= へ指定した拡張子を追加している
+  - メジャーモードのパッケージに使う
+
+#+begin_src emacs-lisp :results silent
+(use-package web-mode
+  :mode (("\\.html?\\'" . web-mode)
+         ("\\.jsp\\'"   . web-mode)
+         ("\\.gsp\\'"   . web-mode))
+  :config
+  ;; web-modeの設定
+  )
+#+end_src
+
+- =:interpreter=
+  - =:mode= と使い方が似ているが、シバンで指定されたインタプリタから識別する
+  - スクリプト言語のメジャーモードに利用する
+
+#+begin_src emacs-lisp :results silent
+(use-package ruby-mode
+  :interpreter (("ruby"    . ruby-mode)
+                ("rbx"     . ruby-mode)
+                ("jruby"   . ruby-mode)
+                ("ruby1.9" . ruby-mode)
+                ("ruby1.8" . ruby-mode))
+  :config
+  ;; ruby-modeの設定
+  )
+#+end_src
+
+- =:hook=
+  - フックを指定してパッケージを読み込む
+  - =-hook= という接尾語は省く =(setq use-package-hook-name-suffix t)=
+  - 以下の 3 つの書き方は全て同じ意味
+
+#+begin_src emacs-lisp :results silent
+(use-package ace-jump-mode
+  :hook (prog-mode text-mode))
+
+(use-package ace-jump-mode
+  :hook ((prog-mode text-mode) . ace-jump-mode))
+
+(use-package ace-jump-mode
+  :hook ((prog-mode . ace-jump-mode)
+         (text-mode . ace-jump-mode)))
+
+(use-package ace-jump-mode
+  :commands ace-jump-mode
+  :init
+  (add-hook 'prog-mode-hook #'ace-jump-mode)
+  (add-hook 'text-mode-hook #'ace-jump-mode))
+#+end_src
+
+** Other
+
+- =:diminish= 
+  - モードラインからマイナーモードの情報を省く
+- =:delight=
+- =:preface=
+  - Code to be run before everything except ‘:disabled’; this can be used to define functions for use in ‘:if’, or that should be seen by the byte-compiler.
+- =:magic=
+  - Form to be added to ‘magic-mode-alist’.
+- =:magic-fallback=  
+  - Form to be added to ‘magic-fallback-mode-alist’.
+- =:demand= 
+  - Prevent deferred loading in all cases.
+- =:custom=          
+  - Call ‘customize-set-variable’ with each variable definition.
+- =:custom-face=     
+  - Call ‘customize-set-faces’ with each face definition.
+- =:pin=             
+  - Pin the package to an archive.
+
+* straight.el
+
+- パッケージは、git で管理
+- lock ファイルを用意することで、100% の再現性を確保
+- =recipes= format でパッケージを指定
+- =use-package= との統合
+
+* 参考
+
+- [[https://jwiegley.github.io/use-package/][Official]]
+- [[https://github.com/jwiegley/use-package][use-package github repo]]
+- [[https://qiita.com/kai2nenobu/items/5dfae3767514584f5220][use-package で可読性の高い init.el を書く@Qiita]]
+
+- [[https://github.com/raxod502/straight.el][straight.el github repo]]
+

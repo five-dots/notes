@@ -1,0 +1,187 @@
+#+STARTUP: content indent
+
+- [[file:lang/doc/howto_memo.org][How to take a memo ?]]
+
+* Desktop Environment
+** Ubuntu 18.04
+
+- [[file:desktop/ubuntu/Python.org][Python]]
+- [[file:desktop/ubuntu/R.org][R]]
+- [[file:desktop/ubuntu/csharp.org][C#]]
+- [[file:desktop/ubuntu/curl.org][curl]]
+- [[file:desktop/ubuntu/display.org][Display]]
+- [[file:desktop/ubuntu/docker.org][Docker]]
+- [[file:desktop/ubuntu/dropbox.org][Dropbox]]
+- [[file:desktop/ubuntu/emacs.org][Emacs]]
+- [[file:desktop/ubuntu/enpass.org][Enpass]]
+- [[file:desktop/ubuntu/font.org][Font]]
+- [[file:desktop/ubuntu/gcloug.org][Google Cloud SDK]]
+- [[file:desktop/ubuntu/japanese_input.org][Japanese input]]
+- [[file:desktop/ubuntu/java.org][Java]]
+- [[file:desktop/ubuntu/keybinding.org][Keybinding]]
+- [[file:desktop/ubuntu/latex.org][LaTex]]
+- [[file:desktop/ubuntu/mssql.org][Microsoft SQL tools]]
+- [[file:desktop/ubuntu/mysql.org][MySQL]]
+- [[file:desktop/ubuntu/nodejs.org][Node.js]]
+- [[file:desktop/ubuntu/screen.org][GNU screen]]
+- [[file:desktop/ubuntu/search_tool.org][Search tools]]
+- [[file:desktop/ubuntu/ssh.org][SSH]]
+- [[file:desktop/ubuntu/task_scheduler.org][Task Scheduler]]
+- [[file:desktop/ubuntu/touchpad.org][Touchpad sensitivity]]
+- [[file:desktop/ubuntu/tws.org][TWS]]
+- [[file:desktop/ubuntu/virtualbox.org][VirtualBox]]
+- vscode
+- Network
+- Command line tools
+  - exa (ls)
+  - bat (cat)
+  - fd (find)
+  - procs (ps)
+  - ripgrep
+
+** Windows 10
+
+- [[file:desktop/windows/application_list.org][Application list]]
+- [[file:desktop/windows/emacs_setup.org][Emacs]]
+- [[file:desktop/windows/japanese_input.org][Japanese input]]
+- [[file:desktop/windows/wsl.org][WSL]]
+- [[file:desktop/windows/open_ssh.org][Open SSH]]
+- [[file:desktop/windows/vs_extension.org][Visual Studio Extension]]
+
+* Development Environment
+** Database
+
+- [[file:dev/database/sqlite.org][SQLite]]
+- [[file:dev/database/mysql-docker.org][MySQL + Docker]]
+
+** Docker
+
+- [[file:dev/docker/basic_usage.org][Basic usage]]
+- [[file:dev/docker/rocker.org][rocker container]]
+- [[file:dev/docker/iqfeed.org][iqfeed]]
+
+** Emacs
+
+- evil
+- [[file:dev/emacs/company.org][company]]
+- Gmail (mu4e vs. gnus)
+- Google Calender
+- [[file:dev/emacs/ess.org][ESS]]
+- [[file:dev/emacs/font.org][Font]]
+- [[file:dev/emacs/org-mode.org][org]]
+- [[file:dev/emacs/tramp.org][Tramp]]
+- [[file:dev/emacs/use-package.org][use-package]]
+- [[file:dev/emacs/workspace.org][Workspace]]
+- [[file:dev/emacs/keybindings.org][keybindings]]
+- eshell
+- omnisharp
+- general.el
+
+** Git
+
+- [[file:dev/git/git_basic_usage.org][Basic usage]]
+
+** Vagrand/Kubernetes
+* Language
+** C#
+
+- [[file:lang/csharp/basic.org][Basic]]
+- [[file:lang/csharp/wpf.org][WPF]]
+- [[file:lang/csharp/dotnet.org][Dotnet Command]]
+
+** Clojure
+** Common Lisp
+** CSS
+
+- [[file:lang/css/css_selector.org][css selector]]
+
+** Emacs Lisp
+
+- [[file:lang/elisp/basic.el][basic]], [[file:lang/elisp/math.el][math]]
+- [[file:lang/elisp/numeric.el][numeric]], [[file:lang/elisp/string.el][string]], [[file:lang/elisp/s.el][s.el]]
+- [[file:lang/elisp/list.el][list]], [[file:lang/elisp/vector.el][vector]], [[file:lang/elisp/dash.org][dash.el]]
+- [[file:lang/elisp/controll_flow.el][controll_flow]]
+- [[file:lang/elisp/buffer.el][buffer]], window, file, [[file:lang/elisp/f.org][f.el]]
+- [[file:lang/elisp/function.el][function]], [[file:lang/elisp/command.el][command]], [[file:lang/elisp/advice.el][advice]], [[file:lang/elisp/macro.el][macro]], [[file:lang/elisp/autoload.el][autoload]]
+
+** Python
+
+- [[file:lang/python/operator.py][operator]]
+- [[file:lang/python/control_flow.py][control_flow]]
+- [[file:lang/python/string.py][string]]
+- [[file:lang/python/sequence.py][sequence]], [[file:lang/python/list.py][list]], [[file:lang/python/dictionary.py][dictionary]], [[file:lang/python/tuple.py][tuple]], [[file:lang/python/set.py][set]]
+- [[file:lang/python/class.py][class]], [[file:lang/python/function.py][function]]
+- [[file:lang/python/module.py][module]], [[file:lang/python/import_test.py][import_test]]
+- Book [[https://arisuchan.jp/%CE%BB/src/1518379718288-1.pdf][Introducing Python]], Deep Learning from Scrath
+
+** R
+*** General
+- Basic Types: [[file:lang/R/general/type.org][Type]] [[file:lang/R/general/environment.org][Environment]], [[file:lang/R/general/factor.org][Factor]] [[file:lang/R/general/string.org][String]]
+- Data Types:  [[file:lang/R/general/data_frame.org][data.frame]] [[file:lang/R/general/json.R][JSON]], [[file:lang/R/general/xml.R][XML]]
+- Date Time:   [[file:lang/R/general/date_time_base.org][base R]], [[file:lang/R/general/date_time_lubridate.org][lubridate]]
+- Operation:   [[file:lang/R/general/base_R.org][base R]], [[file:lang/R/general/import_export.R][Import & Export]], [[file:lang/R/general/operator.R][Operators]], [[file:lang/R/general/set_operation.R][Set Operations]], [[file:lang/R/general/equality.R][Equality]]
+- Quality:     [[file:lang/R/general/assertion.R][Assertion]], [[file:lang/R/general/error_handling.R][Error Handling]], [[file:lang/R/general/rtvs_debug.R][RTVS Debug]], [[file:lang/R/general/test.org][Test]]
+- Application: [[file:lang/R/general/db.R][Database]], [[file:lang/R/general/file.R][File]], [[file:lang/R/general/mail.R][Mail]], [[file:lang/R/general/scraping.R][Scraping]], [[file:lang/R/general/http.org][HTTP]]
+- Language:    [[file:lang/R/general/nse.R][NSE]], [[file:lang/R/general/function.R][Function]]
+- Style:       [[file:lang/R/general/oop.R][OOP]], [[file:lang/R/general/functional_prog.R][Functional Programming]]
+- Plot:        [[file:lang/R/general/plot.org][Plot]] [[file:lang/R/general/plot_samples.org][Plot Sample]]
+- Performance: [[file:lang/R/general/parallel.org][Parallel]], [[file:lang/R/general/profiling.R][Profiling]], [[file:lang/R/general/profiling2.R][Profiling2]], [[file:lang/R/general/Append.org][Append]]
+- Package:     [[file:lang/R/general/package_dev.R][Pacakge Development]], [[file:lang/R/general/usefull_packages.org][Usefull Packages]]
+- Other:       [[file:lang/R/general/data_set.R][Data Sets]], [[file:lang/R/general/5_problems.R][5 Problems]]
+- Book:        [[https://adv-r.hadley.nz/][Advanced R]], [[https://r4ds.had.co.nz/][R4DS]], [[https://www.burns-stat.com/pages/Tutor/R_inferno.pdf][R Inferno]]
+*** Finance
+- [[file:lang/R/finance/strat_dev.org][Strategy Development]], Strategy Basics
+- [[file:lang/R/finance/backtest_package_idea.R][Backtest Package]]
+- [[file:lang/R/finance/ibrokers.R][iBrokers]]
+- [[file:lang/R/finance/nasdaq.Rmd][Nasdaq]]
+- [[file:lang/R/finance/performance.R][Performance]]
+- [[file:lang/R/finance/price_adjustment.R][Price Adjustement]]
+- [[file:lang/R/finance/tidyquant.R][tidyquant]]
+- [[file:lang/R/finance/volatility.R][Volatility]], [[file:lang/R/finance/volatility_rugarch.R][rugarch]], [[file:lang/R/finance/volatility_fgarch.R][fGarch]]
+- Dataset
+
+*** Statistics
+- [[file:lang/R/stats/desc_stats.org][Descriptive Statistics]]
+- Inferential Statistics
+- [[file:lang/R/stats/time_series.org][Time Series]]
+- [[file:lang/R/stats/distribution.R][Distribution]], [[file:lang/R/stats/distribution.org][Distribution(org)]]
+- [[file:lang/R/stats/green_book.R][Green Book]]
+- [[file:lang/R/stats/linear_model.R][Linear Model]]
+- [[file:lang/R/stats/math.org][Math]]
+- [[file:lang/R/stats/optimization.R][Optimization]]
+- Stan: [[file:lang/R/stats/stan.org][Stan]] [[file:lang/R/stats/rstan_book.R][RStan Book]], [[file:lang/R/stats/rstan_book][RStan Book/]], [[file:lang/R/stats/stan_samples][Stan Samples/]]
+- [[file:lang/R/stats/test.R][Test]]
+** SQL
+
+- [[file:lang/sql/basic.org][Basic]]
+ 
+** Shell
+
+- shell script
+- bash
+- zsh
+- fish
+
+** Data Format
+
+- CSV
+- XML
+- JSON
+- YAML
+- TOML
+
+** Documentation
+
+- [[file:lang/doc/howto_memo.org][How to take a memo ?]]
+- org-mode
+- Markdown
+- R Markdown
+
+* Market 
+** Data Vender
+- [[file:market/polygon-io.org][Polygon.io]]
+* Strategy
+
+- [[file:strategy/basics.org][Basics]]
+
+* Career

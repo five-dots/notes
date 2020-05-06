@@ -1,0 +1,199 @@
+#+STARTUP: content indent
+
+* TODOs
+** TODO [#C] backtest 用に日経 mini 先物のつなぎ足を得るには、eSignal を再度試す
+** TODO [#C] JPX Data Cloud で購入
+
+* 比較対象(候補)
+
+  |---------------------+----------+------------|
+  | Vender              | Realtime | Historical |
+  |---------------------+----------+------------|
+  | Kinetick            | OK       | OK         |
+  | CQG(AMP)            | OK       | OK         |
+  | IQFeed              | OK       | OK         |
+  | Interactive Brokers | OK       | OK         |
+  | eSignal             | OK       | OK         |
+  | polygon.io          | OK       | OK         |
+  |---------------------+----------+------------|
+  | Sharadar@Quandl     |          | OK         |
+  | Quotemedia@Qunadl   |          | OK         |
+  | alphavantage        |          | OK         |
+  | JPX Data Cloud      |          | OK         |
+  | Tick Data           |          | OK         |
+  | Nikkei NEEDS        |          |            |
+  | AlgoSeek            |          | OK         |
+  | QuantGo             |          |            |
+  |---------------------+----------+------------|
+  
+* 比較結果まとめ
+
+  |---------------------+----------+------------|
+  | Vender              | Realtime | Historical |
+  |---------------------+----------+------------|
+  | Kinetick            |          |            |
+  | CQG(AMP)            |          |            |
+  | IQFeed              |          |            |
+  | Interactive Brokers |          |            |
+  | eSignal             |          |            |
+  |---------------------+----------+------------|
+  | Sharadar@Quandl     |          |            |
+  | Quotemedia@Qunadl   |          |            |
+  | alphavantage        |          |            |
+  | JPX Data Cloud      |          |            |
+  | Tick Data           |          |            |
+  | Nikkei NEEDS        |          |            |
+  |---------------------+----------+------------|
+
+* 比較項目
+- Realtime and Historical Data それぞれで比較
+- 価格
+- データの正確さ
+- 反応速度、サーバーの設置場所
+- 利用可能なデータの期間
+	- 日足・分足・ティックそれぞれで
+- 板情報(Level 2)の対応
+- つなぎ足(Continuos Contract)への対応 ※ MC 側で対応可能なら重視しない
+	- Back Adjusted (#C) などの有無
+	- つなぎ足がない場合、過去の限月のデータも利用可能か？
+	- NT ならつなぎ足を自動で作ってくれる
+- 対応銘柄
+	- CME
+	- US Stock
+	- 日経 mini 先物の対応、対応銘柄
+	- TSE Stock
+- サポートの質
+- ツールの使いやすさ
+	- Client Software の有無
+- (念のため確認事項)終値は、Close or Settle？
+
+- NinjaTrader のリスト
+	- https://ninjatrader.com/support/helpGuides/nt8/en-us/?chartbars.htm
+
+* Kinetick
+- 利用可能期間
+	- IQFeed と同じレベル (ただし読み込み速度は、IQFeed より早く安定している印象)
+	- NT の Market Analyzer で大量(数百)のデータを読み込んだ際、IQFeed だと固まるが、
+	　 Kinetick では固まらなかった
+
+- Base $55
+	- CME Non-Pro は他と同じ
+	- Base 55 + CME + 3 = $58
+
+- Portal などはない。リクエストフォームから変更リクエスト
+
+- Default max symbol: 100
+	- Increase to 200 = +$20
+	- Increase to 500 = +$30
+
+- Total
+	- 55(Base) + 3(CME) + 6(NYSE) + 6(NASDAQ) +30(500sybmol) = $100
+
+* IQFeed
+- @ES#がつなぎ足(Back adjust なし), @ES#C が Back adjust あり
+	- @ES Minute = 2005/9/7 -
+	- @ES Day = 1997/9/9 -, QCL# 1983/3/30
+	- @ES Tick = 半年間
+	- その他の銘柄も分足 10 年、日足は 20 年程度
+
+- CME: Night/Electric Session は、先頭に@ or Q がつく
+- FX: FXCM の Tick データ込みのデータが取得可能
+	- FXCM の Tick データは、実際には Volume = 1 となっている。
+	- そのため、MC で VP を Tick Count としても、Total Volume としても数字は同じになる
+- Base Fee $82/m
+	- RT US Futures Entitlement $20/m リアルタイムデータに必要
+	- L2 $20/m
+- CME E-mini $46/m
+- Forex Data - Preminum (FXCM and TenForce) $50/m
+- CME Non-Profesional Globex Data Package の割引を受けられる
+	- IQFeed で IB TWS との接続を確認するアプリがある
+	- $1/exchange, $5/exchange (L2)
+	- 4 市場のコンボで 1 市場分割引
+	- Total 78+15+20+20 = $133 (4 market L2)
+	- Total 78+5+20 = $103 (4 market L1)
+- 読み込み速度 from Ninja はかなり良好
+- Default max symbol: 500
+	- Additional 500 symbols = +$50
+
+- 米国株
+	- NYSE $6, NASDAQ L1 $6
+
+- Total
+	- 78(Base) + 3(CME) + 6(NYSE) + 6(NASDAQ) + 20(Realtime) = $113
+
+- クライアントソフトが 64bit 対応でないからか、多数のシンボルを登録するとメモリ不足で固まる
+	- NT 利用時で発生、100 シンボル程度なら大丈夫か
+
+- DDE (IQLink) でリアルタイムデータ、ファンダメンタルズなど入手可能
+	- Historical Data NG
+
+- API $360/year
+
+- 調整
+	- 日足 分割は調整済み、配当は未調整
+	- 分足 分割・配当、共に未調整
+
+- 分足
+	- US 株の分足では、16:11 のデータが日足の Close price となっている模様
+
+* CQG
+- OSE データが取得可能
+- つなぎ足なし (CQG 自体にはあるっぽいが、API で取得できない？もう一回要調査)
+- MC.NET からは Expire した先物はデータ取得できず
+- 歩み値の正確さ => kabu station とくらべて細かく分断されているように見える
+- IQFeed と同じく、CME Non-Pro ディスカウントを受けられる
+- AMP は Customer Dashboard がしょぼい (信用できない)
+- データ期間 (MC QuoteManager より)
+	- Tick = 1year
+	- Minute = up to 10 year
+
+- NinjaTrader Continuum
+	- $7 x CME market (L2 only)
+	- $21 CME Bundle (L2 only)
+	- Base Fee がないのである意味一番安いか
+
+- CME NonPro L2 Bundle $15
+- OSE NonPro L2 $29
+
+* Interactive Brokers
+- つなぎ足はあるが、TWS からのみ利用可能 (TWS Version Up で API から利用可能になった)
+	- NinjaTrader から ES ##-## 等でアクセスはできない
+- 分足は提供していない, Tick データ(実際は 1 second?)から分足を Build する
+- MC.NET からは Expire した先物はデータ取得できず
+- Historical Data 取得には大きな制限がある
+- http://interactivebrokers.github.io/tws-api/historical_limitations.html
+
+- IB 自身も自分たちは Data Vender ではない、と言っている on IB API Document
+  Although Interactive Brokers offers our clients high quality market data,
+  IB is not a specialised market data provider and as such it is forced to put in place restrictions
+  to limit traffic which is not directly associated to trading. 
+
+- 代わりに、TWS Data Source として、eSignal が利用可能
+- 他の Data Source では見られないような大きな歩み値がでる　突然日経 mini で 700 とか
+- IB doesn't provide all tick data (IB provides only filtered snapshots).
+	- 1tick = 1 second or 5 second で設定可能 (MC.NET)
+	- 5 seconds bar API を提供している？ (上記の Workaround として）
+	- https://www.multicharts.com/pm/public/multicharts/issues/MC-1224
+
+* eSignal
+- CME と 日本株のデータが取れるのは、ここだけ
+- ツールは、圧倒的に多機能、かつチャートも使いやすい。その分データ利用量は高額。
+- 米国株 NYSE, NASDQA それぞれ $10 (IQFeed と違い、Index も含まれる)
+- Market Depth $25, +Live Chart $32
+- CME Non-Pro Fee
+	- L1 bundle $10
+- Osaka Delivative $2
+- TOCOM $3
+- TSE $2
+- Intraday History 短い!
+	- Standard 6 month (minute), 10 days (Tick)
+	- Extended From 2007 (Minute), 40 days (Tick) +$14
+	
+- QLink(RTD,DDE) $15
+- 昔は API が提供されていたようだが、今は廃止。DDE/RTD を使えということになっている模様
+- Daily
+ 	- US Stock 2000/1-
+
+- Symbol = Max 500, Additional 1k symbols = $100/m
+
+* Data 構造

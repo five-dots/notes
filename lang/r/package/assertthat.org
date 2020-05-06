@@ -12,6 +12,7 @@
 * 目次                                                            :quote:toc:
 #+BEGIN_QUOTE
 - [[#ライブラリの読み込みとバージョンの確認][ライブラリの読み込みとバージョンの確認]]
+- [[#全関数][全関数]]
 - [[#関数リスト][関数リスト]]
   - [[#assert-functions][Assert functions]]
     - [[#-assert_that-env--parentframe-msg--null][★★★ ~assert_that(..., env = parent.frame(), msg = NULL)~.]]
@@ -23,6 +24,8 @@
     - [[#-iscountx][★☆☆ ~is.count(x)~.]]
     - [[#-isscalarx][★☆☆ ~is.scalar(x)~.]]
     - [[#-isnumberx][★☆☆ ~is.number(x)~.]]
+    - [[#-isdatex-istime][★☆☆ ~is.date(x)~, ~is.time()~.]]
+    - [[#-iserrorx][★☆☆ ~is.error(x)~.]]
     - [[#-has_namex-nm-x-has_name-nm][★☆☆ ~has_name(x, nm)~, ~x %has_name% nm~.]]
     - [[#-has_attrx-attr-x-has_attr-attr][★☆☆ ~has_attr(x, attr)~, ~x %has_attr% attr~.]]
     - [[#-has_argsx-args-exact--false-x-has_args-attr][★☆☆ ~has_args(x, args, exact = FALSE)~, ~x %has_args% attr~.]]
@@ -51,6 +54,21 @@ packageVersion("assertthat")
 #+RESULTS:
 : [1] ‘0.2.1’
 \\
+
+* 全関数
+
+#+begin_src R
+pacman::p_funs(assertthat)
+#+end_src
+
+#+RESULTS:
+:  [1] "%has_args%"    "%has_attr%"    "%has_name%"    "are_equal"    
+:  [5] "assert_that"   "has_args"      "has_attr"      "has_extension"
+:  [9] "has_name"      "is.count"      "is.date"       "is.dir"       
+: [13] "is.error"      "is.flag"       "is.number"     "is.readable"  
+: [17] "is.scalar"     "is.string"     "is.time"       "is.writeable" 
+: [21] "noNA"          "not_empty"     "on_failure"    "on_failure<-" 
+: [25] "see_if"        "validate_that"
 
 * 関数リスト
 ** Assert functions
@@ -117,12 +135,18 @@ validate_that(is.character(x))
 #+begin_src R :exports both
 is.flag(TRUE)
 is.flag(c(TRUE, TRUE))
+is.flag(NULL)
+is.flag(NA)
 #+end_src
 
 #+RESULTS:
 : [1] TRUE
 : 
 : [1] FALSE
+: 
+: [1] FALSE
+: 
+: [1] TRUE
 \\
 
 *** ★☆☆ ~is.string(x)~.
@@ -131,12 +155,26 @@ is.flag(c(TRUE, TRUE))
 #+begin_src R :exports both
 is.string("hoge")
 is.string(c("hoge", "fuga"))
+is.string(NA_character_)
+is.string(NULL)
+is.string(NaN)
+is.string(Inf)
 #+end_src
 
 #+RESULTS:
-: [1] TRUE
-: 
-: [1] FALSE
+#+begin_example
+[1] TRUE
+
+[1] FALSE
+
+[1] TRUE
+
+[1] FALSE
+
+[1] FALSE
+
+[1] FALSE
+#+end_example
 \\
 
 *** ★☆☆ ~is.count(x)~.
@@ -172,14 +210,58 @@ is.scalar(c("hoge", "fuga"))
 
 #+begin_src R :exports both
 is.number(1)
+is.number(1L)
 is.number(1.1)
 is.number(c(1.1, 2.2))
 #+end_src
 
 #+RESULTS:
 : [1] TRUE
+: 
 : [1] TRUE
+: 
+: [1] TRUE
+: 
 : [1] FALSE
+\\
+
+*** ★☆☆ ~is.date(x)~, ~is.time()~.
+
+#+begin_src R :exports both
+is.date(Sys.Date())
+is.date(c(Sys.Date(), Sys.Date()))
+is.date(NA)
+is.date(NULL)
+
+is.time(Sys.time())
+#+end_src
+
+#+RESULTS:
+: [1] TRUE
+: 
+: [1] TRUE
+: 
+: [1] FALSE
+: 
+: [1] FALSE
+: 
+: [1] TRUE
+\\
+
+*** ★☆☆ ~is.error(x)~.
+
+#+begin_src R :exports both
+c <- try(stop("!!"))
+class(c)
+is.error(c)
+#+end_src
+
+#+RESULTS:
+: Error in try(stop("!!")) : !!
+: 
+: [1] "try-error"
+: 
+: [1] TRUE
 \\
 
 *** ★☆☆ ~has_name(x, nm)~, ~x %has_name% nm~.
