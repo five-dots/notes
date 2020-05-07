@@ -1,26 +1,7 @@
 #+STARTUP: folded indent inlineimages latexpreview
 #+PROPERTY: header-args:R :results output :colnames yes :exports both :session *R:notes*
 
-* Tech Notes by Org-mode + Babel :noexport:
-
-個人の技術ノートをまとめたリポジトリです。すべてのノートを Emacs の [[https://orgmode.org/ja/][Org-mode]] で記載しています。ソースコードは、[[https://orgmode.org/worg/org-contrib/babel/][Babel]] を利用して実際に実行したものを掲載していますので、clone をしてご自身の環境で試していただくことが可能です。
-
-できるだけ、各ノートの末尾に実行環境を掲載するようにしています。ただし、外部の依存関係の問題で実行できないものもあるかもしれません。
-
-#+begin_src shell
-git clone https://github.com/five-dots/notes.git
-#+end_src
-
-Babel の実行には適切な ~org-babel-load-language~ の設定が必要です。このノートでは、以下の言語を利用しています。
-#+begin_src emacs-lisp
-(org-babel-do-load-languages 'org-babel-load-languages
-  '((emacs-lisp . t)
-    (shell . t)
-    (R . t)
-    (stan . t)
-    (C . t)
-    (python . t)))
-#+end_src
+Tech Notes by  [[https://orgmode.org/ja/][Org-mode]] + [[https://orgmode.org/worg/org-contrib/babel/][Babel]]
 
 * Table of Contents :toc_2:quote:
 #+BEGIN_QUOTE
