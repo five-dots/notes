@@ -30,6 +30,7 @@ library(zeallot)
 
 - =:=, =::=, =:::=, =$=, =@=, =^=, =*=, =/=, =+=, =-=, =>=, =>==, =<=, =<==, ~=~, =!==, =!=, =&=, =&&=, =|=, =||=, =~=, =<-=, =<<-=
 - =%%=, =%*%=, =%/%=, =%in%=, =%o%=, =%x%=
+\\
 
 *** =<-= 束縛
 
@@ -189,7 +190,7 @@ iris$Sepal.Length
 #+end_src
 \\
 
-*** =%T>%= "tee" 演算子
+*** =%T>%= tee 演算子
 
 - RHS の結果を返すのではなく、LHS の結果をスルーして返す
 #+begin_src R :exports both
@@ -206,7 +207,7 @@ rnorm(200) %>%
 #+end_src
 \\
 
-*** =%$%= "exposition" 演算子
+*** =%$%= exposition 演算子
 
 - LHS のオブジェクトの名前を RHS で参照できる
 - data 引数を持たない関数に名前を渡すのに便利
@@ -223,13 +224,14 @@ iris %>%
 #+end_src
 \\
 
-#+begin_src R :results output graphics file :file (my/get-babel-file) :exports both :cache yes
+#+begin_src R :results output graphics file :file (my/get-babel-file2) :exports both
 data.frame(z = rnorm(100)) %$%
   ts.plot(z) # ts.plot() は data.frame をそのまま引数にとることができない
 #+end_src
 
 #+RESULTS[2916e893e54d49f2401643fe01c02f08dd7b0a06]:
-[[file:/home/shun/Dropbox/memo/img/babel/fig-n28pom.png]]
+[[file:../../../img/babel/fig-dajz3X.png]]
+\\
 
 ** rlang package
 *** List
