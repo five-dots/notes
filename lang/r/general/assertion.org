@@ -20,7 +20,7 @@ library(assertr)
 * Assertion Patterns
 
 - =if= + =stop()=
-#+begin_src R
+#+begin_src R :exports both
 if (is.null(NULL)) stop("NULL!!")
 #+end_src
 
