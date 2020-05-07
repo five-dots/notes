@@ -516,3 +516,14 @@ In readLines(file, warn = TRUE) :
 #+end_example
 
 ** haskell
+* github/markup 向けの書き方
+
+- =:exports both=
+  - デフォルトでは =:exports code= なので、これを設定しないと結果が表示されない
+  - トップの Header に追加しただけでは、反映されない。個別のブロックに設定する必要あり。
+
+- =:results output code=
+  - =:results output= だけでは、複数行の出力の際 =:= のみの行がそのまま表示されてしまう。
+  - =code= にすることで、各言語のシンタックスでハイライトされるメリットもある。
+
+- =options(crayon.enabled = FALSE)= で色の出力を停止

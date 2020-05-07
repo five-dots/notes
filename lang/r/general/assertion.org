@@ -1,5 +1,5 @@
 #+STARTUP: folded indent inlineimages latexpreview
-#+PROPERTY: header-args:R :results output :exports both :session *R:assertion*
+#+PROPERTY: header-args:R :results output code :session *R:assertion*
 
 * Table of Contents :toc_2:quote:
 #+BEGIN_QUOTE
@@ -24,7 +24,7 @@ library(assertr)
 * Assertion Patterns
 ** if + stop()
 
-#+begin_src R :exports both :results code
+#+begin_src R :exports both
 if (is.null(NULL)) stop("NULL!!")
 #+end_src
 
@@ -37,7 +37,7 @@ Error: NULL!!
 
 - base で使うことができる。簡易的。
 - メッセージがわかりにくい。
-#+begin_src R :exports both :results code
+#+begin_src R :exports both
 stopifnot(!is.null(NULL))
 #+end_src
 
@@ -49,7 +49,7 @@ Error: !is.null(NULL) is not TRUE
 ** assertthat::assert_that()
 
 - メッセージがわかりやすい
-#+begin_src R :exports both :results code
+#+begin_src R :exports both
 assert_that(!is.null(NULL))
 assert_that(!is.null(NULL), msg = "NULL はだめよ")
 #+end_src
@@ -64,7 +64,7 @@ Error: NULL はだめよ
 ** assertr::assert_that()
 
 - data.frame の内容検査。パイプと組み合わせて使う。問題なければ、そのまま df を返す。
-#+begin_src R :exports both :results code
+#+begin_src R :exports both
 mtcars %>% verify(nrow(.) > 100)
 #+end_src
 
