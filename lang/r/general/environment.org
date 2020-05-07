@@ -91,6 +91,7 @@ identical(environment(), globalenv())
 #+begin_src R
 [1] TRUE
 #+end_src
+\\
 
 ** Search Path
 
@@ -172,6 +173,7 @@ find("sd")
 
 [1] "package:stats"
 #+end_src
+\\
 
 ** R_EmptyEnv
 
@@ -198,6 +200,7 @@ parent.env(baseenv())
 
 <environment: R_EmptyEnv>
 #+end_src
+\\
 
 ** Autoloads
 
@@ -251,6 +254,7 @@ search()
  [7] "package:grDevices" "package:utils"     "package:datasets"
 [10] "package:methods"   "Autoloads"         "package:base"
 #+end_src
+\\
 
 * Environments as a data structure
 ** Reference Semantics
@@ -321,6 +325,7 @@ parent.env(e2)
 
 <environment: R_EmptyEnv>
 #+end_src
+\\
 
 *** =ls(name, pos = -1L, envir = as.environment(pos), all.names = FALSE, pattern, sorted = TRUE)=
 
@@ -337,6 +342,7 @@ ls(e, all.names = TRUE) # .も表示
 
 [1] ".c" "a"  "b"
 #+end_src
+\\
 
 *** =ls.str(pos = -1, name, envir, all.names = FALSE, pattern, mode = "any")=
 
@@ -349,6 +355,7 @@ ls.str(e)
 a :  num 10
 b :  chr "a"
 #+end_src
+\\
 
 *** =get(x, pos = -1, envir = as.environment(pos), mode = "any", inherits = TRUE)=
  
@@ -367,6 +374,7 @@ get("c", envir = e, inherits = FALSE)
 
 Error in get("c", envir = e, inherits = FALSE) : object 'c' not found
 #+end_src
+\\
 
 *** =rm(..., list = character(), pos = -1, envir = as.environment(pos), inherits = FALSE)=
 
@@ -394,6 +402,7 @@ ls(e)
 
 [1] "b"
 #+end_src
+\\
 
 *** =exists(x, where = -1, envir = , frame, mode = "any", inherits = TRUE)=
 
@@ -411,6 +420,7 @@ exists("b", envir = e) # get() と同じく、指定した環境になければ�
 
 [1] TRUE
 #+end_src
+\\
 
 *** =as.environment(x)=
 
@@ -437,6 +447,7 @@ attr(,"name")
 attr(,"path")
 [1] "/home/shun/.anyenv/envs/Renv/versions/3.6.3/lib/R/library/stats"
 #+end_src
+\\
 
 *** getter/setter example
 
@@ -468,6 +479,7 @@ ls.str(my_env)
 
 a :  num 2
 #+end_src
+\\
 
 * Environments in Function
 ** Basics
@@ -546,6 +558,7 @@ where("sd")
 #+begin_src R
 Error in where("sd") : could not find function "where"
 #+end_src
+\\
 
 ** Execution environment
 
@@ -598,6 +611,7 @@ i()
 <environment: R_GlobalEnv>
 <environment: R_GlobalEnv>
 #+end_src
+\\
 
 ** Function factory and closure
 
@@ -662,6 +676,7 @@ i()
 
 [1] 10
 #+end_src
+\\
 
 ** 関数内から .GlobalEnv の値を得る
 
@@ -689,6 +704,7 @@ List of 2
  $ defined: num 10
  $ called : num 20
 #+end_src
+\\
 
 ** 値の割当て
 
@@ -768,6 +784,7 @@ x
 
 [1] 0.7943504
 #+end_src
+\\
 
 * Links
 
