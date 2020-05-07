@@ -1,13 +1,9 @@
 #+STARTUP: folded indent inlineimages latexpreview
-#+PROPERTY: header-args:R :results value :colnames yes :session *R:env*
+#+PROPERTY: header-args:R :results output code :colnames yes :session *R:env*
 
-* R's environment in ={base}=                                        :noexport:
-
-R の enviroment (環境) について、おもに Advanced R を読んだ上でのまとめ。
-
-* 目次                                                            :quote:toc:
+* Table of Contents :quote:toc:
 #+BEGIN_QUOTE
-- [[#environment-環境-とは][environment (環境) とは？]]
+- [[#what-is-an-environment-][What is an Environment ?]]
 - [[#search-path-and-environments-basics][Search path and environments basics]]
   - [[#r_globalenv][R_GlobalEnv]]
   - [[#search-path][Search Path]]
@@ -16,26 +12,18 @@ R の enviroment (環境) について、おもに Advanced R を読んだ上で
 - [[#environments-as-a-data-structure][Environments as a data structure]]
   - [[#reference-semantics][Reference Semantics]]
   - [[#basic-operations][Basic operations]]
-    - [[#newenvhash--true-parent--parentframe-size--29l][=new.env(hash = TRUE, parent = parent.frame(), size = 29L)=]]
-    - [[#lsname-pos---1l-envir--asenvironmentpos-allnames--false-pattern-sorted--true][=ls(name, pos = -1L, envir = as.environment(pos), all.names = FALSE, pattern, sorted = TRUE)=]]
-    - [[#lsstrpos---1-name-envir-allnames--false-pattern-mode--any][=ls.str(pos = -1, name, envir, all.names = FALSE, pattern, mode = "any")=]]
-    - [[#getx-pos---1-envir--asenvironmentpos-mode--any-inherits--true][=get(x, pos = -1, envir = as.environment(pos), mode = "any", inherits = TRUE)=]]
-    - [[#rm-list--character-pos---1-envir--asenvironmentpos-inherits--false][=rm(..., list = character(), pos = -1, envir = as.environment(pos), inherits = FALSE)=]]
-    - [[#existsx-where---1-envir---frame-mode--any-inherits--true][=exists(x, where = -1, envir = , frame, mode = "any", inherits = TRUE)=]]
-    - [[#asenvironmentx][=as.environment(x)=]]
-    - [[#gettersetter-example][getter/setter example]]
 - [[#environments-in-function][Environments in Function]]
   - [[#basics][Basics]]
   - [[#enclosing-enviroment--biding-environment][Enclosing enviroment / Biding environment]]
   - [[#execution-environment][Execution environment]]
   - [[#function-factory-and-closure][Function factory and closure]]
-  - [[#関数内から-globalenv-の値を得る][関数内から ~.GlobalEnv~ の値を得る]]
+  - [[#関数内から-globalenv-の値を得る][関数内から .GlobalEnv の値を得る]]
   - [[#値の割当て][値の割当て]]
--  [[#rlang][={rlang}=]]
+- [[#links][Links]]
 - [[#reference][Reference]]
 #+END_QUOTE
 
-* environment (環境) とは？
+* What is an Environment ?
 
 1. スコーピングのためのデータ構造
    - 全ての R のオブジェクトは ~enviroment~ に属している
@@ -44,8 +32,8 @@ R の enviroment (環境) について、おもに Advanced R を読んだ上で
   
 2. ~name~ にメモリ上の特定のオブジェクトを紐付ける役割
    - ~name~ (オブジェクトのラベル) からオプジェクトを探すことができるようにする
-   - ※ ~name~ は一意でなければならない
-   - ※ ~environment~ 内の名前は順序付けられていない
+     - ~name~ は一意でなければならない
+     - ~environment~ 内の名前は順序付けられていない
   
 3. ~frame~ (= name と object を紐付けたもの) と 親 ~environment~ を組み合わせたもの
    - 親環境を遡って名前を探すことができる
@@ -65,7 +53,10 @@ environment()
 #+end_src
 
 #+RESULTS:
-: <environment: R_GlobalEnv>
+#+begin_src R
+<environment: R_GlobalEnv>
+#+end_src
+\\
 
 - 上記と同じ結果
 #+begin_src R :exports both
@@ -73,24 +64,33 @@ globalenv()
 #+end_src
 
 #+RESULTS:
-: <environment: R_GlobalEnv>
+#+begin_src R
+<environment: R_GlobalEnv>
+#+end_src
+\\
 
-- ~.GlobalEnv~ は ~R_GlobalEnv~ がバインドされている名前のこと ([[https://stackoverflow.com/questions/37918335/difference-between-globalenv-and-globalenv][参考]])
+- ~.GlobalEnv~ は ~R_GlobalEnv~ がバインドされている名前のこと
+  - [[https://stackoverflow.com/questions/37918335/difference-between-globalenv-and-globalenv][Difference between `.GlobalEnv` and `globalenv()`@Stackoverflow]]
 #+begin_src R :exports both
 .GlobalEnv
 #+end_src
 
 #+RESULTS:
-: <environment: R_GlobalEnv>
+#+begin_src R
+<environment: R_GlobalEnv>
+#+end_src
+\\
 
 - 環境の比較は ~==~ ではできない
-- ~identical()~ を使う
+  - ~identical()~ を使う
 #+begin_src R :exports both
 identical(environment(), globalenv())
 #+end_src
 
 #+RESULTS:
-: [1] TRUE
+#+begin_src R
+[1] TRUE
+#+end_src
 
 ** Search Path
 
@@ -107,9 +107,12 @@ parent.env(globalenv())
 #+end_src
 
 #+RESULTS:
-: <environment: 0x562aae83ac60>
-: attr(,"name")
-: [1] "ESSR"
+#+begin_src R
+<environment: 0x55d3f00b7b20>
+attr(,"name")
+[1] "ESSR"
+#+end_src
+\\
 
 - ~search()~ でサーチパスを表示
 - ~parent.env()~ の環境が、.GlobalEnv の次に来ているのが確認できる
@@ -118,10 +121,13 @@ search()
 #+end_src
 
 #+RESULTS:
-:  [1] ".GlobalEnv"        "ESSR"              "package:stats"    
-:  [4] "package:graphics"  "package:grDevices" "package:utils"    
-:  [7] "package:datasets"  "package:methods"   "Autoloads"        
-: [10] "package:base"
+#+begin_src R
+ [1] ".GlobalEnv"        "ESSR"              "package:stats"
+ [4] "package:graphics"  "package:grDevices" "package:utils"
+ [7] "package:datasets"  "package:methods"   "Autoloads"
+[10] "package:base"
+#+end_src
+\\
 
 - パッケージを読み込むと GlobalEnv の次に来る
 #+begin_src R :exports both
@@ -130,11 +136,14 @@ search()
 #+end_src
 
 #+RESULTS:
-:  [1] ".GlobalEnv"        "package:dplyr"     "package:pryr"     
-:  [4] "package:splines"   "ESSR"              "package:stats"    
-:  [7] "package:graphics"  "package:grDevices" "package:utils"    
-: [10] "package:datasets"  "package:methods"   "Autoloads"        
-: [13] "package:base"
+#+begin_src R
+
+ [1] ".GlobalEnv"        "package:dplyr"     "ESSR"
+ [4] "package:stats"     "package:graphics"  "package:grDevices"
+ [7] "package:utils"     "package:datasets"  "package:methods"
+[10] "Autoloads"         "package:base"
+#+end_src
+\\
 
 - サーチパスに先にマッチした関数が使われるので、利用した関数が意図したパッケージのものか注意する
 #+begin_src R :exports both
@@ -143,8 +152,12 @@ environment(stats::filter)
 #+end_src
 
 #+RESULTS:
-: <environment: namespace:dplyr>
-: <environment: namespace:stats>
+#+begin_src R
+<environment: namespace:dplyr>
+
+<environment: namespace:stats>
+#+end_src
+\\
 
 - 名前から環境を得る
 #+begin_src R :exports both
@@ -154,8 +167,11 @@ find("sd")
 #+end_src
 
 #+RESULTS:
-: <environment: namespace:stats>
-: [1] "package:stats"
+#+begin_src R
+<environment: namespace:stats>
+
+[1] "package:stats"
+#+end_src
 
 ** R_EmptyEnv
 
@@ -165,7 +181,10 @@ parent.env(emptyenv())
 #+end_src
 
 #+RESULTS:
-: Error in parent.env(emptyenv()) : the empty environment has no parent
+#+begin_src R
+Error in parent.env(emptyenv()) : the empty environment has no parent
+#+end_src
+\\
 
 - ~{base}~ package の親環境は ~R_EmptyEnv~
 #+begin_src R :exports both
@@ -174,13 +193,16 @@ parent.env(baseenv())
 #+end_src
 
 #+RESULTS:
-: <environment: base>
-: 
-: <environment: R_EmptyEnv>
+#+begin_src R
+<environment: base>
+
+<environment: R_EmptyEnv>
+#+end_src
 
 ** Autoloads
 
-- ~AutoLoads~ 環境は、遅延ロードのパッケージ用に使われる ([[https://stackoverflow.com/questions/13401977/what-does-the-autoloads-environment-do][参考]])
+- ~AutoLoads~ 環境は、遅延ロードのパッケージ用に使われる
+  - [[https://stackoverflow.com/questions/13401977/what-does-the-autoloads-environment-do][What does the Autoloads environment do?@Stackoverflow]]
 - ~autoload(name, package)~ で ~name~ を遅延ロードに指定
 - この時点では ~{splines}~ パッケージはロードされていない
 #+begin_src R :exports both
@@ -189,11 +211,14 @@ search()
 #+end_src
 
 #+RESULTS:
-: 
-:  [1] ".GlobalEnv"        "ESSR"              "package:stats"    
-:  [4] "package:graphics"  "package:grDevices" "package:utils"    
-:  [7] "package:datasets"  "package:methods"   "Autoloads"        
-: [10] "package:base"
+#+begin_src R
+
+ [1] ".GlobalEnv"        "package:dplyr"     "ESSR"
+ [4] "package:stats"     "package:graphics"  "package:grDevices"
+ [7] "package:utils"     "package:datasets"  "package:methods"
+[10] "Autoloads"         "package:base"
+#+end_src
+\\
 
 - ~AutoLoads~ 環境に、遅延ロード指定された関数が入っている
 - ~.Autoloaded~ に遅延指定されたパッケージ名が入る
@@ -203,9 +228,12 @@ ls("Autoloads")
 #+end_src
 
 #+RESULTS:
-: [1] "interpSpline"
-: 
-: [1] "splines"
+#+begin_src R
+[1] "interpSpline"
+
+[1] "splines"
+#+end_src
+\\
 
 - 遅延ロード指定された ~interpSpline()~ を実行すると ~{splines}~ もロードされる
 #+begin_src R :exports both
@@ -216,11 +244,13 @@ search()
 #+end_src
 
 #+RESULTS:
-: 
-:  [1] ".GlobalEnv"        "package:splines"   "ESSR"             
-:  [4] "package:stats"     "package:graphics"  "package:grDevices"
-:  [7] "package:utils"     "package:datasets"  "package:methods"  
-: [10] "Autoloads"         "package:base"
+#+begin_src R
+
+ [1] ".GlobalEnv"        "package:splines"   "package:dplyr"
+ [4] "ESSR"              "package:stats"     "package:graphics"
+ [7] "package:grDevices" "package:utils"     "package:datasets"
+[10] "package:methods"   "Autoloads"         "package:base"
+#+end_src
 
 * Environments as a data structure
 ** Reference Semantics
@@ -229,7 +259,6 @@ search()
   - 大きなデータのコピーを避けることができる
   - package 内の state 管理に最適
   - name での lookup が効率的に行える
-
 #+begin_src R :exports both
 modify <- function(x) {
   x$a <- 2
@@ -248,10 +277,12 @@ x_e$a # env だと元のオブジェクトが書き換わる
 #+end_src
 
 #+RESULTS:
-: 
-: [1] 1
-: 
-: [1] 2
+#+begin_src R
+
+[1] 1
+
+[1] 2
+#+end_src
 \\
 
 ** Basic operations
@@ -266,13 +297,16 @@ e[["b"]]
 #+end_src
 
 #+RESULTS:
-: 
-: [1] 10
-: 
-: [1] "a"
+#+begin_src R
+
+[1] 10
+
+[1] "a"
+#+end_src
+\\
 
 - データとして ~envivroment~ を使う際は、親を ~emptyevn()~ にする 
-- *予期せず、他の環境の値を変えてしまうのを防ぐ*
+  - *予期せず、他の環境の値を変えてしまうのを防ぐ*
 #+begin_src R :exports both
 e2 <- new.env()
 parent.env(e2) # 通常は、.GlobalEnv
@@ -281,10 +315,12 @@ parent.env(e2)
 #+end_src
 
 #+RESULTS:
-: 
-: <environment: R_GlobalEnv>
-: 
-: <environment: R_EmptyEnv>
+#+begin_src R
+
+<environment: R_GlobalEnv>
+
+<environment: R_EmptyEnv>
+#+end_src
 
 *** =ls(name, pos = -1L, envir = as.environment(pos), all.names = FALSE, pattern, sorted = TRUE)=
 
@@ -296,9 +332,11 @@ ls(e, all.names = TRUE) # .も表示
 #+end_src
 
 #+RESULTS:
-: [1] "a" "b"
-: 
-: [1] ".c" "a"  "b"
+#+begin_src R
+[1] "a" "b"
+
+[1] ".c" "a"  "b"
+#+end_src
 
 *** =ls.str(pos = -1, name, envir, all.names = FALSE, pattern, mode = "any")=
 
@@ -307,13 +345,15 @@ ls.str(e)
 #+end_src
 
 #+RESULTS:
-: a :  num 10
-: b :  chr "a"
+#+begin_src R
+a :  num 10
+b :  chr "a"
+#+end_src
 
 *** =get(x, pos = -1, envir = as.environment(pos), mode = "any", inherits = TRUE)=
  
 - 指定した環境にない場合は、親環境を探しに行く
-- inherits = FALSE で親環境を探さない
+  - inherits = FALSE で親環境を探さない
 #+begin_src R :exports both
 c <- 20
 get("c", envir = e)
@@ -321,10 +361,12 @@ get("c", envir = e, inherits = FALSE)
 #+end_src
 
 #+RESULTS:
-: 
-: [1] 20
-: 
-: Error in get("c", envir = e, inherits = FALSE) : object 'c' not found
+#+begin_src R
+
+[1] 20
+
+Error in get("c", envir = e, inherits = FALSE) : object 'c' not found
+#+end_src
 
 *** =rm(..., list = character(), pos = -1, envir = as.environment(pos), inherits = FALSE)=
 
@@ -335,8 +377,11 @@ ls(e)
 #+end_src
 
 #+RESULTS:
-: 
-: [1] "a" "b"
+#+begin_src R
+
+[1] "a" "b"
+#+end_src
+\\
 
 - ~rm()~ で消す
 #+begin_src R :exports both
@@ -345,8 +390,10 @@ ls(e)
 #+end_src
 
 #+RESULTS:
-: 
-: [1] "b"
+#+begin_src R
+
+[1] "b"
+#+end_src
 
 *** =exists(x, where = -1, envir = , frame, mode = "any", inherits = TRUE)=
 
@@ -357,11 +404,13 @@ exists("b", envir = e) # get() と同じく、指定した環境になければ�
 #+end_src
 
 #+RESULTS:
-: [1] "b"
-: 
-: [1] FALSE
-: 
-: [1] TRUE
+#+begin_src R
+[1] "b"
+
+[1] FALSE
+
+[1] TRUE
+#+end_src
 
 *** =as.environment(x)=
 
@@ -373,21 +422,21 @@ as.environment("package:stats")
 #+end_src
 
 #+RESULTS:
-#+begin_example
+#+begin_src R
 <environment: R_GlobalEnv>
 
 <environment: package:splines>
 attr(,"name")
 [1] "package:splines"
 attr(,"path")
-[1] "/usr/lib/R/library/splines"
+[1] "/home/shun/.anyenv/envs/Renv/versions/3.6.3/lib/R/library/splines"
 
 <environment: package:stats>
 attr(,"name")
 [1] "package:stats"
 attr(,"path")
-[1] "/usr/lib/R/library/stats"
-#+end_example
+[1] "/home/shun/.anyenv/envs/Renv/versions/3.6.3/lib/R/library/stats"
+#+end_src
 
 *** getter/setter example
 
@@ -413,10 +462,12 @@ ls.str(my_env)
 #+end_src
 
 #+RESULTS:
-: 
-: [1] 1
-: 
-: a :  num 2
+#+begin_src R
+
+[1] 1
+
+a :  num 2
+#+end_src
 
 * Environments in Function
 ** Basics
@@ -455,7 +506,11 @@ environment(f)
 #+end_src
 
 #+RESULTS:
-: <environment: R_GlobalEnv>
+#+begin_src R
+
+<environment: R_GlobalEnv>
+#+end_src
+\\
 
 - Biding env
 #+begin_src R :exports both
@@ -465,7 +520,11 @@ e
 #+end_src
 
 #+RESULTS:
-: <environment: 0x55c87444be78>
+#+begin_src R
+
+<environment: 0x55d3f0522220>
+#+end_src
+\\
 
 - Enclosing env (= namespace env)
 #+begin_src R :exports both
@@ -473,7 +532,10 @@ environment(sd)
 #+end_src
 
 #+RESULTS:
-: <environment: namespace:stats>
+#+begin_src R
+<environment: namespace:stats>
+#+end_src
+\\
 
 - Biding env (= package env)
 #+begin_src R :exports both
@@ -481,11 +543,9 @@ where("sd")
 #+end_src
 
 #+RESULTS:
-: <environment: package:stats>
-: attr(,"name")
-: [1] "package:stats"
-: attr(,"path")
-: [1] "/usr/lib/R/library/stats"
+#+begin_src R
+Error in where("sd") : could not find function "where"
+#+end_src
 
 ** Execution environment
 
@@ -512,10 +572,14 @@ h()
 #+end_src
 
 #+RESULTS:
-: <environment: 0x55c874451180>
-: <environment: R_GlobalEnv>
-: <environment: 0x55c874452348>
-: <environment: 0x55c874451180>
+#+begin_src R
+
+<environment: 0x55d3ee760f98>
+<environment: R_GlobalEnv>
+<environment: 0x55d3ee7544f0>
+<environment: 0x55d3ee760f98>
+#+end_src
+\\
 
 - ~parent.env()~ と ~parent.frame()~ が紛らわしい
 - parent.frame = Calling enviroment = 関数を呼び出している環境 (~parent.env()~ ではない)
@@ -529,9 +593,11 @@ i()
 #+end_src
 
 #+RESULTS:
-: <environment: 0x55c87445fb68>
-: <environment: R_GlobalEnv>
-: <environment: R_GlobalEnv>
+#+begin_src R
+
+<environment: R_GlobalEnv>
+<environment: R_GlobalEnv>
+#+end_src
 
 ** Function factory and closure
 
@@ -553,10 +619,17 @@ plus_two(10)
 #+end_src
 
 #+RESULTS:
-: <environment: 0x55c87480ce38>
-: [1] 41
-: <environment: 0x55c87480ee00>
-: [1] 42
+#+begin_src R
+
+<environment: 0x55d3ee716670>
+
+[1] 41
+
+<environment: 0x55d3ee70db30>
+
+[1] 42
+#+end_src
+\\
 
 #+begin_src R :exports both
 environment(plus_one)
@@ -564,8 +637,12 @@ identical(parent.env(environment(plus_one)), environment(plus))
 #+end_src
 
 #+RESULTS:
-: <environment: 0x55c87480ce38>
-: [1] TRUE
+#+begin_src R
+<environment: 0x55d3ee716670>
+
+[1] TRUE
+#+end_src
+\\
 
 - 20 ではなく、10 が返る (親関数内の x を環境内で引き継いでいる)
 #+begin_src R :exports both
@@ -581,9 +658,12 @@ i()
 #+end_src
 
 #+RESULTS:
-: [1] 10
+#+begin_src R
 
-** 関数内から ~.GlobalEnv~ の値を得る
+[1] 10
+#+end_src
+
+** 関数内から .GlobalEnv の値を得る
 
 - Dynamic Scoping (Interactive Data Analysis では便利)
 - ~get()~ を利用するか ~.GlobalEnv$~ でアクセスする
@@ -603,14 +683,17 @@ str(g2())
 #+end_src
 
 #+RESULTS:
-: List of 2
-:  $ defined: num 10
-:  $ called : num 20
+#+begin_src R
+
+List of 2
+ $ defined: num 10
+ $ called : num 20
+#+end_src
 
 ** 値の割当て
 
 - ~<-~ (束縛)
-- ?Reserved ワード以外は利用可能
+  - ?Reserved ワード以外は利用可能
 #+begin_src R :exports both
 `a + b` <- 3
 `:)` <- "smile"
@@ -619,15 +702,19 @@ ls()
 #+end_src
 
 #+RESULTS:
-:  [1] "    "     ":)"       "a + b"    "c"        "e"        "e2"      
-:  [7] "f"        "f2"       "g2"       "get_a"    "h"        "i"       
-: [13] "is"       "modify"   "my_env"   "plus"     "plus_one" "plus_two"
-: [19] "ports"    "set_a"    "settings" "x"        "x_e"      "x_l"     
-: [25] "y"
+#+begin_src R
+
+ [1] "    "     ":)"       "a
+b"    "c"        "e"        "e2"
+ [7] "f"        "f2"       "g2"       "get_a"    "h"        "i"
+[13] "is"       "modify"   "my_env"   "plus"     "plus_one" "plus_two"
+[19] "set_a"    "settings" "x"        "x_e"      "x_l"      "y"
+#+end_src
+\\
 
 - ~<<-~
-- 親環境をさかのぼって変更する
-- 通常は利用しない方が良いが、Closure と組み合わせて使うと便利
+  - 親環境をさかのぼって変更する
+  - 通常は利用しない方が良いが、Closure と組み合わせて使うと便利
 #+begin_src R :exports both
 x <- 0
 f <- function() {
@@ -638,10 +725,14 @@ x
 #+end_src
 
 #+RESULTS:
-: [1] 1
+#+begin_src R
+
+[1] 1
+#+end_src
+\\
 
 - ~pryr::`%<d-%`~ (~base::delayedAssign()~)
-- Delayed binding => ~promise~ (遅延評価) を作成する
+  - Delayed binding => ~promise~ (遅延評価) を作成する
 #+begin_src R :exports both
 library(pryr)
 system.time(b %<d-% {
@@ -652,13 +743,18 @@ system.time(b) # ここを実行した時点で、%<d-% のブロックが実行
 #+end_src
 
 #+RESULTS:
-:    user  system elapsed 
-:       0       0       0
-:    user  system elapsed 
-:   0.000   0.000   1.001
+#+begin_src R
+
+   user  system elapsed
+      0       0       0
+
+   user  system elapsed
+  0.000   0.000   1.001
+#+end_src
+\\
 
 - ~pryr::`%<a-%`~ (~base::makeActiveBinding()~)
-- Active binding => アクセスされる毎に再計算される
+  - Active binding => アクセスされる毎に再計算される
 #+begin_src R :exports both
 x %<a-% runif(1)
 x
@@ -666,10 +762,17 @@ x
 #+end_src
 
 #+RESULTS:
-: [1] 0.8595137
-: [1] 0.6320141
+#+begin_src R
 
-* [[file:../package/r-lib/rlang.org][ ={rlang}= ]]
+[1] 0.4642073
+
+[1] 0.7943504
+#+end_src
+
+* Links
+
+- [[file:../package/r-lib/rlang.org][ ={rlang}= ]]
+
 * Reference
 
 - [[http://adv-r.had.co.nz/Environments.html][Advanced R 1st Edition: Environments]]
