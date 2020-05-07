@@ -1,8 +1,6 @@
 #+STARTUP: folded indent inlineimages latexpreview
 #+PROPERTY: header-args:R :results output :colnames yes :exports both :session *R:notes*
 
-Tech Notes by  [[https://orgmode.org/ja/][Org-mode]] + [[https://orgmode.org/worg/org-contrib/babel/][Babel]]
-
 * Table of Contents :toc_2:quote:
 #+BEGIN_QUOTE
 - [[#programming-language][Programming Language]]
