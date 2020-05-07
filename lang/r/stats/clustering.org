@@ -1,0 +1,236 @@
+#+STARTUP: folded indent inlineimages latexpreview
+#+PROPERTY: header-args:R :results output :session *R:clustering* :width 640 :height 480 :colnames yes
+
+* ライブラリの読み込み
+* 教師有り
+** k 近傍法 (KNN, K-Nearest Neighbor)
+
+*アルゴリズム*
+- 最も単純な機械学習アルゴリズムと言われる
+- クラス判別用の手法
+  1. 学習データをベクトル空間上にプロット
+  2. 未知のデータが得られたら、そこから距離が近い順に任意の k 個を取得
+  3. 多数決でデータが属するクラスを推定
+
+- 近さ
+  - 一般的にはユークリッド距離を利用
+  - ={kknn}= ではミンコフスキー距離を利用
+- k の数が違えば、分類が異なることもある
+  - CV で最適な k を求める
+- 学習データが大量にあるときに有効
+- 計算コストが大きい
+
+*その他のアルゴリズム*
+- 単純に Nearest Neighbor といった場合は k=1 のケース
+- 変形 k 近傍法 (modified k-NN)
+  - 近いデータ (Distance に応じて) を重視するように重み付け (Weighted KNN)
+
+*パラメタ*
+- =neighbors= (k)
+  - k の個数
+  - 100 くらいまでに増やして自動選択させる (オーバーフィットの可能性あり?)
+  - d=1 [1 ~ 10]
+- =weight_func= (kernal)
+  - The type of kernel function that weights the distances between samples.
+  - ={kknn}= の kernal の選択肢
+- =dist_power= (distance)
+  - The parameter used when calculating the Minkowski distance.
+  - Manhattan distance with =dist_power = 1=
+  - Euclidean distance with =dist_power = 2=
+  - distance > 0 でなければダメ (整数でなくて、正の実数)
+  - d=2 [1 ~ 5]
+  - [[https://medium.com/@mohtedibf/in-depth-parameter-tuning-for-knn-4c0de485baf6][In Depth: Parameter tuning for KNN]]
+
+** ={kknn}= Package
+
+- 分類だけでなく、回帰・多クラス分類にも利用可能
+- kernal の選択
+  - ="rectangular"= (which is standard unweighted knn)
+  - ="triangular"=
+  - ="epanechnikov"= (or beta(2,2))
+  - ="biweight"= (or beta(3,3))
+  - ="triweight"= (or beta(4,4))
+  - ="cos"=
+  - ="inv"=
+  - ="gaussian"=
+  - ="rank"=
+  - ="optimal"=
+  - まとめて vector で指定できる. ベストなものを選択してくれる
+
+- =kknn()= は newdata から =predict()= で予測を生成できない
+  - =train.kknn()= なら可能
+  - [[https://stackoverflow.com/questions/57649227/how-to-predict-in-kknn-function-librarykknn][How to predict in kknn function? library(kknn)@stackoverflow]]
+
+#+begin_src R
+kknn(
+  formula = formula(train),
+  train,
+  test,
+  na.action = na.omit(), 
+	k = 7,
+  distance = 2, # Minkowski distance
+  kernel = "optimal",
+  ykernel = NULL, # Window width of an y-kernel, especially for prediction of ordinal classes.
+  scale=TRUE, # 特徴量を正規化するか
+	contrasts = c('unordered' = "contr.dummy", ordered = "contr.ordinal"))
+
+## LOO
+train.kknn(
+  formula,
+  data, # matrix or data.frame
+  kmax = 11, # kの最大値
+  ks = NULL, # A vector specifying values of k (kmax よりも優先される)
+  distance = 2,
+  kernel = "optimal",
+	ykernel = NULL,
+  scale = TRUE,
+  contrasts = c('unordered' = "contr.dummy", ordered = "contr.ordinal"),
+  ...)
+
+## K-fold
+cv.kknn(
+  formula,
+  data,
+  kcv = 10,
+  ...)
+#+end_src
+
+* 教師なし
+** 階層型クラスタリング (ユークリッド距離 * ウォード法など)
+*** 概要
+
+- *Hierarchical Clustering = 階層型クラスタリング*
+- データの類似度からデータをいくつかのグループ(クラスタ)に分類する手法
+- データの類似度はデータ間の距離に基づく
+
+*距離の測定方法*
+- ユークリッド距離（Euclidean）
+- ミンコフスキー距離（Minkowski）
+- マンハッタン距離（Manhattan）
+- マハラノビス距離（Mahalanobis）
+- チェビシェフ距離（Chebyshev）
+- キャンベラ距離（Canberra）
+
+*クラスター間の距離の測定法 (ウォード法が最もよく使われる)*
+- 最短距離法 (単連結法)
+  - 2 つのクラスターから 1 個ずつ個体を選び、個体間の距離を求める
+  - 最も近い個体間の距離をクラスター間の距離とする
+- 最長距離法 (完全連結法)
+	- 2 つのクラスターから 1 個ずつ個体を選び、個体間の距離を求める
+  - 最も遠い個体間の距離をクラスター間の距離とする
+- 群平均法	
+  - 最近隣法と最遠隣法のハイブリッド的な手法
+  - 全個体間の距離の平均をクラスター間の距離とする
+- 重心法
+  - クラスター間の重心間距離をクラスター間の距離とする
+  - 重心を求める際に、個体数を重みとして用いる
+- メディアン法
+  - 重心法と似た方法
+  - 重みを等しくし求めたクラスター間の重心間距離をクラスター間の距離とする
+- McQuitty 法
+  - 2 つのクラスター A ・ B を併合したクラスター C がある時、クラスター D との距離を、距離 AD と距離 BD の平均値より算出する
+- *ウォード法 (最小分散法)*
+  - 併合することによる情報の損失量の増加分をクラスター間の距離とする
+  - すべてのクラスター内の偏差平方和の和が小さくなるように併合する
+
+*** Reference
+
+#+begin_src R :results silent
+
+## 距離の計測
+stats::dist(
+  x, # matrix, data.frame or dist object
+  method = "euclidean", # or "maximum", "manhattan", "canberra", "binary", "minkowski"
+  diag = FALSE,
+  upper = FALSE,
+  p = 2)
+
+## 樹形図の作成
+stats::hclust(
+  d, # hist() で作成した非類似度
+  ## "ward.D"
+  ## "ward.D2"
+  ## "single"
+  ## "complete"
+  ## "average"
+  ## "mcquitty"
+  ## "median"
+  ## "centroid"
+  method = "complete", 
+  members = NULL)
+
+cutree(
+  tree, # hclust() で作成されたツリー
+  k = NULL, # グループ数. k もしくは H を必ず指定する
+  h = NULL # numeric scalar or vector with heights where the tree should be cut.
+)
+#+end_src
+
+*** [[https://qiita.com/Haruka-Ogawa/items/fcda36cc9060ba851225][R言語でクラスタリングしてみた@Qiita]]
+
+- iris の Species の分類を再現したい
+#+begin_src R
+data <- iris[, 1:4]
+
+## データの非類似度
+distance <- dist(data)
+
+## ウォード法で樹形図 (テンドログラム) を作成
+hc <- hclust(distance, "ward.D2")
+hc
+#+end_src
+
+#+RESULTS:
+: 
+: Call:
+: hclust(d = distance, method = "ward.D2")
+: 
+: Cluster method   : ward.D2 
+: Distance         : euclidean 
+: Number of objects: 150
+
+#+begin_src R
+plot(hc)
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-LNG1rJ.png]]
+
+- クラスタを 3 つ (Species の数) で分割する
+#+begin_src R
+result <- cutree(hc, k=3)
+result
+#+end_src
+
+#+RESULTS:
+: 
+:   [1] 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+:  [38] 1 1 1 1 1 1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
+:  [75] 2 2 2 3 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 3 2 3 3 3 3 2 3 3 3 3
+: [112] 3 3 2 2 3 3 3 3 2 3 2 3 2 3 3 2 2 3 3 3 3 3 2 2 3 3 3 2 3 3 3 2 3 3 3 2 3
+: [149] 3 2
+
+- 正答率を見る
+#+begin_src R
+answer <- iris[,5]
+table <- table(answer, result)
+table
+#+end_src
+
+#+RESULTS:
+: 
+:             result
+: answer        1  2  3
+:   setosa     50  0  0
+:   versicolor  0 49  1
+:   virginica   0 15 35
+ 
+** 非階層型クラスタリング (k-means など)
+
+- いくつのグループに分割するかを予め指定する方法
+- k-means 法が最もメジャー
+
+** トピックモデル (LDA など)
+* 参考
+
+- [[https://qiita.com/Haruka-Ogawa/items/fcda36cc9060ba851225][R言語でクラスタリングしてみた@Qiita]]

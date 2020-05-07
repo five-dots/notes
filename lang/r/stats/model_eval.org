@@ -1,0 +1,809 @@
+#+STARTUP: folded indent inlineimages latexpreview
+#+PROPERTY: header-args:R :session *R:eval* :results output :width 640 :height 480 :colnames yes
+
+* ライブラリの読み込み
+
+#+begin_src R :results silent
+library(tidyverse)
+#+end_src
+
+* 概要
+
+- モデルの当てはまりの評価
+- 「当てはまりの良さ」と「予測の精度」は違う !!!
+- 一般的に、モデルが複雑になれば、当てはまりの良さは向上するが、予測精度は悪くなる
+- [[https://funatsu-lab.github.io/open-course-ware/basic-theory/accuracy-index/][精度評価指標と回帰モデルの評価]]
+
+- モデルの評価は、からなず学習データとは分けたバリデーションデータで行う
+  - 当てはまりではなく、汎化性能 (予測能力) を見るため
+
+* 指標
+** リスト
+
+- 2 値分類 (0/1)
+  - Accuracy             =Metrics::accuracy()=
+  - Classification Error =Metrics::ce()=
+  - Precision            =Metrics::precision()=
+  - Recall               =Metrics::recall()=
+  - F1                   =Metrics::f1()=
+  - F1-beta              =Metrics::fbeta_score()=
+
+- 2 値分類 (確率)
+  - Logloss                        =Metrics::logLoss()=
+  - AUC (Area Under the ROC Curve) =Metrics::auc()=
+
+- 多クラス分類
+  - Accuracy  =Metrics::accuracy()=
+  - Multiclass Logloss MLmetrics =MLmetrics::MultiLogLoss()=
+
+- 回帰
+  - RMSE  (Root Mean Squared Error)             =Metrics::rmse()=
+  - RMSLE (Root Mean Squared Logarithmic Error) =Metrics::rmsle()=
+  - MSE   (Mean Squared Error)                  =Metrics::mse()=
+  - MAE   (Mean Absolute Error)                 =Metrics::mae()=
+  - MAPE  (Mean Absolute Percent Error)         =Metrics::mape()=
+  - MASE  (Mean Absolute Scaled Error)          =Metrics::mase()=
+  - MDAE  (Median Absolute Error)               =Metrics::mdae()=
+  - MSLE  (Mean Squared Log Error)              =Metrics::msle()=
+  - RAE   (Relative Absolute Error)             =Metrics::rae()=
+  - RRSE  (Root Relative Squared Error)         =Metrics::rrse()=
+  - RSE   (Relative Squared Error)              =Metrics::rse()=
+  - SE    (Squared Error)                       =Metrics::se()=
+  - SLE   (Squared Log Error)                   =Metrics::sle()=
+  - SSE   (Sum of Squared Errors)               =Metrics::sse()=
+  - SMAPE (Symmetric Mean Absolute Percentage Error) =Metrics::smape()=
+  - Bias                                        =Metrics::bias()=
+  - Percent Bias                                =Metrics::percent_bias()=
+
+- Vectorized
+  =Metrics::ae()= Abusolute Error
+  =Metrics::ape()= Abusolute Percent Error
+  =Metrics::ll()= Element-wise Logloss
+
+=Metrics::apk()= Average Precision at k
+=Metrics::mapk()= Mean Absolute Precision at k
+=Metrics::MeanQuadraticWeightedKappa()= Mean Quadratic Weighted Kappa
+=Metrics::ScoreQuadraticWeightedKappa()= Quadratic Weighted Kappa 
+
+** 回帰の指標
+*** データ
+
+- 異なるデータセットの結果を比較してはいけない！！
+#+begin_src R :results graphics :file (get-babel-file)
+obs <- c(1.1, 1.9, 3.0, 4.4, 5.0, 5.6)
+pred <- c(0.9, 1.8, 2.5, 4.5, 5.0, 6.2)
+
+plot(obs, pred)
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-2gGLZK.png]]
+
+*** RMSE (Root Mean Squared Error)
+
+- 回帰モデルの指標として、最も一般的
+- 平均化された誤差, 0 に近づくほど精度が高い
+
+$RMSE = \sqrt{\frac{1}{N} \Sigma_{i=1}^N (y_i - \hat{y_i})^2}$
+
+- ポイント  
+  - RMSE の最小化は以下の意味があるため、統計学的にも重要
+    = 最小二乗法 (2 乗誤差の最小化)
+    = 最尤推定法 (誤差に正規分布を仮定した場合)
+  - データと同じ尺度
+  - MAE と比べると外れ値の影響を受けやすいため、予め除外するなどの処理が必要
+
+#+begin_src R
+sqrt(sum((obs - pred) ^ 2) / length(obs))
+sqrt(mean((obs - pred) ^ 2)) # 上記と同じ
+
+Metrics::rmse(obs, pred)
+DescTools::RMSE(pred, ref = obs)
+DescTools::RMSE(lm_fit)
+#+end_src
+
+#+RESULTS:
+: [1] 0.3341656
+: [1] 0.3341656
+: [1] 0.3341656
+: [1] 0.3162998
+: [1] 0.3341656
+
+*** RMSLE (Root Mean Squared Logarithmic Error)
+
+- RMSE の対数版
+- 目的変数を対数変換した場合の RMSE と同じ意味
+- 負の数にならないように log(1 + y) とする
+- Point
+  - 目的変数の裾が厚い場合
+  - 予測値の比率に注目したい場合
+
+$RMSLE = \sqrt{\frac{1}{N} \Sigma_{i=1}^N (log(1 + y_i) - log(1 + \hat{y_i}))^2}$
+
+#+begin_src R
+sqrt(mean((log(1 + obs) - log(1 + pred)) ^ 2))
+Metrics::rmsle(obs, pred)
+#+end_src
+
+#+RESULTS:
+: [1] 0.0785137
+: 
+: [1] 0.0785137
+
+*** MSE (Mean Squared Error)
+
+- 経済・ファイナンスデータで用いられることが多い (by 沖本)
+
+#+begin_src R
+sum((obs - pred) ^ 2) / length(obs)
+mean((obs - pred) ^ 2)
+
+Metrics::mse(obs, pred)
+DescTools::MSE(pred, ref = obs)
+DescTools::MSE(lm_fit)
+#+end_src
+
+#+RESULTS:
+: [1] 0.1116667
+: [1] 0.1116667
+: [1] 0.1116667
+: [1] 0.1116667
+: [1] 0.1000456
+
+*** MAE (Mean Absolute Error)
+
+- 平均化された絶対誤差, 0 に近づくほど精度が高い
+- MAE の最小化 
+  => 絶対誤差の最小化
+  => 最尤推定法(誤差にラプラス分布を仮定した場合)
+- ラプラス分布は裾のが広いため、 _外れ値に影響されたくない場合は、RMSE よりも MAE を使う_
+
+$MAE = \frac{1}{N} \Sigma_{i=1}^N | y_i - \hat{y_i} |$
+
+#+begin_src R
+sum(abs(obs - pred)) / length(obs)
+mean(abs(obs - pred))
+
+Metrics::mae(obs, pred)
+DescTools::MAE(pred, ref = obs)
+DescTools::MAE(lm_fit)
+#+end_src
+
+#+RESULTS:
+: [1] 0.25
+: [1] 0.25
+: [1] 0.25
+: [1] 0.25
+: [1] 0.2552523
+
+*** RMSE vs. MAE
+
+- [[https://funatsu-lab.github.io/open-course-ware/basic-theory/accuracy-index/][精度評価指標と回帰モデルの評価@Instruction of chemoinfomatics]]
+
+- rmse / mae == sqrt(1 + var / mean(e) ^ 2)
+- RMSE/MAE = 1.253(=sqrt(pi/2)) 付近になるのが、よいモデル (誤差が正規分布の場合)
+- RMSE/MAE = 1.414 付近になるのが、よいモデル (誤差がラプラス分布の場合)
+
+#+begin_src R
+rmse(obs, pred) / mae(obs, pred)
+#+end_src
+
+#+RESULTS:
+: [1] 1.336663
+
+*** R2 決定係数
+
+- 観測値と予測値の相関係数, 1 に近づくほど精度が高い
+- Adjusted R2 = 自由度調整済み決定係数 (説明変数を増やすことのペナルティを考慮)
+
+$R^2 = 1 - \frac{\Sigma_{i=1}^N(y_i - \hat{y_i})^2}{\Sigma_{i=1}^N (y_i - \bar{y_i})^2}$
+
+- 分子が RMSE と同じ形
+- _R2 の最大化は RMSE の最小化と同じ意味_
+
+#+begin_src R
+r2 <- 1 - sum((obs - pred)^2) / sum((obs - mean(obs))^2)
+r2
+# summary(fit)$r.squared
+lm_fit <- lm(obs ~ pred) 
+summary(lm_fit)$r.squared
+#+end_src
+
+#+RESULTS:
+: 
+: [1] 0.9582294
+: 
+: [1] 0.9832212
+
+** 分類の指標
+*** データ
+
+#+begin_src R :results silent
+obs <- c(1, 0, 0, 1, 1, 0, 1, 0, 1, 1, 0)
+pred <- c(1, 0, 0, 0, 0, 1, 1, 0, 1, 0, 0)
+#+end_src
+
+*** 混同行列 (Confusion Matrix)
+
+- 予測値と正解・不正解をマトリックで表現する
+  - TP (True Positive)  正解 by 1
+  - TN (True Negative)  正解 by 0
+  - FP (False Positive) 不正解 by 1
+  - FN (False Negative) 不正解 by 0
+
+| TP | FP |
+| FN | FP |
+
+*** 正答率 (Accuracy), 誤答率 (Error Rate)
+
+- 正解数 / 全レコード
+- わかりやすいが、モデルの性能評価には使いづらい (細かい改善が反映されない)
+- 例えば、51% の予測と 99% の予測がどちらも 予測=1 になるため、予測精度の情報が抜け落ちる
+
+$accuracy = \frac{TP + TN}{TP + FP + TN + FN}$
+
+$error rate = 1 - accuracy$
+
+#+begin_src R
+length(pred[pred == obs]) / length(pred)
+Metrics::accuracy(obs, pred)
+#+end_src
+
+#+RESULTS:
+: [1] 0.6363636
+: 
+: [1] 0.6363636
+
+*** 適合率 (Precision), 再現率 (Recall)
+
+- 適合率 = 1 と予測した中で正解した割合
+$precision = \frac{TP}{TP + FP}$
+
+- 再現率 = 正解=1 の時、どの程度 1 を含めていたか
+$recall = \frac{TP}{TP + FN}$
+
+- 適合率と再現率はトレードオフの関係にある
+  - 誤検知を少なくしたいときは、適合率を改善する
+  - 正例の見逃しを避けたい場合は、再現率を改善する
+- F1 や F-beta の計算に用いられる
+
+#+begin_src R
+Metrics::precision(obs, pred)
+Metrics::recall(obs, pred)
+#+end_src
+
+#+RESULTS:
+: [1] 0.75
+: 
+: [1] 0.5
+
+*** F1, F-beta
+
+- 適合率と再現率の調和平均
+- 実務でもよく利用される
+
+$F1 = \frac{2}{\frac{1}{precision} \frac{1}{recall}}$
+
+$F \beta = \frac{(1 + \beta)^2}{\frac{\beta^2}{recall} \frac{1}{precision}}$
+
+#+begin_src R
+Metrics::f1(obs, pred)
+
+Metrics::fbeta_score(obs, pred, beta = 1) # default
+Metrics::fbeta_score(obs, pred, beta = 0.5)
+#+end_src
+
+#+RESULTS:
+: [1] 1
+: [1] 0.6
+: [1] 0.6818182
+
+*** MCC (Matthews Correlation Coefficient)
+
+- -1 ~ +1 の値を取る
+- +1 = 完璧な予想, 0 = ランダム, -1 = 全く逆の予想
+
+$MCC = \frac{TP \times TN - FP \times FN}{\sqrt{(TP+FP)(TP+FN)(TN+FP)(TN+FN)}}$
+
+#+begin_src R
+mltools::mcc(pred, obs)
+#+end_src
+
+#+RESULTS:
+: [1] 0.3105295
+
+** 分類の指標 (確率)
+*** logloss (Cross Entropy)
+
+- 低いほうが良い指標
+- p' が真の値を予測している確率
+- 「p' の対数の平均のマイナスを小さくする」という考え方
+
+- 分類タスクでの代表的な指標
+- モデル学習の目的変数としても利用される
+
+$logloss = -\frac{1}{N} \Sigma_{i=1}^N (y_i log(p_i) + (1 - y_i)log(1 - p_i)) = -\frac{1}{N} \Sigma_{i=1}^N logp_i^'$
+
+#+begin_src R
+obs <- c(1, 1, 0)
+pred <- c(0.9, 0.5, 0.1)
+
+-mean(obs * log(pred) + (1 - obs) * log(1 - pred))
+Metrics::logLoss(obs, pred)
+#+end_src
+
+#+RESULTS:
+: 
+: [1] 0.3012894
+: 
+: [1] 0.3012894
+
+- 大きく外すと、その分のペナルティがある、という考え方
+#+begin_src R
+-log(0.9) # 90%と予測
+-log(0.5) # 50%と予測
+-log(0.1) # 10%と予測 (ペナルティが大きい)
+#+end_src
+
+#+RESULTS:
+: [1] 0.1053605
+: 
+: [1] 0.6931472
+: 
+: [1] 2.302585
+
+- 予測値に 1 or 0 が含まれていると logloss が不正な値になる
+  - =log(0) = -Inf= になるため
+  - [[https://stackoverflow.com/questions/53057083/why-does-the-log-loss-function-return-undefined-when-the-prediction-has-1-or-0][Why does the log loss function return undefined when the prediction has 1 or 0?@Stackoverflow]]
+  - minmax 処理を挟む
+  - =Metrics::logLoss()= では計算可能？
+
+#+begin_src R
+obs <- c(1, 1, 0, 1)
+pred <- c(0.9, 0.5, 0.1, 1)
+Metrics::logLoss(obs, pred)
+
+pred_minmax = max(min(pred, 1-10^-15), 10^-15)
+Metrics::logLoss(obs, pred_minmax)
+#+end_src
+
+#+RESULTS:
+: 
+: [1] 0.2259671
+: 
+: [1] 1.753279
+
+*** AUC (Area Under the ROC Curve)
+
+- ROC 曲線を元に算出される指標
+- ROC 曲線とは
+  - 予測値を 1 とする確率の閾値を 0 ~ 1 に動かす
+  - 偽陽性率(FP rate) を x にプロット  (FP/(FP+TN))
+  - 真陽性率(TP rate) を y にプロット  (TP/(TP+FN))
+- 完全な予測の場合 AUC=1, ランダムな予測の場合, AUC=0.5 になる
+- Gini 係数 = 2*AUC-1 なので、AUC と同じ
+
+ROC 曲線の見方
+- 正答が、(1, 1, 0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0) の場合の例
+- 左下からスタートし、右上でゴール。そこに至るまでに 閾値を 0 ~ 1 へ変化させる。
+- 1=正解したら、上に 0.2 移動、不正解なら右に 0.1 移動
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+df <- tibble(
+  tpr = c(0, 0.2, 0.4, 0.4, 0.4, 0.6, 0.8, 0.8, 0.8, 0.8, 1, 1, 1, 1, 1, 1),
+  fpr = c(0, 0, 0, 0.1, 0.2, 0.2, 0.2, 0.3, 0.4, 0.5, 0.5, 0.6, 0.7, 0.8, 0.9, 1))
+
+ggplot(df, aes(x = fpr, y = tpr)) +
+  geom_line() +
+  geom_abline(slope = 1, linetype = "dotted")
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-bO5Wi7.png]]
+
+#+begin_src R
+obs <- c(1, 1, 0, 1, 0)
+pred <- c(0.9, 0.4, 0.4, 0.6, 0.1)
+Metrics::auc(obs, pred)
+#+end_src
+
+#+RESULTS:
+: [1] 0.9166667
+
+** 分類の指標 (多クラス)
+*** Multi-class Accuracy
+
+- Accuracy の多クラス版
+
+*** Multi-class logloss
+
+- logloss を多クラスに拡張したもの
+- 多クラス分類の指標としてよく用いられる
+- M = クラス数
+- データ数 X クラス数の行列を入力する
+
+$multiclass \ logloss = -\frac{1}{N} \Sigma_{i=1}^N \Sigma_{i=1}^M y_{i,m} logp_{i,m}$
+
+#+begin_src R
+true <- c(0, 2, 1, 2, 2)
+pred <- matrix(
+  c(0.68, 0.32, 0,
+    0,    0.00, 1,
+    0.60, 0.40, 0,
+    0,       0, 1,
+    0.28, 0.12, 0.60),
+  ncol = 3, byrow = TRUE)
+
+MLmetrics::MultiLogLoss(pred, true)
+#+end_src
+
+#+RESULTS:
+: [1] 0.3625558
+
+*** mean-F1, macro-F1, micro-F1
+
+- F1 を多クラスに拡張
+- 主に、マルチラベル分類に利用される
+
+- mean-F1 レコード単位で F1 を計算し、平均する
+- macro-F1 クラス単位で F1 を計算し、平均する
+- micro-F1 レコード x クラス
+
+*** Quadoratic Weighted Kappa
+
+- マルチクラス分類で、クラス間に順序関係があるものに利用する
+- i = 真のクラス
+- j = 予測値のクラス
+
+$\kappa = 1 - \frac{\Sigma_{i,j} w_{i,j} Q_{i,j}}{\Sigma_{ij} w_{i,j} E_{i,j}}$
+
+** レコメンデーションの指標
+*** MAP@K
+
+- Mean Average Precision @ K の略
+- レコメンデーションタスクで利用される
+
+** R パッケージ
+*** ={yardstick}= package
+
+#+begin_src R
+pacman::p_funs(yardstick)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+ [1] "accuracy"                    "accuracy_vec"               
+ [3] "average_precision"           "average_precision_vec"      
+ [5] "bal_accuracy"                "bal_accuracy_vec"           
+ [7] "ccc"                         "ccc_vec"                    
+ [9] "conf_mat"                    "detection_prevalence"       
+[11] "detection_prevalence_vec"    "dots_to_estimate"           
+[13] "f_meas"                      "f_meas_vec"                 
+[15] "finalize_estimator"          "finalize_estimator_internal"
+[17] "gain_capture"                "gain_capture_vec"           
+[19] "gain_curve"                  "get_weights"                
+[21] "huber_loss"                  "huber_loss_pseudo"          
+[23] "huber_loss_pseudo_vec"       "huber_loss_vec"             
+[25] "iic"                         "iic_vec"                    
+[27] "j_index"                     "j_index_vec"                
+[29] "kap"                         "kap_vec"                    
+[31] "lift_curve"                  "mae"                        
+[33] "mae_vec"                     "mape"                       
+[35] "mape_vec"                    "mase"                       
+[37] "mase_vec"                    "mcc"                        
+[39] "mcc_vec"                     "metric_set"                 
+[41] "metric_summarizer"           "metric_vec_template"        
+[43] "metrics"                     "mn_log_loss"                
+[45] "mn_log_loss_vec"             "npv"                        
+[47] "npv_vec"                     "ppv"                        
+[49] "ppv_vec"                     "pr_auc"                     
+[51] "pr_auc_vec"                  "pr_curve"                   
+[53] "precision"                   "precision_vec"              
+[55] "recall"                      "recall_vec"                 
+[57] "rmse"                        "rmse_vec"                   
+[59] "roc_auc"                     "roc_auc_vec"                
+[61] "roc_curve"                   "rpd"                        
+[63] "rpd_vec"                     "rpiq"                       
+[65] "rpiq_vec"                    "rsq"                        
+[67] "rsq_trad"                    "rsq_trad_vec"               
+[69] "rsq_vec"                     "sens"                       
+[71] "sens_vec"                    "smape"                      
+[73] "smape_vec"                   "spec"                       
+[75] "spec_vec"                    "tidy"                       
+[77] "validate_estimator"
+#+end_example
+
+*** ={Metircs}= package
+
+#+begin_src R
+pacman::p_funs(Metrics)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+ [1] "accuracy"                    "ae"                         
+ [3] "ape"                         "apk"                        
+ [5] "auc"                         "bias"                       
+ [7] "ce"                          "f1"                         
+ [9] "fbeta_score"                 "ll"                         
+[11] "logLoss"                     "mae"                        
+[13] "mape"                        "mapk"                       
+[15] "mase"                        "mdae"                       
+[17] "MeanQuadraticWeightedKappa"  "mse"                        
+[19] "msle"                        "percent_bias"               
+[21] "precision"                   "rae"                        
+[23] "recall"                      "rmse"                       
+[25] "rmsle"                       "rrse"                       
+[27] "rse"                         "ScoreQuadraticWeightedKappa"
+[29] "se"                          "sle"                        
+[31] "smape"                       "sse"
+#+end_example
+
+*** ={DescTools}= package
+
+#+begin_src R
+pacman::p_funs(DescTools)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+  [1] "%()%"                   "%(]%"                   "%)(%"                  
+  [4] "%)[%"                   "%[)%"                   "%[]%"                  
+  [7] "%](%"                   "%][%"                   "%^%"                   
+ [10] "%c%"                    "%like any%"             "%like%"                
+ [13] "%nin%"                  "%overlaps%"             "Abind"                 
+ [16] "Abstract"               "AddMonths"              "AddMonthsYM"           
+ [19] "Agree"                  "AllDuplicated"          "AndersonDarlingTest"   
+ [22] "aovlDetails"            "aovlErrorTerms"         "Append"                
+ [25] "Arrow"                  "as.CDateFmt"            "as.fmt"                
+ [28] "as.matrix.xtabs"        "AscToChar"              "Asp"                   
+ [31] "Assocs"                 "Atkinson"               "AUC"                   
+ [34] "AxisBreak"              "axTicks.Date"           "axTicks.POSIXct"       
+ [37] "BarnardTest"            "BartelsRankTest"        "BarText"               
+ [40] "BinomCI"                "BinomDiffCI"            "BinomRatioCI"          
+ [43] "BinToDec"               "BinTree"                "BlankIfNA"             
+ [46] "BootCI"                 "BoxCox"                 "BoxCoxInv"             
+ [49] "BoxCoxLambda"           "BoxedText"              "BreslowDayTest"        
+ [52] "BreuschGodfreyTest"     "BrierScore"             "BubbleLegend"          
+ [55] "Canvas"                 "CartToPol"              "CartToSph"             
+ [58] "CatTable"               "CCC"                    "CharToAsc"             
+ [61] "Clockwise"              "Closest"                "CmToPts"               
+ [64] "Coalesce"               "CochranArmitageTest"    "CochranQTest"          
+ [67] "CoefVar"                "CohenD"                 "CohenKappa"            
+ [70] "CollapseTable"          "ColorLegend"            "ColToGray"             
+ [73] "ColToGrey"              "ColToHex"               "ColToHsv"              
+ [76] "ColToRgb"               "ColumnWrap"             "CombN"                 
+ [79] "CombPairs"              "CombSet"                "CompleteColumns"       
+ [82] "ConDisPairs"            "Conf"                   "ConnLines"             
+ [85] "ConoverTest"            "ContCoef"               "Contrasts"             
+ [88] "ConvUnit"               "Cor"                    "CorCI"                 
+ [91] "CorPart"                "CorPolychor"            "CountCompCases"        
+ [94] "CourseData"             "Cov"                    "CramerV"               
+ [97] "CramerVonMisesTest"     "createCOMReference"     "CronbachAlpha"         
+[100] "Cross"                  "CrossN"                 "Cstat"                 
+[103] "CutQ"                   "Day"                    "Day<-"                 
+[106] "DB"                     "dBenf"                  "DecToBin"              
+[109] "DecToHex"               "DecToOct"               "DegToRad"              
+[112] "DenseRank"              "Desc"                   "DescToolsOptions"      
+[115] "dExtrVal"               "dFrechet"               "dGenExtrVal"           
+[118] "dGenPareto"             "dGompertz"              "dGumbel"               
+[121] "DiffDays360"            "DigitSum"               "DivCoef"               
+[124] "DivCoefMax"             "Divisors"               "dNegWeibull"           
+[127] "DoBy"                   "DoCall"                 "dOrder"                
+[130] "Dot"                    "DrawArc"                "DrawBand"              
+[133] "DrawBezier"             "DrawCircle"             "DrawEllipse"           
+[136] "DrawRegPolygon"         "dRevGumbel"             "dRevWeibull"           
+[139] "Dummy"                  "DunnettTest"            "DunnTest"              
+[142] "DurbinWatsonTest"       "Entropy"                "Eps"                   
+[145] "ErrBars"                "EtaSq"                  "ExpFreq"               
+[148] "Factorize"              "FctArgs"                "Fibonacci"             
+[151] "FindColor"              "FindCorr"               "FindRProfile"          
+[154] "FisherZ"                "FisherZInv"             "FixToTable"            
+[157] "Flags"                  "Fmt"                    "Format"                
+[160] "Frac"                   "Freq"                   "Freq2D"                
+[163] "GCD"                    "GeomSn"                 "GeomTrans"             
+[166] "GetCurrPP"              "GetCurrWrd"             "GetCurrXL"             
+[169] "GetNewPP"               "GetNewWrd"              "GetNewXL"              
+[172] "Gini"                   "GiniSimpson"            "Gmean"                 
+[175] "GoodmanKruskalGamma"    "GoodmanKruskalTau"      "Gsd"                   
+[178] "GTest"                  "Herfindahl"             "HexToCol"              
+[181] "HexToDec"               "HexToRgb"               "HighLow"               
+[184] "Hmean"                  "HmsToSec"               "HodgesLehmann"         
+[187] "HoeffD"                 "HosmerLemeshowTest"     "HotellingsT2Test"      
+[190] "Hour"                   "HuberM"                 "ICC"                   
+[193] "identify.formula"       "IdentifyA"              "Impute"                
+[196] "InDots"                 "Interval"               "IPMT"                  
+[199] "IQRw"                   "IRR"                    "IsDate"                
+[202] "IsDichotomous"          "IsEuclid"               "IsLeapYear"            
+[205] "IsNumeric"              "IsOdd"                  "IsPrime"               
+[208] "IsValidHwnd"            "IsWeekend"              "IsWhole"               
+[211] "IsZero"                 "JarqueBeraTest"         "JonckheereTerpstraTest"
+[214] "KappaM"                 "KendallTauA"            "KendallTauB"           
+[217] "KendallW"               "Keywords"               "KrippAlpha"            
+[220] "Kurt"                   "Label"                  "Label<-"               
+[223] "Lambda"                 "Large"                  "LastDayOfMonth"        
+[226] "Lc"                     "LCM"                    "LehmacherTest"         
+[229] "LeveneTest"             "LillieTest"             "lines.Lc"              
+[232] "lines.lm"               "lines.loess"            "lines.smooth.spline"   
+[235] "lines.SmoothSpline"     "LineToUser"             "LinScale"              
+[238] "LOCF"                   "LOF"                    "Logit"                 
+[241] "LogitInv"               "LogSt"                  "LogStInv"              
+[244] "LongToRgb"              "LsFct"                  "LsObj"                 
+[247] "MAD"                    "MAE"                    "MAPE"                  
+[250] "Mar"                    "Margins"                "MaxDigits"             
+[253] "Mean"                   "MeanAD"                 "MeanCI"                
+[256] "MeanDiffCI"             "MeanSE"                 "Median"                
+[259] "MedianCI"               "Mgp"                    "MHChisqTest"           
+[262] "Midx"                   "Minute"                 "MixColor"              
+[265] "Mode"                   "ModSummary"             "Month"                 
+[268] "MosesTest"              "MoveAvg"                "MSE"                   
+[271] "MultinomCI"             "MultMerge"              "MutInf"                
+[274] "N"                      "NAIfBlank"              "NAIfZero"              
+[277] "Ndec"                   "NemenyiTest"            "NMAE"                  
+[280] "NMSE"                   "Now"                    "NPV"                   
+[283] "NPVFixBond"             "OctToDec"               "OddsRatio"             
+[286] "OPR"                    "OrderMixed"             "ORToRelRisk"           
+[289] "Outlier"                "Overlap"                "PageTest"              
+[292] "PairApply"              "Pal"                    "ParseFormula"          
+[295] "ParseSASDatalines"      "PartialSD"              "PasswordDlg"           
+[298] "pBenf"                  "PDFManual"              "PearsonTest"           
+[301] "PercentRank"            "PercTable"              "Permn"                 
+[304] "pExtrVal"               "pFrechet"               "pGenExtrVal"           
+[307] "pGenPareto"             "pGompertz"              "pGumbel"               
+[310] "Phi"                    "Phrase"                 "plot.bagplot"          
+[313] "plot.Conf"              "plot.Lc"                "plot.Lclist"           
+[316] "plot.palette"           "plot.PostHocTest"       "PlotACF"               
+[319] "PlotArea"               "PlotBag"                "PlotBagPairs"          
+[322] "PlotBinTree"            "PlotBubble"             "PlotCandlestick"       
+[325] "PlotCashFlow"           "PlotCirc"               "PlotCorr"              
+[328] "PlotDot"                "PlotECDF"               "PlotFaces"             
+[331] "PlotFdist"              "PlotFun"                "PlotGACF"              
+[334] "PlotLinesA"             "PlotLog"                "PlotMarDens"           
+[337] "PlotMiss"               "PlotMonth"              "PlotMosaic"            
+[340] "PlotMultiDens"          "PlotPairs"              "PlotPolar"             
+[343] "PlotPyramid"            "PlotQQ"                 "PlotTernary"           
+[346] "PlotTreemap"            "PlotVenn"               "PlotViolin"            
+[349] "PlotWeb"                "PMT"                    "pNegWeibull"           
+[352] "PoissonCI"              "PolarGrid"              "PolToCart"             
+[355] "pOrder"                 "PostHocTest"            "power.chisq.test"      
+[358] "PpAddSlide"             "PPMT"                   "PpPlot"                
+[361] "PpText"                 "Prec"                   "pRevGumbel"            
+[364] "pRevWeibull"            "Primes"                 "print.Assocs"          
+[367] "print.Conf"             "print.CorPolychor"      "print.DunnTest"        
+[370] "print.Freq"             "print.HoeffD"           "print.ICC"             
+[373] "print.mtest"            "print.PercTable"        "print.PostHocTest"     
+[376] "PseudoR2"               "PtInPoly"               "PtsToCm"               
+[379] "qBenf"                  "qExtrVal"               "qFrechet"              
+[382] "qGenExtrVal"            "qGenPareto"             "qGompertz"             
+[385] "qGumbel"                "qNegWeibull"            "qRevGumbel"            
+[388] "qRevGumbelExp"          "qRevWeibull"            "Quantile"              
+[391] "Quarter"                "Quot"                   "RadToDeg"              
+[394] "Range"                  "RBAL"                   "rBenf"                 
+[397] "Recode"                 "Recycle"                "RelRisk"               
+[400] "Rename"                 "reorder.factor"         "Rev"                   
+[403] "rExtrVal"               "rFrechet"               "RgbToCol"              
+[406] "RgbToLong"              "rGenExtrVal"            "rGenPareto"            
+[409] "rGompertz"              "rGumbel"                "RMSE"                  
+[412] "RndPairs"               "RndWord"                "rNegWeibull"           
+[415] "RobScale"               "RomanToInt"             "rOrder"                
+[418] "Rosenbluth"             "Rotate"                 "RoundTo"               
+[421] "rRevGumbel"             "rRevWeibull"            "RunsTest"              
+[424] "Sample"                 "SampleTwins"            "SaveAs"                
+[427] "ScheffeTest"            "SD"                     "Second"                
+[430] "SecToHms"               "SendOutlookMail"        "Sens"                  
+[433] "SetAlpha"               "SetNames"               "Shade"                 
+[436] "ShapiroFranciaTest"     "SiegelTukeyRank"        "SiegelTukeyTest"       
+[439] "SignTest"               "Skew"                   "SLN"                   
+[442] "Small"                  "SMAPE"                  "SmoothSpline"          
+[445] "Some"                   "SomersDelta"            "Sort"                  
+[448] "SortMixed"              "SpearmanRho"            "Spec"                  
+[451] "SphToCart"              "split.formula"          "SplitAt"               
+[454] "SplitPath"              "SpreadOut"              "Stamp"                 
+[457] "StdCoef"                "Str"                    "StrAbbr"               
+[460] "StrAlign"               "Strata"                 "StrCap"                
+[463] "StrChop"                "StrCountW"              "StrDist"               
+[466] "StrExtract"             "StrIsNumeric"           "StrLeft"               
+[469] "StrPad"                 "StrPos"                 "StrRev"                
+[472] "StrRight"               "StrSpell"               "StrTrim"               
+[475] "StrTrunc"               "StrVal"                 "StuartMaxwellTest"     
+[478] "StuartTauC"             "SYD"                    "SysInfo"               
+[481] "TextContrastColor"      "TextToTable"            "TheilU"                
+[484] "Timezone"               "TitleRect"              "TMod"                  
+[487] "Today"                  "ToLong"                 "TOne"                  
+[490] "ToWide"                 "ToWrd"                  "ToWrdB"                
+[493] "ToWrdPlot"              "ToXL"                   "Trim"                  
+[496] "TschuprowT"             "TTestA"                 "TukeyBiweight"         
+[499] "TwoGroups"              "UncertCoef"             "UnirootAll"            
+[502] "Unit"                   "Unit<-"                 "Untable"               
+[505] "Unwhich"                "Var"                    "VarCI"                 
+[508] "VarTest"                "VecRot"                 "VecShift"              
+[511] "VIF"                    "Vigenere"               "VonNeumannTest"        
+[514] "Week"                   "Weekday"                "Winsorize"             
+[517] "WithOptions"            "WoolfTest"              "WrdBookmark"           
+[520] "WrdCaption"             "WrdCellRange"           "WrdFont"               
+[523] "WrdFont<-"              "WrdFormatCells"         "WrdGoto"               
+[526] "WrdInsertBookmark"      "WrdKill"                "WrdMergeCells"         
+[529] "WrdOpenFile"            "WrdPageBreak"           "WrdParagraphFormat"    
+[532] "WrdParagraphFormat<-"   "WrdPlot"                "WrdSaveAs"             
+[535] "WrdStyle"               "WrdStyle<-"             "WrdTable"              
+[538] "WrdTableBorders"        "WrdUpdateBookmark"      "XLCurrReg"             
+[541] "XLDateToPOSIXct"        "XLGetRange"             "XLGetWorkbook"         
+[544] "XLKill"                 "XLNamedReg"             "XLSaveAs"              
+[547] "XLView"                 "Year"                   "YearDay"               
+[550] "YearMonth"              "YTM"                    "YuenTTest"             
+[553] "YuleQ"                  "YuleY"                  "ZeroIfNA"              
+[556] "Zodiac"                 "ZTest"
+#+end_example
+
+*** ={MLmetrics}= package
+
+#+begin_src R
+pacman::p_funs(MLmetrics)
+#+end_src
+
+#+RESULTS:
+:  [1] "Accuracy"         "Area_Under_Curve" "AUC"              "ConfusionDF"     
+:  [5] "ConfusionMatrix"  "F1_Score"         "FBeta_Score"      "GainAUC"         
+:  [9] "Gini"             "KS_Stat"          "LiftAUC"          "LogLoss"         
+: [13] "MAE"              "MAPE"             "MedianAE"         "MedianAPE"       
+: [17] "MSE"              "MultiLogLoss"     "NormalizedGini"   "Poisson_LogLoss" 
+: [21] "PRAUC"            "Precision"        "R2_Score"         "RAE"             
+: [25] "Recall"           "RMSE"             "RMSLE"            "RMSPE"           
+: [29] "RRSE"             "Sensitivity"      "Specificity"      "ZeroOneLoss"
+
+* リサンプリング手法
+
+- モデル評価のためのリサンプリング手法一覧
+- 選択の指針
+  - *Variance* & *Bias*
+  - _kfold = bias は小さいが、variance が大きい_
+  - _bootstrap = variance を劇的に減少させるが、bias が大きくなる_
+
+- *Hold-out*
+  - 単純に 1 つの学習データ、1つのバリデーションデータに分割
+
+- *Cross-validation (k-fold)*
+  - n 個の fold に分割
+  - 全てのデータをバリデーションに利用できる
+  - =rsample::vfold_cv()=
+  - *Stratified k-fold CV*
+    - fold 毎に含まれるクラスの割合を等しくするように抽出する
+    - クラス分類問題で、特定クラスの頻度に偏りがある場合などに利用する
+    - ={rsample}= の =strata= 引数で指定
+  - *Group k-fold CV*
+    - 学習データと、バリデーションデータのグループを等しくする
+    - =rsample::group_vfold_cv()=
+  - *Nested CV* / *Double CV*
+    - モデルの評価とパラメタのチューニングを同時に行う場合に推奨される方法
+    - 外側の KFold で評価、内側の KFold でモデルのチューニングを行う
+    - 外側の Fold の学習データを更に、KFold に分割する
+    - =rsample::nested_cv()=
+  - *Leave-one-out CV*
+    - fold 数を最大まで増やした手法
+    - バリデーションデータが各 Fold で 1 つだけになる
+    - データ数が極端に少ない場合に利用する
+    - =rsample::loo_cv()=
+  - *Monte Carlo CV*
+    - データをランダムに訓練/検証データに分割する
+    - k-fold では fold 間でテストデータは重複しないが、mc で重複がある
+    - [[https://stats.stackexchange.com/questions/51416/k-fold-vs-monte-carlo-cross-validation][K-fold vs. Monte Carlo cross-validation@CrossValidated]]
+  - *Time-series CV*
+    - 学習データ期間を固定でスライドさせる手法
+    - 学習データを拡張していく手法
+    - =rsample::rolling_origin()=
+
+- *Bootstrap*
+  - 再抽出法でサンプルを作成
+  - =rsample::bootstraps()=
+
+- Monte Carlo CV
+
+- Apparent
+
+* 参考
+
+- [[https://funatsu-lab.github.io/open-course-ware/basic-theory/accuracy-index/][精度評価指標と回帰モデルの評価@Instruction of chemoinfomatics]]
+- [[https://stackoverflow.com/questions/53057083/why-does-the-log-loss-function-return-undefined-when-the-prediction-has-1-or-0][Why does the log loss function return undefined when the prediction has 1 or 0?@Stackoverflow]]
+
+- [[https://qiita.com/Hatomugi/items/d00c1a7df07e0e3925a8#huber-loss][損失関数のまとめ (Huber,Log-Cosh,Poisson,CustomLoss,MAE,MSE)@Qiita]]
+- [[https://qiita.com/shnchr/items/22868bea27a3a8bf0977][scikit-learnとLightGBMの評価関数比較@Qiita]]
+- [[https://blog.datarobot.com/jp/%E3%83%A2%E3%83%87%E3%83%AB%E6%9C%80%E9%81%A9%E5%8C%96%E6%8C%87%E6%A8%99-%E8%A9%95%E4%BE%A1%E6%8C%87%E6%A8%99%E3%81%AE%E9%81%B8%E3%81%B3%E6%96%B9][モデル最適化指標・評価指標の選び方@DataRobot]]

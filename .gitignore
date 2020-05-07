@@ -1,8 +1,10 @@
 
+
 .drake/
-lang/r/package/renv/renv
+lang/r/package/renv/renv/
 lang/r/package/drake/main/
 lang/r/temp.R
+lang/r/cheat_sheet/
 
 lang/python/other/DLFS/
 # lang/python/temp.py

@@ -1,0 +1,268 @@
+#+STARTUP: folded indent
+
+* Package list
+
+- [[https://github.com/rstudio/RStartHere][RStartHere]]
+- [[https://awesome-r.com/][Awesome R]]
+- [[https://github.com/jdblischak/r-project-workflows][List of workflow tools for R projects@github]]
+
+* tidyverse
+
+- Core packages
+| Packages  | Description                                            |
+|-----------+--------------------------------------------------------|
+| ~dplyr~     | A grammar of data manipulation                         |
+| ~forcats~   | Tools for working with categorical variables (factors) |
+| ~ggplot2~   | An implementation of the Grammar of Graphics in R      |
+| ~purrr~     | A functional programming toolkit for R                 |
+| ~readr~     | Read flat files (csv, tsv, fwf) into R                 |
+| ~stringr~   | A fresh approach to string manipulation in R           |
+| ~tibble~    | A modern re-imagining of the data frame                |
+| ~tidyr~     | Easily tidy data with spread and gather functions      |
+| ~tidyverse~ | Easily install and load packages from the tidyverse    |
+|-----------+--------------------------------------------------------|
+
+- Other packages
+| Packages   | Description                                                         |
+|------------+---------------------------------------------------------------------|
+| ~broom~      | Convert statistical analysis objects from R into tidy format        |
+| ~cli~        | Tools for making beautiful & useful command line interfaces         |
+| ~crayon~     | R package for colored terminal output                               |
+| ~dbplyr~     | Database (DBI) backend for dplyr                                    |
+| ~haven~      | Read SPSS, Stata and SAS files from R                               |
+| ~hms~        | A simple class for storing time-of-day values                       |
+| ~httr~       | A friendly http package for R                                       |
+| ~jsonlite~   | A Robust, High Performance JSON Parser and Generator for R          |
+| ~lubridate~  | Make working with dates in R just that little bit easier            |
+| ~magrittr~   | Improve the readability of R code with the pipe                     |
+| ~modelr~     | Helper functions for modelling                                      |
+| ~readxl~     | Read excel files (.xls and .xlsx) into R                            |
+| ~reprex~     | Render bits of R code for sharing, e.g., on GitHub or StackOverflow |
+| ~rlang~      | Low-level API for programming with R                                |
+| ~rstudioapi~ | Safely access RStudio's API (when available)                        |
+| ~rvest~      | Simple web scraping for R                                           |
+| ~xml2~       | Bindings to libxml2                                                 |
+|------------+---------------------------------------------------------------------|
+
+- Packages not in tidyverse
+| Packages      | Description                                                                         |
+|---------------+-------------------------------------------------------------------------------------|
+| ~blob~          | A simple S3 class for representing BLOBs                                            |
+| ~googlesheets4~ | Google Spreadsheets R API (reboot of the googlesheets package)                      |
+| ~googledrive~   | Google Drive R API                                                                  |
+| ~dtplyr~        | Data table backend for dplyr                                                        |
+| ~principles~    | Tidyverse principles                                                                |
+| ~tidyeval~      | A guide to tidy evaluation                                                          |
+| ~style~         | The tidyverse style guide for R code                                                |
+| ~glue~          | Glue strings to data in R. Small, fast, dependency free interpreted string literals |
+| ~multidplyr~    | A dplyr backend that partitions a data frame over multiple processes                |
+| ~tidytemplate~  | A pkgdown template for core tidyverse packages                                      |
+
+* tidymodels
+
+| Packages      | Description                                                                                |
+|---------------+--------------------------------------------------------------------------------------------|
+| ~broom~         | Convert statistical analysis objects from R into tidy format                               |
+| ~cli~           | Tools for making beautiful & useful command line interfaces                                |
+| ~crayon~        | R package for colored terminal output                                                      |
+| ~dials~         | Tools for creating tuning parameter values                                                 |
+| ~dplyr~         | A grammar of data manipulation                                                             |
+| ~ggplot2~       | An implementation of the Grammar of Graphics in R                                          |
+| ~infer~         | An R package for tidyverse-friendly statistical inference                                  |
+| ~magrittr~      | Improve the readability of R code with the pipe                                            |
+| ~parsnip~       | A tidy unified interface to models                                                         |
+| ~pillar~        | Format columns with colour                                                                 |
+| ~purrr~         | A functional programming toolkit for R                                                     |
+| ~recipes~       | A preprocessing engine to generate design matrices                                         |
+| ~rlang~         | Low-level API for programming with R                                                       |
+| ~rsample~       | Classes and functions to create and summarize different types of resampling objects        |
+| ~rstudioapi~    | Safely access RStudio's API (when available)                                               |
+| ~tibble~        | A modern re-imagining of the data frame                                                    |
+| ~tidyposterior~ | Bayesian comparisons of models using resampled statistics                                  |
+| ~tidypredict~   | Run predictions inside the database                                                        |
+| ~tidytext~      | Text mining using dplyr, ggplot2, and other tidy tools                                     |
+| ~yardstick~     | Tidy methods for measuring model performance                                               |
+| ~tidymodels~    | Easily Install and Load the 'Tidymodels' Packages                                          |
+|---------------+--------------------------------------------------------------------------------------------|
+| ~aml-training~  | The most recent version of the Applied Machine Learning notes                              |
+| ~applicable~    | Quantify extrapolation of new samples given a training set                                 |
+| ~butcher~       | Reduce the size of model objects saved to disk                                             |
+| ~corrr~         | R package for exploring correlations                                                       |
+| ~discrim~       | Wrappers for discriminant analysis and naive Bayes models for use with the parsnip package |
+| ~embed~         | Extra recipes for categorical predictor embeddings                                         |
+| ~hardhat~       | A Toolkit for the Construction of Modeling Packages                                        |
+| ~modeldb~       | Run models inside a database using R                                                       |
+| ~probably~      | Tools for post-processing class probability estimates                                      |
+| ~textrecipes~   | Extra recipes for Text Processing                                                          |
+| ~tune~          | Tools for tidy parameter tuning                                                            |
+
+* r-lib project
+
+- devtools
+- testthat
+- R6
+- pkgdown
+- usethis
+- rlang
+他多数
+
+* Workflow
+
+_R のワークフローパッケージ_
+- R Package の構造を利用して、プロジェクトのディレクトリ構造を自動作成するもの
+- データの管理 (キャッシュ・自動読み込み) 機能をもつもの
+- RMarkdonw/knitr を利用してレポーティングを自動化するもの
+- git を使って、コードだけでなく、リサーチ結果もバージョン管理するもの
+
+| DataPackageR    |  114 | reproducible research のためのデータのパッケージ化                 |
+| _drake_           |  946 |                                                                    |
+| knowledge-repo  | 4000 | データ分析プロジェクトの共有リポジトリ                             |
+| _ProjectTemplate_ |  550 | A template utility for R projects that provides a skeletal project |
+| remake          |  324 | Make-like declarative workflows in R                               |
+| rrtools         |  348 | Tools for Writing Reproducible Research in R                       |
+| usethis         |  454 | Set up commonly used package components                            |
+| workflowr       |  352 | Organize your project into a research website                      |
+
+* Bioconductor project
+
+- BiocManager
+
+* File I/O
+
+- fs
+
+* Parallel
+
+- foreach
+- doParallel
+- parallel
+- future
+- furrr
+- *async*
+
+* Probability Distributions
+
+- GeneralizedHyperbolic
+- SuppDists
+- fBasics
+- fGarch
+- gamlss.dist
+- mvtnorm
+- nimble
+- sn
+
+* Modeling 
+
+一般化加法モデル (Generalized Addictive Model)
+- mgcv
+
+ロバスト回帰
+- robustbase
+- MASS::rlm()
+  
+線形混合モデル (Linear Mixed-Effects Model)
+- lme4
+ 
+非線形混合モデル
+- nlme
+
+* Time-Series Modeling
+
+ARIMA モデル
+- arfima
+- forecast
+- rugarch
+
+GARCH モデル (単変量)
+- fGarch
+- rugarch
+
+GARCH モデル (多変量)
+- mgarch (BEKK)
+- rmgarch (DCC, GO-GARCH, Copula-GARCH)
+  https://stackoverflow.com/questions/35035857/multivariate-garch1-1-in-r/35039163
+- ccgarch (DCC) (by 中谷 朋昭)
+  https://eprints.lib.hokudai.ac.jp/dspace/bitstream/2115/42903/1/RAE65_007.pdf
+- copula
+- fCopulae
+- MSGARCH
+
+VAR モデル
+- vars
+- rmgarch::varx()
+- MSBVAR (Malkov Swiching Bayesian VAR)
+
+SV モデル
+- stochvol
+
+マルコフスイッチモデル
+- depmixS4
+- MSwM
+- RHmm (CRAN にはない. http://r-forge.r-project.org/R/?group_id=85)
+- MSGARCH
+
+状態空間モデル
+- dlm
+- KFAS
+
+単位根検定
+- fUnitRoots
+- urca
+- CADFtest
+- tseries
+
+その他
+- fracdiff
+- timsac
+- pro
+- prophet
+
+Recommneded by TJO
+https://tjo.hatenablog.com/entry/2013/07/04/190139
+- forecast # 単変量時系列モデリング向け。ARIMA 次数推定やその予測など
+- tseries  # 汎用パッケージ。単位根の ADF 検定など時系列の性質を調べる際に使う
+- vars     # 多変量（ベクトル）時系列モデリング向け。ズバリ VAR モデルやその予測、Granger 因果など
+- urca     # 共和分モデリング向け。VECM 推定など
+- tsDyn    # 非線形単変量時系列モデリング向け。SETAR モデルなど
+- MSwM     # 単変量時系列のマルコフ状態転換モデル推定
+- MSBVAR   # 多変量時系列のマルコフ状態転換モデル推定 (現在は開発停止)
+
+* Machine Learning
+
+- [[file:./ml_model.org][ml_model]]
+
+* Machine Learning Wrappers
+
+- caret
+
+- tidymodels
+  - リサンプリング       ={rsample}=
+  - 前処理               ={recipes}=
+  - パラメタチューニング ={dials}= + ={tune}=
+  - モデル               ={parsnip}=
+  - 評価                 ={yardstick}=
+  - ワークフロー         ={workflows}=
+
+- mlr3
+  - リサンプリング       ={mlr3}=
+  - 前処理               ={mlr3pipelines}= + ={mlr3filters}=
+  - パラメタチューニング ={mlr3tuning}= + ={paradox}=
+  - モデル               ={mlr3}=
+  - 評価                 ={mlr3}=
+  - ワークフロー         ={mlr3pipelines}=
+  - 可視化               ={mlr3viz}=
+
+* Finance
+
+ポートフォリオ
+- fPortfolio
+- PortfolioAnalytics
+- RiskPortfolios
+- portfolio
+
+パフォーマンス
+- PerformanceAnalytics
+
+* other
+
+- vroom

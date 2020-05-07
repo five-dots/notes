@@ -363,13 +363,21 @@ git merge origin/master
 
 * Remove files from repo
 
+- [[https://qiita.com/ytkt/items/a2afd6be8e4f06c1ea25][gitの管理対象から特定のファイル、ディレクトリを削除する@Qiita]]
+
 #+begin_src shell
 git reset HEAD -- <filename>
 #+end_src
 
 - 一度 commit した後に .gitignore に追加したファイルをキャシュから削除できる
+  - =--cached=: ファイル自体は残す
 #+begin_src shell
 git rm --cached <filename>
+#+end_src
+
+- ディレクトリの削除
+#+begin_src shell
+git rm -r --cached <dir_name>
 #+end_src
 
 * How to write commit messages

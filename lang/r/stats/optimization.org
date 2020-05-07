@@ -1,0 +1,156 @@
+#+STARTUP: folded indent
+#+PROPERTY: header-args:R :results output :colnames yes :session *R:optimize* :width 640 :height 480
+
+* stats::optimize()
+
+- 変数が 1 つのみの場合
+- https://stats.biopapyrus.jp/stats/optimize.html
+
+#+begin_src R
+optimize(f, interval, ..., lower = min(interval), upper = max(interval),
+         maximum = FALSE, tol = .Machine$double.eps ^ 0.25)
+#+end_src
+
+- f(x) = (x - a)2 を最小にする x を求める例。ただし、a は定数として扱う。
+#+begin_src R
+x <- rnorm(10)
+f <- function(x, a) (x - a) ^ 2
+f(-5, 2)
+f(5, 2)
+f(2, 2)
+
+# 探索区間での最小値を求める
+opt <- optimize(f, interval = c(-5, 5), a = 2)
+opt
+
+# 最大値の場合は、maximum = TRUE
+opt <- optimize(f, interval = c(-5, 5), a = 2, maximum = TRUE)
+opt
+#+end_src
+
+* stats::optim()
+
+- 変数が複数の場合
+- https://stats.biopapyrus.jp/stats/optim.html
+
+#+begin_src R :results silent
+optim(par, fn, gr = NULL, ...,
+      method = c("Nelder-Mead", "BFGS", "CG", "L-BFGS-B", "SANN", "Brent"),
+      lower = -Inf, upper = Inf, control = list(), hessian = FALSE)
+#+end_src
+
+- 最適化アルゴリズム
+  - "Nelder-Mead", "BFGS", "CG", "L-BFGS-B", "SANN", "Brent"
+
+- 最尤推定法により、正規分布の 2 つのパラメーター(mean, sd)を推定する
+
+#+begin_src R
+y <- rnorm(100, mean = 10, sd = 4)
+
+# 最適化に用いる対数尤度関数
+loglikelihood <- function(x, y) {
+  -sum(0.5 * (y - x[1]) ^ 2 / x[2] + 0.5 * log(x[2]))
+}
+
+# control = list(fnscale = -1) で最大化
+optim(c(10, 2), loglikelihood, y = y, control = list(fnscale = -1))
+
+# par = best parameters
+# value = LogLik
+# counts =
+# convergence = 0 (success) or other (fail)
+
+fit <- fitdistr(y, "normal")
+logLik(fit)
+#+end_src
+
+* 最適化手法
+
+- [[file:../package/mlr/mlr3.org][mlr3 の最適化]] 
+
+- グリッドサーチ
+- ランダムサーチ
+- 遺伝的アルゴリズム
+- 焼きなまし法 (疑似アーニング法)
+- ベイズ最適化
+
+* ベイズ最適化
+** 概要
+
+- [[https://www.slideshare.net/hoxo_m/ss-77421091][機械学習のためのベイズ最適化入門@SlideShare]]
+- [[https://arxiv.org/pdf/1012.2599.pdf][A Tutorial on Bayesian Optimization of Expensive Cost Functions, with Application to Active User Modeling and Hierarchical Reinforcement Learning(PDF)]]
+
+- 機械学習のハイパーパラメタ探索
+- グリッドサーチよりも効率的に探索
+- 形状のわからない関数 (ブラックボックス関数) の最大・最小を求める
+  - *大域的最適化 (Global Optimization)*
+  - *逐次最適化手法 (Sequential Optimization)*
+    - これまでの結果を元に次に探索するパラメタを決める (良さげなエリアを選ぶ)
+    - 探索できていないエリアもたまに計算する
+    - 次のエリアを決定するための関数 (=獲得関数)
+      - 以下のようないくつかの戦略で獲得関数を最大化する
+      - PI 戦略 (Probability Improvement; 改善確率). 局所解に陥りやすい.
+        - 現在の最適解を超える可能性が最も高くなる点を次に探索する
+        - 確率は高くても改善量が小さいと非効率
+      - EI 戦略 (Expected Improvement; 期待改善量). 最も一般的.
+        - PI 戦略と違い、確率ではなく、改善の期待値が最も高い点を次に探索
+      - UCB 戦略 (Upper Confidence Bound; 上側信頼限界) 最適解への理論的根拠.
+        - 評価値の信頼区間の上側が最も高い点を次に探索
+    - 獲得関数を計算するために、ガウス過程を仮定する
+      - 獲得関数がガウス過程に従うと仮定する
+      - カーネル関数の選択が必要
+        - Squared Exponential
+          - 距離の近い観測点は似た値であることを表現
+        - Matern
+
+** R パッケージ
+*** ={rBayesianOptimization}=
+
+#+begin_src R
+BayesianOptimization(
+  FUN,    # 最大化したい関数. listで Score(最大化対象) と Pred(アンサンブル用?) を出力する関数
+  bounds, # パラメタの名前付き list を指定. 例) bounds = list(max_depth = c(3, 12))
+  init_grid_dt = NULL, # ユーザー指定の評価点. 評価済みであれば、Value 列に指標を入れる
+  init_points = 0, # 初期の探索数
+  n_iter, # ベイズ最適化の反復数
+  acq = "ucb", # 獲得関数 "ucb", "ei" or "poi" (=pi)
+  kappa = 2.576, # UCB の kappa
+  eps = 0, #  PI と EI の epsilon
+  kernel = list(type = "exponential", power = 2),
+  verbose = TRUE,
+  ...)
+#+end_src
+
+*** ={tune}=
+
+#+begin_src R
+tune_bayes(
+  object,
+  model,
+  resamples,
+  ...,
+  iter = 10,
+  param_info = NULL,
+  metrics = NULL,
+  objective = exp_improve(),
+  initial = 5,
+  control = control_bayes()
+)
+
+control_bayes(
+  verbose = FALSE,
+  no_improve = 10L,
+  uncertain = Inf,
+  seed = sample.int(10^5, 1),
+  extract = NULL,
+  save_pred = FALSE,
+  time_limit = NA,
+  pkgs = NULL
+)
+#+end_src
+
+* 参考
+
+- [[https://note.com/tqwst408/n/n2483a75d82a0][R言語:tuneパッケージを試してみる。]]
+- [[https://www.slideshare.net/hoxo_m/ss-77421091][機械学習のためのベイズ最適化入門@SlideShare]]
+- [[https://qiita.com/hoxo_m/items/2040ba7a6e7843fc8971][R でベイズ最適化@Qiita]]

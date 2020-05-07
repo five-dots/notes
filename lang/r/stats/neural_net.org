@@ -1,0 +1,151 @@
+#+STARTUP: folded indent inlineimages latexpreview
+#+PROPERTY: header-args:R :session *R:nnet* :width 640 :height 480 :colnames yes
+
+* ライブラリの読み込み
+
+#+begin_src R :results silent
+library(tidyverse)
+library(tidymodels)
+library(keras)
+library(nnet)
+#+end_src
+
+* 主なライブラリ
+
+- [[file:../package/keras/keras.org][Keras]]
+  - tensorflow など複数のライブラリをラップする
+  - Python
+  - R 版の ={keras}= は Rstudio が開発したオリジナル Keras のラッパー (={reticulate}= 利用)
+  - CPU 利用・ GPU 利用でも同じコード
+  - CNN, RNN サポート
+  - 複数のバックエンド: TensorFlow (default), CNTK, Theano
+
+- TensorFlow by Google Brain Project
+  - テンサーフロー・テンソルフロー
+  - C++/Python
+  - Theano の代替として開発された
+  - ={keras}= から使う
+  - ={tensorflow}= by RStudio
+
+- Theano
+  - TensorFlow が登場する以前のもの
+
+- PyTorch by Facebook
+  - R からは ={reticulate}= で利用するか ={rTorch}=
+
+- Chianer by PFN
+  - R からは ={reticulate}=
+  - 動的に計算グラフを構築
+  - 学習途中でネットワークの形が変わるニューラルネットワークでも簡単に記述できる点が強力
+
+- MXNet by ワシントン大・カーネギーメロン大
+  - Python, R
+
+- Deeplearning4j (DL4j)
+  - Deep Learning for Java
+
+- Microsoft Cognitive Toolkit (CNTK)
+
+- PaddlePaddel by Baidu
+
+- Caffe
+  - Python (C++で実装)
+
+* パーセプトロン/多層パーセプトロン (MLP)
+** 概要
+
+- テーブルデータの分析には、中間層が 2-4 の多層パーセプトロンをよく用いられる
+  - 10 層以上あるようなもの = ディープラーニング
+- 各層のウェイトが学習対象
+- *多クラス分類につよい*
+- GPU で高速化が可能 
+
+- *入力層 -> (ドロップアウト) ->  中間層 -> (ドロップアウト) -> 出力層* という構成
+  - _<入力層>_
+    - 特徴量と同じ数のユニット数
+    - *活性化関数 (ReLU, PReLU, LeakyReLU)*
+  - _<中間層>_
+    - *ユニット数はハイパーパラメタ*
+    - 前の層の出力 x ウェイト を和を取って結合する $u_i = \Sigma_j z'_j w_{ji}$
+    - 和を取ったものに活性化関数を適応して、出力する
+  - _<出力層>_
+    - タスクに応じて、出力層の *活性化関数・ユニット数・目的関数* が異なる
+      - 回帰
+        - 恒等関数
+        - ユニット = 1
+        - 目的関数 = mean_squared_error
+      - 二値分類
+        - シグモイド関数 (ロジスティック関数)
+        - ユニット = 1
+        - 目的関数 = binary_crossentropy
+      - 多クラス分類
+        - ソフトマックス関数
+        - ユニット = クラス数
+        - 目的関数 = categorical_crossentropy
+
+- データ前処理
+  - 特徴量はすべて数値
+    - カテゴリ変数は、One-hot もしくは、Label encoding + Embedded Layer
+    - 数値は、標準化する
+  - 欠損値は扱えない
+
+- 過学習対策
+  - データを増やす
+  - モデルを小さくする (層・ユニット数)
+  - 正則化項を入れる
+  - ドロップアウト層を入れる
+
+** パラメタ
+
+- 中間層の総数
+  - d=3 [2 ~ 4]
+
+- 中間層の活性化関数
+  - ReLU, PReLU, LeakyReLU
+
+- 各層のユニット数
+  - d=96 [32 ~ 256]
+
+- ドロップアウト
+  - 入力層: d=0.0 [0.0 ~ 0.2 (0.05 刻み)]
+  - 中間層: d=0.2 [0.0 ~ 0.3 (0.05 刻み)]
+
+- Batch Normalization の有無
+
+- Weight Decay (L2 正則化) の有無
+
+- オプティマイザの選択
+  - Adam, SGD
+  - =lr= (learning rate) の最適化) [0.00001 ~ 0.01]
+
+- ミニバッチのデータ量
+  - d=64 [32 ~ 128]
+
+- エポック数
+  - アーリーストッピング
+
+* 勾配降下法のアルゴリズム
+
+- [[https://postd.cc/optimizing-gradient-descent/][勾配降下法の最適化アルゴリズムを概観する]]
+- 勾配降下法 = Gradient Descent Optimization
+
+- 勾配を計算する際のデータ量のよる分類
+  - バッチ勾配降下法 = 全てのデータを利用
+  - 確率的勾配降下法 (SGD)
+  - ミニバッチ勾配降下法 = バッチ勾配降下法と SGD のいいとこ取り = データを n 個のミニバッチに分割
+    - 学習率の選択が課題
+
+- 勾配降下法のアルゴリズム
+  - Momentum (慣性)
+  - Nasterov の加速勾配降下法
+  - Adagrad
+  - Adadelta
+  - RMSprop
+  - Adam (Adaptive Moment Estimation)
+
+* 畳み込みニューラルネットワーク (CNN, Convolutional Neural Network)
+* 再起型ニューラルネットワーク (RNN, Recurrent Neural Network)
+* 残差ネットワーク (ResNet)
+* [[file:../package/tidymodels/parsnip.org][ ={parsnip}= ]]
+* [[file:../package/keras/keras.org][ ={keras}= ]]
+* [[file:../package/nnet.org][ ={nnet}= ]]

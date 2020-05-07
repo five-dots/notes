@@ -1,0 +1,244 @@
+#+STARTUP: folded indent inlineimages latexpreview
+#+PROPERTY: header-args:R :session *R:ic* :width 640 :height 480 :results output
+
+* ライブラリの読み込み
+
+#+begin_src R :results silent
+library(tidyverse)
+#+end_src
+
+* 情報量とは?
+* IC
+** Overview
+
+- 予測分布が真の分布に対して、どの程度妥当かを検討するのが *「情報量基準」*
+
+$IC = -2L(\hat{\theta}) + p(T)k$
+
+- $L(\theta)$ 最大対数尤度
+- $p(T)$ ペナルティ関数 (T は標本数)
+- *k* パラメタ数
+ 
+- 当てはまりの良さ + ペナルティ の構成
+- ペナルティ関数の種類によって、いくつかの IC が存在する
+- p(T) = 2 が AIC, p(T) = log(T) が BIC
+
+** List
+
+- 正則モデル
+- AIC (Akaike)
+- BIC (Bayesian) or SIC (Schwarz)
+- CIC
+- DIC
+- EIC
+- GIC
+- PIC
+- RIC
+- TIC
+- MDL
+- HQC
+
+- 特異モデル
+  - WAIC (Widely Applicable Information Criterion)
+  - WBIC (Widely Applicable Bayesian Information Criterion)
+
+- Cross Validation
+
+** AIC
+
+$AIC = -2(logL^* -k)$
+
+- 平均対数尤度の推定量
+- 最大対数尤度は過大評価するバイアスがあるので、-2 * パラメタ数で補正する
+- 確からしさとして、汎化損失を用いた指標
+- *正規分布を前提としている*
+
+** BIC(SIC)
+
+$BIC = -2(LogL^* - log(T)k)$
+
+- log(T) が 2 以上なら AIC よりもペナルティが大きい指標
+- log(8) > 2 なので、大抵は AIC よりもシンプルなモデルを選択する
+- 確からしさとして自由エネルギーを用いた指標
+- *正規分布を前提としている*
+
+** WAIC/WBIC
+*** 諸々の定義
+
+-$X \in R^N$                      確率変数
+
+$X_i \in R^N, i=1, \dots, n$      X の実現値
+
+$w \in Rd$                        パラメタ
+
+$q(x)$                            真の分布
+
+$p(X|w)$                        確率モデル
+
+$p(X^n|w) = \Pi_{i=1}^n p(Xi|w)$   尤度
+
+$\phi(w)$                            事前分布
+
+$p(w|X^n) = \frac{p(X^n|w)\phi(w)}{Z_n}$     事後分布
+
+$Z_n = \int p(X^n|w) p(w) dw$    周辺尤度
+
+$p^*(x) = \int p(x|w) p(w|X^n)$  予測分布 (尤度 * 事後分布)
+
+*** 逆温度
+
+$p(w|X^n) = \frac{p(X^n|w)^\beta p(w)}{Z_n(\beta)}$ 事後分布
+
+$\beta$ は *逆温度.* $(0, \infty)$ を取る (通常は $\beta = 1$ の式がよく使われる)
+
+$Z_n(\beta) = \int p(X^n|w)^{\beta} p(w) dw$ これを分配関数と呼ぶ
+
+
+- ベイズ推論では、真の分布 $q(x)$ は、予測分布 $p^*(x)$ だろうと推測する
+- 予測分布が真の分布に対してどの程度妥当かを検討するのが *「情報量基準」*
+- 確からしさを図る指標 *「汎化損失」「自由エネルギー」*
+
+*** 自由エネルギー
+
+分配関数 Z から定義される
+
+$F_n(\beta) = -\frac{1}{\beta}\log{Z_n}(\beta)$
+
+真の分布 $q(x)$ のエントロピー S を定義する
+
+$S = - \int q(x) \log{q(x)}dx$
+
+サンプル $X^n$ に対して定義される経験エントロピー
+
+$S_i = - \frac{1}{n} \Sigma_{i=1}^n \log{q(X_i)$
+
+期待値を取る
+$E[F_n(1)] = nS + \int q(x^n)\log{\frac{q(X^n)}{Z_n(X^n)}}dx$
+
+
+- $F_n(1)$ の値が小さいほど、想定した分布が真の分布を平均的に近似しているとみなす
+- 自由エネルギーでのモデル選択は *「真のモデル」* に近いモデルを選択する
+
+*** 汎化損失
+
+汎化損失
+$G_n = - \log{\int q(x)} \log{p^*(x)}dx$
+
+- $G_n$ が小さいほど、想定した分布が真の分布を平均的に近似しているとみなせる
+
+経験損失
+$T_n = - \frac{1}{n} \Sigam_{i=1}^n \log{p^*(X_i)}$
+
+- Gn は直接計算することができない (真の分布が不明のため)
+- 一方で経験損失は計算可能
+- Tn の値から Gn の値を推測する
+- *「予測精度の高いモデル」* を選択する手法
+
+*** WAIC
+
+汎関数分散
+$V_n = \Sigma_{i=1}^n \{E_w[(\log{p(X_i|w)^2})] - E_w[\log{p(X_i|w)}]^2\}$
+
+このとき
+$WAIC = T_n + \frac{\beta V_n}{n}$
+
+- WAIC = 経験損失 + ((逆温度 * 汎関数分散) / n)
+- WAIC の期待値と汎化損失 Gn の期待値は漸近的に同じ値を取る
+
+
+[[http://ushi-goroshi.hatenablog.com/entry/2017/12/24/225748][WAICを計算してみる@統計コンサルの議事メモ]] での定義
+
+$WAIC = -2(lppd - pWAIC)$
+
+ここで lppd (log-pointwise-predictive-density)
+
+$lppd = \sum_{i=1}^{N} log{Pr(y_i)}$ (事後分布からの対数尤度の平均値の合計)
+
+
+$pWAIC = \Sigma_{i=1}^N V(y_i)$ (事後分布からの対数尤度の分散の合計)
+
+*** WBIC
+
+$WBIC = \frac{\int nL_n(w) \Pi_{i=1}^n p(Xi|w)^{\beta} \phi(w)dw}{\int \Pi_{i=1}^n p(X_i|w)^{\beta} \phi(w)dw}$
+
+ここで
+$\beta = \frac{1}{log{n}}$
+
+- この時、自由エネルギーと WBIC は logn のオーダーで同じ漸近挙動を持つ
+
+** LOOCV (Leave One Out Cross-Validation)
+* 正則化 (Regularization)
+
+*目的*
+- 統計モデルの変数選択に利用する
+- 重要でない変数を取り除くことができる
+- モデルの過学習を抑制して、汎化性能を高める
+
+*コンセプト*
+- モデルの 2 乗残差と f(b) を最小化する
+- 通常の最小二乗法に加えて、f(b)も最小化するということ
+  - *誤差だけでなく、パラメタの大きさも最小化する*
+  - lambda に大きさによって、誤差を小さくするほうが良いか・
+    パラメタを小さくするほうが良いかの重みが変わる
+  - f(b)には、Lasso, Ridge などが入る
+- lambda が正則化パラメタ (Complexity Parameter とも呼ばれる)
+  - lambda 大きいほどモデルはシンプル (ペナルティが大きいため)
+  - lambda=0 で最小二乗法と一致
+
+$Min \Sigma u_i^2 + f(\beta)$
+
+*正則化*
+- *L1 正則化* (L1 ノルム)
+  - 係数 (重みとも言う) の *絶対値* にペナルティを課す
+    - 大きすぎる係数は過学習である、というコンセプト
+  - _重みをゼロにして変数削減を行うことができる_
+    - 相関の強い変数では、片方のみを選んでしまう危険性がある:
+  - _データ数以上に多い変数の選択はできない_
+  - 係数ベクトル B の推定を以下の式で行う
+
+$\hat{\beta} = argmin_\beta(|| \bf{y} - \bf{X} \beta ||_2^2 + \lambda ||\beta||_1)$
+
+$Lasso = \Sigma_{i=1}^n(y_i - \hat{y}_i)^2 + \lambda \Sigma_{j=1}^m |w_j|$
+
+
+- *L2 正則化* (L2 ノルム)
+  - 係数の *2 乗* にペナルティを課す
+  - _L2 正則化では、係数は完全には 0 にならない_
+    - 小さなパラメタ (0 に近い) を小さくするよりも、大きなパラメタを小さくするほうがよい点があるから
+
+$\hat{\beta} = argmin_\beta(|| \bf{y} - \bf{X} \beta ||_2^2 + \lambda ||\beta||_2^2)$
+
+$Ridge = \Sigma_{i=1}^n(y_i - \hat{y}_i)^2 + \lambda \Sigma_{j=1}^m w_j^2$
+
+
+- *Elastic Net*
+  - L1, L2 正則化を混合したもの
+  - Lasso の変数数の限界を克服するために考案された
+
+$\hat{\beta} = argmin_\beta(|| \bf{y} - \bf{X} \beta ||_2^2 + \lambda (\alpha|| \beta||_1 + (1 - \alpha) ||\beta||_2^2))$
+
+$ElasticNet = \Sigma_{i=1}^n(y_i - \hat{y}_i)^2 + \lambda_1 \Sigma_{j=1}^m w_j^2 - \lambda_2 \Sigma_{j=1}^m |w_j|$
+
+* 参考 
+
+- WAIC
+  - [[http://ushi-goroshi.hatenablog.com/entry/2017/12/24/225748][WAICを計算してみる@統計コンサルの議事メモ]]
+  - [[http://statmodeling.hatenablog.com/entry/calc-waic-wbic][WAICとWBICを事後分布から計算する@StatModeling Memorandum]]
+  - [[http://statmodeling.hatenablog.com/entry/watanabe-bayes-book][「ベイズ統計の理論と方法」渡辺澄夫のメモ@StatModeling Memorandum]]
+  - [[https://rpubs.com/siero5335/92987][loo package動かしてみた: WAIC比較@RPubs]]
+  - [[https://www.slideshare.net/motivic/r-28993607][RでWAIC@SlideShare]]
+  - [[http://motivic.hateblo.jp/entry/2013/12/13/195527][RでWAICを強引に計算させてみた@motivicのチラ裏]]
+  - [[http://motivic.hateblo.jp/entry/2013/12/15/232856][RStanでWAICの計算をしてみた@motivicのチラ裏]]
+  - [[https://www.slideshare.net/tomokimatsumoto37/waicwbic][WAICとWBICのご紹介@SlideShare]]
+
+- [[https://logics-of-blue.com/information-theory-basic/][情報理論の基礎～情報量の定義から相対エントロピー、相互情報量まで～@Logics of Blue]]
+
+- 正則化 
+  - [[https://stats.biopapyrus.jp/sparse-modeling/glmnet.html][R の glmnet パッケージを利用した LASSO 推定と Elastic Net 推定@biostatistics]]
+  - [[http://www.housecat442.com/?p=646][正則化についてとLassoとRidge。@分析のおはなし]]
+
+- 渡辺澄夫
+  - [[http://watanabe-www.math.dis.titech.ac.jp/users/swatanab/waic2011.html][広く使える情報量規準(WAIC)@渡辺澄夫のウェブサイト]]
+  - [[http://watanabe-www.math.dis.titech.ac.jp/users/swatanab/wbic2012.html][広く使えるベイズ情報量規準 (WBIC)@渡辺澄夫のウェブサイト]]
+    
+    

@@ -1,5 +1,0 @@
-#+STARTUP: folded indent inlineimages latexpreview
-#+PROPERTY: header-args:R :session *R:em_algo* :width 560 :height 420
-
-
-* 
