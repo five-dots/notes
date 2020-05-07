@@ -82,6 +82,7 @@ noweb 参照の例 <<>> で参照できる
 
 - :eval
   - Export 時にコードブロックを評価しない =never-export=
+  - 単純にコードを実行しない場合 =never=
 
 - emacs-lisp
 #+begin_src emacs-lisp :results list

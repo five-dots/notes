@@ -1,14 +1,27 @@
 #+STARTUP: folded indent inlineimages latexpreview
-#+PROPERTY: header-args:R :results output :colnames yes :session *R:error*
+#+PROPERTY: header-args:R :results output code :colnames yes :session *R:error*
 
-* Error Handling
+* Table of Contents :quote:toc:
+#+BEGIN_QUOTE
+- [[#conditions][Conditions]]
+  - [[#3-conditions][3 Conditions]]
+  - [[#try][try()]]
+  - [[#trycatch][tryCatch()]]
+  - [[#rlangabort][rlang::abort()]]
+- [[#debugging][Debugging]]
+  - [[#debug][Debug]]
+  - [[#rtvs][RTVS]]
+- [[#defensive-programming][Defensive Programming]]
+- [[#reference][Reference]]
+#+END_QUOTE
+
 * Conditions
-** Conditions
+** 3 Conditions
 
 - 3 つのコンディションを適切に使い分ける
-  - =stop()= 処理を継続できないとき
-  - =warning()= 処理をリカバリーできるとき. 関数が =Deprecate= であることを通知するとき.
-  - =message()= その他
+  - Error by =stop()=: 処理を継続できないとき
+  - Warning by =warning()=: 処理をリカバリーできるとき. 関数が =Deprecate= であることを通知するとき.
+  - Message by =message()=: その他
 
 - 重要なメッセージに単なる =print()=, =cat()= を使わない
 #+begin_src R :results silent
@@ -30,22 +43,29 @@ log("x") # error
 : In log(-1) : NaNs produced
 : Error in log("x") : non-numeric argument to mathematical function
 
-** =try()=
+** try()
 
 - =try()= の結果を受けて、処理を分岐させるのは、推奨されない (by Hadley)
-- 代わりに =tryCatch()= を使う
-#+begin_src R
-try()
+  - 代わりに =tryCatch()= を使う
+#+begin_src R :exports both
 try(log("x"))
-try(log("x"), silent = TRUE)
+try(log("x"), silent = TRUE) # エラーメッセージを表示しない
 
 ## 失敗時は、try-error クラスを返す
 fail <- try(log("x"), silent = TRUE)
 class(fail)
 #+end_src
 
+#+RESULTS:
+#+begin_src R
+Error in log("x") : non-numeric argument to mathematical function
+
+[1] "try-error"
+#+end_src
+\\
+
 - 有用なユースケース
-- try() の中で assignment を行い、デフォルト値を設定する
+  - =try()= の中で assignment を行い、デフォルト値を設定する
 #+begin_src R
 default <- NULL
 try(default <- read.csv("possibly-bad-input.csv"), silent = TRUE)
@@ -53,20 +73,26 @@ default
 #+end_src
 
 #+RESULTS:
-: Warning message:
-: In file(file, "rt") :
-:   cannot open file 'possibly-bad-input.csv': No such file or directory
-: NULL
+#+begin_src R
 
-** =tryCatch()=
+Warning message:
+In file(file, "rt") :
+  cannot open file 'possibly-bad-input.csv': No such file or directory
+
+NULL
+#+end_src
+\\
+
+** tryCatch()
 
 - exiting handler
   - =tryCatch()=
   - condition を受け取った場合、その後の処理を停止する
+
 - calling handler
   - =withCallingHandlers()=
   - condition を受け取っても、その後の処理を継続する
-#+begin_src R :results silent
+#+begin_src R :eval never
 tryCatch(expr, ..., finally)
 rlang::catch_cnd(expr, classes = "condition") # tryCatch の wrapper
 
@@ -75,15 +101,16 @@ withCallingHandlers(expr, ...)
 
 ## classes
 simpleCondition(message, call = NULL)
-simpleError    (message, call = NULL)
-simpleWarning  (message, call = NULL)
-simpleMessage  (message, call = NULL)
+simpleError(message, call = NULL)
+simpleWarning(message, call = NULL)
+simpleMessage(message, call = NULL)
 #+end_src
+\\
 
 - =simpleError= class を返す
 - condition -> error -> simpleError
 - message, call を持った list になっている
-#+begin_src R
+#+begin_src R :exports both
 err <- tryCatch(log("x"), error = function(e) e)
 class(err)
 str(err)
@@ -93,19 +120,25 @@ conditionCall(err)
 #+end_src
 
 #+RESULTS:
-: [1] "simpleError" "error"       "condition"
-: List of 2
-:  $ message: chr "non-numeric argument to mathematical function"
-:  $ call   : language log("x")
-:  - attr(*, "class")= chr [1:3] "simpleError" "error" "condition"
-: [1] "non-numeric argument to mathematical function"
-: log("x")
+#+begin_example
 
-** =rlang::abort()=
+[1] "simpleError" "error"       "condition"
+
+List of 2
+ $ message: chr "non-numeric argument to mathematical function"
+ $ call   : language log("x")
+ - attr(*, "class")= chr [1:3] "simpleError" "error" "condition"
+
+[1] "non-numeric argument to mathematical function"
+
+log("x")
+#+end_example
+\\
+
+** rlang::abort()
 
 - Custom condition を作成するのに便利
-
-#+begin_src R :results silent
+#+begin_src R :eval never
 abort(
   message = NULL,
   class = NULL,
@@ -119,7 +152,7 @@ abort(
 )
 #+end_src
 
-#+begin_src R
+#+begin_src R :exports both
 e <- tryCatch(
   rlang::abort(
     "error_not_found", # error クラス名
@@ -132,7 +165,8 @@ str(e)
 #+end_src
 
 #+RESULTS:
-#+begin_example
+#+begin_src R
+
 List of 4
  $ message: chr "Path `blah.csv` not found"
  $ trace  :List of 4
@@ -142,13 +176,14 @@ List of 4
   .. ..$ : language base:::tryCatchOne(expr, names, parentenv, handlers[[1L]])
   .. ..$ : language base:::doTryCatch(return(expr), name, parentenv, handler)
   ..$ parents: int [1:4] 0 1 2 3
-  ..$ ids    : chr [1:4] "0x5598f52c7e38" "0x5598f52c87a0" "0x5598f52c2d98" "0x5598f52c30e0"
+  ..$ ids    : chr [1:4] "0x5641225c9c08" "0x5641225c9508" "0x5641225c91c0" "0x5641225c8e78"
   ..$ indices: int [1:4] 1 2 3 4
   ..- attr(*, "class")= chr "rlang_trace"
  $ parent : NULL
  $ path   : chr "blah.csv"
  - attr(*, "class")= chr [1:4] "error_not_found" "rlang_error" "error" "condition"
-#+end_example
+#+end_src
+\\
 
 * Debugging
 ** Debug
@@ -158,7 +193,7 @@ List of 4
 3. バグの発生場所を特定する -> =traceback()=
 4. 修正しテストする -> =browser()=, =debug()=
 
-#+begin_src R
+#+begin_src R :exports both
 browser()
 # traceback (Call stack)
 f <- function(a) g(a)
@@ -169,17 +204,21 @@ f(10)
 #+end_src
 
 #+RESULTS:
-: Error in "a"
-: a (from #1) : non-numeric argument to binary operator
+#+begin_src R
+Called from: top level
+
+Error in "a"
+a (from #1) : non-numeric argument to binary operator
+#+end_src
 
 - 最後のキャッチされなかったエラーの call stack を表示 (下から上に読む)
-#+begin_src R :results silent
+#+begin_src R :eval never
 traceback(x = NULL, max.lines = getOption("deparse.max.lines"))
 .traceback(x = NULL)
 #+end_src
 
 - browser (=Breakpoint)
-#+begin_src R :results silent
+#+begin_src R :eval never
 browser(text = "", condition = NULL, expr = TRUE, skipCalls = 0L)
 # c     continue (次の Breakpoint まで進む)
 # f     finish
@@ -191,7 +230,7 @@ browser(text = "", condition = NULL, expr = TRUE, skipCalls = 0L)
 # Q     exit the browser (結果を表示しない)
 #+end_src
 
-#+begin_src R :results silent
+#+begin_src R :eval never
 add <- function(a, b, c) {
   d <- a + b
   e <- b + c
@@ -208,7 +247,7 @@ add <- function(a, b, c) {
 #+end_src
 
 - debug 関数をステップ実行
-#+begin_src R :results silent
+#+begin_src R :eval never
 debug(fun, text = "", condition = NULL, signature = NULL)
 debugonce(fun, text = "", condition = NULL, signature = NULL)
 undebug(fun, signature = NULL)
@@ -221,7 +260,7 @@ undebug(add) # デバッグ解除
 #+end_src
 
 - trace 関数の任意の位置に Breakpoint を置く
-#+begin_src R :results silent
+#+begin_src R :eval never
 trace(what, tracer, exit, at, print, signature, where = topenv(parent.frame()), edit = FALSE)
 untrace(what, signature = NULL, where = topenv(parent.frame()))
 
@@ -231,7 +270,7 @@ untrace(add)
 #+end_src
 
 - 以下の設定で、error 時に browser 関数を実行するかを切り替えられる
-#+begin_src R :results silent
+#+begin_src R :eval never
 options(error = browser)
 options(error = NULL)
 
@@ -253,7 +292,7 @@ f()
 
 - [[https://docs.microsoft.com/ja-jp/visualstudio/rtvs/debugging-r-in-visual-studio?view=vs-2017][Visual Studio で R をデバッグする]]
 
-#+begin_src R
+#+begin_src R :exports both
 add <- function(a, b, c) {
   d <- a + b
   e <- b + c

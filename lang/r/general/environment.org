@@ -20,10 +20,12 @@
   - [[#関数内から-globalenv-の値を得る][関数内から .GlobalEnv の値を得る]]
   - [[#値の割当て][値の割当て]]
 - [[#links][Links]]
-- [[#reference][Reference]]
+- [[#references][References]]
 #+END_QUOTE
 
 * What is an Environment ?
+
+参考: [[http://adv-r.had.co.nz/Environments.html][Advanced R: Environment]]
 
 1. スコーピングのためのデータ構造
    - 全ての R のオブジェクトは ~enviroment~ に属している
@@ -790,7 +792,7 @@ x
 
 - [[file:../package/r-lib/rlang.org][ ={rlang}= ]]
 
-* Reference
+* References
 
 - [[http://adv-r.had.co.nz/Environments.html][Advanced R 1st Edition: Environments]]
 - [[https://adv-r.hadley.nz/environments.html][Advanced R 2nd Edition: Environments]]
