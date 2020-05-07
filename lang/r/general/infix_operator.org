@@ -84,8 +84,10 @@ x
 
 *** =::=, =:::= の違い
 
-- pkg::obj # Exported obj
-- pkg:::obj # Internal obj
+- =pkg::obj=
+  - Exported object
+- =pkg:::obj=
+  - Internal object
   - Internal のオブジェクトにアクセスするのは、非推奨
 \\
 
@@ -132,29 +134,30 @@ x
 *** List
 
 #+begin_src R :exports both
-pacman::p_funs(magrittr)
+pacman::p_funs(magrittr) %>% str_subset("^%")
 #+end_src
 
 #+RESULTS:
 #+begin_src R
- [1] "%$%"                    "%<>%"                   "%>%"
- [4] "%T>%"                   "add"                    "and"
- [7] "debug_fseq"             "debug_pipe"             "divide_by"
-[10] "divide_by_int"          "equals"                 "extract"
-[13] "extract2"               "freduce"                "functions"
-[16] "inset"                  "inset2"                 "is_greater_than"
-[19] "is_in"                  "is_less_than"           "is_weakly_greater_than"
-[22] "is_weakly_less_than"    "mod"                    "multiply_by"
-[25] "multiply_by_matrix"     "n'est pas"              "not"
-[28] "or"                     "raise_to_power"         "set_colnames"
-[31] "set_names"              "set_rownames"           "subtract"
-[34] "undebug_fseq"           "use_series"
+[1] "%$%"  "%<>%" "%>%"  "%T>%"
 #+end_src
 \\
 
-*** LHS =%>%= RHS Pipe
+*** =%>%= Pipe
+
+#+begin_src R :exports both
+iris %>% head(2)
+#+end_src
+
+#+RESULTS:
+#+begin_src R
+  Sepal.Length Sepal.Width Petal.Length Petal.Width Species
+1          5.1         3.5          1.4         0.2  setosa
+2          4.9         3.0          1.4         0.2  setosa
+#+end_src
 \\
-*** LHS =%<>%= RHS 代入演算子
+
+*** =%<>%= 代入演算子
 
 #+begin_src R :exports both
 iris$Sepal.Length %<>% sqrt
@@ -186,7 +189,7 @@ iris$Sepal.Length
 #+end_src
 \\
 
-*** LHS =%T>%= RHS "tee" 演算子
+*** =%T>%= "tee" 演算子
 
 - RHS の結果を返すのではなく、LHS の結果をスルーして返す
 #+begin_src R :exports both
@@ -203,7 +206,7 @@ rnorm(200) %>%
 #+end_src
 \\
 
-*** LHS =%$%= RHS "exposition" 演算子
+*** =%$%= "exposition" 演算子
 
 - LHS のオブジェクトの名前を RHS で参照できる
 - data 引数を持たない関数に名前を渡すのに便利
@@ -283,7 +286,7 @@ c("a", "b", NA, "c") %|% "default"
 \\
 
 ** lubridate package
-*** =%--%= (時間の引き算 -> interval class)
+*** =%--%= 時間の引き算 -> interval class
 
 #+begin_src R :exports both
 arrive <- ymd_hms("2011-06-04 12:00:00", tz = "Asia/Tokyo")
@@ -297,7 +300,7 @@ arrive %--% leave
 #+end_src
 \\
 
-*** =%m-%=, =%m+%= (月を安全に加算・減算する。月末日やうるう年を考慮)
+*** =%m-%=, =%m+%= (月を安全に加算・減算する。月末日やうるう年を考慮
 
 #+begin_src R :exports both
 jan <- ymd_hms("2010-01-31 03:04:05")
@@ -330,7 +333,7 @@ leap %m-% years(1)
 #+end_src
 \\
 
-*** =%within%= (interval/date_time %within% interval/list of intervals)
+*** =%within%= interval/date_time %within% interval/list of intervals
 
 - 日付が interval に含まれているかどうか
 #+begin_src R :exports both
@@ -364,9 +367,10 @@ ttime %within% rth
 \\
 
 ** pryr package
+*** =%<d-%= Delayed Binding
 
-- =pryr::`%<d-%`= (=base::delayedAssign()=)
-  - Delayed binding -> =promise= (遅延評価) を作成する
+- Delayed binding -> =promise= (遅延評価) を作成する
+  - =base::delayedAssign()=
 #+begin_src R :exports both
 library(pryr)
 system.time(b %<d-% {
@@ -387,8 +391,10 @@ system.time(b) # ここを実行した時点で、%<d-% のブロックが実行
 #+end_src
 \\
 
-- =pryr::`%<a-%`= (=base::makeActiveBinding()=)
-  - Active binding => アクセスされる毎に再計算される
+*** =%<a-%= Active Binding
+
+- Active binding => アクセスされる毎に再計算される
+  - =base::makeActiveBinding()=
 #+begin_src R :exports both
 x %<a-% runif(1)
 x
@@ -405,6 +411,7 @@ x
 \\
 
 ** zeallot package
+*** =%<-%=
 
 - Python ぽい値の割当
 #+begin_src R :exports both
@@ -421,6 +428,7 @@ y
 [1] 1
 #+end_src
 \\
+
 * Links
 
 - [[file:../stats/math.org][math 行列計算関連 =%*%=, =%x%=, =%o%=, =*= ]]
