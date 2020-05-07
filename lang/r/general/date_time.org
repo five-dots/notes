@@ -1,15 +1,14 @@
 #+STARTUP: folded indent inlineimages latexpreview
 #+PROPERTY: header-args:R :results output :colnames yes :session *R:date_time*
 
-* Date and Time in ~{base}~ package                                  :noexport:
+* Date and Time in ={base}= package                                  :noexport:
 
-R での日時の扱いは煩雑な面がある。似たような複数の型が存在していたり、名前が直感的にわかりにくかったりするからだ。幸い ~{lubridate}~ などの便利なパッケージのお陰で、そうした不便を軽減することはできる。しかし ~{lubridate}~ は ~{tidyverse}~ のコアパッケージではないし、どんな時も利用できる、というわけではないだろう。そんな時のために、ここでは ~{base}~ パッケージの中で最低限押さえて置くべきことをまとめておく。
-\\
+R での日時の扱いは煩雑な面がある。似たような複数の型が存在していたり、名前が直感的にわかりにくかったりするからだ。幸い ={lubridate}= などの便利なパッケージのお陰で、そうした不便を軽減することはできる。しかし ={lubridate}= は ={tidyverse}= のコアパッケージではないし、どんな時も利用できる、というわけではないだろう。そんな時のために、ここでは ={base}= パッケージの中で最低限押さえて置くべきことをまとめておく。
 
-* 目次                                                            :quote:toc:
+* Table of Contents :quote:toc:
 #+BEGIN_QUOTE
-- [[#日時を扱う型][日時を扱う型]]
-- [[#date-class][Date class]]
+- [[#date-time-types-in-r][Date Time Types in R]]
+- [[#date-class][Date Class]]
   - [[#新規作成][新規作成]]
   - [[#for-loop-で-date-が-numeric-になる問題][for loop で Date が numeric になる問題]]
 - [[#posixct-class][POSIXct class]]
@@ -27,37 +26,38 @@ R での日時の扱いは煩雑な面がある。似たような複数の型が
 - [[#参考情報][参考情報]]
 #+END_QUOTE
 
-* 日時を扱う型
+* Date Time Types in R
 
-base R には、日時を扱う 4 つの class が存在する
+- base R には、日時を扱う 4 つの class が存在する
 |---------+-------------------------------------------------------------|
 | Type    | Description                                                 |
 |---------+-------------------------------------------------------------|
-| ~Date~    | 経過日数で表現される。「年月日」のみ。                      |
-| ~POSIXt~  | POSIXct, POSIXlt の両方の性質を持つ。                       |
-| ~POSIXct~ | ct = Calender Time。経過秒数で表現される。                  |
-| ~POSIXlt~ | lt = Local Time。日付項目が名前付きのリスト。可読性が高い。 |
+| =Date=    | 経過日数で表現される。「年月日」のみ。                      |
+| =POSIXt=  | POSIXct, POSIXlt の両方の性質を持つ。                       |
+| =POSIXct= | ct = Calender Time。経過秒数で表現される。                  |
+| =POSIXlt= | lt = Local Time。日付項目が名前付きのリスト。可読性が高い。 |
 |---------+-------------------------------------------------------------|
 
 - R の日時を扱う型は、Unix エポックからの経過時間で表現される (origin = "1970-01-01")
-- 日時は、基本的に ~POSIXct~ class を利用しておけば良い
-- R には時刻のみ扱うクラスはない (パッケージとして、 ~{hms}~ がある)
-- ~POSIXct~ は ~double~ の実装なので、マイクロ秒の粒度までしか扱うことができない (パッケージとして ~{nanotime}~ がある)
-- ~tibble~ では、日付<date>、時刻<time>、日時<dttm>で表示される
-\\
+- 日時は、基本的に =POSIXct= class を利用しておけば良い
+- R には時刻のみ扱うクラスはない (パッケージとして、 ={hms}= がある)
+- =POSIXct= は =double= の実装なので、マイクロ秒の粒度までしか扱うことができない (パッケージとして ={nanotime}= がある)
+- =tibble= では、日付<date>、時刻<time>、日時<dttm>で表示される
 
-* Date class
+* Date Class
 ** 新規作成
 
 - 今日を取得
-#+begin_src R :exports both
+#+begin_src R :exports both :results output code
 td <- Sys.Date()
 td
 #+end_src
 
 #+RESULTS:
-: 
-: [1] "2019-10-17"
+#+begin_src R
+
+[1] "2020-05-07"
+#+end_src
 \\
 
 - ~Date~ はエポックからの日数で表現されている
