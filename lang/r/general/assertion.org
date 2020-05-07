@@ -46,7 +46,7 @@ assert_that(!is.null(NULL), msg = "NULL はだめよ")
 
 #+RESULTS:
 : Error: !is.null(NULL) is not TRUE
-: 
+:
 : Error: NULL はだめよ
 
 - =assertr::assert_that()=
@@ -57,13 +57,11 @@ mtcars %>% verify(nrow(.) > 100)
 #+end_src
 
 #+RESULTS:
-: verification [nrow(.)
-: 100] failed! (1 failure)
-: 
+: verification [nrow(.) > 100] failed! (1 failure)
+:
 :     verb redux_fn     predicate column index value
-: 1 verify       NA nrow(.)
-: 100     NA     1    NA
-: 
+: 1 verify       NA nrow(.) > 100     NA     1    NA
+:
 : Error: assertr stopped execution
 
 * Links
