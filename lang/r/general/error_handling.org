@@ -29,19 +29,25 @@ stop(..., call. = TRUE, domain = NULL)
 warning(..., call. = TRUE, immediate. = FALSE, noBreaks. = FALSE, domain = NULL)
 message(..., domain = NULL, appendLF = TRUE)
 #+end_src
+\\
 
 - warning/error
-#+begin_src R
+#+begin_src R :exports both
 ## warning
 log(-1) # warning
 log("x") # error
 #+end_src
 
 #+RESULTS:
-: [1] NaN
-: Warning message:
-: In log(-1) : NaNs produced
-: Error in log("x") : non-numeric argument to mathematical function
+#+begin_src R
+
+[1] NaN
+Warning message:
+In log(-1) : NaNs produced
+
+Error in log("x") : non-numeric argument to mathematical function
+#+end_src
+\\
 
 ** try()
 
@@ -66,7 +72,7 @@ Error in log("x") : non-numeric argument to mathematical function
 
 - 有用なユースケース
   - =try()= の中で assignment を行い、デフォルト値を設定する
-#+begin_src R
+#+begin_src R :exports both
 default <- NULL
 try(default <- read.csv("possibly-bad-input.csv"), silent = TRUE)
 default
@@ -108,8 +114,8 @@ simpleMessage(message, call = NULL)
 \\
 
 - =simpleError= class を返す
-- condition -> error -> simpleError
-- message, call を持った list になっている
+  - condition -> error -> simpleError という階層構造
+  - message, call を持った list になっている
 #+begin_src R :exports both
 err <- tryCatch(log("x"), error = function(e) e)
 class(err)
@@ -151,6 +157,7 @@ abort(
   .subclass
 )
 #+end_src
+\\
 
 #+begin_src R :exports both
 e <- tryCatch(
@@ -210,12 +217,14 @@ Called from: top level
 Error in "a"
 a (from #1) : non-numeric argument to binary operator
 #+end_src
+\\
 
 - 最後のキャッチされなかったエラーの call stack を表示 (下から上に読む)
 #+begin_src R :eval never
 traceback(x = NULL, max.lines = getOption("deparse.max.lines"))
 .traceback(x = NULL)
 #+end_src
+\\
 
 - browser (=Breakpoint)
 #+begin_src R :eval never
@@ -229,6 +238,7 @@ browser(text = "", condition = NULL, expr = TRUE, skipCalls = 0L)
 # r     resume
 # Q     exit the browser (結果を表示しない)
 #+end_src
+\\
 
 #+begin_src R :eval never
 add <- function(a, b, c) {
@@ -245,6 +255,7 @@ add <- function(a, b, c) {
   d + e
 }
 #+end_src
+\\
 
 - debug 関数をステップ実行
 #+begin_src R :eval never
@@ -258,6 +269,7 @@ debug(add) # 関数のデバッグ指定
 add(1, 3, 6)
 undebug(add) # デバッグ解除
 #+end_src
+\\
 
 - trace 関数の任意の位置に Breakpoint を置く
 #+begin_src R :eval never
@@ -268,6 +280,7 @@ trace(add, tracer = browser, at = 2)
 add(1, 2, 3)
 untrace(add)
 #+end_src
+\\
 
 - 以下の設定で、error 時に browser 関数を実行するかを切り替えられる
 #+begin_src R :eval never
@@ -287,6 +300,7 @@ f <- function() stop("!") #
 f()
 f()
 #+end_src
+\\
 
 ** RTVS
 
@@ -307,6 +321,7 @@ add(1, 2, 3)
 # デバッガーを添付した後に、自前でファイルをソースする
 #rtvs::debug_source(glue("{repos}/Workspace/R/memo/R/rtvs_debug.R", repos = Sys.getenv("REPOS")))
 #+end_src
+\\
 
 * Defensive Programming
 
