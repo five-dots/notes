@@ -1,0 +1,1131 @@
+#+STARTUP: folded indent inlineimages latexpreview
+#+PROPERTY: header-args:R :results value :colnames yes :session *R:single-table-verbs*
+
+* 1 つの ~data.frame~ を操作する関数群                               :noexport:
+
+- ~filter()~, ~mutate()~, ~summarise()~, ~select()~ などのメジャーな関数はこのカテゴリーに含まれる (これらの関数は ~{dplyr}~ のドキュメントなどでは *Scoped verbs* とも呼ばれている)
+- 第 1 引数が ~.data~ や ~tbl~ となっていて、受け取った ~data.frame~ に何らかの操作をする関数群
+- 基本的に返り値も ~data.frame~ のため ~%>%~ でメッソッドチェーンを作ることができる (~pull()~ などの例外除く)
+- 主に *行に対する操作* ・ *列に対する操作* ・ *グループに対する操作* に大別できる
+\\
+
+* 目次                                                            :toc:quote:
+#+BEGIN_QUOTE
+- [[#ライブラリの読み込みとバージョンの確認][ライブラリの読み込みとバージョンの確認]]
+- [[#データセット][データセット]]
+- [[#行の操作][行の操作]]
+  - [[#行の抽出削減][行の抽出・削減]]
+    - [[#-filterdata--preserve--false][★★★ ~filter(.data, ..., .preserve = FALSE)~.]]
+    - [[#-slicedata--preserve--false][★★☆ ~slice(.data, ..., .preserve = FALSE)~.]]
+    - [[#-distinctdata--keep_all--false][★★☆ ~distinct(.data, ..., .keep_all = FALSE)~.]]
+    - [[#-top_nx-n-wt][★☆☆ ~top_n(x, n, wt)~.]]
+    - [[#-top_fracx-n-wt][★☆☆ ~top_frac(x, n, wt)~.]]
+    - [[#-sample_ntbl-size-replace--false-weight--null-env--null-][★☆☆ ~sample_n(tbl, size, replace = FALSE, weight = NULL, .env = NULL, ...)~.]]
+    - [[#-sample_fractbl-size--1-replace--false-weight--null-env--null-][★☆☆ ~sample_frac(tbl, size = 1, replace = FALSE, weight = NULL, .env = NULL, ...)~.]]
+  - [[#行の並び替え][行の並び替え]]
+    - [[#-arrangedata-][★★★ ~arrange(.data, ...)~.]]
+  - [[#行の要約][行の要約]]
+    - [[#-summarisedata-][★★★ ~summarise(.data, ...)~.]]
+    - [[#-tallyx-wt-sort--false-name--n][★★☆ ~tally(x, wt, sort = FALSE, name = "n")~.]]
+    - [[#-countx--wt--null-sort--false-name--n-drop--group_dropsx][★☆☆ ~count(x, ..., wt = NULL, sort = FALSE, name = "n", .drop = group_drops(x))~.]]
+- [[#列の操作][列の操作]]
+  - [[#列の追加][列の追加]]
+    - [[#-mutatedata-][★★★ ~mutate(.data, ...)~.]]
+    - [[#-transmutedata-][★☆☆ ~transmute(.data, ...)~.]]
+    - [[#-add_tallyx-wt-sort--false-name--n][★★☆ ~add_tally(x, wt, sort = FALSE, name = "n")~.]]
+    - [[#-add_countx--wt--null-sort--false-name--n][★☆☆ ~add_count(x, ..., wt = NULL, sort = FALSE, name = "n")~.]]
+  - [[#列の抽出][列の抽出]]
+    - [[#-selectdata-][★★★ ~select(.data, ...)~.]]
+    - [[#-pulldata-var---1][★★★ ~pull(.data, var = -1)~.]]
+  - [[#列の名前変更][列の名前変更]]
+    - [[#-renamedata-][★★☆ ~rename(.data, ...)~.]]
+- [[#グループの操作][グループの操作]]
+  - [[#グループの作成][グループの作成]]
+    - [[#-group_bydata--add--false-drop--group_by_drop_defaultdata][★★★ ~group_by(.data, ..., add = FALSE, .drop = group_by_drop_default(.data))~.]]
+    - [[#-ungroupx-][★★★ ~ungroup(x, ...)~.]]
+    - [[#-group_nesttbl--key--data-keep--false][★☆☆ ~group_nest(.tbl, ..., .key = "data", keep = FALSE)~.]]
+    - [[#-group_splittbl--keep--true][★★☆ ~group_split(.tbl, ..., keep = TRUE)~.]]
+  - [[#グループへの関数適応][グループへの関数適応]]
+    - [[#-group_maptbl-f--keep--false][★★★ ~group_map(.tbl, .f, ..., keep = FALSE)~.]]
+    - [[#-group_modifytbl-f--keep--false][★☆☆ ~group_modify(.tbl, .f, ..., keep = FALSE)~.]]
+    - [[#-group_walktbl-f-][★☆☆ ~group_walk(.tbl, .f, ...)~.]]
+  - [[#グループ情報の抽出][グループ情報の抽出]]
+    - [[#-group_datadata][★☆☆ ~group_data(.data)~.]]
+    - [[#-group_keystbl-][★☆☆ ~group_keys(.tbl, ...)~.]]
+    - [[#-group_rowsdata][★☆☆ ~group_rows(.data)~.]]
+    - [[#-group_indicesdata-][★☆☆ ~group_indices(.data, ...)~.]]
+    - [[#-group_colsvars--peek_vars][★☆☆ ~group_cols(vars = peek_vars())~.]]
+    - [[#-groupsx][★☆☆ ~groups(x)~.]]
+    - [[#-group_varsx][★☆☆ ~group_vars(x)~.]]
+    - [[#-group_sizex][★☆☆ ~group_size(x)~.]]
+    - [[#-n_groupsx][★☆☆ ~n_groups(x)~.]]
+  - [[#グループへのその他の操作][グループへのその他の操作]]
+    - [[#-group_trimtbl-drop--group_by_drop_defaulttbl][★☆☆ ~group_trim(.tbl, .drop = group_by_drop_default(.tbl))~.]]
+    - [[#-group_by_drop_defaulttbl][★☆☆ ~group_by_drop_default(.tbl)~.]]
+  - [[#grouped_df-の作成][grouped_df の作成]]
+    - [[#-grouped_dfdata-vars-drop--false][★☆☆ ~grouped_df(data, vars, drop = FALSE)~.]]
+    - [[#-isgrouped_dfx][★☆☆ ~is.grouped_df(x)~.]]
+    - [[#-is_grouped_dfx][★☆☆ ~is_grouped_df(x)~.]]
+    - [[#-new_grouped_dfx-groups--class--character][★☆☆ ~new_grouped_df(x, groups, ..., class = character())~.]]
+    - [[#-validate_grouped_dfx][★☆☆ ~validate_grouped_df(x)~.]]
+- [[#実行環境][実行環境]]
+#+END_QUOTE
+
+* ライブラリの読み込みとバージョンの確認
+
+#+begin_src R :results silent
+library(dplyr)
+#+end_src
+\\
+
+- バージョン
+#+begin_src R :results output :exports both
+packageVersion("dplyr")
+#+end_src
+
+#+RESULTS:
+: [1] ‘0.8.3’
+\\
+
+* データセット
+
+- ~{tidyquant}~ に収録されている ~FANG~ データセットを利用する
+- Facebook, Amazon, Netflix, Goolge の株価データ
+
+#+begin_src R :results value :colnames yes
+library(tidyquant)
+data(FANG)
+# 表示を見やすくするために、小数点以下第二位までにしておく
+FANG <- FANG %>% mutate_if(is.numeric, round, digit = 2)
+head(FANG, n = 3)
+#+end_src
+
+#+RESULTS:
+| symbol |       date |  open |  high |   low | close |   volume | adjusted |
+|--------+------------+-------+-------+-------+-------+----------+----------|
+| FB     | 2013-01-02 | 27.44 | 28.18 | 27.42 |    28 | 69846400 |       28 |
+| FB     | 2013-01-03 | 27.88 | 28.47 | 27.59 | 27.77 | 63140600 |    27.77 |
+| FB     | 2013-01-04 | 28.01 | 28.93 | 27.83 | 28.76 | 72715400 |    28.76 |
+\\
+
+* 行の操作
+** 行の抽出・削減
+*** ★★★ ~filter(.data, ..., .preserve = FALSE)~.
+
+- 条件に合致する行を抽出
+- 評価結果が ~NA~ となる行は除かれる
+- ~grouped_df~ に対する処理の際に ~.preserve = TRUE~ にすると、処理前のグループ情報がそのまま保持される (仮にそのグループに属する行がゼロになったとしても保持される)
+
+#+begin_src R
+FANG %>% filter(symbol == "GOOG" & date == "2013-01-02")
+#+end_src
+
+#+RESULTS:
+| symbol |       date |   open | high |    low |  close |  volume | adjusted |
+|--------+------------+--------+------+--------+--------+---------+----------|
+| GOOG   | 2013-01-02 | 719.42 |  727 | 716.55 | 723.25 | 5101500 |   361.26 |
+\\
+
+- base R の機能で同様のことを書くと若干冗長になる
+
+#+begin_src R
+FANG[FANG$symbol == "GOOG" & FANG$date == "2013-01-02", ]
+#+end_src
+
+#+RESULTS:
+| symbol |       date |   open | high |    low |  close |  volume | adjusted |
+|--------+------------+--------+------+--------+--------+---------+----------|
+| GOOG   | 2013-01-02 | 719.42 |  727 | 716.55 | 723.25 | 5101500 |   361.26 |
+\\
+
+- AND 条件は、「,」で繋げて書くことができる
+#+begin_src R
+FANG %>% filter(symbol == "GOOG", date == "2013-01-02")
+#+end_src
+
+#+RESULTS:
+| symbol |       date |   open | high |    low |  close |  volume | adjusted |
+|--------+------------+--------+------+--------+--------+---------+----------|
+| GOOG   | 2013-01-02 | 719.42 |  727 | 716.55 | 723.25 | 5101500 |   361.26 |
+\\
+
+- GlobalEnv に存在する変数でフィルタしようとするとうまくいかない
+- ~.GlobalEnv$symbol~ ではなく ~.data$symbol~ が使われてしまうため
+- ~.data~ は *pronoun* (=代名詞) と呼ばれ ~{dplyr}~ の関数に渡された ~data.frame~ 自体を参照するためのもの
+
+#+begin_src R
+symbol = "GOOG"
+FANG %>% filter(symbol == symbol, .data$date == "2013-01-02")
+#+end_src
+
+#+RESULTS:
+| symbol |       date |   open |  high |    low |  close |   volume | adjusted |
+|--------+------------+--------+-------+--------+--------+----------+----------|
+| FB     | 2013-01-02 |  27.44 | 28.18 |  27.42 |     28 | 69846400 |       28 |
+| AMZN   | 2013-01-02 | 256.08 | 258.1 | 253.26 | 257.31 |  3271000 |   257.31 |
+| NFLX   | 2013-01-02 |  95.21 | 95.81 |  90.69 |  92.01 | 19431300 |    13.14 |
+| GOOG   | 2013-01-02 | 719.42 |   727 | 716.55 | 723.25 |  5101500 |   361.26 |
+\\
+
+- 変数を使う場合、対策としては、3つ存在する
+  1. ~.GlobalEnv~ を指定する
+  2. *unquote* (~!!~) する
+  3. ~rlang::syms()~ でシンボル化した後に *unquote-splicing* (~!!!~) する
+
+#+begin_src R
+symbol = "GOOG"
+## 方法1
+FANG %>% filter(symbol == .GlobalEnv$symbol, .data$date == "2013-01-02")
+
+## 方法2 （結果は同じ)
+## FANG %>% filter(symbol == !!symbol, .data$date == "2013-01-02")
+
+## 方法3 （結果は同じ)
+## FANG %>% filter(symbol == !!!rlang::syms(symbol), .data$date == "2013-01-02")
+#+end_src
+
+#+RESULTS:
+| symbol |       date |   open | high |    low |  close |  volume | adjusted |
+|--------+------------+--------+------+--------+--------+---------+----------|
+| GOOG   | 2013-01-02 | 719.42 |  727 | 716.55 | 723.25 | 5101500 |   361.26 |
+\\
+
+*** ★★☆ ~slice(.data, ..., .preserve = FALSE)~.
+
+- 行番号で抽出する
+- 1 〜 4, 10, 15 行を抽出する場合
+
+#+begin_src R
+FANG %>%
+  # 結果がわかりやすいように行番号を列に変換する
+  tibble::rownames_to_column() %>%
+  slice(1:4, 10, 15)
+#+end_src
+
+#+RESULTS:
+| rowname | symbol |       date |  open |  high |   low | close |    volume | adjusted |
+|---------+--------+------------+-------+-------+-------+-------+-----------+----------|
+|       1 | FB     | 2013-01-02 | 27.44 | 28.18 | 27.42 |    28 |  69846400 |       28 |
+|       2 | FB     | 2013-01-03 | 27.88 | 28.47 | 27.59 | 27.77 |  63140600 |    27.77 |
+|       3 | FB     | 2013-01-04 | 28.01 | 28.93 | 27.83 | 28.76 |  72715400 |    28.76 |
+|       4 | FB     | 2013-01-07 | 28.69 | 29.79 | 28.65 | 29.42 |  83781800 |    29.42 |
+|      10 | FB     | 2013-01-15 | 30.64 | 31.71 | 29.88 |  30.1 | 173242600 |     30.1 |
+|      15 | FB     | 2013-01-23 |  31.1 |  31.5 |  30.8 | 30.82 |  48899800 |    30.82 |
+\\
+
+- 総行数を表す ~n()~ と組み合わせて、末尾から抽出する
+
+#+begin_src R
+FANG %>%
+  tibble::rownames_to_column() %>%
+  slice((n()-9):n())
+#+end_src
+
+#+RESULTS:
+| rowname | symbol |       date |   open |   high |    low |  close |  volume | adjusted |
+|---------+--------+------------+--------+--------+--------+--------+---------+----------|
+|    4023 | GOOG   | 2016-12-16 |  800.4 | 800.86 | 790.29 |  790.8 | 2428300 |    790.8 |
+|    4024 | GOOG   | 2016-12-19 | 790.22 | 797.66 | 786.27 |  794.2 | 1225900 |    794.2 |
+|    4025 | GOOG   | 2016-12-20 | 796.76 | 798.65 | 793.27 | 796.42 |  925100 |   796.42 |
+|    4026 | GOOG   | 2016-12-21 | 795.84 | 796.68 |  787.1 | 794.56 | 1208700 |   794.56 |
+|    4027 | GOOG   | 2016-12-22 | 792.36 | 793.32 | 788.58 | 791.26 |  969100 |   791.26 |
+|    4028 | GOOG   | 2016-12-23 |  790.9 | 792.74 | 787.28 | 789.91 |  623400 |   789.91 |
+|    4029 | GOOG   | 2016-12-27 | 790.68 | 797.86 | 787.66 | 791.55 |  789100 |   791.55 |
+|    4030 | GOOG   | 2016-12-28 |  793.7 | 794.23 |  783.2 | 785.05 | 1132700 |   785.05 |
+|    4031 | GOOG   | 2016-12-29 | 783.33 | 785.93 | 778.92 | 782.79 |  742200 |   782.79 |
+|    4032 | GOOG   | 2016-12-30 | 782.75 | 782.78 | 770.41 | 771.82 | 1760200 |   771.82 |
+\\
+
+- マイナスで指定行だけ削除もできる
+- symbol 毎に ~lag()~ を使って収益率を計算する例
+- group の最初の行が ~NA~ になってしまうので ~slice(-1)~ で削除する
+
+#+begin_src R
+FANG %>%
+  group_by(symbol) %>%
+  mutate(return = log(adjusted) - lag(log(adjusted))) %>%
+  slice(-1) %>%
+  ungroup() %>%
+  head()
+#+end_src
+
+#+RESULTS:
+| symbol |       date |   open |   high |    low |  close |  volume | adjusted |                return |
+|--------+------------+--------+--------+--------+--------+---------+----------+-----------------------|
+| AMZN   | 2013-01-03 | 257.27 | 260.88 | 256.37 | 258.48 | 2750900 |   258.48 |     0.004536737845803 |
+| AMZN   | 2013-01-04 | 257.58 |  259.8 | 256.65 | 259.15 | 1874200 |   259.15 |   0.00258872311947211 |
+| AMZN   | 2013-01-07 | 262.97 | 269.73 | 262.67 | 268.46 | 4910000 |   268.46 |    0.0352948824237744 |
+| AMZN   | 2013-01-08 | 267.07 | 268.98 | 263.57 | 266.38 | 3010700 |   266.38 |  -0.00777806628660471 |
+| AMZN   | 2013-01-09 | 268.17 |  269.5 |  265.4 | 266.35 | 2265600 |   266.35 | -0.000112627409876609 |
+| AMZN   | 2013-01-10 | 268.54 | 268.74 |  262.3 | 265.34 | 2863400 |   265.34 |  -0.00379921087423796 |
+\\
+
+*** ★★☆ ~distinct(.data, ..., .keep_all = FALSE)~.
+
+- 重複を削除する
+- ~...~ で重複を判断する列を指定 (省略すれば全列を利用)
+- FANG データでは理解が難しいので、単純な ~data.frame~ を作成する
+
+#+begin_src R
+df <- tibble(
+  x = c(1, 2, 3, 1, 2, 3),
+  y = c(1, 2, 3, 1, 2, 3))
+
+# 後半3行は重複 
+distinct(df)
+#+end_src
+
+#+RESULTS:
+| x | y |
+|---+---|
+| 1 | 1 |
+| 2 | 2 |
+| 3 | 3 |
+\\
+
+*** ★☆☆ ~top_n(x, n, wt)~.
+
+- 上位・下位 n 番目までを抽出する
+- プラスで指定すれば上位から、マイナスで指定すれば下位から抽出する
+- ~arrange()~ -> ~slice()~ でも同様のことが実現できるが、より簡潔に実現したいことを表現できる
+
+#+begin_src R
+FANG %>%
+  group_by(symbol) %>%
+  # 対数収益率を計算
+  mutate(return = log(adjusted) - lag(log(adjusted))) %>%
+  # シンボル毎に上位3つを抽出する
+  top_n(3, return) %>%
+  ungroup() %>%
+  select(symbol, date, return)
+#+end_src
+
+#+RESULTS:
+| symbol |       date |             return |
+|--------+------------+--------------------|
+| FB     | 2013-07-25 |  0.259371076815121 |
+| FB     | 2014-01-30 |  0.131942235945142 |
+| FB     | 2016-01-28 |  0.144285953719488 |
+| AMZN   | 2015-01-30 |  0.128495157741183 |
+| AMZN   | 2015-04-24 |  0.132177878252494 |
+| AMZN   | 2015-07-24 | 0.0934645793755555 |
+| NFLX   | 2013-01-24 |  0.352326520182322 |
+| NFLX   | 2013-04-23 |  0.218717875211057 |
+| NFLX   | 2016-10-18 |   0.17418904498403 |
+| GOOG   | 2013-10-18 |     0.129242446998 |
+| GOOG   | 2015-07-17 |  0.148871862945331 |
+| GOOG   | 2015-08-26 | 0.0769534053916816 |
+\\
+
+*** ★☆☆ ~top_frac(x, n, wt)~.
+
+- 上位・下位を整数ではなく、パーセントで指定する
+- それ以外は ~top_n()~ と同じ使い方
+
+#+begin_src R
+FANG %>%
+  group_by(symbol) %>%
+  # 対数収益率を計算
+  mutate(return = log(adjusted) - lag(log(adjusted))) %>%
+  # シンボル毎に下位0.2% を抽出する
+  top_frac(-0.002, return) %>%
+  ungroup() %>%
+  select(symbol, date, return)
+#+end_src
+
+#+RESULTS:
+| symbol |       date |              return |
+|--------+------------+---------------------|
+| FB     | 2013-10-08 | -0.0692473999743055 |
+| FB     | 2014-03-26 | -0.0718700003132673 |
+| AMZN   | 2014-01-31 |  -0.116502869834937 |
+| AMZN   | 2014-04-25 |  -0.104059600717207 |
+| NFLX   | 2014-10-16 |  -0.215254960461011 |
+| NFLX   | 2016-07-19 |  -0.140713715884429 |
+| GOOG   | 2015-08-21 | -0.0545672199920357 |
+| GOOG   | 2016-04-22 |  -0.054644795802778 |
+\\
+
+*** ★☆☆ ~sample_n(tbl, size, replace = FALSE, weight = NULL, .env = NULL, ...)~.
+
+- ランダムに指定した行数を抽出する
+- 重み付けは ~weight~ を指定 (非負でデータと同じ長さのベクトル)
+- ~replace~ は使い方不明
+- ~.env~, ~...~ は現在使われていない
+
+#+begin_src R
+FANG %>%
+  # グループ毎に 2行ずつ抽出する
+  group_by(symbol) %>% sample_n(2, weight = adjusted)
+#+end_src
+
+#+RESULTS:
+| symbol |       date |   open |   high |    low |  close |   volume | adjusted |
+|--------+------------+--------+--------+--------+--------+----------+----------|
+| AMZN   | 2016-09-02 | 774.11 |    776 |  771.7 | 772.44 |  2181800 |   772.44 |
+| AMZN   | 2013-06-13 |  271.5 |  276.8 | 270.29 | 275.79 |  2649800 |   275.79 |
+| FB     | 2016-05-23 | 117.42 |  117.6 | 115.94 | 115.97 | 20441000 |   115.97 |
+| FB     | 2016-07-14 |  117.5 | 117.64 |  116.7 | 117.29 | 14579700 |   117.29 |
+| GOOG   | 2016-04-07 | 745.37 |    747 | 736.28 | 740.28 |  1453200 |   740.28 |
+| GOOG   | 2015-03-13 |  553.5 |  558.4 | 544.22 | 547.32 |  1703500 |   547.32 |
+| NFLX   | 2013-02-25 | 180.99 |  187.1 | 175.45 | 179.32 | 52164700 |    25.62 |
+| NFLX   | 2016-07-05 |   95.2 | 101.27 |  93.31 |  97.91 | 25879400 |    97.91 |
+\\
+
+*** ★☆☆ ~sample_frac(tbl, size = 1, replace = FALSE, weight = NULL, .env = NULL, ...)~.
+
+- ~sample_n()~ の指定行数をパーセントで指定できる亜種
+
+#+begin_src R
+FANG %>%
+  # グループ毎に 0.3% ずつ抽出する
+  group_by(symbol) %>% sample_frac(0.003)
+#+end_src
+
+#+RESULTS:
+| symbol |       date |   open |   high |    low |  close |   volume | adjusted |
+|--------+------------+--------+--------+--------+--------+----------+----------|
+| AMZN   | 2016-02-24 | 545.75 | 554.27 | 533.15 | 554.04 |  6231700 |   554.04 |
+| AMZN   | 2013-07-01 |    279 | 283.29 | 277.16 |  282.1 |  2888200 |    282.1 |
+| AMZN   | 2014-12-24 | 306.38 |    307 | 302.88 | 303.03 |  1513800 |   303.03 |
+| FB     | 2013-03-21 |  25.66 |  26.11 |  25.56 |  25.74 | 24336100 |    25.74 |
+| FB     | 2014-09-11 |  77.13 |  78.36 |  77.05 |  77.92 | 32219000 |    77.92 |
+| FB     | 2014-04-23 |  63.45 |  63.48 |  61.26 |  61.36 | 95908700 |    61.36 |
+| GOOG   | 2015-07-17 |    649 | 674.47 |    645 | 672.93 | 11164900 |   672.93 |
+| GOOG   | 2015-08-21 | 639.78 | 640.05 | 612.33 | 612.48 |  4265200 |   612.48 |
+| GOOG   | 2016-06-30 | 685.47 | 692.32 | 683.65 |  692.1 |  1597700 |    692.1 |
+| NFLX   | 2015-12-14 | 119.77 |  120.9 | 114.66 | 120.67 | 18679300 |   120.67 |
+| NFLX   | 2015-01-02 | 344.06 | 352.32 | 341.12 | 348.94 | 13475000 |    49.85 |
+| NFLX   | 2014-12-03 | 351.55 | 355.12 | 344.27 | 355.12 | 13819400 |    50.73 |
+\\
+
+** 行の並び替え
+*** ★★★ ~arrange(.data, ...)~.
+
+- 指定した列の値で並び替え
+
+#+begin_src R
+FANG %>% arrange(volume) %>% head(4)
+#+end_src
+
+#+RESULTS:
+| symbol |       date |   open |   high |    low |  close | volume | adjusted |
+|--------+------------+--------+--------+--------+--------+--------+----------|
+| GOOG   | 2014-04-01 | 558.71 | 568.45 | 558.71 | 567.16 |   7900 |   567.16 |
+| GOOG   | 2014-03-31 | 566.89 |    567 | 556.93 | 556.97 |  10800 |   556.97 |
+| GOOG   | 2014-03-27 |    568 |    568 | 552.92 | 558.46 |  13100 |   558.46 |
+| GOOG   | 2014-03-28 |  561.2 | 566.43 | 558.67 | 559.99 |  41200 |   559.99 |
+\\
+
+- デフォルトは昇順なので、降順には ~desc()~ を使う
+
+#+begin_src R
+FANG %>% arrange(desc(volume)) %>% head(4)
+#+end_src
+
+#+RESULTS:
+| symbol |       date |   open |   high |    low |  close |    volume | adjusted |
+|--------+------------+--------+--------+--------+--------+-----------+----------|
+| FB     | 2013-07-25 |  33.54 |  34.88 |  32.75 |  34.36 | 365457900 |    34.36 |
+| FB     | 2013-10-31 |  47.16 |     52 |   46.5 |  50.21 | 248809000 |    50.21 |
+| FB     | 2013-12-20 |  54.93 |  55.15 |  54.23 |  55.12 | 239824000 |    55.12 |
+| NFLX   | 2013-01-25 | 145.67 | 172.68 | 145.61 | 169.56 | 191445800 |    24.22 |
+\\
+
+** 行の要約
+*** ★★★ ~summarise(.data, ...)~.
+
+- ~summarise()~ (アメリカ英語) と ~summarize()~ (イギリス英語) は同じもの
+- _vector を引数に取って、スカラ値を返す関数_ (~sum()~ や ~mean()~)を ~summarise()~ の中で利用する
+
+#+begin_src R
+FANG %>%
+  group_by(symbol) %>%
+  # 銘柄毎に平均出来高を算出
+  summarise(mean_volume = mean(volume))
+#+end_src
+
+#+RESULTS:
+| symbol |      mean_volume |
+|--------+------------------|
+| AMZN   | 3741086.11111111 |
+| FB     | 40007883.8293651 |
+| GOOG   | 2644114.88095238 |
+| NFLX   | 19565909.8214286 |
+\\
+
+*** ★★☆ ~tally(x, wt, sort = FALSE, name = "n")~.
+
+- ~summarise()~ -> ~n()~ や ~sum(n)~ のラッパー関数
+- 列を指定しなければ、総行数を集計してくれる (= ~n()~)
+
+#+begin_src R
+FANG %>% group_by(symbol) %>% tally()
+
+# 上記と同じ
+## FANG %>% group_by(symbol) %>% summarise(n = n())
+#+end_src
+
+#+RESULTS:
+| symbol | nrow |
+|--------+------|
+| AMZN   | 1008 |
+| FB     | 1008 |
+| GOOG   | 1008 |
+| NFLX   | 1008 |
+\\
+
+- 列を指定した場合は、その列の合計値を算出する
+
+#+begin_src R
+FANG %>% group_by(symbol) %>% tally(volume, sort = TRUE, name = "total_volume")
+#+end_src
+
+#+RESULTS:
+| symbol | total_volume |
+|--------+--------------|
+| FB     |  40327946900 |
+| NFLX   |  19722437100 |
+| AMZN   |   3771014800 |
+| GOOG   |   2665267800 |
+\\
+
+- ~tidyr::pivot_wider()~ と組み合わせて、クロス集計表を作るのに便利
+- 銘柄・年ごとの総出来高
+
+#+begin_src R
+FANG %>%
+  # date から年のみを抜き出して、グループ変数として使う
+  group_by(symbol, year = lubridate::year(date)) %>%
+  tally(volume) %>%
+  # pivot_wider() は spread() の後継機能
+  tidyr::pivot_wider(values_from = n, names_from = year)
+#+end_src
+
+#+RESULTS:
+| symbol |        2013 |        2014 |       2015 |       2016 |
+|--------+-------------+-------------+------------+------------|
+| AMZN   |   747905700 |  1029066700 |  956936800 | 1037105600 |
+| FB     | 15143182600 | 11977699100 | 6792708200 | 6414357000 |
+| GOOG   |  1055967100 |   626733500 |  521446300 |  461120900 |
+| NFLX   |  6915790700 |  4898415200 | 4679881700 | 3228349500 |
+\\
+
+*** ★☆☆ ~count(x, ..., wt = NULL, sort = FALSE, name = "n", .drop = group_drops(x))~.
+
+- ~tally()~ と似ているが、事前に ~group_by()~ してくれる
+
+#+begin_src R
+FANG %>% count(symbol)
+#+end_src
+
+#+RESULTS:
+| symbol |    n |
+|--------+------|
+| AMZN   | 1008 |
+| FB     | 1008 |
+| GOOG   | 1008 |
+| NFLX   | 1008 |
+\\
+
+* 列の操作
+** 列の追加
+*** ★★★ ~mutate(.data, ...)~.
+
+- 新しい列を追加する
+- Name-Value のペアを引数とする
+- _Value は評価結果がスカラ値か、長さがデータと同じベクトルである必要がある_
+
+#+begin_src R
+FANG %>%
+  mutate(return = log(adjusted) - lag(log(adjusted))) %>%
+  head(4)
+#+end_src
+
+#+RESULTS:
+| symbol |       date |  open |  high |   low | close |   volume | adjusted |               return |
+|--------+------------+-------+-------+-------+-------+----------+----------+----------------------|
+| FB     | 2013-01-02 | 27.44 | 28.18 | 27.42 |    28 | 69846400 |       28 |                  nil |
+| FB     | 2013-01-03 | 27.88 | 28.47 | 27.59 | 27.77 | 63140600 |    27.77 | -0.00824820885649569 |
+| FB     | 2013-01-04 | 28.01 | 28.93 | 27.83 | 28.76 | 72715400 |    28.76 |   0.0350292315341378 |
+| FB     | 2013-01-07 | 28.69 | 29.79 | 28.65 | 29.42 | 83781800 |    29.42 |   0.0226891823204456 |
+\\
+
+*** ★☆☆ ~transmute(.data, ...)~.
+
+- 新しい列を作成し、その他の列を削除する
+
+#+begin_src R
+FANG %>%
+  transmute(return = log(adjusted) - lag(log(adjusted))) %>%
+  head(4)
+#+end_src
+
+#+RESULTS:
+|               return |
+|----------------------|
+|                  nil |
+| -0.00824820885649569 |
+|   0.0350292315341378 |
+|   0.0226891823204456 |
+\\
+
+*** ★★☆ ~add_tally(x, wt, sort = FALSE, name = "n")~.
+
+- ~tally()~ と同様の機能だが、行を要約するのではなく、単純に列を追加するだけ
+
+#+begin_src R
+FANG %>% add_tally() %>% head(4)
+#+end_src
+
+#+RESULTS:
+| symbol |       date |  open |  high |   low | close |   volume | adjusted |    n |
+|--------+------------+-------+-------+-------+-------+----------+----------+------|
+| FB     | 2013-01-02 | 27.44 | 28.18 | 27.42 |    28 | 69846400 |       28 | 4032 |
+| FB     | 2013-01-03 | 27.88 | 28.47 | 27.59 | 27.77 | 63140600 |    27.77 | 4032 |
+| FB     | 2013-01-04 | 28.01 | 28.93 | 27.83 | 28.76 | 72715400 |    28.76 | 4032 |
+| FB     | 2013-01-07 | 28.69 | 29.79 | 28.65 | 29.42 | 83781800 |    29.42 | 4032 |
+\\
+
+*** ★☆☆ ~add_count(x, ..., wt = NULL, sort = FALSE, name = "n")~.
+
+- ~count()~ と同様の機能だが、行を要約するのではなく、単純に列を追加するだけ
+
+#+begin_src R
+FANG %>% add_count() %>% head(4)
+#+end_src
+
+#+RESULTS:
+| symbol |       date |  open |  high |   low | close |   volume | adjusted |    n |
+|--------+------------+-------+-------+-------+-------+----------+----------+------|
+| FB     | 2013-01-02 | 27.44 | 28.18 | 27.42 |    28 | 69846400 |       28 | 4032 |
+| FB     | 2013-01-03 | 27.88 | 28.47 | 27.59 | 27.77 | 63140600 |    27.77 | 4032 |
+| FB     | 2013-01-04 | 28.01 | 28.93 | 27.83 | 28.76 | 72715400 |    28.76 | 4032 |
+| FB     | 2013-01-07 | 28.69 | 29.79 | 28.65 | 29.42 | 83781800 |    29.42 | 4032 |
+\\
+
+** 列の抽出
+*** ★★★ ~select(.data, ...)~.
+
+- 列の選択
+- 1 列のみであっても、ベクトルにはならず ~data.frame~ のまま抽出できる
+- 列の指定方法
+
+#+begin_src R
+# 1. 列名
+FANG %>% select(symbol, date, adjusted) %>% head(4)
+
+# 2. 列の文字列ベクトル (結果は同じ)
+## FANG %>% select(c("symbol", "date", "adjusted")) %>% head(4)
+
+# 3. 列のインデックス (結果は同じ)
+## FANG %>% select(1, 2, 8) %>% head(4)
+
+# 4. 列名のマイナス指定 (結果は同じ)
+## FANG %>% select(-open, -high, -low, -close, -volume) %>% head(4)
+
+# 4. 列インデックスのマイナス指定 (結果は同じ)
+## FANG %>% select(-(3:6)) %>% head(4)
+#+end_src
+
+#+RESULTS:
+| symbol |       date |   volume | adjusted |
+|--------+------------+----------+----------|
+| FB     | 2013-01-02 | 69846400 |       28 |
+| FB     | 2013-01-03 | 63140600 |    27.77 |
+| FB     | 2013-01-04 | 72715400 |    28.76 |
+| FB     | 2013-01-07 | 83781800 |    29.42 |
+\\
+
+*** ★★★ ~pull(.data, var = -1)~.
+
+- 列をベクトルとして抽出する
+
+#+begin_src R
+FANG %>% pull(adjusted) %>% head(4)
+
+# インデックスで指定 (結果は同じ)
+## FANG %>% pull(-1) %>% head(4)
+#+end_src
+
+#+RESULTS:
+|     x |
+|-------|
+|    28 |
+| 27.77 |
+| 28.76 |
+| 29.42 |
+\\
+
+- 以下のように書いても同様だが ~pull()~ を使った方がより意図が明確になる
+
+#+begin_src R
+FANG %>% .$adjusted %>% head(4)
+#+end_src
+
+#+RESULTS:
+|     x |
+|-------|
+|    28 |
+| 27.77 |
+| 28.76 |
+| 29.42 |
+\\
+
+** 列の名前変更
+*** ★★☆ ~rename(.data, ...)~.
+
+- new = old の形式で列の名前を変更できる
+- 全ての列名を一括で変更したい場合は ~rlang::set_names()~ や ~stats::setNames()~ に列名の文字列ベクトルを渡すほうが簡単
+
+#+begin_src R
+FANG %>%
+  select(symbol, date, adjusted) %>%
+  rename(adj_close = adjusted) %>%
+  head(4)
+#+end_src
+
+#+RESULTS:
+| symbol |       date | adj_close |
+|--------+------------+-----------|
+| FB     | 2013-01-02 |        28 |
+| FB     | 2013-01-03 |     27.77 |
+| FB     | 2013-01-04 |     28.76 |
+| FB     | 2013-01-07 |     29.42 |
+\\
+
+- 名前の指定に変数を利用する場合
+
+#+begin_src R
+new_name <- "adj_close"
+old_name <- "adjusted"
+FANG %>%
+  select(symbol, date, adjusted) %>%
+  rename(!!new_name := !!old_name) %>%
+  head(4)
+#+end_src
+
+#+RESULTS:
+| symbol |       date | adj_close |
+|--------+------------+-----------|
+| FB     | 2013-01-02 |        28 |
+| FB     | 2013-01-03 |     27.77 |
+| FB     | 2013-01-04 |     28.76 |
+| FB     | 2013-01-07 |     29.42 |
+\\
+
+* グループの操作
+** グループの作成
+*** ★★★ ~group_by(.data, ..., add = FALSE, .drop = group_by_drop_default(.data))~.
+
+- 指定した列でグループ化された ~grouped_df~ を作成する
+- ~ungroup()~ でグループ化を解除
+- ~.drop = TRUE~ の場合は、空のグループを削除する
+
+#+begin_src R :results output :exports both
+FANG %>% group_by(symbol) %>% class()
+#+end_src
+
+#+RESULTS:
+: [1] "grouped_df" "tbl_df"     "tbl"        "data.frame"
+\\
+
+*** ★★★ ~ungroup(x, ...)~.
+
+- グループ化を解除する
+
+#+begin_src R :results output :exports both
+FANG %>% group_by(symbol) %>% ungroup() %>% class()
+#+end_src
+
+#+RESULTS:
+: [1] "tbl_df"     "tbl"        "data.frame"
+\\
+
+*** ★☆☆ ~group_nest(.tbl, ..., .key = "data", keep = FALSE)~.
+
+- グループ毎のネストされた ~data.frame~ を作成する
+- ネストされたデータに対して ~purrr::map()~ を ~mutate()~ 内で使ってモデリング等の操作することが多い
+
+#+begin_src R :results output :exports both
+FANG %>% group_nest(symbol)
+#+end_src
+
+#+RESULTS:
+: # A tibble: 4 x 2
+:   symbol data                
+:   <chr>  <list>
+: 1 AMZN   <tibble [1,008 × 7]>
+: 2 FB     <tibble [1,008 × 7]>
+: 3 GOOG   <tibble [1,008 × 7]>
+: 4 NFLX   <tibble [1,008 × 7]>
+\\
+
+- ~tidyr::nest()~ と同じ機能
+
+#+begin_src R :results output :exports both
+FANG %>% tidyr::nest(-symbol)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+# A tibble: 4 x 2
+  symbol           data
+  <chr>  <list<df[,7]>>
+1 FB        [1,008 × 7]
+2 AMZN      [1,008 × 7]
+3 NFLX      [1,008 × 7]
+4 GOOG      [1,008 × 7]
+Warning message:
+All elements of `...` must be named.
+Did you want `data = c(date, open, high, low, close, volume, adjusted)`?
+#+end_example
+\\
+
+*** ★★☆ ~group_split(.tbl, ..., keep = TRUE)~.
+
+- 指定した列で ~data.frame~ を *list of data.frame* に分割する
+- list に分割し ~purrr::map()~ で関数を適応するフローが強力
+
+#+begin_src R :results output :exports both
+FANG_l <- FANG %>% group_split(symbol)
+class(FANG_l)
+length(FANG_l)
+#+end_src
+
+#+RESULTS:
+: 
+: [1] "list"
+: 
+: [1] 4
+\\
+
+** グループへの関数適応
+*** ★★★ ~group_map(.tbl, .f, ..., keep = FALSE)~.
+
+- ~{purrr}~ と同様のスタイルで ~grouped_df~ のグループ毎に ~.f~ 関数を適応できる
+- 結果を ~list~ で返す
+- ~keep = TRUE~ でグループ変数に ~.x~ からアクセスできる
+- ~purrrlyr::by_slice()~ は ~group_map()~ と似ているが *list of data.frame* で返す点が異なる
+\\
+- ~group_by()~ -> ~group_map()~ -> モデリング のフローが頻出
+- グループ毎の ~lm()~ の回帰係数を ~list~ で返す例
+#+begin_src R :results output :exports both
+FANG %>%
+  group_by(symbol) %>%
+  group_map(~ {
+    lm_fit <- lm(adjusted ~ volume, data = .x)
+    coef(lm_fit)
+  })
+#+end_src
+
+#+RESULTS:
+#+begin_example
+[[1]]
+ (Intercept)       volume 
+4.312711e+02 5.557190e-06 
+
+[[2]]
+ (Intercept)       volume 
+ 9.67234e+01 -4.80164e-07 
+
+[[3]]
+  (Intercept)        volume 
+ 6.675434e+02 -3.036972e-05 
+
+[[4]]
+  (Intercept)        volume 
+ 8.429586e+01 -6.451335e-07
+#+end_example
+\\
+
+*** ★☆☆ ~group_modify(.tbl, .f, ..., keep = FALSE)~.
+
+- ~.f~ は ~data.frame~ を返す必要がある
+- グループ毎の ~lm()~ の結果を ~{broom}~ で ~data.frame~ にして返す例
+
+#+begin_src R
+FANG %>%
+  group_by(symbol) %>%
+  group_modify(~ {
+    lm_fit <- lm(adjusted ~ volume, data = .x)
+    broom::glance(lm_fit) %>%
+      select(r.squared, p.value, logLik, AIC)
+  })
+#+end_src
+
+#+RESULTS:
+| symbol |           r.squared |              p.value |            logLik |              AIC |
+|--------+---------------------+----------------------+-------------------+------------------|
+| AMZN   | 0.00503224044132785 |   0.0243055858574906 | -6636.55373969206 | 13279.1074793841 |
+| FB     |   0.199686711490091 | 1.22586513487227e-50 |  -4784.6044866744 | 9575.20897334879 |
+| GOOG   |   0.199159670604448 | 1.70931646465457e-50 | -6142.15846499808 | 12290.3169299962 |
+| NFLX   |   0.105343657901732 | 3.70454569826428e-26 | -4813.48163450679 | 9632.96326901357 |
+\\
+
+*** ★☆☆ ~group_walk(.tbl, .f, ...)~.
+
+- 副作用目的の関数を適応
+- 返り値は ~invisible~ で入力の ~data.frame~ を返す
+
+#+begin_src R :results output :exports both
+df <- FANG %>%
+  group_by(symbol) %>%
+  group_walk(~ print(mean(.x$volume)))
+#+end_src
+
+#+RESULTS:
+: 
+: [1] 3741086
+: [1] 40007884
+: [1] 2644115
+: [1] 19565910
+\\
+
+** グループ情報の抽出
+*** ★☆☆ ~group_data(.data)~.
+
+- ~grouped_df~ から グループのキーと元の ~data.frame~ に対する行インデックスを取得できる
+
+#+begin_src R :results output :exports both
+FANG %>% group_by(symbol) %>% group_data()
+#+end_src
+
+#+RESULTS:
+: # A tibble: 4 x 2
+:   symbol .rows        
+:   <chr>  <list>
+: 1 AMZN   <int [1,008]>
+: 2 FB     <int [1,008]>
+: 3 GOOG   <int [1,008]>
+: 4 NFLX   <int [1,008]>
+\\
+
+*** ★☆☆ ~group_keys(.tbl, ...)~.
+
+- ~group_data()~ のグループキーのみを返すバージョン
+
+#+begin_src R :exports both
+FANG %>% group_keys(symbol)
+#+end_src
+
+#+RESULTS:
+| symbol |
+|--------|
+| AMZN   |
+| FB     |
+| GOOG   |
+| NFLX   |
+\\
+
+*** ★☆☆ ~group_rows(.data)~.
+
+- ~group_data()~ の行インデックスのみを返すバージョン
+
+#+begin_src R :results output :exports both
+FANG_l <- FANG %>% group_by(symbol) %>% group_rows()
+class(FANG_l)
+#+end_src
+
+#+RESULTS:
+: 
+: [1] "list"
+\\
+
+*** ★☆☆ ~group_indices(.data, ...)~.
+
+- グループ毎のユニーク ID を生成する
+
+#+begin_src R :results output :exports both
+gid <- FANG %>% group_indices(symbol)
+class(gid)
+length(gid)
+head(gid)
+#+end_src
+
+#+RESULTS:
+: 
+: [1] "integer"
+: 
+: [1] 4032
+: 
+: [1] 2 2 2 2 2 2
+\\
+
+*** ★☆☆ ~group_cols(vars = peek_vars())~.
+
+- グループ変数列を抜き出す
+- ~select()~ の中で、select_helpers のようにグループ変数を選択・除外したい場合に利用する
+
+#+begin_src R :exports both :results output
+FANG %>%
+  group_by(symbol) %>%
+  select(group_cols())
+#+end_src
+
+#+RESULTS:
+#+begin_example
+# A tibble: 4,032 x 1
+# Groups:   symbol [4]
+   symbol
+   <chr>
+ 1 FB    
+ 2 FB    
+ 3 FB    
+ 4 FB    
+ 5 FB    
+ 6 FB    
+ 7 FB    
+ 8 FB    
+ 9 FB    
+10 FB    
+# … with 4,022 more rows
+#+end_example
+\\
+
+*** ★☆☆ ~groups(x)~.
+
+- グループ変数の ~symbol~ を抽出する
+- 返り値は ~list~
+
+#+begin_src R :exports both :results output
+FANG %>%
+  group_by(symbol) %>%
+  groups()
+#+end_src
+
+#+RESULTS:
+: 
+: [[1]]
+: symbol
+\\
+
+*** ★☆☆ ~group_vars(x)~.
+
+- ~groups()~ と同様の機能だが ~character~ として抽出する
+
+#+begin_src R :exports both :results output
+FANG %>%
+  group_by(symbol) %>%
+  group_vars()
+#+end_src
+
+#+RESULTS:
+: 
+: [1] "symbol"
+\\
+
+*** ★☆☆ ~group_size(x)~.
+
+- grouped_df のグループ毎の列数を抽出する
+
+#+begin_src R :exports both :results output
+FANG %>%
+  group_by(symbol) %>%
+  group_size()
+#+end_src
+
+#+RESULTS:
+: [1] 1008 1008 1008 1008
+\\
+
+*** ★☆☆ ~n_groups(x)~.
+
+- grouped_df のグループ数を抽出する
+
+#+begin_src R :exports both :results output
+FANG %>%
+  group_by(symbol) %>%
+  n_groups()
+#+end_src
+
+#+RESULTS:
+: [1] 4
+\\
+
+** グループへのその他の操作
+*** ★☆☆ ~group_trim(.tbl, .drop = group_by_drop_default(.tbl))~.
+
+- grouped_df を引数にして、グループ変数から利用されていない ~factor~ を削減する
+
+#+begin_src R :exports both :results output
+iris %>%
+  group_by(Species) %>%
+  # この時点では、Species [3]
+  filter(Species == "setosa", .preserve = TRUE) %>%
+  # この時点で、Species [1]
+  group_trim()
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+# A tibble: 50 x 5
+# Groups:   Species [1]
+   Sepal.Length Sepal.Width Petal.Length Petal.Width Species
+          <dbl>       <dbl>        <dbl>       <dbl>   <fct>
+ 1          5.1         3.5          1.4         0.2 setosa 
+ 2          4.9         3            1.4         0.2 setosa 
+ 3          4.7         3.2          1.3         0.2 setosa 
+ 4          4.6         3.1          1.5         0.2 setosa 
+ 5          5           3.6          1.4         0.2 setosa 
+ 6          5.4         3.9          1.7         0.4 setosa 
+ 7          4.6         3.4          1.4         0.3 setosa 
+ 8          5           3.4          1.5         0.2 setosa 
+ 9          4.4         2.9          1.4         0.2 setosa 
+10          4.9         3.1          1.5         0.1 setosa 
+# … with 40 more rows
+#+end_example
+\\
+
+*** TODO ★☆☆ ~group_by_drop_default(.tbl)~.
+** TODO grouped_df の作成
+*** ★☆☆ ~grouped_df(data, vars, drop = FALSE)~.
+*** ★☆☆ ~is.grouped_df(x)~.
+*** ★☆☆ ~is_grouped_df(x)~.
+*** ★☆☆ ~new_grouped_df(x, groups, ..., class = character())~.
+*** ★☆☆ ~validate_grouped_df(x)~.
+* 実行環境
+
+#+begin_src R :results output :exports both
+sessionInfo()
+#+end_src
+
+#+RESULTS:
+#+begin_example
+R version 3.6.1 (2019-07-05)
+Platform: x86_64-pc-linux-gnu (64-bit)
+Running under: Ubuntu 18.04.3 LTS
+
+Matrix products: default
+BLAS:   /usr/lib/x86_64-linux-gnu/blas/libblas.so.3.7.1
+LAPACK: /usr/lib/x86_64-linux-gnu/lapack/liblapack.so.3.7.1
+
+locale:
+ [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C              
+ [3] LC_TIME=en_US.UTF-8        LC_COLLATE=en_US.UTF-8    
+ [5] LC_MONETARY=en_US.UTF-8    LC_MESSAGES=en_US.UTF-8   
+ [7] LC_PAPER=en_US.UTF-8       LC_NAME=C                 
+ [9] LC_ADDRESS=C               LC_TELEPHONE=C            
+[11] LC_MEASUREMENT=en_US.UTF-8 LC_IDENTIFICATION=C       
+
+attached base packages:
+[1] stats     graphics  grDevices utils     datasets  methods   base     
+
+other attached packages:
+[1] rlang_0.4.0                tidyquant_0.5.7           
+[3] quantmod_0.4-15            TTR_0.23-5                
+[5] PerformanceAnalytics_1.5.3 xts_0.11-2                
+[7] zoo_1.8-6                  lubridate_1.7.4           
+[9] dplyr_0.8.3               
+
+loaded via a namespace (and not attached):
+ [1] Rcpp_1.0.2       rstudioapi_0.10  magrittr_1.5     tidyselect_0.2.5
+ [5] lattice_0.20-38  R6_2.4.0         quadprog_1.5-7   fansi_0.4.0     
+ [9] httr_1.4.1       stringr_1.4.0    tools_3.6.1      grid_3.6.1      
+[13] utf8_1.1.4       cli_1.1.0        assertthat_0.2.1 tibble_2.1.3    
+[17] crayon_1.3.4     purrr_0.3.2      vctrs_0.2.0      zeallot_0.1.0   
+[21] curl_3.3         Quandl_2.10.0    glue_1.3.1       stringi_1.4.3   
+[25] compiler_3.6.1   pillar_1.4.2     backports_1.1.5  jsonlite_1.6    
+[29] pkgconfig_2.0.3
+#+end_example

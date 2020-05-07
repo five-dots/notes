@@ -1,14 +1,18 @@
 
-
-.drake/
-lang/r/package/renv/renv/
-lang/r/package/drake/main/
+# R
 lang/r/temp.R
 lang/r/cheat_sheet/
+lang/r/package/renv/renv/
+lang/r/package/drake/main/
+lang/r/package/catboost/train_dir/
+lang/r/package/ProjectTemplate/test-project/
+.drake/
 
+# Python
 lang/python/other/DLFS/
 # lang/python/temp.py
 
+# Emacs Lisp
 lang/emacs-lisp/temp.el
 
 private/

@@ -1,0 +1,828 @@
+#+STARTUP: folded indent
+#+PROPERTY: header-args:R :results output :colnames yes :session *R:drake*
+
+* ~{drake}~: A Pipeline Toolkit for Reproducible Computation at Scale :noexport:
+
+~{drake}~ は R のデータ分析ワークフローをサポートするパッケージ。
+\\
+
+* 目次                                                            :quote:toc:
+#+BEGIN_QUOTE
+- [[#ライブラリの読み込みとバージョンの確認][ライブラリの読み込みとバージョンの確認]]
+- [[#全関数リスト][全関数リスト]]
+- [[#基本][基本]]
+  - [[#-drake_example][★☆☆ ~drake_example()~.]]
+  - [[#-drake_plan][★★★ ~drake_plan()~.]]
+  - [[#-drake_config][★★★ ~drake_config()~.]]
+  - [[#-vis_drake_graph][★★★ ~vis_drake_graph()~.]]
+  - [[#-make][★★★ ~make()~.]]
+  - [[#-readd-loadd][★★★ ~readd()~, ~loadd()~.]]
+  - [[#-fix-code-confirm-changes-and-re-run-make][★★★ Fix code, confirm changes and re-run ~make()~.]]
+  - [[#-drake_history][★★★ ~drake_history()~.]]
+  - [[#-drake_cache][★★★ ~drake_cache()~.]]
+  - [[#-makeplan-recover--true][★★★ ~make(plan, recover = TRUE)~.]]
+  - [[#-clean][★☆☆ ~clean()~.]]
+  - [[#-renaming-by-old-seed][★★☆ Renaming by old seed]]
+- [[#応用][応用]]
+  - [[#-plan_to_code][★☆☆ ~plan_to_code()~.]]
+  - [[#-code_to_plan][★☆☆ ~code_to_plan()~.]]
+  - [[#-code_to_function][★☆☆ ~code_to_function()~.]]
+  - [[#-deps_code][★☆☆ ~deps_code()~.]]
+  - [[#-special-columns][★☆☆ Special columns]]
+  - [[#-large-plans][★★☆ Large plans]]
+- [[#プロジェクト][プロジェクト]]
+- [[#インタラクティブ][インタラクティブ]]
+- [[#実行環境][実行環境]]
+- [[#参考リンク][参考リンク]]
+#+END_QUOTE
+
+* ライブラリの読み込みとバージョンの確認
+
+#+begin_src R :results silent
+library(drake)
+library(tidyverse)
+#+end_src
+\\
+
+- バージョン
+#+begin_src R :exports both
+packageVersion("drake")
+#+end_src
+
+#+RESULTS:
+: [1] ‘7.7.0’
+\\
+
+* 全関数リスト
+
+#+begin_src R :exports both
+pacman::p_funs(drake)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+  [1] "analyses"                   "analysis_wildcard"         
+  [3] "as_drake_filename"          "as_file"                   
+  [5] "available_hash_algos"       "backend"                   
+  [7] "bind_plans"                 "build_drake_graph"         
+  [9] "build_graph"                "build_times"               
+ [11] "built"                      "cache_namespaces"          
+ [13] "cache_path"                 "cached"                    
+ [15] "check"                      "check_plan"                
+ [17] "clean"                      "clean_main_example"        
+ [19] "clean_mtcars_example"       "cleaned_namespaces"        
+ [21] "cmq_build"                  "code_to_plan"              
+ [23] "config"                     "configure_cache"           
+ [25] "dataframes_graph"           "dataset_wildcard"          
+ [27] "debug_and_run"              "default_graph_title"       
+ [29] "default_long_hash_algo"     "default_Makefile_args"     
+ [31] "default_Makefile_command"   "default_parallelism"       
+ [33] "default_recipe_command"     "default_short_hash_algo"   
+ [35] "default_system2_args"       "default_verbose"           
+ [37] "dependency_profile"         "deprecate_wildcard"        
+ [39] "deps"                       "deps_code"                 
+ [41] "deps_knitr"                 "deps_profile"              
+ [43] "deps_target"                "deps_targets"              
+ [45] "diagnose"                   "do_prework"                
+ [47] "doc_of_function_call"       "drake_batchtools_tmpl_file"
+ [49] "drake_build"                "drake_cache"               
+ [51] "drake_cache_log"            "drake_cache_log_file"      
+ [53] "drake_config"               "drake_debug"               
+ [55] "drake_envir"                "drake_example"             
+ [57] "drake_examples"             "drake_gc"                  
+ [59] "drake_get_session_info"     "drake_ggraph"              
+ [61] "drake_graph_info"           "drake_history"             
+ [63] "drake_hpc_template_file"    "drake_hpc_template_files"  
+ [65] "drake_meta"                 "drake_palette"             
+ [67] "drake_plan"                 "drake_plan_source"         
+ [69] "drake_quotes"               "drake_session"             
+ [71] "drake_slice"                "drake_strings"             
+ [73] "drake_tip"                  "drake_unquote"             
+ [75] "eager_load_target"          "evaluate"                  
+ [77] "evaluate_plan"              "example_drake"             
+ [79] "examples_drake"             "expand"                    
+ [81] "expand_plan"                "expose_imports"            
+ [83] "failed"                     "file_in"                   
+ [85] "file_out"                   "file_store"                
+ [87] "find_cache"                 "find_knitr_doc"            
+ [89] "find_project"               "from_plan"                 
+ [91] "future_build"               "gather"                    
+ [93] "gather_by"                  "gather_plan"               
+ [95] "get_cache"                  "ignore"                    
+ [97] "imported"                   "in_progress"               
+ [99] "is_function_call"           "isolate_example"           
+[101] "knitr_deps"                 "knitr_in"                  
+[103] "legend_nodes"               "load_basic_example"        
+[105] "load_main_example"          "load_mtcars_example"       
+[107] "loadd"                      "long_hash"                 
+[109] "make"                       "make_imports"              
+[111] "make_targets"               "make_with_config"          
+[113] "Makefile_recipe"            "manage_memory"             
+[115] "map_plan"                   "max_useful_jobs"           
+[117] "migrate_drake_project"      "missed"                    
+[119] "new_cache"                  "no_deps"                   
+[121] "outdated"                   "parallel_stages"           
+[123] "parallelism_choices"        "plan"                      
+[125] "plan_analyses"              "plan_drake"                
+[127] "plan_summaries"             "plan_to_code"              
+[129] "plan_to_notebook"           "plot_graph"                
+[131] "predict_load_balancing"     "predict_runtime"           
+[133] "predict_workers"            "process_import"            
+[135] "progress"                   "prune_drake_graph"         
+[137] "r_deps_target"              "r_drake_build"             
+[139] "r_drake_ggraph"             "r_drake_graph_info"        
+[141] "r_make"                     "r_missed"                  
+[143] "r_outdated"                 "r_predict_runtime"         
+[145] "r_predict_workers"          "r_recipe_wildcard"         
+[147] "r_recoverable"              "r_sankey_drake_graph"      
+[149] "r_text_drake_graph"         "r_vis_drake_graph"         
+[151] "rate_limiting_times"        "read_config"               
+[153] "read_drake_config"          "read_drake_graph"          
+[155] "read_drake_meta"            "read_drake_plan"           
+[157] "read_drake_seed"            "read_graph"                
+[159] "read_plan"                  "readd"                     
+[161] "recover_cache"              "recoverable"               
+[163] "reduce_by"                  "reduce_plan"               
+[165] "render_drake_ggraph"        "render_drake_graph"        
+[167] "render_graph"               "render_sankey_drake_graph" 
+[169] "render_static_drake_graph"  "render_text_drake_graph"   
+[171] "rescue_cache"               "rs_addin_loadd"            
+[173] "rs_addin_r_make"            "rs_addin_r_outdated"       
+[175] "rs_addin_r_vis_drake_graph" "running"                   
+[177] "sankey_drake_graph"         "session"                   
+[179] "shell_file"                 "short_hash"                
+[181] "show_source"                "static_drake_graph"        
+[183] "summaries"                  "target"                    
+[185] "target_namespaces"          "text_drake_graph"          
+[187] "this_cache"                 "tracked"                   
+[189] "transform_plan"             "trigger"                   
+[191] "triggers"                   "type_sum.expr_list"        
+[193] "use_drake"                  "vis_drake_graph"           
+[195] "workflow"                   "workplan"
+#+end_example
+\\
+
+* 基本
+** ★☆☆ ~drake_example()~.
+
+- [[https://github.com/wlandau/drake-examples][drake example]] に ~{drake}~ を利用したプロジェクト例が掲載されている
+- ~drake_examples()~ で利用可能な例の一覧を取得
+#+begin_src R :exports both
+drake_examples()
+#+end_src
+
+#+RESULTS:
+:  [1] "code_to_plan"           "customer-churn"         "dbi"                   
+:  [4] "Docker-psock"           "fcd"                    "gapminder"             
+:  [7] "gsp"                    "hpc-profiling"          "lfs"                   
+: [10] "main"                   "mlr-slurm"              "mtcars"                
+: [13] "overhead"               "packages"               "script-based-workflows"
+: [16] "sge"                    "slurm"                  "torque"
+\\
+
+- "main" example を利用する
+#+begin_src R :exports both
+drake_example("main")
+setwd("./main")
+list.files()
+#+end_src
+
+#+RESULTS:
+: 
+:  [1] "_drake.R"      "clean.R"       "COPYRIGHT.md"  "interactive.R"
+:  [5] "LICENSE.md"    "main.Rproj"    "make.R"        "R"            
+:  [9] "raw_data.xlsx" "README.md"     "report.Rmd"
+\\
+
+- カスタム関数を定義
+#+begin_src R :results silent
+create_plot <- function(data) {
+  ggplot(data, aes(x = Petal.Width, fill = Species)) +
+    geom_histogram()
+}
+#+end_src
+\\
+
+** ★★★ ~drake_plan()~.
+
+- プランを作成する (~target~ = 変数 + ~command~ = 処理内容)
+- ~drake_plan~ class
+- Deprecated とされている引数
+  - ~list~
+  - ~file_targets~
+  - ~strings_in_dots~
+  - ~tidy_evaluation~
+
+#+begin_src R
+plan <- drake_plan(
+  raw_data = readxl::read_excel(file_in("raw_data.xlsx")),
+  data = raw_data %>%
+    mutate(Species = forcats::fct_inorder(Species)),
+  hist = create_plot(data),
+  fit = lm(Sepal.Width ~ Petal.Width + Species, data),
+  report = rmarkdown::render(knitr_in("report.Rmd"),
+                             output_file = file_out("report.html"),
+                             quiet = TRUE))
+plan                             
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+# A tibble: 5 x 2
+  target   command                                                              
+  <chr>    <expr>                                                               
+1 raw_data readxl::read_excel(file_in("raw_data.xlsx"))                        …
+2 data     raw_data %>% mutate(Species = forcats::fct_inorder(Species))        …
+3 hist     create_plot(data)                                                   …
+4 fit      lm(Sepal.Width ~ Petal.Width + Species, data)                       …
+5 report   rmarkdown::render(knitr_in("report.Rmd"), output_file = file_out("re…
+#+end_example
+\\
+
+** ★★★ ~drake_config()~.
+
+- ~make()~ に必要な全ての設定情報を ~list~ で返す
+- Deprecated とされている引数
+  - ~hook~
+  - ~fetch_cache~
+  - ~prepend~
+  - ~command~
+  - ~args~
+  - ~recipe_command~
+  - ~timeout~
+  - ~sesssion~
+  - ~makefile_path~
+  - ~ensure_workers~
+
+#+begin_src R
+config <- drake_config(plan)
+class(config)
+#+end_src
+
+#+RESULTS:
+: 
+: [1] "list"
+\\
+
+** ★★★ ~vis_drake_graph()~.
+
+- 依存関係・ワークフローをグラフ化する
+#+begin_src R :results silent
+vis_drake_graph(config)
+#+end_src
+\\
+
+** ★★★ ~make()~.
+
+- ワークフローを実行
+#+begin_src R :exports both
+make(plan)
+#+end_src
+
+#+RESULTS:
+: target raw_data
+: target data
+: target fit
+: target hist
+: target report
+\\
+
+- 再度グラフ化する
+- 全て緑になっていることを確認できる
+#+begin_src R :results silent
+vis_drake_graph(config)
+#+end_src
+\\
+
+** ★★★ ~readd()~, ~loadd()~.
+
+- ~readd()~ オブジェクトを読み出す
+#+begin_src R :results value
+readd(data) %>% head()
+#+end_src
+
+#+RESULTS:
+| Sepal.Length | Sepal.Width | Petal.Length | Petal.Width | Species |
+|--------------+-------------+--------------+-------------+---------|
+|          5.1 |         3.5 |          1.4 |         0.2 | setosa  |
+|          4.9 |           3 |          1.4 |         0.2 | setosa  |
+|          4.7 |         3.2 |          1.3 |         0.2 | setosa  |
+|          4.6 |         3.1 |          1.5 |         0.2 | setosa  |
+|            5 |         3.6 |          1.4 |         0.2 | setosa  |
+|          5.4 |         3.9 |          1.7 |         0.4 | setosa  |
+\\
+
+- ~loadd()~ 環境に読み込む
+#+begin_src R :exports both
+loadd(fit)
+summary(fit)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+Call:
+lm(formula = Sepal.Width ~ Petal.Width
+Species, data = data)
+
+Residuals:
+     Min       1Q   Median       3Q      Max 
+-1.17017 -0.19105  0.00793  0.19173  0.85172 
+
+Coefficients:
+                  Estimate Std. Error t value Pr(>|t|)    
+(Intercept)        3.23587    0.05194  62.295  < 2e-16 ***
+Petal.Width        0.78102    0.12121   6.443 1.59e-09 ***
+Speciesversicolor -1.50150    0.14407 -10.422  < 2e-16 ***
+Speciesvirginica  -1.84421    0.22399  -8.234 9.35e-14 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 0.3008 on 146 degrees of freedom
+Multiple R-squared:  0.5335,	Adjusted R-squared:  0.5239 
+F-statistic: 55.65 on 3 and 146 DF,  p-value: < 2.2e-16
+#+end_example
+\\
+
+** ★★★ Fix code, confirm changes and re-run ~make()~.
+
+- 関数を変更
+#+begin_src R :results silent
+create_plot <- function(data) {
+  ggplot(data, aes(x = Petal.Width, fill = Species)) +
+    geom_histogram(binwidth = 0.25) +
+    theme_gray(20)
+}
+#+end_src
+
+- 変更箇所を確認
+#+begin_src R :results silent
+vis_drake_graph(config)
+#+end_src
+\\
+
+- 再度 ~make()~ を実行
+#+begin_src R :exports both
+make(plan)
+#+end_src
+
+#+RESULTS:
+: unload targets from environment:
+:    fit 
+: target hist
+: target report
+\\
+
+#+begin_src R :results graphics :file (my/get-babel-file)
+loadd(hist)
+hist
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-GWhu3T.png]]
+\\
+
+** ★★★ ~drake_history()~.
+
+- target 毎に履歴を遡ることができる
+- ~exists~ が ~TRUE~ であれば ~hash~ から結果を復元できる
+#+begin_src R :exports both
+history <- drake_history(analyze = TRUE)
+history
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+# A tibble: 7 x 10
+  target  current built  exists hash  command     seed runtime quiet output_file
+  <chr>   <lgl>   <chr>  <lgl>  <chr> <chr>      <int>   <dbl> <lgl> <chr>      
+1 data    TRUE    2019-… TRUE   e580… raw_data… 1.29e9 0.004   NA    NA         
+2 fit     TRUE    2019-… TRUE   62a1… lm(Sepal… 1.11e9 0.007   NA    NA         
+3 hist    FALSE   2019-… TRUE   22a2… create_p… 2.10e8 0.0130  NA    NA         
+4 hist    TRUE    2019-… TRUE   56d2… create_p… 2.10e8 0.00800 NA    NA         
+5 raw_da… TRUE    2019-… TRUE   6317… "readxl:… 1.20e9 0.018   NA    NA         
+6 report  TRUE    2019-… TRUE   8fbc… "rmarkdo… 1.30e9 0.765   TRUE  report.html
+7 report  TRUE    2019-… TRUE   8fbc… "rmarkdo… 1.30e9 0.689   TRUE  report.html
+#+end_example
+\\
+
+** ★★★ ~drake_cache()~.
+
+- ~cache~ から最も古いプロットを復元する
+- ~{storr}~ ([[https://github.com/richfitz/storr][Github]]) を使って、オブジェクトを保存している
+#+begin_src R :results graphics :file (my/get-babel-file)
+hash <- history %>%
+  filter(target == "hist") %>%
+  pull(hash) %>%
+  head(1)
+  
+cache <- drake_cache()
+cache$get_value(hash)
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-keECyF.png]]
+\\
+
+** ★★★ ~make(plan, recover = TRUE)~.
+
+- 関数定義を再度もとに戻す
+- 実際には ~git reset~ を使う
+- 誤って ~clean()~ してしまった場合に、戻すことができる
+#+begin_src R :exports both
+create_plot <- function(data) {
+  ggplot(data, aes(x = Petal.Width, fill = Species)) +
+    geom_histogram()
+}
+
+make(plan, recover = TRUE)
+#+end_src
+
+#+RESULTS:
+: 
+: unload targets from environment:
+:    hist 
+: recover hist
+: target report
+\\
+
+- もとのプロットに戻る
+#+begin_src R :results graphics :file (my/get-babel-file)
+readd(hist)
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-BdhjVQ.png]]
+\\
+
+- ひとつ前が current になっている
+#+begin_src R :exports both
+drake_history() %>% filter(target == "hist")
+#+end_src
+
+#+RESULTS:
+#+begin_example
+# A tibble: 3 x 10
+  target current built    exists hash   command   seed runtime quiet output_file
+  <chr>  <lgl>   <chr>    <lgl>  <chr>  <chr>    <int>   <dbl> <lgl> <chr>      
+1 hist   FALSE   2019-10… TRUE   22a25… create… 2.10e8  0.0110 NA    NA         
+2 hist   TRUE    2019-10… TRUE   65e0a… create… 2.10e8  0.009  NA    NA         
+3 hist   FALSE   2019-10… TRUE   69095… create… 2.10e8  0.009  NA    NA
+#+end_example
+\\
+
+** ★☆☆ ~clean()~.
+
+- CLEAN() によって全ての target が out of date の状態になる (キャッシュも削除される)
+- 何が削除されるかを事前に確認 
+#+begin_src R :exports both
+which_clean()
+#+end_src
+
+#+RESULTS:
+:  [1] "create_plot"                        "data"                              
+:  [3] "fit"                                "hist"                              
+:  [5] "n-MZXXEY3BORZTUOTGMN2F62LON5ZGIZLS" "n-OJSWCZDYNQ5DU4TFMFSF6ZLYMNSWY"   
+:  [7] "n-OJWWC4TLMRXXO3R2HJZGK3TEMVZA"     "p-OJQXOX3EMF2GCLTYNRZXQ"           
+:  [9] "p-OJSXA33SOQXFE3LE"                 "p-OJSXA33SOQXGQ5DNNQ"              
+: [11] "raw_data"                           "report"
+\\
+
+#+begin_src R :results silent
+clean()
+vis_drake_graph(config)
+#+end_src
+\\
+
+- 全てをリカバリーする
+#+begin_src R :exports both
+make(plan, recover = TRUE)
+#+end_src
+
+#+RESULTS:
+: recover raw_data
+: recover data
+: recover fit
+: recover hist
+: recover report
+\\
+
+- 履歴も元に戻っている
+#+begin_src R :exports both
+diagnose(raw_data)$date
+#+end_src
+
+#+RESULTS:
+: [1] "2019-10-22 11:54:31.901277 +0900 GMT"
+\\
+
+** ★★☆ Renaming by old seed
+
+- target の名前を変更する場合、既存の target を引き継ぐことができる
+- ~target()~ に old_seed を渡してリカバーしている
+  - ~target(command = NULL, transform = NULL, ...)~
+#+begin_src R :exports both
+old_seed <- diagnose(data)$seed
+plan <- drake_plan(
+  raw_data = readxl::read_excel(file_in("raw_data.xlsx")),
+  iris_data = target(
+    raw_data %>%
+    mutate(Species = forcats::fct_inorder(Species)),
+    seed = !!old_seed
+  ),
+  hist = create_plot(iris_data),
+  fit = lm(Sepal.Width ~ Petal.Width + Species, iris_data),
+  report = rmarkdown::render(knitr_in("report.Rmd"),
+                             output_file = file_out("report.html"),
+                             quiet = TRUE))
+make(plan, recover = TRUE)                             
+#+end_src
+
+#+RESULTS:
+: 
+: recover iris_data
+: target fit
+: target hist
+: target report
+\\
+
+* 応用
+** ★☆☆ ~plan_to_code()~.
+
+- plan オブジェクトをスクリプトファイル (.R) に変換する
+\\
+
+** ★☆☆ ~code_to_plan()~.
+
+- .R のスクリプトや、.Rmd から plan を生成する 
+\\
+
+** ★☆☆ ~code_to_function()~.
+
+- .R や .Rmd を関数化する
+- 関数化することで、plan に記述しやすくなる
+
+** ★☆☆ ~deps_code()~.
+
+- function や command の依存関係を表示
+- この機能のおかげで、target の実行順を自動で決定してくれる
+#+begin_src R :results value
+create_plot <- function(data) {
+  ggplot(data, aes(x = .data$Petal.Width, fill = .data$Species)) +
+    geom_histogram(bins = 20)
+}
+
+deps_code(create_plot)
+#+end_src
+
+#+RESULTS:
+| name           | type    |
+|----------------+---------|
+| geom_histogram | globals |
+| ggplot         | globals |
+| .data          | globals |
+| aes            | globals |
+\\
+
+#+begin_src R :results value
+deps_code(quote(create_plot(datasets::iris)))
+#+end_src
+
+#+RESULTS:
+| name           | type       |
+|----------------+------------|
+| create_plot    | globals    |
+| datasets::iris | namespaced |
+\\
+
+- 保存対象の plot よりも先に保存を書いてみる
+#+begin_src R :exports both
+small_plan <- drake_plan(
+  file = ggsave(file_out("plot.png"), plot, width = 7, height = 5),
+  plot = create_plot(datasets::iris))
+small_plan
+#+end_src
+
+#+RESULTS:
+: 
+: # A tibble: 2 x 2
+:   target command                                                  
+:   <chr>  <expr>                                                   
+: 1 file   ggsave(file_out("plot.png"), plot, width = 7, height = 5)
+: 2 plot   create_plot(datasets::iris)
+\\
+
+- 依存関係の順で正しく実行してくれる
+#+begin_src R :exports both
+make(small_plan)
+#+end_src
+
+#+RESULTS:
+: target plot
+: target file
+\\
+
+** ★☆☆ Special columns
+
+- target, command 以外にもカラムを追加できる
+#+begin_src R
+bind_cols(small_plan, cpu = c(1, 2))
+#+end_src
+
+#+RESULTS:
+: # A tibble: 2 x 3
+:   target command                                                     cpu
+:   <chr>  <expr>                                                    <dbl>
+: 1 file   ggsave(file_out("plot.png"), plot, width = 7, height = 5)     1
+: 2 plot   create_plot(datasets::iris)                                   2
+\\
+
+~make()~ 実行時のオプションとして以下のカラムを設定できる。
+- ~format~: set a storage format to save big targets more efficiently. Most formats are faster than ordinary storage, and they consume far less memory. Available formats:
+  - *"fst"*: save big data frames fast. Requirements:
+    1. The fst package must be installed.
+    2. The target’s value must be a plain data frame. If it is not a plain data frame (for example, a tibble or data.table) then drake will coerce it to a plain data frame with as.data.frame(). All non-data-frame-specific attributes are lost when drake saves the target.
+  - *"fst_dt"*: Like "fst" format, but for data.table objects. Requirements:
+    1. The data.table and fst packages must be installed.
+    2. The target’s value must be a data.table object. If it is not a data.table object (for example, a data frame or tibble) then drake will coerce it to a data.table object using data.table::as.data.table(). All non-data-table-specific attributes are lost when drake saves the target.
+  - *"keras"*: save Keras models as HDF5 files. Requires the keras package.
+  - *"rds"*: save any object. This is similar to the default storage except we avoid creating a serialized copy of the entire target in memory. Requires R >= 3.5.0 so drake can use ALTREP.
+- ~trigger~: rule to decide whether a target needs to run. See the trigger chapter to learn more.
+- ~elapsed~ and ~cpu~: number of seconds to wait for the target to build before timing out (elapsed for elapsed time and cpu for CPU time).
+- ~hpc~: logical values (TRUE/FALSE/NA) whether to send each target to parallel workers. Click here to learn more.
+- ~resources~: target-specific lists of resources for a computing cluster. See the advanced options in the parallel computing chapter for details.
+- ~caching~: overrides the caching argument of make() for each target individually. Only supported in drake version 7.6.1.9000 and above. Possible values:
+  - “master”: tell the master process to store the target in the cache.
+  - “worker”: tell the HPC worker to store the target in the cache.
+  - NA: default to the caching argument of make().
+- ~retries~: number of times to retry building a target in the event of an error.
+- ~seed~: pseudo-random number generator (RNG) seed for each target. drake usually computes its own unique reproducible target-specific seeds using the target name and the global seed (the seed argument of make() and drake_config()). Any non-missing seeds in the seed column override drake’s default target seeds.
+\\
+
+** ★★☆ Large plans
+
+- 何らかの繰り返しによる、大量の target を自動生成できる
+- transformations の種類
+  - ~map()~ - ~purrr::pmap()~
+  - ~cross()~ - ~tidyr::crossing()~
+  - ~split()~ - ~dplyr::group_map()~
+  - ~combine()~ - ~dplyr::summaries()~
+
+#+begin_src R
+lots_of_sds <- as.numeric(1:1e3)
+drake_plan(
+  data = get_data(),
+  analysis = target(
+    fun(data, mean = mean_val, sd = sd_val),
+    transform = cross(mean_val = c(2, 5, 10, 100, 1000), sd_val = !!lots_of_sds)))
+#+end_src
+
+#+RESULTS:
+#+begin_example
+# A tibble: 5,001 x 2
+   target          command                       
+   <chr>           <expr>                        
+ 1 data            get_data()                    
+ 2 analysis_2_1    fun(data, mean = 2, sd = 1)   
+ 3 analysis_5_1    fun(data, mean = 5, sd = 1)   
+ 4 analysis_10_1   fun(data, mean = 10, sd = 1)  
+ 5 analysis_100_1  fun(data, mean = 100, sd = 1) 
+ 6 analysis_1000_1 fun(data, mean = 1000, sd = 1)
+ 7 analysis_2_2    fun(data, mean = 2, sd = 2)   
+ 8 analysis_5_2    fun(data, mean = 5, sd = 2)   
+ 9 analysis_10_2   fun(data, mean = 10, sd = 2)  
+10 analysis_100_2  fun(data, mean = 100, sd = 2) 
+# … with 4,991 more rows
+#+end_example
+\\
+
+- trace = TRUE で生成過程を確認できる
+#+begin_src R
+drake_plan(
+  data = get_data(),
+  analysis = target(
+    fun(data, mean = mean_val, sd = sd_val),
+    transform = cross(mean_val = c(2, 5, 10, 100, 1000), sd_val = !!lots_of_sds)),
+  trace = TRUE)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+# A tibble: 5,001 x 5
+   target          command                        mean_val sd_val analysis      
+   <chr>           <expr>                         <chr>    <chr>  <chr>         
+ 1 data            get_data()                     NA       NA     NA            
+ 2 analysis_2_1    fun(data, mean = 2, sd = 1)    2        1      analysis_2_1  
+ 3 analysis_5_1    fun(data, mean = 5, sd = 1)    5        1      analysis_5_1  
+ 4 analysis_10_1   fun(data, mean = 10, sd = 1)   10       1      analysis_10_1 
+ 5 analysis_100_1  fun(data, mean = 100, sd = 1)  100      1      analysis_100_1
+ 6 analysis_1000_1 fun(data, mean = 1000, sd = 1) 1000     1      analysis_1000…
+ 7 analysis_2_2    fun(data, mean = 2, sd = 2)    2        2      analysis_2_2  
+ 8 analysis_5_2    fun(data, mean = 5, sd = 2)    5        2      analysis_5_2  
+ 9 analysis_10_2   fun(data, mean = 10, sd = 2)   10       2      analysis_10_2 
+10 analysis_100_2  fun(data, mean = 100, sd = 2)  100      2      analysis_100_2
+# … with 4,991 more rows
+#+end_example
+\\
+
+* プロジェクト
+
+- make.R をスクリプト実行することでプロジェクトを実行できる
+#+begin_quote
+make.R
+R/
+├── packages.R
+├── functions.R
+└── plan.R
+#+end_quote
+
+- make.R
+  - パッケージ・独自関数・その他のデータの読み込み
+  - ~drake~ plan の作成
+  - ~make()~ の実行
+
+* インタラクティブ
+
+- インタラクティブに実行するためのプロジェクトテンプレート
+- ~r_make()~ などの ~r_*()~ の関数を利用する
+- _drake.R では ~make()~ は実行せずに ~drake_config()~ の実行までを行う
+#+begin_quote
+_drake.R
+R/
+├── packages.R
+├── functions.R
+└── plan.R
+#+end_quote
+
+- ~r_make()~ を実行した際の挙動:
+  1. ~callr::r()~ で新しいセッションを開始
+  2. _drake.R を実行して パッケージの読み込みや ~plan~ の作成 ~drake_config()~ の実行
+  3. ~make(config = config)~ を実行
+\\
+
+* 実行環境
+
+#+begin_src R :results output :exports both
+sessionInfo()
+#+end_src
+
+#+RESULTS:
+#+begin_example
+R version 3.6.1 (2019-07-05)
+Platform: x86_64-pc-linux-gnu (64-bit)
+Running under: Ubuntu 18.04.3 LTS
+
+Matrix products: default
+BLAS:   /usr/lib/x86_64-linux-gnu/blas/libblas.so.3.7.1
+LAPACK: /usr/lib/x86_64-linux-gnu/lapack/liblapack.so.3.7.1
+
+locale:
+ [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C              
+ [3] LC_TIME=en_US.UTF-8        LC_COLLATE=en_US.UTF-8    
+ [5] LC_MONETARY=en_US.UTF-8    LC_MESSAGES=en_US.UTF-8   
+ [7] LC_PAPER=en_US.UTF-8       LC_NAME=C                 
+ [9] LC_ADDRESS=C               LC_TELEPHONE=C            
+[11] LC_MEASUREMENT=en_US.UTF-8 LC_IDENTIFICATION=C       
+
+attached base packages:
+[1] stats     graphics  grDevices utils     datasets  methods   base     
+
+other attached packages:
+ [1] forcats_0.4.0    stringr_1.4.0    dplyr_0.8.3      purrr_0.3.3     
+ [5] readr_1.3.1      tidyr_1.0.0      tibble_2.1.3     ggplot2_3.2.1   
+ [9] tidyverse_1.2.1  tidyselect_0.2.5 drake_7.7.0     
+
+loaded via a namespace (and not attached):
+ [1] storr_1.2.1       progress_1.2.2    xfun_0.10         haven_2.1.1      
+ [5] lattice_0.20-38   colorspace_1.4-1  vctrs_0.2.0       generics_0.0.2   
+ [9] htmltools_0.4.0   yaml_2.2.0        utf8_1.1.4        rlang_0.4.0      
+[13] pillar_1.4.2      withr_2.1.2       txtq_0.2.0        glue_1.3.1       
+[17] modelr_0.1.5      readxl_1.3.1      lifecycle_0.1.0   munsell_0.5.0    
+[21] gtable_0.3.0      cellranger_1.1.0  rvest_0.3.4       visNetwork_2.0.8 
+[25] htmlwidgets_1.5.1 evaluate_0.14     labeling_0.3      knitr_1.25       
+[29] fansi_0.4.0       broom_0.5.2       Rcpp_1.0.2        backports_1.1.5  
+[33] scales_1.0.0      filelock_1.0.2    jsonlite_1.6      hms_0.5.1        
+[37] digest_0.6.21     stringi_1.4.3     grid_3.6.1        cli_1.9.9.9000   
+[41] tools_3.6.1       magrittr_1.5      base64url_1.4     lazyeval_0.2.2   
+[45] crayon_1.3.4      pkgconfig_2.0.3   zeallot_0.1.0     data.table_1.12.6
+[49] xml2_1.2.2        downloader_0.4    prettyunits_1.0.2 lubridate_1.7.4  
+[53] rstudioapi_0.10   httr_1.4.1        assertthat_0.2.1  rmarkdown_1.16   
+[57] R6_2.4.0          igraph_1.2.4.1    nlme_3.1-141      compiler_3.6.1
+#+end_example
+\\
+
+* 参考リンク
+
+- [[https://docs.ropensci.org/drake/][公式サイト]]
+- [[https://cloud.r-project.org/web/packages/drake/index.html][CRAN]]
+- [[https://cloud.r-project.org/web/packages/drake/drake.pdf][Reference Manual]]
+- [[https://github.com/ropensci/drake][Github Repo]]
+- [[https://ropenscilabs.github.io/drake-manual/][The drake R Package User Manual]]
+- [[https://stackoverflow.com/questions/56161508/how-to-generate-arguments-to-a-target-transformation-dynamically-in-r-drake][How to generate arguments to a target transformation dynamically in R drake?@stackoverflow]]
+- [[https://github.com/ropensci/drake/issues/685][Dynamic branching #685@Github]]
+- Blog
+  - [[https://blog.hoxo-m.com/entry/2018/09/05/184425][データ分析のワークフローをdrakeで管理して効率的に作業を進めよう@株式会社ホクソエムのブログ]]
+  - [[https://niszet.hatenablog.com/entry/2018/04/30/073000][(R) 再現性を確保するためにdrakeパッケージを使おう、らしいですね…？@niszetの日記]]
+  - [[https://niszet.hatenablog.com/entry/2018/05/09/073800][(R) drakeパッケージを頑張って使う…（必要は今はないよ…）@niszetの日記]]

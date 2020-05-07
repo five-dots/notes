@@ -1,0 +1,399 @@
+#+STARTUP: folded indent inlineimages latexpreview
+#+PROPERTY: header-args:R :session *R:perf* :width 640 :height 480 :results output
+
+* ~{PerformanceAnalytics}~: Econometric Tools for Performance and Risk Analysis :noexport:
+* Libraries
+  
+#+begin_src R :results silent
+library(PerformanceAnalytics)
+#+end_src
+
+* All Functions
+
+#+begin_src R
+all_funs <- ls("package:PerformanceAnalytics")
+length(all_funs)
+#+end_src
+
+#+RESULTS:
+: 
+: [1] 252
+
+* Prepare Data
+
+- Return Based Analysis (RBA)
+- Return は xts でなければならない
+
+#+begin_src R :results silent
+## Ra = Asset return by tidyquant
+aapl <- tq_get("AAPL") %>%
+  mutate(ret = (adjusted - lag(adjusted)) / lag(adjusted),
+         log_ret = log(adjusted) - log(lag(adjusted)))
+ra <- tk_xts(aapl, ret, date)
+ra_log <- tk_xts(aapl, log_ret, date)
+
+## Rb = Baseline return
+spy <- tq_get("SPY") %>%
+  mutate(ret = (adjusted - lag(adjusted)) / lag(adjusted),
+        log_ret = log(adjusted) - log(lag(adjusted)))
+rb <- tk_xts(spy, ret, date)
+rb_log <- tk_xts(spy, log_ret, date)
+#+end_src
+
+* Return Functions
+** List
+
+#+begin_src R
+str_subset(all_funs, "^Return.")
+#+end_src
+
+#+RESULTS:
+:  [1] "Return.annualized"        "Return.annualized.excess"
+:  [3] "Return.calculate"         "Return.centered"         
+:  [5] "Return.clean"             "Return.cumulative"       
+:  [7] "Return.excess"            "Return.Geltner"          
+:  [9] "Return.portfolio"         "Return.read"             
+: [11] "Return.rebalancing"       "Return.relative"
+
+** geometric arg
+
+- geometric 引数の意味
+  The default for this function is to use discrete returns,
+  because most other package functions use compound chaining by default.
+  - geometric = TRUE  Discrete Return
+  - geometric = FALSE Continous(Log) Return
+
+- ra は、discrete return
+#+begin_src R
+Return.cumulative(data$ret, geometric = TRUE)
+Return.cumulative(data$log_ret, geometric = FALSE)
+#+end_src
+
+#+RESULTS:
+:                            [,1]
+: Cumulative Return -8.881784e-16
+: 
+:                   [,1]
+: Cumulative Return    0
+
+- CAGR
+#+begin_src R
+Return.annualized(ra, geometric = TRUE)
+#+end_src
+
+#+RESULTS:
+:                         ret
+: Annualized Return 0.3171291
+
+- Return.excess() Risk-free rate を差し引いたリターン
+aapl$excess_ret <- Return.excess(aapl$discrete_ret, Rf = 0.02)
+
+- Return.portfolio()
+- Return.rebalancing()
+- Return.clean()
+  method = "boudt" or "geltner"
+aapl_boudt_cleaned <- Return.clean(aapl$discrete_ret, method = "boudt")
+aapl$boudt_cleaned_ret <- c(NA, aapl_boudt_cleaned)
+aapl$geltner_cleaned <- Return.clean(aapl$discrete_ret, method = "geltner")
+
+* Return Distribution
+** Histogram
+
+#+begin_src R :results graphics :file (get-babel-file)
+chart.Histogram(ra, main = "Ra Hist",
+                methods = c("add.normal", "add.density", "add.qqplot"))
+#+end_src
+
+#+RESULTS:
+[[file:~/Dropbox/memo/img/babel/fig-7k5HNz.png]]
+
+chart.QQPlot(ra)
+DownsideDeviation(ra)
+SemiDeviation(ra)
+var(ra) - SemiVariance(ra)
+
+** Skewness
+[[file:../stats/distribution.org][Distribution]] 参照
+
+** Kurtosis
+[[file:../stats/distribution.org][Distribution]] 参照
+
+** Others
+
+CoVariance(ra, rb)
+CoSkewness(ra, rb)
+CoKurtosis(ra, rb)
+BetaCoVariance(ra, rb)
+BetaCoSkewness(ra, rb)
+BetaCoKurtosis(ra, rb)
+
+* Chart & Charts Functions
+
+- chart funs
+#+begin_src R
+str_subset(all_funs, "^chart.")
+#+end_src
+
+#+RESULTS:
+#+begin_example
+ [1] "chart.ACF"                       "chart.ACFplus"                  
+ [3] "chart.Bar"                       "chart.BarVaR"                   
+ [5] "chart.Boxplot"                   "chart.CaptureRatios"            
+ [7] "chart.Correlation"               "chart.CumReturns"               
+ [9] "chart.Drawdown"                  "chart.ECDF"                     
+[11] "chart.Events"                    "chart.Histogram"                
+[13] "chart.QQPlot"                    "chart.Regression"               
+[15] "chart.RelativePerformance"       "chart.RiskReturnScatter"        
+[17] "chart.RollingCorrelation"        "chart.RollingMean"              
+[19] "chart.RollingPerformance"        "chart.RollingQuantileRegression"
+[21] "chart.RollingRegression"         "chart.Scatter"                  
+[23] "chart.SnailTrail"                "chart.StackedBar"               
+[25] "chart.TimeSeries"                "chart.VaRSensitivity"           
+[27] "charts.Bar"                      "charts.BarVaR"                  
+[29] "charts.PerformanceSummary"       "charts.RollingPerformance"      
+[31] "charts.RollingRegression"        "charts.TimeSeries"
+#+end_example
+
+- charts funs
+#+begin_src R
+str_subset(all_funs, "^charts.")
+#+end_src
+
+#+RESULTS:
+: [1] "charts.Bar"                "charts.BarVaR"            
+: [3] "charts.PerformanceSummary" "charts.RollingPerformance"
+: [5] "charts.RollingRegression"  "charts.TimeSeries"
+
+- 複数シリーズの色分け
+#+begin_src R :results graphics :file (get-babel-file)
+charts.PerformanceSummary(cbind(ra, rb), colorset = rich6equal, lwd = 2)
+#+end_src
+
+#+RESULTS:
+[[file:~/Dropbox/memo/img/babel/fig-2wMZUM.png]]
+
+* Table Functions
+
+#+begin_src R
+str_subset(all_funs, "^table.")
+#+end_src
+
+#+RESULTS:
+#+begin_example
+ [1] "table.AnnualizedReturns"  "table.Arbitrary"         
+ [3] "table.Autocorrelation"    "table.CalendarReturns"   
+ [5] "table.CAPM"               "table.CaptureRatios"     
+ [7] "table.Correlation"        "table.Distributions"     
+ [9] "table.DownsideRisk"       "table.DownsideRiskRatio" 
+[11] "table.Drawdowns"          "table.DrawdownsRatio"    
+[13] "table.HigherMoments"      "table.InformationRatio"  
+[15] "table.ProbOutPerformance" "table.RollingPeriods"    
+[17] "table.SFM"                "table.SpecificRisk"      
+[19] "table.Stats"              "table.TrailingPeriods"   
+[21] "table.UpDownRatios"       "table.Variability"
+#+end_example
+
+* CAPM Functions
+
+- Capital Asset Pricing Model by William Sharpe in 1964
+  Return = a + b
+  a (アルファ) = インデックスを超えるリターン
+                 (リスクの増加分よりもリターンの増加分が大きいこと)
+  b (ベータ) = インデックスから得られるリターン (市場平均)
+                (インデックスの変動に対する感応度)
+
+- CML = Capital Market Line
+- CML.slope = CML の傾き = Sharpe ratio (切片は Risk-Free Rate)
+- RiskPremium = Risk-Free Rate に対しての Return (正であるか)
+- SML.slope = Security Market Line Slope
+- InformationRatio = ActivePremium / TrackingError
+                
+#+begin_src R
+str_subset(all_funs, "CAPM.")
+#+end_src
+
+#+RESULTS:
+:  [1] "CAPM.alpha"       "CAPM.beta"        "CAPM.beta.bear"   "CAPM.beta.bull"  
+:  [5] "CAPM.CML"         "CAPM.CML.slope"   "CAPM.dynamic"     "CAPM.epsilon"    
+:  [9] "CAPM.jensenAlpha" "CAPM.RiskPremium" "CAPM.SML.slope"
+
+#+begin_src R
+table.CAPM(ra, rb)
+cat("###\n")
+ActivePremium(ra, rb)
+TrackingError(ra, rb)
+InformationRatio(ra, rb)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+                    ret to ret
+Alpha                   0.0007
+Beta                    0.9949
+                  1.1036
+Beta-                   0.9954
+R-squared               0.3670
+Annualized Alpha        0.1857
+Correlation             0.6058
+Correlation p-value     0.0000
+Tracking Error          0.0000
+Active Premium          0.1807
+Information Ratio          Inf
+Treynor Ratio           0.3215
+###
+[1] 0.1806958
+[1] 0
+[1] Inf
+#+end_example
+
+* Kelly Ratio (Kelly Criterion)
+
+- Introduced by John kelly
+- "Bet size is the ratio of edge over odds"
+- f* = Edge / Odds
+- Expected excess return / expected variance of excess return
+- ケリーの公式、ケリー基準、オプティマル F などと言われる（それぞれ若干異なる）
+- OptimalF は ラフル・ビンズ考案
+- 複利収益率が最も高くなる最適な投資サイズを決定するための指標
+- 資産の上下が激しいので、ハーフケリーがよく用いられる
+
+#+begin_src R
+KellyRatio(ra, method = "half")
+(mean(Return.excess(ra)) / sd(Return.excess(ra)) ^ 2) / 2
+#+end_src
+
+#+RESULTS:
+:                  ret
+: Kelly Ratio 2.203636
+: [1] NA
+
+* Risk Measure
+** Overview
+
+リスクの種類
+- Market Risk
+- Liquidity Risk
+- Credit Risk (Default Risk)
+- Counterparty Risk
+- [[file:volatility.R][Volatility]] も参照
+
+** Standard Deviation
+
+- 最も標準的なリスク指標（リターンが正規分布であれば）
+StdDev(ra)
+StdDev.annualized(ra)
+
+** ダウンサイドリスク
+
+# DownsideDeviation, DownsidePotential
+# 下振れ時の値動きだけでリスクを評価する
+# MAR = Minimum Acceptable Return から下方のリターンのみで計算
+DownsidePotential(ra)
+DownsideDeviation(ra)
+
+# Semi-Variance (準分散)
+# DownsideDeviation の Wrapper (MAR = mean(R) となっている)
+SemiVariance(ra)
+SemiDeviation(ra)
+sd(ra)
+var(ra)
+
+** ドローダウン
+maxDrawdown(ra)
+sortDrawdowns(findDrawdowns(ra))
+chart.Drawdown(ra)
+
+** Up/Down Ratio ベンチマークが上昇・下落した際の動き
+# Capture
+# Number
+# Percent
+UpDownRatios(ra, rb)
+
+** Omega
+# 正のリターンの合計 / 負のリターンの合計
+Omega(ra)
+OmegaSharpeRatio(ra)
+OmegaExcessReturn(ra, rb)
+
+** VaR = Value at Risk
+
+# 出し得る損失の最大額
+# リターンの分布（正規分布）などがわかればより正確に算出できる
+# Skewness(歪度)/Kurtosis(尖度)がある場合は、Cornish-Fisher の手法を用いる
+# 一般的には、モンテカルロ法で算出する=1 万回試行ならば、下位から 101 番の損失額 (99%)
+
+# method = modified, gaussian, historical or kernel
+VaR(ra, p = 0.95, method = "modified")   # ★★ Cornish-Fisher VaR
+VaR(ra, p = 0.95, method = "historical") # by JPM
+VaR(ra, p = 0.95, method = "gaussian")
+chart.VaRSensitivity(ra)
+
+** ES = Expected Shortfall
+
+# = Conditional VaR (CVaR) or Expected Tail Loss (ETL)
+# VaR を上回る損失が発生した場合の平均値
+# 一般的には、モンテカルロ法で算出する=1 万回試行ならば、下位から 100 番の平均損失額 (99%)
+ETL(ra, p = 0.95, method = "modified")
+ETL(ra, p = 0.95, method = "gaussian")
+ETL(ra, p = 0.95, method = "historical")
+
+* Risk Adjusted Performance
+** Sharpe Ratio
+
+# (リターン - リスクフリーレート) / リターンの標準偏差
+# 3 つの計算バリエーション (StdDev, VaR, ES)
+# ※ VaR, ES に関してもより詳細なオプションを設定可能
+# ※ リターンの分布に正規分布を想定しているところが欠点とされていた
+SharpeRatio(ra) # ★★
+SharpeRatio(ra, annualize = TRUE) # ★★
+SharpeRatio.annualized(ra)
+SharpeRatio.modified(ra) # deprecated
+
+** Information Ratio (IR)
+# William Sharpe は、Sharpe Ratio よりもこちらを推奨
+# Sharpe はリスクフリーレートに対しての比較、IR はベンチマークに対しての比較
+# Active Preminum / Tracking Error = 超過利益 / 超過利益の標準偏差
+# (Tracking error = ベンチマークリターンとの乖離の標準偏差)
+# 1 = 例外的に良い, 0.75 = 極めて良い, 0.5 = 良い
+# ランキングの指標としても用いられる
+InformationRatio(ra, rb)
+
+** Sortino Ratio (ソルティノレシオ)
+# Introduced by Frank Sortino
+# Sharpe ratio の改良版、下方に乱調したときだけをリスクとみなす
+# (リターン - リスクフリーレート) / 下方リスク
+# 大きいほど良い（下方リスクに強い)
+SortinoRatio(ra)
+SharpeRatio(ra)
+
+** Upside Potential Ratio
+# Sortino Ratio を更に改良したもの
+# Upside performance / Downside risk
+# (上方リターン - リスクフリーレート) / 下方リスク
+UpsidePotentialRatio(ra, MAR = 0)
+
+** Calmer Ratio/Sterling Ratio/Burke Ratio
+# 平均リターン / 最大ドローダウン
+# ドローダウンをリスク指標にしている
+# - Calmer = 最大
+# - Sterling = 平均
+# - Burke = 標準偏差
+CalmarRatio(ra)
+SterlingRatio(ra)
+BurkeRatio(ra)
+
+## Treynor Ratio
+TreynorRatio(ra, rb)
+* 参考
+
+- [[https://cran.r-project.org/web/packages/PerformanceAnalytics/index.html][CRAN]]
+- [[https://cran.r-project.org/web/packages/PerformanceAnalytics/PerformanceAnalytics.pdf][Reference Manual]]
+- [[https://github.com/braverock/PerformanceAnalytics][Github Repo]]
+- Vignette
+  - [[https://cran.r-project.org/web/packages/PerformanceAnalytics/vignettes/EstimationComoments.pdf][Estimation of Higher Order Moments]]
+  - [[https://cran.r-project.org/web/packages/PerformanceAnalytics/vignettes/PA-Bacon.pdf][Performance Attribution from Bacon]]
+  - [[https://cran.r-project.org/web/packages/PerformanceAnalytics/vignettes/PA-charts.pdf][PerformanceAnalytics Charts and Tables Reference]]
+  - [[https://cran.r-project.org/web/packages/PerformanceAnalytics/vignettes/PerformanceAnalyticsChartsPresentation-Meielisalp-2007.pdf][PerformanceAnalytics Charts and Tables Presentation - Meielisalp - 2007]]
+  - [[https://cran.r-project.org/web/packages/PerformanceAnalytics/vignettes/PerformanceAnalyticsPresentation-UseR-2007.pdf][PerformanceAnalytics Data Mining Presentation - UseR - 2007]]
+  - [[https://cran.r-project.org/web/packages/PerformanceAnalytics/vignettes/portfolio_returns.pdf][Portfolio Returns]]
+  - [[https://cran.r-project.org/web/packages/PerformanceAnalytics/vignettes/textplotPresentation-CRUG-2011.pdf][How to Present Tables in Plot Devices]]

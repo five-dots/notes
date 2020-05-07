@@ -1,0 +1,89 @@
+#+STARTUP: folded indent inlineimages latexpreview
+#+PROPERTY: header-args:R :results value :colnames yes :session *R:imported-funs*
+
+* 目次                                                            :TOC:QUOTE:
+#+BEGIN_QUOTE
+- [[#インポートされた関数群][インポートされた関数群]]
+  - [[#magrittr][{magrittr}]]
+    - [[#][%>%]]
+  - [[#rlang][{rlang}]]
+    - [[#as_label][as_label()]]
+    - [[#enexpr][enexpr()]]
+    - [[#enexprs][enexprs()]]
+    - [[#enquo][enquo()]]
+    - [[#enquos][enquos()]]
+    - [[#ensym][ensym()]]
+    - [[#ensyms][ensyms()]]
+    - [[#expr][expr()]]
+    - [[#quo][quo()]]
+    - [[#quo_name][quo_name()]]
+    - [[#quos][quos()]]
+    - [[#sym][sym()]]
+    - [[#syms][syms()]]
+  - [[#tibble][{tibble}]]
+    - [[#add_row][add_row()]]
+    - [[#as_data_frame][as_data_frame()]]
+    - [[#as_tibble][as_tibble()]]
+    - [[#data_frame][data_frame()]]
+    - [[#data_frame_][data_frame_()]]
+    - [[#frame_data][frame_data()]]
+    - [[#glimpse][glimpse()]]
+    - [[#lst][lst()]]
+    - [[#lst_][lst_()]]
+    - [[#tbl_sum][tbl_sum()]]
+    - [[#tibble-1][tibble()]]
+    - [[#tribble][tribble()]]
+    - [[#trunc_mat][trunc_mat()]]
+    - [[#type_sum][type_sum()]]
+  - [[#tidyselect][{tidyselect}]]
+    - [[#contains][contains()]]
+    - [[#ends_with][ends_with()]]
+    - [[#everything][everything()]]
+    - [[#last_col][last_col()]]
+    - [[#matches][matches()]]
+    - [[#num_range][num_range()]]
+    - [[#one_of][one_of()]]
+    - [[#starts_with][starts_with()]]
+#+END_QUOTE
+
+* TODO インポートされた関数群
+** {magrittr}
+*** %>%
+** {rlang}
+*** as_label()
+*** enexpr()
+*** enexprs()
+*** enquo()
+*** enquos()
+*** ensym()
+*** ensyms()
+*** expr()
+*** quo()
+*** quo_name()
+*** quos()
+*** sym()
+*** syms()
+** {tibble}
+*** add_row()
+*** as_data_frame()
+*** as_tibble()
+*** data_frame()
+*** data_frame_()
+*** frame_data()
+*** glimpse()
+*** lst()
+*** lst_()
+*** tbl_sum()
+*** tibble()
+*** tribble()
+*** trunc_mat()
+*** type_sum()
+** {tidyselect}
+*** contains()
+*** ends_with()
+*** everything()
+*** last_col()
+*** matches()
+*** num_range()
+*** one_of()
+*** starts_with()

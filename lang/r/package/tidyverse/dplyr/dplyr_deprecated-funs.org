@@ -1,0 +1,29 @@
+#+STARTUP: folded indent inlineimages latexpreview
+#+PROPERTY: header-args:R :results value :colnames yes :session *R:deprecated*
+
+* 非推奨とされている関数群
+
+| dplyr function    | sucesssor                                          |
+|-------------------+----------------------------------------------------|
+| ~add_rownames()~    | ~tibble::rownames_to_column()~                       |
+| ~current_vars()~    |                                                    |
+| ~do()~              |                                                    |
+| ~do()~              |                                                    |
+| ~failwith()~        | ~purrr::possibly()~                                  |
+| ~funs()~            | ~~~, ~list()~                                          |
+| ~funs_()~           |                                                    |
+| ~rbind_all()~       | ~bind_rows()~                                        |
+| ~rbind_list()~      | ~bind_rows()~                                        |
+| ~rename_vars()~     | ~tidyselect::vars_rename()~                          |
+| ~rename_vars_()~    |                                                    |
+| ~rowwise()~         |                                                    |
+| ~select_var()~      | ~tidyselect::vars_select()~, ~tidyselect::vars_pull()~ |
+| ~select_vars()~     | ~tidyselect::vars_select()~, ~tidyselect::vars_pull()~ |
+| ~select_vars_()~    |                                                    |
+| ~tbl_df()~          | ~tibble::as_tibble()~                                |
+| ~mutate_each()~     | ~mutate_*()~                                         |
+| ~mutate_each_()~    |                                                    |
+| ~summarise_each()~  | ~summarise_*()~                                      |
+| ~summarise_each_()~ |                                                    |
+\\
+

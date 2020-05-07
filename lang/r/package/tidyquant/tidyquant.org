@@ -1,0 +1,464 @@
+#+STARTUP: folded indent inlineimages
+#+PROPERTY: header-args:R :results output :colnames yes :session *R:tidyquant*
+
+* ~{tidyquant}~: Bringing financial analysis to the tidyverse        :noexport:
+
+\\
+
+* 目次                                                                :quote:
+* ライブラリの読み込みとバージョンの確認
+
+#+begin_src R :results silent
+library(tidyquant)
+library(tidyverse)
+#+end_src
+\\
+
+- バージョン
+#+begin_src R :exports both
+packageVersion("tidyquant")
+#+end_src
+
+#+RESULTS:
+: [1] ‘0.5.8’
+\\
+
+* 関数リスト
+** Stock Indexes
+
+- List all indexes (Data source: SPDR)
+#+begin_src R :exports both
+tq_index_options()
+#+end_src
+
+#+RESULTS:
+: [1] "RUSSELL1000" "RUSSELL2000" "RUSSELL3000" "DOW"         "DOWGLOBAL"  
+: [6] "SP400"       "SP500"       "SP600"       "SP1000"
+\\
+
+#+begin_src R :results value
+sp500 <- tq_index("SP500")
+head(select(sp500, symbol, company, weight))
+#+end_src
+
+#+RESULTS:
+| symbol | company                         |             weight |
+|--------+---------------------------------+--------------------|
+| MSFT   | Microsoft Corporation           | 0.0423327530790359 |
+| AAPL   | Apple Inc.                      |  0.040520888434691 |
+| AMZN   | Amazon.com Inc.                 | 0.0294646260083848 |
+| FB     | Facebook Inc. Class A           |  0.018043994604027 |
+| BRK.B  | Berkshire Hathaway Inc. Class B |   0.01652040706283 |
+| JPM    | JPMorgan Chase & Co.            | 0.0155575833388535 |
+\\
+
+** Stock exchanges
+
+- List all exchangs (Data source: nasdaq.com)
+#+begin_src R :exports both
+tq_exchange_options()
+#+end_src
+
+#+RESULTS:
+: [1] "AMEX"   "NASDAQ" "NYSE"
+
+#+begin_src R :results value
+nyse <- tq_exchange("NYSE")
+head(select(nyse, symbol, company, last.sale.price, market.cap))
+#+end_src
+
+#+RESULTS:
+| symbol | company                | last.sale.price | market.cap |
+|--------+------------------------+-----------------+------------|
+| DDD    | 3D Systems Corporation |            8.32 | $983.03M   |
+| MMM    | 3M Company             |          165.94 | $95.46B    |
+| WBAI   | 500.com Limited        |            9.83 | $422.45M   |
+| WUBA   | 58.com Inc.            |           51.09 | $7.6B      |
+| EGHT   | 8x8 Inc                |           18.62 | $1.85B     |
+| AHC    | A.H. Belo Corporation  |            3.52 | $75.55M    |
+\\
+
+** Market data
+
+- List of available data
+#+begin_src R :exports both
+tq_get_options()
+#+end_src
+
+#+RESULTS:
+:  [1] "stock.prices"        "stock.prices.google" "stock.prices.japan" 
+:  [4] "financials"          "key.ratios"          "dividends"          
+:  [7] "splits"              "economic.data"       "exchange.rates"     
+: [10] "metal.prices"        "quandl"              "quandl.datatable"   
+: [13] "alphavantager"       "rblpapi"
+\\
+
+- ~tibble~ class
+- ~get~ option
+  - ~stock.price~ = Yahoo Finance
+  - ~dividends~ = Yahoo Finance
+  - ~splits~ = Yahoo Finance
+  - ~stock.price.japan~ = Yahoo Finance Japan
+  - ~key.ratios~ = Morningstar
+  - ~economic.data~ = FRED
+  - ~metal.prices~ = Oanda
+  - ~exchange.rates~ = Oanda
+  - ~quandl~ = Quandl
+  - ~quandl.datatable~ = Quandl
+  - ~alphavantager~ = Alphavantage
+#+begin_src R :results value
+aapl <- tq_get("AAPL", get = "stock.prices", from = "2018-01-03", to = "2018-01-31")
+head(aapl)
+#+end_src
+
+#+RESULTS:
+|       date |       open |       high |        low |      close |   volume |   adjusted |
+|------------+------------+------------+------------+------------+----------+------------|
+| 2018-01-03 | 172.529999 | 174.550003 | 171.960007 | 172.229996 | 29517900 | 167.672668 |
+| 2018-01-04 | 172.539993 | 173.470001 | 172.080002 | 173.029999 | 22434600 | 168.451508 |
+| 2018-01-05 | 173.440002 | 175.369995 | 173.050003 |        175 | 23660000 | 170.369385 |
+| 2018-01-08 | 174.350006 | 175.610001 | 173.929993 | 174.350006 | 20567800 | 169.736588 |
+| 2018-01-09 | 174.550003 | 175.059998 | 173.410004 | 174.330002 | 21584000 | 169.717117 |
+| 2018-01-10 | 173.160004 | 174.300003 |        173 | 174.289993 | 23959900 | 169.678162 |
+\\
+
+** Mutate data
+
+data(FANG)
+FANG
+
+# list of functions from (xts,zoo,TTR,quantmod, and PerformanceAnalytics)
+tq_mutate_fun_options()
+tq_mutate_fun_options()$zoo # rollapply (亜種: rollmax, rollmean, rollmedian, rollsum)
+tq_mutate_fun_options()$xts # apply.period (daily, weekly ...)
+                            # to.period (daily, weekly ...)
+tq_mutate_fun_options()$quantmod # Percentage change (Delt, Lag)
+                                 # Period Return (daily, weekly ...)
+                                 # Series fun
+tq_mutate_fun_options()$TTR # Indicators, runXXX
+tq_mutate_fun_options()$PerformanceAnalytics # Returns
+
+## tq_transmute (時間軸を変換するときに主に使う）
+
+# Conver to monthly data
+# select した列が mutate_fun に渡される。indexAt は to.monthly 関数の引数
+FANG %>%
+  group_by(symbol) %>%
+  tq_transmute(select = adjusted, mutate_fun = to.monthly, indexAt = "lastof")
+
+# OHLC データでなくても扱うことができる
+wti_prices <- tq_get("DCOILWTICO", get = "economic.data")
+wti_prices %>%
+  tq_transmute(mutate_fun = to.period, period = "months", col_rename = "WTI Price")
+
+# Annual arithmetic return
+FANG_annual_returns <- FANG %>%
+  group_by(symbol) %>%
+  tq_transmute(select = adjusted,
+               mutate_fun = periodReturn,
+               period = "yearly",
+               type = "arithmetic")
+
+FANG_daily_log_return <- FANG %>%
+  group_by(symbol) %>%
+  tq_transmute(select = adjusted,
+               mutate_fun = periodReturn,
+               period = "daily",
+               type = "log")
+
+ret <- FANG %>%
+    group_by(symbol) %>%
+    tq_transmute(adjusted, periodReturn, period = "daily") %>% # daily return
+    tq_transmute(daily.returns, Return.clean, alpha = 0.05)
+    %>%
+    tq_transmute(daily.returns, Return.excess, Rf = 0.03 / 252)
+
+
+## tq_mutate
+
+# Add MACD
+macd <- FANG %>%
+  dplyr::group_by(symbol) %>%
+  tq_mutate(select = close, mutate_fun = MACD, col_rename = c("MACD", "Signal"))
+
+
+# Mutate by rolling regression (rollapply custom function)
+
+fb_returns <- tq_get("FB", get = "stock.prices", from = "2016-01-01", to = "2016-12-31") %>%
+    tq_transmute(adjusted, periodReturn, period = "weekly", col_rename = "fb.returns")
+
+xlk_returns <- tq_get("XLK", from = "2016-01-01", to = "2016-12-31") %>%
+    tq_transmute(adjusted, periodReturn, period = "weekly", col_rename = "xlk.returns")
+
+returns_combined <- left_join(fb_returns, xlk_returns, by = "date")
+returns_combined
+
+regr_fun <- function(data) {
+  # rollapply では data が xts で渡されるので、tk_tbl で xts=>tibble の変換を行う
+  coef(lm(fb.returns ~ xlk.returns, data = timetk::tk_tbl(data, silent = TRUE)))
+}
+
+b <- returns_combined %>%
+    tq_mutate(mutate_fun = rollapply,
+              width      = 12,
+              FUN        = regr_fun,
+              by.column  = FALSE,
+              col_rename = c("coef.0", "coef.1"))
+
+
+## tq_mutate_xy, tq_transmute_xy
+
+# 入力が 2 つ必要な場合は、select の代わりに x，y を使う
+FANG %>%
+    group_by(symbol) %>%
+    tq_mutate_xy(x = close, y = volume,
+                 mutate_fun = EVWMA, col_rename = "EVWMA")
+
+** Performance analytics
+*** tq_performance_fun_options()
+
+- List of all options
+#+begin_src R :exports both
+tq_performance_fun_options()
+#+end_src
+
+#+RESULTS:
+#+begin_example
+$table.funs
+ [1] "table.AnnualizedReturns" "table.Arbitrary"        
+ [3] "table.Autocorrelation"   "table.CAPM"             
+ [5] "table.CaptureRatios"     "table.Correlation"      
+ [7] "table.Distributions"     "table.DownsideRisk"     
+ [9] "table.DownsideRiskRatio" "table.DrawdownsRatio"   
+[11] "table.HigherMoments"     "table.InformationRatio" 
+[13] "table.RollingPeriods"    "table.SFM"              
+[15] "table.SpecificRisk"      "table.Stats"            
+[17] "table.TrailingPeriods"   "table.UpDownRatios"     
+[19] "table.Variability"      
+
+$CAPM.funs
+ [1] "CAPM.alpha"       "CAPM.beta"        "CAPM.beta.bear"   "CAPM.beta.bull"  
+ [5] "CAPM.CML"         "CAPM.CML.slope"   "CAPM.dynamic"     "CAPM.epsilon"    
+ [9] "CAPM.jensenAlpha" "CAPM.RiskPremium" "CAPM.SML.slope"   "TimingRatio"     
+[13] "MarketTiming"    
+
+$SFM.funs
+[1] "SFM.alpha"       "SFM.beta"        "SFM.CML"         "SFM.CML.slope"  
+[5] "SFM.dynamic"     "SFM.epsilon"     "SFM.jensenAlpha"
+
+$descriptive.funs
+[1] "mean"           "sd"             "min"            "max"           
+[5] "cor"            "mean.geometric" "mean.stderr"    "mean.LCL"      
+[9] "mean.UCL"      
+
+$annualized.funs
+[1] "Return.annualized"        "Return.annualized.excess"
+[3] "sd.annualized"            "SharpeRatio.annualized"  
+
+$VaR.funs
+[1] "VaR"  "ES"   "ETL"  "CDD"  "CVaR"
+
+$moment.funs
+ [1] "var"              "cov"              "skewness"         "kurtosis"        
+ [5] "CoVariance"       "CoSkewness"       "CoSkewnessMatrix" "CoKurtosis"      
+ [9] "CoKurtosisMatrix" "M3.MM"            "M4.MM"            "BetaCoVariance"  
+[13] "BetaCoSkewness"   "BetaCoKurtosis"  
+
+$drawdown.funs
+[1] "AverageDrawdown"   "AverageLength"     "AverageRecovery"  
+[4] "DrawdownDeviation" "DrawdownPeak"      "maxDrawdown"      
+
+$Bacon.risk.funs
+[1] "MeanAbsoluteDeviation" "Frequency"             "SharpeRatio"          
+[4] "MSquared"              "MSquaredExcess"        "HurstIndex"           
+
+$Bacon.regression.funs
+ [1] "CAPM.alpha"       "CAPM.beta"        "CAPM.epsilon"     "CAPM.jensenAlpha"
+ [5] "SystematicRisk"   "SpecificRisk"     "TotalRisk"        "TreynorRatio"    
+ [9] "AppraisalRatio"   "FamaBeta"         "Selectivity"      "NetSelectivity"  
+
+$Bacon.relative.risk.funs
+[1] "ActivePremium"    "ActiveReturn"     "TrackingError"    "InformationRatio"
+
+$Bacon.drawdown.funs
+[1] "PainIndex"     "PainRatio"     "CalmarRatio"   "SterlingRatio"
+[5] "BurkeRatio"    "MartinRatio"   "UlcerIndex"   
+
+$Bacon.downside.risk.funs
+ [1] "DownsideDeviation"     "DownsidePotential"     "DownsideFrequency"    
+ [4] "SemiDeviation"         "SemiVariance"          "UpsideRisk"           
+ [7] "UpsidePotentialRatio"  "UpsideFrequency"       "BernardoLedoitRatio"  
+[10] "DRatio"                "Omega"                 "OmegaSharpeRatio"     
+[13] "OmegaExcessReturn"     "SortinoRatio"          "M2Sortino"            
+[16] "Kappa"                 "VolatilitySkewness"    "AdjustedSharpeRatio"  
+[19] "SkewnessKurtosisRatio" "ProspectRatio"        
+
+$misc.funs
+[1] "KellyRatio"   "Modigliani"   "UpDownRatios"
+#+end_example
+
+*** tq_performance(data, Ra, Rb = NULL, performance_fun, ...)
+
+- Analysis to "Return". Ra = Asset return, Rb = Baseline return (benchmark)
+#+begin_src R :results value
+Ra <- tq_get("AAPL", get = "stock.prices", from = "2010-01-01", to = "2015-12-31") %>%
+  tq_transmute(select = adjusted,
+               mutate_fun = periodReturn,
+               period = "monthly",
+               col_rename = "Ra")
+head(Ra)
+#+end_src
+
+#+RESULTS:
+|       date |                  Ra |
+|------------+---------------------|
+| 2010-01-29 |  -0.102564789686271 |
+| 2010-02-26 |  0.0653958808950514 |
+| 2010-03-31 |   0.148470478255869 |
+| 2010-04-30 |   0.111021029834803 |
+| 2010-05-28 | -0.0161248735175281 |
+| 2010-06-30 | -0.0208265933822107 |
+\\
+
+#+begin_src R :results value
+Rb <- tq_get("XLK", get = "stock.prices", from = "2010-01-01", to = "2015-12-31") %>%
+  tq_transmute(select = adjusted,
+               mutate_fun = periodReturn,
+               period = "monthly",
+               col_rename = "Rb")
+head(Rb)
+#+end_src
+
+#+RESULTS:
+|       date |                  Rb |
+|------------+---------------------|
+| 2010-01-29 | -0.0992699044073897 |
+| 2010-02-26 |  0.0348285186631276 |
+| 2010-03-31 |  0.0683981493794286 |
+| 2010-04-30 |  0.0125540175447689 |
+| 2010-05-28 | -0.0748183114976538 |
+| 2010-06-30 | -0.0539662608210781 |
+\\
+
+#+begin_src R :results value
+RaRb <- left_join(Ra, Rb, by = "date")
+head(RaRb)
+#+end_src
+
+#+RESULTS:
+|       date |                  Ra |                  Rb |
+|------------+---------------------+---------------------|
+| 2010-01-29 |  -0.102564789686271 | -0.0992699044073897 |
+| 2010-02-26 |  0.0653958808950514 |  0.0348285186631276 |
+| 2010-03-31 |   0.148470478255869 |  0.0683981493794286 |
+| 2010-04-30 |   0.111021029834803 |  0.0125540175447689 |
+| 2010-05-28 | -0.0161248735175281 | -0.0748183114976538 |
+| 2010-06-30 | -0.0208265933822107 | -0.0539662608210781 |
+\\
+
+#+begin_src R :results value :rownames yes
+RaRb_capm <- RaRb %>%
+  tq_performance(Ra = Ra, Rb = Rb, performance_fun = table.CAPM)
+t(RaRb_capm)
+#+end_src
+
+#+RESULTS:
+|                    |     V1 |
+|--------------------+--------|
+| ActivePremium      | 0.1189 |
+| Alpha              | 0.0089 |
+| AnnualizedAlpha    | 0.1118 |
+| Beta               | 1.1121 |
+| Beta-              | 0.5777 |
+| Beta+              | 1.0418 |
+| Correlation        | 0.6587 |
+| Correlationp-value |      0 |
+| InformationRatio   | 0.6284 |
+| R-squared          | 0.4339 |
+| TrackingError      | 0.1893 |
+| TreynorRatio       | 0.2226 |
+\\
+
+** tq_portfolio(data, assets_col, returns_col, weights = NULL, col_rename = NULL, ...)
+
+- Portfolio weight by vector (all symbol must be specified)
+wts <- c(0.5, 0.0, 0.5)
+
+portfolio_return <- Ra %>%
+  tq_portfolio(assets_col = symbol,
+               returns_col = Ra,
+               weights = wts,
+               col_rename = "Ra")
+
+- Weight by tibble (all symbol should not be specified)
+wts_map <- tibble(
+  symbols = c("AAPL", "NFLX"),
+  weights = c(0.5, 0.5)
+)
+
+portfolio_return <- Ra %>%
+  tq_portfolio(assets_col = symbol,
+               returns_col = Ra,
+               weights = wts_map,
+               col_rename = "Ra")
+
+- Expand to multi portfolios
+Ra_multi <- tq_repeat_df(Ra, n = 3)
+
+* 実行環境
+
+#+begin_src R :results output :exports both
+sessionInfo()
+#+end_src
+
+#+RESULTS:
+#+begin_example
+R version 3.6.1 (2019-07-05)
+Platform: x86_64-pc-linux-gnu (64-bit)
+Running under: Ubuntu 18.04.3 LTS
+
+Matrix products: default
+BLAS:   /usr/lib/x86_64-linux-gnu/blas/libblas.so.3.7.1
+LAPACK: /usr/lib/x86_64-linux-gnu/lapack/liblapack.so.3.7.1
+
+locale:
+ [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C              
+ [3] LC_TIME=en_US.UTF-8        LC_COLLATE=en_US.UTF-8    
+ [5] LC_MONETARY=en_US.UTF-8    LC_MESSAGES=en_US.UTF-8   
+ [7] LC_PAPER=en_US.UTF-8       LC_NAME=C                 
+ [9] LC_ADDRESS=C               LC_TELEPHONE=C            
+[11] LC_MEASUREMENT=en_US.UTF-8 LC_IDENTIFICATION=C       
+
+attached base packages:
+[1] stats     graphics  grDevices utils     datasets  methods   base     
+
+other attached packages:
+[1] tidyr_1.0.0
+
+loaded via a namespace (and not attached):
+ [1] Rcpp_1.0.2       zeallot_0.1.0    crayon_1.3.4     dplyr_0.8.3     
+ [5] assertthat_0.2.1 R6_2.4.0         lifecycle_0.1.0  backports_1.1.5 
+ [9] pacman_0.5.1     magrittr_1.5     pillar_1.4.2     rlang_0.4.0     
+[13] vctrs_0.2.0      tools_3.6.1      glue_1.3.1       purrr_0.3.2     
+[17] compiler_3.6.1   pkgconfig_2.0.3  tidyselect_0.2.5 tibble_2.1.3
+#+end_example
+\\
+
+* 参考リンク
+
+- [[https://business-science.github.io/tidyquant/][公式サイト]]
+- [[https://cran.r-project.org/web/packages/tidyquant/index.html][CRAN]]
+- [[https://cran.r-project.org/web/packages/tidyquant/tidyquant.pdf][Reference Manual]] 
+- [[https://github.com/business-science/tidyquant][Github Repo]]
+- Vignette
+  - [[https://cran.r-project.org/web/packages/tidyquant/vignettes/TQ00-introduction-to-tidyquant.html][Introduction to tidyquant]]
+  - [[https://cran.r-project.org/web/packages/tidyquant/vignettes/TQ01-core-functions-in-tidyquant.html][Core Functions in tidyquant]]
+  - [[https://cran.r-project.org/web/packages/tidyquant/vignettes/TQ02-quant-integrations-in-tidyquant.html][R Quantitative Analysis Package Integrations in tidyquant]]
+  - [[https://cran.r-project.org/web/packages/tidyquant/vignettes/TQ03-scaling-and-modeling-with-tidyquant.html][Scaling and Modeling with tidyquant]]
+  - [[https://cran.r-project.org/web/packages/tidyquant/vignettes/TQ04-charting-with-tidyquant.html][Charting with tidyquant]]
+  - [[https://cran.r-project.org/web/packages/tidyquant/vignettes/TQ05-performance-analysis-with-tidyquant.html][Performance Analysis with tidyquant]]
+
+- Blog
+  - [[http://delta0726.web.fc2.com/packages/finance/tidyquant.html][tidyquantの使い方]]
+  - [[https://blog.exploratory.io/quantitative-financial-analysis-for-beginners-with-exploratory-io-and-tidyquant-808fe2793c2e][Quantitative Financial Analysis For Beginners with Exploratory.io and tidyquant@Exploratory]] ([[https://blog.exploratory.io/tidyquant%E3%81%A8exploratory%E3%81%A7%E5%A7%8B%E3%82%81%E3%82%8B0%E3%81%8B%E3%82%89%E3%81%AE%E3%83%95%E3%82%A1%E3%82%A4%E3%83%8A%E3%83%B3%E3%82%B9%E8%A8%88%E9%87%8F%E5%88%86%E6%9E%90-18f9399ec0e4][日本語訳]])
+  - [[https://www.business-science.io/code-tools/2017/03/19/tidyquant-quandl-integration.html][tidyquant Integrates Quandl: Getting Data Just Got Easier@Business Science]]
