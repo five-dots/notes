@@ -5,9 +5,9 @@
 #+BEGIN_QUOTE
 - [[#library][Library]]
 - [[#3-components-of-a-function][3 components of a function]]
-  - [[#body][body]]
-  - [[#arguments-formals][arguments (formals)]]
-  - [[#envivronmnet][envivronmnet]]
+  - [[#body][body()]]
+  - [[#formals-aruguments][formals() (aruguments)]]
+  - [[#envivronmnet][envivronmnet()]]
 - [[#primitive-functions][Primitive functions]]
 - [[#scoping][Scoping]]
   - [[#type-of-scoping][Type of Scoping]]
@@ -32,7 +32,7 @@ library(tidyverse)
 #+end_src
 
 * 3 components of a function
-** body
+** body()
 
 #+begin_src R :exports both
 add <- function(a, b) a + b
@@ -59,7 +59,7 @@ body(add) %>% class()
 \\
 
 - 関数を書き換えられる
-#+begin_src R
+#+begin_src R :exports both
 body(add) <- expression(a + b + 10)
 add(1, 2)
 #+end_src
@@ -71,7 +71,7 @@ add(1, 2)
 #+end_src
 \\
 
-** arguments (formals)
+** formals() (aruguments)
 
 #+begin_src R :exports both
 add <- function(a, b) a + b
@@ -99,7 +99,7 @@ formals(add) %>% class()
 #+end_src
 \\
 
-** envivronmnet
+** envivronmnet()
 
 - 通常インタラクティブに定義した関数は Global_Env に存在する
 #+begin_src R :exports both
@@ -167,7 +167,7 @@ NULL
 
 - Scoping = name から value を探す方法
 - Lexical Scoping = 構文(どうネストされるか) によって、有効範囲が決まる
-- Dynamic Scoping
+- Dynamic Scoping = ネストの親の要素まで遡って変更できる
 
 ** 4 Principles of Lexical Scoping
 *** Name masking
@@ -429,7 +429,7 @@ List of 3
 ** Calling a function given a list of arguments
 
 - 関数 + list args
-#+begin_src R :exports both``
+#+begin_src R :exports both
 args <- list(1:10, na.rm = TRUE)
 do.call(mean, args)
 #+end_src
@@ -618,7 +618,7 @@ f(a = 1, b = 2)
 
 * Infix functions
 
-- LHS func RHS の形式のもの
+- LHS /func/ RHS の形式のもの
 - ユーザー定義のものは、%hoge% の形式にする
 - Complete list: [[file:./infix_operator.org][Infix Operator]]
 

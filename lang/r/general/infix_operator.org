@@ -1,7 +1,20 @@
 #+STARTUP: folded indent inlineimages latexpreview
-#+PROPERTY: header-args:R :results output :colnames yes :session *R:infix*
+#+PROPERTY: header-args:R :results output code :colnames yes :session *R:infix*
 
-* ライブラリ
+* Table of Contents :quote:toc:
+#+BEGIN_QUOTE
+- [[#library][Library]]
+- [[#by-package][By Package]]
+  - [[#base-package][base package]]
+  - [[#magrittr-package][magrittr package]]
+  - [[#rlang-package][rlang package]]
+  - [[#lubridate-package][lubridate package]]
+  - [[#pryr-package][pryr package]]
+  - [[#zeallot-package][zeallot package]]
+  - [[#crayon][crayon::%+%]]
+#+END_QUOTE
+
+* Library
 
 #+begin_src R :results silent
 library(tidyverse)
@@ -11,13 +24,14 @@ library(lubridate)
 library(zeallot)
 #+end_src
 
-* ={base}=
-** Complete list (Pre-defined)
+* By Package
+** base package
+*** Complete list (Pre-defined)
 
-- :, ::, :::, $, @, ^, *, /, +, -, >, >=, <, <=, ==, !=, !, &, &&, |, ||, ~, <-, <<-
-- %% , %*% , %/% , %in% , %o% , %x%
+- =:=, =::=, =:::=, =$=, =@=, =^=, =*=, =/=, =+=, =-=, =>=, =>==, =<=, =<==, ===, =!==, =!=, =&=, =&&=, =|,= =||=, =~=, =<-=, =<<-=
+- =%%= , =%*%=, =%/%= , =%in%=, =%o%=, =%x%=
 
-** =<-= 束縛
+*** =<-= 束縛
 
 - ?Reserved ワード以外は利用可能
 #+begin_src R :exports both
@@ -32,7 +46,7 @@ ls()
 : [1] "    "     ":)"       "a
 : b"    "settings"
 
-** =<-= と =<<-= の違い
+*** =<-= と =<<-= の違い
 
 - =<<-=
   - 親環境をさかのぼって変更する
@@ -65,12 +79,12 @@ x
 : 
 : [1] 20
 
-** =::=, =:::= の違い
+*** =::=, =:::= の違い
 
 - pkg::hoge # Exported var
 - pkg:::hoge # Internal var
 
-** =%%= Remainder operator (剰余)
+*** =%%= Remainder operator (剰余)
 
 #+begin_src R
 10 %% 3
@@ -79,7 +93,7 @@ x
 #+RESULTS:
 : [1] 1
 
-** =%/%= Integer division (整数の割り算)
+*** =%/%= Integer division (整数の割り算)
 
 #+begin_src R
 10 %/% 3
@@ -90,7 +104,7 @@ x
 : [1] 3
 : [1] 3.333333
 
-** =%in%= Matching operator
+*** =%in%= Matching operator
 
 #+begin_src R
 "hoge" %in% c("fuga", "hoge", "xxxx")
@@ -99,9 +113,9 @@ x
 #+RESULTS:
 : [1] TRUE
 
-** [[file:math.org][math 行列計算関連 =%*%=, =%x%=, =%o%=, =*= ]
-* ={magrittr}=
-** 全関数
+*** [[file:math.org][math 行列計算関連 =%*%=, =%x%=, =%o%=, =*= ]
+** magrittr package
+*** 全関数
 
 #+begin_src R
 pacman::p_funs(magrittr)
@@ -123,8 +137,8 @@ pacman::p_funs(magrittr)
 [34] "undebug_fseq"           "use_series"
 #+end_example
 
-** LHS =%>%= RHS Pipe
-** LHS =%<>%= RHS 代入演算子
+*** LHS =%>%= RHS Pipe
+*** LHS =%<>%= RHS 代入演算子
 
 #+begin_src R
 iris$Sepal.Length %<>% sqrt
@@ -154,7 +168,7 @@ iris$Sepal.Length
 [145] 2.588436 2.588436 2.509980 2.549510 2.489980 2.428992
 #+end_example
 
-** LHS =%T>%= RHS "tee" 演算子
+*** LHS =%T>%= RHS "tee" 演算子
 
 - RHS の結果を返すのではなく、LHS の結果をスルーして返す
 #+begin_src R
@@ -167,7 +181,7 @@ rnorm(200) %>%
 #+RESULTS:
 : [1] -2.100121 -2.683670
 
-** LHS =%$%= RHS "exposition" 演算子
+*** LHS =%$%= RHS "exposition" 演算子
 
 - LHS のオブジェクトの名前を RHS で参照できる
 - data 引数を持たない関数に名前を渡すのに便利
@@ -188,8 +202,8 @@ data.frame(z = rnorm(100)) %$%
 #+RESULTS:
 [[file:/home/shun/Dropbox/memo/img/babel/fig-E6mqDP.png]]
 
-* ={rlang}=
-** 全関数
+** rlang package
+*** 全関数
 
 #+begin_src R
 pacman::p_funs(rlang)
@@ -432,7 +446,7 @@ pacman::p_funs(rlang)
 [465] "zap"
 #+end_example
 
-** =%@%= Etract attributes
+*** =%@%= Etract attributes
 
 #+begin_src R
 factor(1:3) %@% "levels"
@@ -443,7 +457,7 @@ mtcars %@% class
 : [1] "1" "2" "3"
 : [1] "data.frame"
 
-** =%||%= Default value for NULL
+*** =%||%= Default value for NULL
 
 #+begin_src R
 1 %||% 2
@@ -454,7 +468,7 @@ NULL %||% 2
 : [1] 1
 : [1] 2
 
-** =%|%= Default value for NA (Vectorized)
+*** =%|%= Default value for NA (Vectorized)
 
 #+begin_src R
 c("a", "b", NA, "c") %|% "default"
@@ -463,8 +477,8 @@ c("a", "b", NA, "c") %|% "default"
 #+RESULTS:
 : [1] "a"       "b"       "default" "c"
 
-* ={lubridate}=
-** =%--%= (時間の引き算 => interval class)
+** lubridate package
+*** =%--%= (時間の引き算 => interval class)
 
 #+begin_src R
 arrive <- ymd_hms("2011-06-04 12:00:00", tz = "Asia/Tokyo")
@@ -475,7 +489,7 @@ arrive %--% leave
 #+RESULTS:
 : [1] 2011-06-04 12:00:00 JST--2011-08-20 14:00:00 JST
 
-** =%m-%=, =%m+%= (月を安全に加算・減算する。月末日やうるう年を考慮)
+*** =%m-%=, =%m+%= (月を安全に加算・減算する。月末日やうるう年を考慮)
 
 #+begin_src R
 jan <- ymd_hms("2010-01-31 03:04:05")
@@ -502,7 +516,7 @@ leap %m-% years(1)
 : [1] "2011-02-28"
 : [1] "2011-02-28"
 
-** =%within%= (interval/date_time %within% interval/list of intervals)
+*** =%within%= (interval/date_time %within% interval/list of intervals)
 
 - 日付が interval に含まれているかどうか
 #+begin_src R
@@ -529,7 +543,7 @@ ttime %within% rth
 #+RESULTS:
 : [1] TRUE
 
-* ={pryr}=
+** pryr package
 
 - =pryr::`%<d-%`= (=base::delayedAssign()=)
 - Delayed binding -> =promise= (遅延評価) を作成する
@@ -560,7 +574,7 @@ x
 : [1] 0.8595137
 : [1] 0.6320141
 
-* ={zeallot}=
+** zeallot package
 
 - Python ぽい値の割当
 #+begin_src R
@@ -575,4 +589,4 @@ y
 : 
 : [1] 1
 
-* crayon::%+%
+** crayon::%+%
