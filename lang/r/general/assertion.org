@@ -7,8 +7,8 @@
 - [[#assertion-patterns][Assertion Patterns]]
   - [[#if--stop][if + stop()]]
   - [[#stopifnot][stopifnot()]]
-  - [[#assertthatassert_that][=assertthat::assert_that()=]]
-  - [[#assertrassert_that][=assertr::assert_that()=]]
+  - [[#assertthatassert_that][assertthat::assert_that()]]
+  - [[#assertrassert_that][assertr::assert_that()]]
 - [[#links][Links]]
 #+END_QUOTE
 
@@ -46,7 +46,7 @@ stopifnot(!is.null(NULL))
 Error: !is.null(NULL) is not TRUE
 #+end_src
 
-** =assertthat::assert_that()=
+** assertthat::assert_that()
 
 - メッセージがわかりやすい
 #+begin_src R :exports both :results code
@@ -61,7 +61,7 @@ Error: !is.null(NULL) is not TRUE
 Error: NULL はだめよ
 #+end_src
 
-** =assertr::assert_that()=
+** assertr::assert_that()
 
 - data.frame の内容検査。パイプと組み合わせて使う。問題なければ、そのまま df を返す。
 #+begin_src R :exports both :results code
