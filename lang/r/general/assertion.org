@@ -28,6 +28,7 @@ if (is.null(NULL)) stop("NULL!!")
 #+begin_src R
 Error: NULL!!
 #+end_src
+\\
 
 - =stopifnot()=
   - base で使うことができる。簡易的。
@@ -40,6 +41,7 @@ stopifnot(!is.null(NULL))
 #+begin_src R
 Error: !is.null(NULL) is not TRUE
 #+end_src
+\\
 
 - =assertthat::assert_that()=
 - メッセージがわかりやすい
@@ -54,6 +56,7 @@ Error: !is.null(NULL) is not TRUE
 
 Error: NULL はだめよ
 #+end_src
+\\
 
 - =assertr::assert_that()=
   - data.frame の内容検査。パイプと組み合わせて使う。問題なければ、そのまま df を返す。
@@ -71,6 +74,7 @@ verification [nrow(.) > 100] failed! (1 failure)
 
 Error: assertr stopped execution
 #+end_src
+\\
 
 * Links
 
