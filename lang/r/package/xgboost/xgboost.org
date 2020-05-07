@@ -2,7 +2,7 @@
 #+PROPERTY: header-args:R :results output :session *R:xgb* :width 640 :height 480 :colnames yes
 
 * ={xgboost}=
-* [[file:../../general/tree_models.org][List of Tree Models]]
+* [[file:../../stats/tree_models.org][List of Tree Models]]
 * ライブラリの読み込み
 
 #+begin_src R :results silent
