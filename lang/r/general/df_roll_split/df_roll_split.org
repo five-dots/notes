@@ -11,6 +11,8 @@
 #+HUGO_TAGS: r
 #+HUGO_CUSTOM_FRONT_MATTER: :toc true
 
+[[https://github.com/five-dots/notes/blob/master/lang/r/general/df_roll_split/df_roll_split.org][GitHub]] | [[https://objective-boyd-9b8f29.netlify.app/2019/11/df_roll_split/][Blog]] | [[https://qiita.com/five-dots/items/46fc5c9505b111106e1c][Qiita]]
+
 R で時系列データを交差検証用に分割する際には[[https://github.com/tidymodels/rsample][ ={rsample}= ]]パッケージを利用すると便利だ。このパッケージの =rolling_origin()= 関数で、訓練データと検証データを時系列にスライドさせながら抽出することができる。
 
 ただし、この関数では訓練・検証のデータ件数を =data.frame= の行数でしか指定できない。これでは、時系列データを、月・週といったカレンダーの単位で分割したいケースに対応しづらい。例えば過去 12 ヶ月のデータでモデルを作成し、その後 3 ヶ月で予測の精度を評価する、といったケースだ。
