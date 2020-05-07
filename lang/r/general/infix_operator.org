@@ -11,7 +11,7 @@
   - [[#lubridate-package][lubridate package]]
   - [[#pryr-package][pryr package]]
   - [[#zeallot-package][zeallot package]]
-  - [[#crayon][crayon::%+%]]
+- [[#liks][Liks]]
 #+END_QUOTE
 
 * Library
@@ -26,10 +26,10 @@ library(zeallot)
 
 * By Package
 ** base package
-*** Complete list (Pre-defined)
+*** List (Pre-defined)
 
-- =:=, =::=, =:::=, =$=, =@=, =^=, =*=, =/=, =+=, =-=, =>=, =>==, =<=, =<==, ===, =!==, =!=, =&=, =&&=, =|,= =||=, =~=, =<-=, =<<-=
-- =%%= , =%*%=, =%/%= , =%in%=, =%o%=, =%x%=
+- =:=, =::=, =:::=, =$=, =@=, =^=, =*=, =/=, =+=, =-=, =>=, =>==, =<=, =<==, ==, =!==, =!=, =&=, =&&=, =|=, =||=, =~=, =<-=, =<<-=
+- =%%=, =%*%=, =%/%=, =%in%=, =%o%=, =%x%=
 
 *** =<-= 束縛
 
@@ -42,17 +42,18 @@ ls()
 #+end_src
 
 #+RESULTS:
-: 
-: [1] "    "     ":)"       "a
-: b"    "settings"
+#+begin_src R
+
+[1] "    "     ":)"       "a + b"    "settings"
+#+end_src
+\\
 
 *** =<-= と =<<-= の違い
 
 - =<<-=
   - 親環境をさかのぼって変更する
   - 通常は利用しない方が良いが、Closure と組み合わせて使うと便利
-
-#+begin_src R
+#+begin_src R :exports both
 x <- 10
 f <- function(x) {
   x <- 20 # グローバル変数は書き換えない
@@ -70,83 +71,96 @@ x
 #+end_src
 
 #+RESULTS:
-: 
-: [1] 20
-: 
-: [1] 10
-: 
-: [1] 20
-: 
-: [1] 20
+#+begin_src R
+
+[1] 20
+
+[1] 10
+
+[1] 20
+
+[1] 20
+#+end_src
+\\
 
 *** =::=, =:::= の違い
 
-- pkg::hoge # Exported var
-- pkg:::hoge # Internal var
+- pkg::obj # Exported obj
+- pkg:::obj # Internal obj
+  - Internal のオブジェクトにアクセスするのは、非推奨
 
-*** =%%= Remainder operator (剰余)
+*** =%%= 剰余
 
-#+begin_src R
+#+begin_src R :exports both
 10 %% 3
 #+end_src
 
 #+RESULTS:
-: [1] 1
-
-*** =%/%= Integer division (整数の割り算)
-
 #+begin_src R
+[1] 1
+#+end_src
+
+*** =%/%= 整数の割り算
+
+#+begin_src R :exports both
 10 %/% 3
 10 / 3
 #+end_src
 
 #+RESULTS:
-: [1] 3
-: [1] 3.333333
+#+begin_src R
+[1] 3
+
+[1] 3.333333
+#+end_src
+\\
 
 *** =%in%= Matching operator
 
-#+begin_src R
+#+begin_src R :exports both
 "hoge" %in% c("fuga", "hoge", "xxxx")
 #+end_src
 
 #+RESULTS:
-: [1] TRUE
-
-*** [[file:math.org][math 行列計算関連 =%*%=, =%x%=, =%o%=, =*= ]
-** magrittr package
-*** 全関数
-
 #+begin_src R
+[1] TRUE
+#+end_src
+\\
+
+** magrittr package
+*** List
+
+#+begin_src R :exports both
 pacman::p_funs(magrittr)
 #+end_src
 
 #+RESULTS:
-#+begin_example
- [1] "%<>%"                   "%>%"                    "%$%"                   
- [4] "%T>%"                   "add"                    "and"                   
- [7] "debug_fseq"             "debug_pipe"             "divide_by"             
-[10] "divide_by_int"          "equals"                 "extract"               
-[13] "extract2"               "freduce"                "functions"             
-[16] "inset"                  "inset2"                 "is_greater_than"       
+#+begin_src R
+ [1] "%$%"                    "%<>%"                   "%>%"
+ [4] "%T>%"                   "add"                    "and"
+ [7] "debug_fseq"             "debug_pipe"             "divide_by"
+[10] "divide_by_int"          "equals"                 "extract"
+[13] "extract2"               "freduce"                "functions"
+[16] "inset"                  "inset2"                 "is_greater_than"
 [19] "is_in"                  "is_less_than"           "is_weakly_greater_than"
-[22] "is_weakly_less_than"    "mod"                    "multiply_by"           
-[25] "multiply_by_matrix"     "n'est pas"              "not"                   
-[28] "or"                     "raise_to_power"         "set_colnames"          
-[31] "set_names"              "set_rownames"           "subtract"              
+[22] "is_weakly_less_than"    "mod"                    "multiply_by"
+[25] "multiply_by_matrix"     "n'est pas"              "not"
+[28] "or"                     "raise_to_power"         "set_colnames"
+[31] "set_names"              "set_rownames"           "subtract"
 [34] "undebug_fseq"           "use_series"
-#+end_example
+#+end_src
 
 *** LHS =%>%= RHS Pipe
 *** LHS =%<>%= RHS 代入演算子
 
-#+begin_src R
+#+begin_src R :exports both
 iris$Sepal.Length %<>% sqrt
 iris$Sepal.Length
 #+end_src
 
 #+RESULTS:
-#+begin_example
+#+begin_src R
+
   [1] 2.258318 2.213594 2.167948 2.144761 2.236068 2.323790 2.144761 2.236068
   [9] 2.097618 2.213594 2.323790 2.190890 2.190890 2.073644 2.408319 2.387467
  [17] 2.323790 2.258318 2.387467 2.258318 2.323790 2.258318 2.144761 2.258318
@@ -166,12 +180,12 @@ iris$Sepal.Length
 [129] 2.529822 2.683282 2.720294 2.810694 2.529822 2.509980 2.469818 2.774887
 [137] 2.509980 2.529822 2.449490 2.626785 2.588436 2.626785 2.408319 2.607681
 [145] 2.588436 2.588436 2.509980 2.549510 2.489980 2.428992
-#+end_example
+#+end_src
 
 *** LHS =%T>%= RHS "tee" 演算子
 
 - RHS の結果を返すのではなく、LHS の結果をスルーして返す
-#+begin_src R
+#+begin_src R :exports both
 rnorm(200) %>%
   matrix(ncol = 2) %T>%
   plot() %>% # plot は通常返り値が無い
@@ -179,319 +193,343 @@ rnorm(200) %>%
 #+end_src
 
 #+RESULTS:
-: [1] -2.100121 -2.683670
+#+begin_src R
+
+[1]  -6.192552 -17.628147
+#+end_src
+\\
 
 *** LHS =%$%= RHS "exposition" 演算子
 
 - LHS のオブジェクトの名前を RHS で参照できる
 - data 引数を持たない関数に名前を渡すのに便利
-#+begin_src R
+#+begin_src R :exports both
 iris %>%
   subset(Sepal.Length > mean(Sepal.Length)) %$%
   cor(Sepal.Length, Sepal.Width)
 #+end_src
 
 #+RESULTS:
-: [1] 0.3365679
+#+begin_src R
 
-#+begin_src R :results output graphics file :file (my/get-babel-file)
+[1] 0.3365679
+#+end_src
+\\
+
+#+begin_src R :results output graphics file :file (my/get-babel-file) :exports both
 data.frame(z = rnorm(100)) %$%
   ts.plot(z) # ts.plot() は data.frame をそのまま引数にとることができない
 #+end_src
 
 #+RESULTS:
-[[file:/home/shun/Dropbox/memo/img/babel/fig-E6mqDP.png]]
+[[file:/home/shun/Dropbox/memo/img/babel/fig-UrcZkn.png]]
+\\
 
 ** rlang package
-*** 全関数
+*** List
 
-#+begin_src R
+#+begin_src R :exports both
 pacman::p_funs(rlang)
 #+end_src
 
 #+RESULTS:
-#+begin_example
-  [1] ":="                      "!!"                     
-  [3] "!!!"                     ".data"                  
-  [5] "%@%"                     "%@%<-"                  
-  [7] "%|%"                     "%||%"                   
-  [9] "abort"                   "are_na"                 
- [11] "arg_match"               "as_box"                 
- [13] "as_box_if"               "as_bytes"               
- [15] "as_character"            "as_closure"             
- [17] "as_complex"              "as_data_mask"           
- [19] "as_data_pronoun"         "as_double"              
- [21] "as_env"                  "as_environment"         
- [23] "as_function"             "as_integer"             
- [25] "as_label"                "as_list"                
- [27] "as_logical"              "as_name"                
- [29] "as_overscope"            "as_pairlist"            
- [31] "as_quosure"              "as_quosures"            
- [33] "as_string"               "as_utf8_character"      
- [35] "base_env"                "bytes"                  
- [37] "bytes_along"             "bytes_len"              
- [39] "call_args"               "call_args_names"        
- [41] "call_depth"              "call_fn"                
- [43] "call_frame"              "call_inspect"           
- [45] "call_modify"             "call_name"              
- [47] "call_ns"                 "call_stack"             
- [49] "call_standardise"        "call2"                  
- [51] "caller_env"              "caller_fn"              
- [53] "caller_frame"            "calling"                
- [55] "catch_cnd"               "child_env"              
- [57] "chr"                     "chr_along"              
- [59] "chr_len"                 "chr_unserialise_unicode"
- [61] "cnd"                     "cnd_body"               
- [63] "cnd_entrace"             "cnd_footer"             
- [65] "cnd_header"              "cnd_message"            
- [67] "cnd_muffle"              "cnd_signal"             
- [69] "cnd_type"                "coerce_class"           
- [71] "coerce_type"             "cpl"                    
- [73] "cpl_along"               "cpl_len"                
- [75] "ctxt_depth"              "ctxt_frame"             
- [77] "ctxt_stack"              "current_env"            
- [79] "current_fn"              "current_frame"          
- [81] "dbl"                     "dbl_along"              
- [83] "dbl_len"                 "done"                   
- [85] "dots_definitions"        "dots_list"              
- [87] "dots_n"                  "dots_splice"            
- [89] "dots_values"             "duplicate"              
- [91] "empty_env"               "enexpr"                 
- [93] "enexprs"                 "enquo"                  
- [95] "enquos"                  "ensym"                  
- [97] "ensyms"                  "entrace"                
- [99] "env"                     "env_bind"               
-[101] "env_bind_active"         "env_bind_exprs"         
-[103] "env_bind_fns"            "env_bind_lazy"          
-[105] "env_binding_are_active"  "env_binding_are_lazy"   
-[107] "env_binding_are_locked"  "env_binding_lock"       
-[109] "env_binding_unlock"      "env_bury"               
-[111] "env_clone"               "env_depth"              
-[113] "env_get"                 "env_get_list"           
-[115] "env_has"                 "env_inherits"           
-[117] "env_is_locked"           "env_label"              
-[119] "env_length"              "env_lock"               
-[121] "env_name"                "env_names"              
-[123] "env_parent"              "env_parents"            
-[125] "env_poke"                "env_poke_parent"        
-[127] "env_print"               "env_tail"               
-[129] "env_unbind"              "env_unlock"             
-[131] "error_cnd"               "eval_bare"              
-[133] "eval_tidy"               "exec"                   
-[135] "exiting"                 "expr"                   
-[137] "expr_deparse"            "expr_interp"            
-[139] "expr_label"              "expr_name"              
-[141] "expr_print"              "expr_text"              
-[143] "exprs"                   "exprs_auto_name"        
-[145] "f_env"                   "f_env<-"                
-[147] "f_label"                 "f_lhs"                  
-[149] "f_lhs<-"                 "f_name"                 
-[151] "f_rhs"                   "f_rhs<-"                
-[153] "f_text"                  "flatten"                
-[155] "flatten_chr"             "flatten_cpl"            
-[157] "flatten_dbl"             "flatten_if"             
-[159] "flatten_int"             "flatten_lgl"            
-[161] "flatten_raw"             "fn_body"                
-[163] "fn_body<-"               "fn_env"                 
-[165] "fn_env<-"                "fn_fmls"                
-[167] "fn_fmls_names"           "fn_fmls_names<-"        
-[169] "fn_fmls_syms"            "fn_fmls<-"              
-[171] "format_error_bullets"    "frame_position"         
-[173] "friendly_type"           "get_env"                
-[175] "get_expr"                "global_env"             
-[177] "global_frame"            "has_length"             
-[179] "has_name"                "have_name"              
-[181] "inform"                  "inherits_all"           
-[183] "inherits_any"            "inherits_only"          
-[185] "int"                     "int_along"              
-[187] "int_len"                 "interrupt"              
-[189] "invoke"                  "is_atomic"              
-[191] "is_attached"             "is_bare_atomic"         
-[193] "is_bare_bytes"           "is_bare_character"      
-[195] "is_bare_double"          "is_bare_env"            
-[197] "is_bare_environment"     "is_bare_formula"        
-[199] "is_bare_integer"         "is_bare_integerish"     
-[201] "is_bare_list"            "is_bare_logical"        
-[203] "is_bare_numeric"         "is_bare_raw"            
-[205] "is_bare_string"          "is_bare_vector"         
-[207] "is_binary_lang"          "is_bool"                
-[209] "is_box"                  "is_bytes"               
-[211] "is_call"                 "is_call_stack"          
-[213] "is_callable"             "is_character"           
-[215] "is_chr_na"               "is_closure"             
-[217] "is_condition"            "is_copyable"            
-[219] "is_cpl_na"               "is_dbl_na"              
-[221] "is_definition"           "is_dictionaryish"       
-[223] "is_done_box"             "is_double"              
-[225] "is_empty"                "is_env"                 
-[227] "is_environment"          "is_eval_stack"          
-[229] "is_expr"                 "is_expression"          
-[231] "is_false"                "is_formula"             
-[233] "is_formulaish"           "is_frame"               
-[235] "is_function"             "is_installed"           
-[237] "is_int_na"               "is_integer"             
-[239] "is_integerish"           "is_interactive"         
-[241] "is_lambda"               "is_lang"                
-[243] "is_lgl_na"               "is_list"                
-[245] "is_logical"              "is_missing"             
-[247] "is_na"                   "is_named"               
-[249] "is_namespace"            "is_node"                
-[251] "is_node_list"            "is_null"                
-[253] "is_pairlist"             "is_primitive"           
-[255] "is_primitive_eager"      "is_primitive_lazy"      
-[257] "is_quosure"              "is_quosures"            
-[259] "is_raw"                  "is_reference"           
-[261] "is_scalar_atomic"        "is_scalar_bytes"        
-[263] "is_scalar_character"     "is_scalar_double"       
-[265] "is_scalar_integer"       "is_scalar_integerish"   
-[267] "is_scalar_list"          "is_scalar_logical"      
-[269] "is_scalar_raw"           "is_scalar_vector"       
-[271] "is_scoped"               "is_spliced"             
-[273] "is_spliced_bare"         "is_stack"               
-[275] "is_string"               "is_symbol"              
-[277] "is_symbolic"             "is_syntactic_literal"   
-[279] "is_true"                 "is_unary_lang"          
-[281] "is_vector"               "is_weakref"             
-[283] "is_zap"                  "lang"                   
-[285] "lang_args"               "lang_args_names"        
-[287] "lang_fn"                 "lang_head"              
-[289] "lang_modify"             "lang_name"              
-[291] "lang_standardise"        "lang_tail"              
-[293] "last_error"              "last_trace"             
-[295] "lgl"                     "lgl_along"              
-[297] "lgl_len"                 "list_along"             
-[299] "list_len"                "list2"                  
-[301] "ll"                      "local_bindings"         
-[303] "local_interactive"       "local_options"          
-[305] "locally"                 "maybe_missing"          
-[307] "message_cnd"             "missing_arg"            
-[309] "modify"                  "mut_attrs"              
-[311] "mut_node_caar"           "mut_node_cadr"          
-[313] "mut_node_car"            "mut_node_cdar"          
-[315] "mut_node_cddr"           "mut_node_cdr"           
-[317] "mut_node_tag"            "na_chr"                 
-[319] "na_cpl"                  "na_dbl"                 
-[321] "na_int"                  "na_lgl"                 
-[323] "names2"                  "new_box"                
-[325] "new_call"                "new_character"          
-[327] "new_character_along"     "new_complex"            
-[329] "new_complex_along"       "new_data_mask"          
-[331] "new_definition"          "new_double"             
-[333] "new_double_along"        "new_environment"        
-[335] "new_formula"             "new_function"           
-[337] "new_integer"             "new_integer_along"      
-[339] "new_language"            "new_list"               
-[341] "new_list_along"          "new_logical"            
-[343] "new_logical_along"       "new_node"               
-[345] "new_overscope"           "new_quosure"            
-[347] "new_quosures"            "new_raw"                
-[349] "new_raw_along"           "new_weakref"            
-[351] "node"                    "node_caar"              
-[353] "node_cadr"               "node_car"               
-[355] "node_cdar"               "node_cddr"              
-[357] "node_cdr"                "node_poke_caar"         
-[359] "node_poke_cadr"          "node_poke_car"          
-[361] "node_poke_cdar"          "node_poke_cddr"         
-[363] "node_poke_cdr"           "node_poke_tag"          
-[365] "node_tag"                "ns_env"                 
-[367] "ns_env_name"             "ns_imports_env"         
-[369] "overscope_clean"         "overscope_eval_next"    
-[371] "pairlist2"               "parse_expr"             
-[373] "parse_exprs"             "parse_quo"              
-[375] "parse_quos"              "parse_quosure"          
-[377] "parse_quosures"          "peek_option"            
-[379] "peek_options"            "pkg_env"                
-[381] "pkg_env_name"            "prepend"                
-[383] "prim_name"               "push_options"           
-[385] "qq_show"                 "quo"                    
-[387] "quo_expr"                "quo_get_env"            
-[389] "quo_get_expr"            "quo_is_call"            
-[391] "quo_is_lang"             "quo_is_missing"         
-[393] "quo_is_null"             "quo_is_symbol"          
-[395] "quo_is_symbolic"         "quo_label"              
-[397] "quo_name"                "quo_set_env"            
-[399] "quo_set_expr"            "quo_squash"             
-[401] "quo_text"                "quos"                   
-[403] "quos_auto_name"          "raw_along"              
-[405] "raw_len"                 "rep_along"              
-[407] "rep_named"               "restarting"             
-[409] "return_from"             "return_to"              
-[411] "rst_abort"               "rst_exists"             
-[413] "rst_jump"                "rst_list"               
-[415] "rst_maybe_jump"          "scoped_bindings"        
-[417] "scoped_env"              "scoped_envs"            
-[419] "scoped_interactive"      "scoped_names"           
-[421] "scoped_options"          "search_env"             
-[423] "search_envs"             "seq2"                   
-[425] "seq2_along"              "set_attrs"              
-[427] "set_env"                 "set_expr"               
-[429] "set_names"               "signal"                 
-[431] "splice"                  "squash"                 
-[433] "squash_chr"              "squash_cpl"             
-[435] "squash_dbl"              "squash_if"              
-[437] "squash_int"              "squash_lgl"             
-[439] "squash_raw"              "stack_trim"             
-[441] "string"                  "switch_class"           
-[443] "switch_type"             "sym"                    
-[445] "syms"                    "trace_back"             
-[447] "trace_length"            "type_of"                
-[449] "unbox"                   "UQ"                     
-[451] "UQS"                     "vec_poke_n"             
-[453] "vec_poke_range"          "warn"                   
-[455] "warning_cnd"             "with_abort"             
-[457] "with_bindings"           "with_env"               
-[459] "with_handlers"           "with_interactive"       
-[461] "with_options"            "with_restarts"          
-[463] "wref_key"                "wref_value"             
-[465] "zap"
-#+end_example
+#+begin_src R
+  [1] "!!"                      "!!!"
+  [3] "%@%"                     "%@%<-"
+  [5] "%|%"                     "%||%"
+  [7] ".data"                   ".env"
+  [9] ":="                      "UQ"
+ [11] "UQS"                     "abort"
+ [13] "are_na"                  "arg_match"
+ [15] "as_box"                  "as_box_if"
+ [17] "as_bytes"                "as_character"
+ [19] "as_closure"              "as_complex"
+ [21] "as_data_mask"            "as_data_pronoun"
+ [23] "as_double"               "as_env"
+ [25] "as_environment"          "as_function"
+ [27] "as_integer"              "as_label"
+ [29] "as_list"                 "as_logical"
+ [31] "as_name"                 "as_overscope"
+ [33] "as_pairlist"             "as_quosure"
+ [35] "as_quosures"             "as_string"
+ [37] "as_utf8_character"       "base_env"
+ [39] "bytes"                   "bytes_along"
+ [41] "bytes_len"               "call2"
+ [43] "call_args"               "call_args_names"
+ [45] "call_depth"              "call_fn"
+ [47] "call_frame"              "call_inspect"
+ [49] "call_modify"             "call_name"
+ [51] "call_ns"                 "call_stack"
+ [53] "call_standardise"        "caller_env"
+ [55] "caller_fn"               "caller_frame"
+ [57] "calling"                 "catch_cnd"
+ [59] "child_env"               "chr"
+ [61] "chr_along"               "chr_len"
+ [63] "chr_unserialise_unicode" "cnd"
+ [65] "cnd_body"                "cnd_entrace"
+ [67] "cnd_footer"              "cnd_header"
+ [69] "cnd_message"             "cnd_muffle"
+ [71] "cnd_signal"              "cnd_type"
+ [73] "coerce_class"            "coerce_type"
+ [75] "cpl"                     "cpl_along"
+ [77] "cpl_len"                 "ctxt_depth"
+ [79] "ctxt_frame"              "ctxt_stack"
+ [81] "current_env"             "current_fn"
+ [83] "current_frame"           "dbl"
+ [85] "dbl_along"               "dbl_len"
+ [87] "done"                    "dots_definitions"
+ [89] "dots_list"               "dots_n"
+ [91] "dots_splice"             "dots_values"
+ [93] "duplicate"               "empty_env"
+ [95] "enexpr"                  "enexprs"
+ [97] "enquo"                   "enquos"
+ [99] "ensym"                   "ensyms"
+[101] "entrace"                 "env"
+[103] "env_bind"                "env_bind_active"
+[105] "env_bind_exprs"          "env_bind_fns"
+[107] "env_bind_lazy"           "env_binding_are_active"
+[109] "env_binding_are_lazy"    "env_binding_are_locked"
+[111] "env_binding_lock"        "env_binding_unlock"
+[113] "env_bury"                "env_clone"
+[115] "env_depth"               "env_get"
+[117] "env_get_list"            "env_has"
+[119] "env_inherits"            "env_is_locked"
+[121] "env_label"               "env_length"
+[123] "env_lock"                "env_name"
+[125] "env_names"               "env_parent"
+[127] "env_parents"             "env_poke"
+[129] "env_poke_parent"         "env_print"
+[131] "env_tail"                "env_unbind"
+[133] "env_unlock"              "error_cnd"
+[135] "eval_bare"               "eval_tidy"
+[137] "exec"                    "exiting"
+[139] "expr"                    "expr_deparse"
+[141] "expr_interp"             "expr_label"
+[143] "expr_name"               "expr_print"
+[145] "expr_text"               "exprs"
+[147] "exprs_auto_name"         "f_env"
+[149] "f_env<-"                 "f_label"
+[151] "f_lhs"                   "f_lhs<-"
+[153] "f_name"                  "f_rhs"
+[155] "f_rhs<-"                 "f_text"
+[157] "flatten"                 "flatten_chr"
+[159] "flatten_cpl"             "flatten_dbl"
+[161] "flatten_if"              "flatten_int"
+[163] "flatten_lgl"             "flatten_raw"
+[165] "fn_body"                 "fn_body<-"
+[167] "fn_env"                  "fn_env<-"
+[169] "fn_fmls"                 "fn_fmls<-"
+[171] "fn_fmls_names"           "fn_fmls_names<-"
+[173] "fn_fmls_syms"            "format_error_bullets"
+[175] "frame_position"          "friendly_type"
+[177] "get_env"                 "get_expr"
+[179] "global_env"              "global_frame"
+[181] "has_length"              "has_name"
+[183] "have_name"               "inform"
+[185] "inherits_all"            "inherits_any"
+[187] "inherits_only"           "int"
+[189] "int_along"               "int_len"
+[191] "interrupt"               "invoke"
+[193] "is_atomic"               "is_attached"
+[195] "is_bare_atomic"          "is_bare_bytes"
+[197] "is_bare_character"       "is_bare_double"
+[199] "is_bare_env"             "is_bare_environment"
+[201] "is_bare_formula"         "is_bare_integer"
+[203] "is_bare_integerish"      "is_bare_list"
+[205] "is_bare_logical"         "is_bare_numeric"
+[207] "is_bare_raw"             "is_bare_string"
+[209] "is_bare_vector"          "is_binary_lang"
+[211] "is_bool"                 "is_box"
+[213] "is_bytes"                "is_call"
+[215] "is_call_stack"           "is_callable"
+[217] "is_character"            "is_chr_na"
+[219] "is_closure"              "is_condition"
+[221] "is_copyable"             "is_cpl_na"
+[223] "is_dbl_na"               "is_definition"
+[225] "is_dictionaryish"        "is_done_box"
+[227] "is_double"               "is_empty"
+[229] "is_env"                  "is_environment"
+[231] "is_eval_stack"           "is_expr"
+[233] "is_expression"           "is_false"
+[235] "is_formula"              "is_formulaish"
+[237] "is_frame"                "is_function"
+[239] "is_installed"            "is_int_na"
+[241] "is_integer"              "is_integerish"
+[243] "is_interactive"          "is_lambda"
+[245] "is_lang"                 "is_lgl_na"
+[247] "is_list"                 "is_logical"
+[249] "is_missing"              "is_na"
+[251] "is_named"                "is_namespace"
+[253] "is_node"                 "is_node_list"
+[255] "is_null"                 "is_pairlist"
+[257] "is_primitive"            "is_primitive_eager"
+[259] "is_primitive_lazy"       "is_quosure"
+[261] "is_quosures"             "is_raw"
+[263] "is_reference"            "is_scalar_atomic"
+[265] "is_scalar_bytes"         "is_scalar_character"
+[267] "is_scalar_double"        "is_scalar_integer"
+[269] "is_scalar_integerish"    "is_scalar_list"
+[271] "is_scalar_logical"       "is_scalar_raw"
+[273] "is_scalar_vector"        "is_scoped"
+[275] "is_spliced"              "is_spliced_bare"
+[277] "is_stack"                "is_string"
+[279] "is_symbol"               "is_symbolic"
+[281] "is_syntactic_literal"    "is_true"
+[283] "is_unary_lang"           "is_vector"
+[285] "is_weakref"              "is_zap"
+[287] "lang"                    "lang_args"
+[289] "lang_args_names"         "lang_fn"
+[291] "lang_head"               "lang_modify"
+[293] "lang_name"               "lang_standardise"
+[295] "lang_tail"               "last_error"
+[297] "last_trace"              "lgl"
+[299] "lgl_along"               "lgl_len"
+[301] "list2"                   "list_along"
+[303] "list_len"                "ll"
+[305] "local_bindings"          "local_interactive"
+[307] "local_options"           "locally"
+[309] "maybe_missing"           "message_cnd"
+[311] "missing_arg"             "modify"
+[313] "mut_attrs"               "mut_node_caar"
+[315] "mut_node_cadr"           "mut_node_car"
+[317] "mut_node_cdar"           "mut_node_cddr"
+[319] "mut_node_cdr"            "mut_node_tag"
+[321] "na_chr"                  "na_cpl"
+[323] "na_dbl"                  "na_int"
+[325] "na_lgl"                  "names2"
+[327] "new_box"                 "new_call"
+[329] "new_character"           "new_character_along"
+[331] "new_complex"             "new_complex_along"
+[333] "new_data_mask"           "new_definition"
+[335] "new_double"              "new_double_along"
+[337] "new_environment"         "new_formula"
+[339] "new_function"            "new_integer"
+[341] "new_integer_along"       "new_language"
+[343] "new_list"                "new_list_along"
+[345] "new_logical"             "new_logical_along"
+[347] "new_node"                "new_overscope"
+[349] "new_quosure"             "new_quosures"
+[351] "new_raw"                 "new_raw_along"
+[353] "new_weakref"             "node"
+[355] "node_caar"               "node_cadr"
+[357] "node_car"                "node_cdar"
+[359] "node_cddr"               "node_cdr"
+[361] "node_poke_caar"          "node_poke_cadr"
+[363] "node_poke_car"           "node_poke_cdar"
+[365] "node_poke_cddr"          "node_poke_cdr"
+[367] "node_poke_tag"           "node_tag"
+[369] "ns_env"                  "ns_env_name"
+[371] "ns_imports_env"          "overscope_clean"
+[373] "overscope_eval_next"     "pairlist2"
+[375] "parse_expr"              "parse_exprs"
+[377] "parse_quo"               "parse_quos"
+[379] "parse_quosure"           "parse_quosures"
+[381] "peek_option"             "peek_options"
+[383] "pkg_env"                 "pkg_env_name"
+[385] "prepend"                 "prim_name"
+[387] "push_options"            "qq_show"
+[389] "quo"                     "quo_expr"
+[391] "quo_get_env"             "quo_get_expr"
+[393] "quo_is_call"             "quo_is_lang"
+[395] "quo_is_missing"          "quo_is_null"
+[397] "quo_is_symbol"           "quo_is_symbolic"
+[399] "quo_label"               "quo_name"
+[401] "quo_set_env"             "quo_set_expr"
+[403] "quo_squash"              "quo_text"
+[405] "quos"                    "quos_auto_name"
+[407] "raw_along"               "raw_len"
+[409] "rep_along"               "rep_named"
+[411] "restarting"              "return_from"
+[413] "return_to"               "rst_abort"
+[415] "rst_exists"              "rst_jump"
+[417] "rst_list"                "rst_maybe_jump"
+[419] "scoped_bindings"         "scoped_env"
+[421] "scoped_envs"             "scoped_interactive"
+[423] "scoped_names"            "scoped_options"
+[425] "search_env"              "search_envs"
+[427] "seq2"                    "seq2_along"
+[429] "set_attrs"               "set_env"
+[431] "set_expr"                "set_names"
+[433] "signal"                  "splice"
+[435] "squash"                  "squash_chr"
+[437] "squash_cpl"              "squash_dbl"
+[439] "squash_if"               "squash_int"
+[441] "squash_lgl"              "squash_raw"
+[443] "stack_trim"              "string"
+[445] "switch_class"            "switch_type"
+[447] "sym"                     "syms"
+[449] "trace_back"              "trace_length"
+[451] "type_of"                 "unbox"
+[453] "vec_poke_n"              "vec_poke_range"
+[455] "warn"                    "warning_cnd"
+[457] "with_abort"              "with_bindings"
+[459] "with_env"                "with_handlers"
+[461] "with_interactive"        "with_options"
+[463] "with_restarts"           "wref_key"
+[465] "wref_value"              "zap"
+#+end_src
 
 *** =%@%= Etract attributes
 
-#+begin_src R
+#+begin_src R :exports both
 factor(1:3) %@% "levels"
 mtcars %@% class
 #+end_src
 
 #+RESULTS:
-: [1] "1" "2" "3"
-: [1] "data.frame"
+#+begin_src R
+[1] "1" "2" "3"
+
+[1] "data.frame"
+#+end_src
+\\
 
 *** =%||%= Default value for NULL
 
-#+begin_src R
+#+begin_src R :exports both
 1 %||% 2
 NULL %||% 2
 #+end_src
 
 #+RESULTS:
-: [1] 1
-: [1] 2
+#+begin_src R
+[1] 1
+
+[1] 2
+#+end_src
+\\
 
 *** =%|%= Default value for NA (Vectorized)
 
-#+begin_src R
+#+begin_src R :exports both
 c("a", "b", NA, "c") %|% "default"
 #+end_src
 
 #+RESULTS:
-: [1] "a"       "b"       "default" "c"
+#+begin_src R
+[1] "a"       "b"       "default" "c"
+#+end_src
+\\
 
 ** lubridate package
 *** =%--%= (時間の引き算 => interval class)
 
-#+begin_src R
+#+begin_src R :exports both
 arrive <- ymd_hms("2011-06-04 12:00:00", tz = "Asia/Tokyo")
 leave <- ymd_hms("2011-08-20 14:00:00", tz = "Asia/Tokyo")
 arrive %--% leave
 #+end_src
 
 #+RESULTS:
-: [1] 2011-06-04 12:00:00 JST--2011-08-20 14:00:00 JST
+#+begin_src R
+
+[1] 2011-06-04 12:00:00 JST--2011-08-20 14:00:00 JST
+#+end_src
+\\
 
 *** =%m-%=, =%m+%= (月を安全に加算・減算する。月末日やうるう年を考慮)
 
-#+begin_src R
+#+begin_src R :exports both
 jan <- ymd_hms("2010-01-31 03:04:05")
 jan + months(1:3) # Feb-31, April-31 は NAになってしまう
 
@@ -499,12 +537,17 @@ jan %m+% months(1:3) # No rollover
 #+end_src
 
 #+RESULTS:
-: [1] NA                        "2010-03-31 03:04:05 UTC"
-: [3] NA
-: [1] "2010-02-28 03:04:05 UTC" "2010-03-31 03:04:05 UTC"
-: [3] "2010-04-30 03:04:05 UTC"
-
 #+begin_src R
+
+[1] NA                        "2010-03-31 03:04:05 UTC"
+[3] NA
+
+[1] "2010-02-28 03:04:05 UTC" "2010-03-31 03:04:05 UTC"
+[3] "2010-04-30 03:04:05 UTC"
+#+end_src
+\\
+
+#+begin_src R :exports both
 leap <- ymd("2012-02-29")
 leap %m+% years(1)
 leap %m+% years(-1)
@@ -512,14 +555,20 @@ leap %m-% years(1)
 #+end_src
 
 #+RESULTS:
-: [1] "2013-02-28"
-: [1] "2011-02-28"
-: [1] "2011-02-28"
+#+begin_src R
+
+[1] "2013-02-28"
+
+[1] "2011-02-28"
+
+[1] "2011-02-28"
+#+end_src
+\\
 
 *** =%within%= (interval/date_time %within% interval/list of intervals)
 
 - 日付が interval に含まれているかどうか
-#+begin_src R
+#+begin_src R :exports both
 int <- interval(ymd("2001-01-01"), ymd("2002-01-01"))
 int2 <- interval(ymd("2001-06-01"), ymd("2002-01-01"))
 
@@ -529,11 +578,17 @@ ymd("1999-01-01") %within% int
 #+end_src
 
 #+RESULTS:
-: [1] TRUE
-: [1] TRUE
-: [1] FALSE
-
 #+begin_src R
+
+[1] TRUE
+
+[1] TRUE
+
+[1] FALSE
+#+end_src
+\\
+
+#+begin_src R :exports both
 ttime <- ymd_hms("2019-03-31 12:31:12")
 rth <- interval(make_datetime(year(ttime), month(ttime), day(ttime), 9, 30, 0),
                 make_datetime(year(ttime), month(ttime), day(ttime), 16, 0, 0))
@@ -541,12 +596,16 @@ ttime %within% rth
 #+end_src
 
 #+RESULTS:
-: [1] TRUE
+#+begin_src R
+
+[1] TRUE
+#+end_src
+\\
 
 ** pryr package
 
 - =pryr::`%<d-%`= (=base::delayedAssign()=)
-- Delayed binding -> =promise= (遅延評価) を作成する
+  - Delayed binding -> =promise= (遅延評価) を作成する
 #+begin_src R :exports both
 library(pryr)
 system.time(b %<d-% {
@@ -557,13 +616,18 @@ system.time(b) # ここを実行した時点で、%<d-% のブロックが実行
 #+end_src
 
 #+RESULTS:
-:    user  system elapsed 
-:       0       0       0
-:    user  system elapsed 
-:   0.000   0.000   1.001
+#+begin_src R
+
+   user  system elapsed
+      0       0       0
+
+   user  system elapsed
+  0.000   0.000   1.002
+#+end_src
+\\
 
 - =pryr::`%<a-%`= (=base::makeActiveBinding()=)
-- Active binding => アクセスされる毎に再計算される
+  - Active binding => アクセスされる毎に再計算される
 #+begin_src R :exports both
 x %<a-% runif(1)
 x
@@ -571,22 +635,31 @@ x
 #+end_src
 
 #+RESULTS:
-: [1] 0.8595137
-: [1] 0.6320141
+#+begin_src R
+
+[1] 0.286763
+
+[1] 0.002307995
+#+end_src
+\\
 
 ** zeallot package
 
 - Python ぽい値の割当
-#+begin_src R
+#+begin_src R :exports both
 c(x, y) %<-% c(0, 1)
 x
 y
 #+end_src
 
 #+RESULTS:
-: 
-: [1] 0
-: 
-: [1] 1
+#+begin_src R
 
-** crayon::%+%
+[1] 0.412926
+
+[1] 1
+#+end_src
+\\
+* Liks
+
+- [[file:../stats/math.org][math 行列計算関連 =%*%=, =%x%=, =%o%=, =*= ]]
