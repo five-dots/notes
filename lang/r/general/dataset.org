@@ -41,7 +41,7 @@ library(faraway)
 
 * By Package
 ** datasets package
-*** list
+*** List
 
 #+begin_src R :rownames yes :exports both
 pacman::p_data(datasets)
@@ -343,7 +343,7 @@ sleep
 |   3.4 |     2 | 10 |
 
 ** ggplot2 package
-*** list
+*** List
 
 #+begin_src R :rownames yes :exports both
 pacman::p_data(ggplot2)
@@ -400,7 +400,7 @@ tibble [234 × 11] (S3: tbl_df/tbl/data.frame)
 #+end_src
 
 ** dplyr package
-*** list
+*** List
 
 #+begin_src R :rownames yes :exports both
 pacman::p_data(dplyr)
@@ -417,7 +417,7 @@ pacman::p_data(dplyr)
 | 6 | storms            | Storm tracks data         |
 
 ** mlbench package
-*** list
+*** List
 
 #+begin_src R :exports both
 pacman::p_data(mlbench)
@@ -1108,7 +1108,7 @@ str(Zoo)
 #+end_src
 
 ** modeldata package
-*** list
+*** List
 
 #+begin_src R :exports both
 pacman::p_data(modeldata)
@@ -2245,7 +2245,7 @@ tibble [7,043 × 20] (S3: tbl_df/tbl/data.frame)
 #+end_src
 
 ** nycflights13 package
-*** list
+*** List
 
 - 2013 年にニューヨークから出航した航空機のリスト
   - EWR: ニューアーク・リバティー国際空港
@@ -2352,35 +2352,22 @@ tibble [3,322 × 9] (S3: tbl_df/tbl/data.frame)
 *** airports
 
 #+begin_src R :exports both :results code output
-str(nycflights13::airports)
+data(airports)
+attributes(airports) <- NULL
+str(airports)
 #+end_src
 
 #+RESULTS:
 #+begin_src R
-tibble [1,458 × 8] (S3: tbl_df/tbl/data.frame)
- $ faa  : chr [1:1458] "04G" "06A" "06C" "06N" ...
- $ name : chr [1:1458] "Lansdowne Airport" "Moton Field Municipal Airport" "Schaumburg Regional" "Randall Airport" ...
- $ lat  : num [1:1458] 41.1 32.5 42 41.4 31.1 ...
- $ lon  : num [1:1458] -80.6 -85.7 -88.1 -74.4 -81.4 ...
- $ alt  : num [1:1458] 1044 264 801 523 11 ...
- $ tz   : num [1:1458] -5 -6 -6 -5 -5 -5 -5 -5 -5 -8 ...
- $ dst  : chr [1:1458] "A" "A" "A" "A" ...
- $ tzone: chr [1:1458] "America/New_York" "America/Chicago" "America/Chicago" "America/New_York" ...
- - attr(*, "spec")=
-  .. cols(
-  ..   id = [32mcol_double()[39m,
-  ..   name = [31mcol_character()[39m,
-  ..   city = [31mcol_character()[39m,
-  ..   country = [31mcol_character()[39m,
-  ..   faa = [31mcol_character()[39m,
-  ..   icao = [31mcol_character()[39m,
-  ..   lat = [32mcol_double()[39m,
-  ..   lon = [32mcol_double()[39m,
-  ..   alt = [32mcol_double()[39m,
-  ..   tz = [32mcol_double()[39m,
-  ..   dst = [31mcol_character()[39m,
-  ..   tzone = [31mcol_character()[39m
-  .. )
+List of 8
+ $ : chr [1:1458] "04G" "06A" "06C" "06N" ...
+ $ : chr [1:1458] "Lansdowne Airport" "Moton Field Municipal Airport" "Schaumburg Regional" "Randall Airport" ...
+ $ : num [1:1458] 41.1 32.5 42 41.4 31.1 ...
+ $ : num [1:1458] -80.6 -85.7 -88.1 -74.4 -81.4 ...
+ $ : num [1:1458] 1044 264 801 523 11 ...
+ $ : num [1:1458] -5 -6 -6 -5 -5 -5 -5 -5 -5 -8 ...
+ $ : chr [1:1458] "A" "A" "A" "A" ...
+ $ : chr [1:1458] "America/New_York" "America/Chicago" "America/Chicago" "America/New_York" ...
 #+end_src
 
 *** airlnes
@@ -2397,7 +2384,7 @@ tibble [16 × 2] (S3: tbl_df/tbl/data.frame)
 #+end_src
 
 ** faraway package
-*** list
+*** List
 
 - Julian Faraway の著書をサポートするパッケージ
 #+begin_src R :rownames yes :exports both
