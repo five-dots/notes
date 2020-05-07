@@ -1,13 +1,9 @@
 #+STARTUP: folded indent inlineimages latexpreview
 #+PROPERTY: header-args:R :results output :colnames yes :session *R:date_time*
 
-* Date and Time in ={base}= package                                  :noexport:
-
-R での日時の扱いは煩雑な面がある。
-似たような複数の型が存在していたり、名前が直感的にわかりにくかったりするからだ。幸い ={lubridate}= などの便利なパッケージのお陰で、そうした不便を軽減することはできる。しかし ={lubridate}= は ={tidyverse}= のコアパッケージではないし、どんな時も利用できる、というわけではないだろう。そんな時のために、ここでは ={base}= パッケージの中で最低限押さえて置くべきことをまとめておく。
-
 * Table of Contents :quote:toc:
 #+BEGIN_QUOTE
+- [[#date-and-time-in-base-package][Date and Time in ={base}= package]]
 - [[#date-time-types-in-r][Date Time Types in R]]
   - [[#summary][Summary]]
   - [[#date-class][Date Class]]
@@ -16,11 +12,21 @@ R での日時の扱いは煩雑な面がある。
 - [[#format][Format]]
   - [[#basics][Basics]]
   - [[#list-of-formats][List of Formats]]
-  - [[#strptime][strptime()]]
-  - [[#strftime][strftime()]]
+  - [[#strptime-character---posixlt][strptime() (character -> POSIXlt)]]
+  - [[#strftime-posixlt---character][strftime() (POSIXlt -> character)]]
   - [[#locale][Locale]]
 - [[#references][References]]
 #+END_QUOTE
+
+* Date and Time in ={base}= package
+
+- R での日時の扱いは若干煩雑
+  - 似たような複数の型が存在
+  - 名前が直感的にわかりにくい
+  - できることなら ={lubridate}= を利用する
+    - [[file:../package/tidyverse/lubridate.org][ ={lubridate}= ]] 参照
+    - しかし ={lubridate}= は ={tidyverse}= のコアパッケージではない
+- ={base}= パッケージの中で最低限押さえて置くべきことの備忘録
 
 * Date Time Types in R
 ** Summary
@@ -365,7 +371,7 @@ purrr::imap_dfr(formats, = data.frame(name = .y, foramt = .x, value = format(tod
 | Timezone              | %Z     |        JST |
 \\
 
-** strptime()
+** strptime() (character -> POSIXlt)
 
 - =strptime(x, format, tz = "")=
   - p = "Parse"
@@ -378,7 +384,7 @@ strptime("2019-01-28 14:23:12", format = "%Y-%m-%d %H:%M:%S")
 : [1] "2019-01-28 14:23:12 JST"
 \\
 
-** strftime()
+** strftime() (POSIXlt -> character)
 
 - =strftime(x, format = "", tz = "", usetz = FALSE, ...)=
   - f = "Format
