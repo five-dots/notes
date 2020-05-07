@@ -1,13 +1,13 @@
 #+STARTUP: folded indent inlineimages latexpreview
-#+PROPERTY: header-args:R :results output :colnames yes :session *R:date_time*
+#+PROPERTY: header-args:R :results output code :colnames yes :session *R:date_time*
 
 * Table of Contents :quote:toc:
 #+BEGIN_QUOTE
 - [[#date-and-time-in-base-package][Date and Time in ={base}= package]]
-- [[#date-time-types-in-r][Date Time Types in R]]
+- [[#date-and-time-types-in-r][Date and Time Types in R]]
   - [[#summary][Summary]]
   - [[#date-class][Date Class]]
-  - [[#posixct-class][POSIXct class]]
+  - [[#posixct-class][POSIXct Class]]
 - [[#timezone][Timezone]]
 - [[#format][Format]]
   - [[#basics][Basics]]
@@ -28,7 +28,7 @@
     - しかし ={lubridate}= は ={tidyverse}= のコアパッケージではない
 - ={base}= パッケージの中で最低限押さえて置くべきことの備忘録
 
-* Date Time Types in R
+* Date and Time Types in R
 ** Summary
 
 - base R には、日時を扱う 4 つの class が存在する
@@ -59,8 +59,10 @@ td
 #+end_src
 
 #+RESULTS:
-:
-: [1] "2020-05-07"
+#+begin_src R
+
+[1] "2020-05-07"
+#+end_src
 \\
 
 - ~Date~ はエポックからの日数で表現されている
@@ -70,8 +72,10 @@ num_dates
 #+end_src
 
 #+RESULTS:
-:
-: [1] 18389
+#+begin_src R
+
+[1] 18389
+#+end_src
 \\
 
 - 当然、エポック時間に経過日数を足せば、今日の日付になる
@@ -81,8 +85,10 @@ epoch + num_dates
 #+end_src
 
 #+RESULTS:
-:
-: [1] "2020-05-07"
+#+begin_src R
+
+[1] "2020-05-07"
+#+end_src
 \\
 
 - 数値から ~Date~ を作成するには ~origin~ を指定する
@@ -91,7 +97,9 @@ as.Date(num_dates, origin = "1970-01-01")
 #+end_src
 
 #+RESULTS:
-: [1] "2020-05-07"
+#+begin_src R
+[1] "2020-05-07"
+#+end_src
 \\
 
 *** for loop で Date が numeric になる問題
@@ -104,9 +112,11 @@ for (date in dates) print(date)
 #+end_src
 
 #+RESULTS:
-:
-: [1] 17897
-: [1] 17898
+#+begin_src R
+
+[1] 17897
+[1] 17898
+#+end_src
 \\
 
 - 対策: ~list~ に変換してからループする
@@ -115,11 +125,13 @@ for (date in as.list(dates)) print(date)
 #+end_src
 
 #+RESULTS:
-: [1] "2019-01-01"
-: [1] "2019-01-02"
+#+begin_src R
+[1] "2019-01-01"
+[1] "2019-01-02"
+#+end_src
 \\
 
-** POSIXct class
+** POSIXct Class
 *** 新規作成
 
 - 現在日時を取得
@@ -128,7 +140,9 @@ Sys.time()
 #+end_src
 
 #+RESULTS:
-: [1] "2020-05-07 13:16:38 JST"
+#+begin_src R
+[1] "2020-05-07 13:34:58.359 JST"
+#+end_src
 \\
 
 - =POSIXct= は Unix エポックからの経過 *秒数* で表現される
@@ -138,8 +152,10 @@ unclass(td)
 #+end_src
 
 #+RESULTS:
-:
-: [1] 1588825007
+#+begin_src R
+
+[1] 1588826100
+#+end_src
 \\
 
 - =POSIXct= を =format= を指定して作成
@@ -149,8 +165,10 @@ as.POSIXct("2019-01-28 15:35:10", format = "%Y-%m-%d %H:%M:%S",
 #+end_src
 
 #+RESULTS:
-:
-: [1] "2019-01-28 15:35:10 JST"
+#+begin_src R
+
+[1] "2019-01-28 15:35:10 JST"
+#+end_src
 \\
 
 *** Date から POSIXct への変換
@@ -162,7 +180,9 @@ as.POSIXct(Sys.Date())
 #+end_src
 
 #+RESULTS:
-: [1] "2020-05-07 09:00:00 JST"
+#+begin_src R
+[1] "2020-05-07 09:00:00 JST"
+#+end_src
 \\
 
 - =lubridate::as_datetime()= なら UTC で 00:00 に変換できる
@@ -171,7 +191,9 @@ lubridate::as_datetime(Sys.Date())
 #+end_src
 
 #+RESULTS:
-: [1] "2020-05-07 UTC"
+#+begin_src R
+[1] "2020-05-07 UTC"
+#+end_src
 \\
 
 *** POSIXct から Date への変換で日付がずれる問題
@@ -183,8 +205,10 @@ as.Date(td)
 #+end_src
 
 #+RESULTS:
-:
-: [1] "2016-09-22"
+#+begin_src R
+
+[1] "2016-09-22"
+#+end_src
 \\
 
 - ~tz~ を指定すれば問題ない
@@ -193,7 +217,9 @@ as.Date(td, tz = "Asia/Tokyo")
 #+end_src
 
 #+RESULTS:
-: [1] "2016-09-23"
+#+begin_src R
+[1] "2016-09-23"
+#+end_src
 \\
 
 - もしくは、文字列に一度変換する
@@ -202,7 +228,9 @@ as.Date(strftime(td, "%Y-%m-%d"))
 #+end_src
 
 #+RESULTS:
-: [1] "2016-09-23"
+#+begin_src R
+[1] "2016-09-23"
+#+end_src
 \\
 
 - ~lubridate::as_date()~ ならずれない
@@ -212,9 +240,11 @@ lubridate::tz(lubridate::as_date(td)) # 時間情報を削除して、UTCに変�
 #+end_src
 
 #+RESULTS:
-: [1] "2016-09-23"
-: 
-: [1] "UTC"
+#+begin_src R
+[1] "2016-09-23"
+
+[1] "UTC"
+#+end_src
 \\
 
 *** ミリ秒の丸め問題
@@ -228,8 +258,10 @@ ms_dt
 #+end_src
 
 #+RESULTS:
-:
-: [1] "2019-06-28 12:34:01.122 JST"
+#+begin_src R
+
+[1] "2019-06-28 12:34:01.122 JST"
+#+end_src
 \\
 
 - ~lubridate::ymd_hms()~ ならずれない 
@@ -239,8 +271,10 @@ lubridate::ymd_hms("2019-06-28 12:34:01.123", tz = "Asia/Tokyo")
 #+end_src
 
 #+RESULTS:
-:
-: [1] "2019-06-28 12:34:01.123 JST"
+#+begin_src R
+
+[1] "2019-06-28 12:34:01.123 JST"
+#+end_src
 \\
 
 - ミリ秒単位の経過時間を POSIXct に変換する
@@ -254,8 +288,10 @@ format(dt + 0.0005, "%Y-%m-%d %H:%M:%OS3")
 #+end_src
 
 #+RESULTS:
-:
-: [1] "2017-09-25 17:27:28.123"
+#+begin_src R
+
+[1] "2017-09-25 17:27:28.123"
+#+end_src
 \\
 
 - ~lubridate::as_datetime()~ でも同じようにずれる
@@ -264,7 +300,9 @@ lubridate::as_datetime(msec/1000 + 0.0005)
 #+end_src
 
 #+RESULTS:
-: [1] "2017-09-25 22:27:28.123 UTC"
+#+begin_src R
+[1] "2017-09-25 22:27:28.123 UTC"
+#+end_src
 \\
 
 * Timezone
@@ -275,7 +313,9 @@ Sys.timezone()
 #+end_src
 
 #+RESULTS:
-: [1] "Asia/Tokyo"
+#+begin_src R
+[1] "Asia/Tokyo"
+#+end_src
 \\
 
 - タイムゾーンのリストを取得
@@ -284,10 +324,12 @@ head(OlsonNames(), 10)
 #+end_src
 
 #+RESULTS:
-:  [1] "Africa/Abidjan"     "Africa/Accra"       "Africa/Addis_Ababa"
-:  [4] "Africa/Algiers"     "Africa/Asmara"      "Africa/Asmera"
-:  [7] "Africa/Bamako"      "Africa/Bangui"      "Africa/Banjul"
-: [10] "Africa/Bissau"
+#+begin_src R
+ [1] "Africa/Abidjan"     "Africa/Accra"       "Africa/Addis_Ababa"
+ [4] "Africa/Algiers"     "Africa/Asmara"      "Africa/Asmera"
+ [7] "Africa/Bamako"      "Africa/Bangui"      "Africa/Banjul"
+[10] "Africa/Bissau"
+#+end_src
 \\
 
 - タイムゾーンは、"Area/Locality" の形式で指定すべき
@@ -298,7 +340,9 @@ as.POSIXct("2019-01-01 13:14:15", tz = "Asia/Tokyo")
 #+end_src
 
 #+RESULTS:
-: [1] "2019-01-01 13:14:15 JST"
+#+begin_src R
+[1] "2019-01-01 13:14:15 JST"
+#+end_src
 \\
 
 * Format
@@ -381,7 +425,9 @@ strptime("2019-01-28 14:23:12", format = "%Y-%m-%d %H:%M:%S")
 #+end_src
 
 #+RESULTS:
-: [1] "2019-01-28 14:23:12 JST"
+#+begin_src R
+[1] "2019-01-28 14:23:12 JST"
+#+end_src
 \\
 
 ** strftime() (POSIXlt -> character)
@@ -394,7 +440,9 @@ strftime(Sys.Date(), format = "Century = %Cth, Weekday = %a")
 #+end_src
 
 #+RESULTS:
-: [1] "Century = 20th, Weekday = Thu"
+#+begin_src R
+[1] "Century = 20th, Weekday = Thu"
+#+end_src
 \\
 
 ** Locale
@@ -410,8 +458,10 @@ strftime(Sys.Date(), format = "Weekday = %A")
 #+end_src
 
 #+RESULTS:
-:
-: [1] "Weekday = 木曜日"
+#+begin_src R
+
+[1] "Weekday = 木曜日"
+#+end_src
 \\
 
 - US 表記
@@ -421,8 +471,10 @@ strftime(Sys.Date(), format = "Weekday = %A")
 #+end_src
 
 #+RESULTS:
-:
-: [1] "Weekday = Thursday"
+#+begin_src R
+
+[1] "Weekday = Thursday"
+#+end_src
 \\
 
 * References
