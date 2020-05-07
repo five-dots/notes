@@ -30,7 +30,7 @@ if (is.null(NULL)) stop("NULL!!")
 - =stopifnot()=
   - base で使うことができる。簡易的。
   - メッセージがわかりにくい。
-#+begin_src R
+#+begin_src R :exports both
 stopifnot(!is.null(NULL))
 #+end_src
 
@@ -39,7 +39,7 @@ stopifnot(!is.null(NULL))
 
 - =assertthat::assert_that()=
 - メッセージがわかりやすい
-#+begin_src R
+#+begin_src R :exports both
 assert_that(!is.null(NULL))
 assert_that(!is.null(NULL), msg = "NULL はだめよ")
 #+end_src
@@ -51,7 +51,7 @@ assert_that(!is.null(NULL), msg = "NULL はだめよ")
 
 - =assertr::assert_that()=
   - data.frame の内容検査。パイプと組み合わせて使う。問題なければ、そのまま df を返す。
-#+begin_src R
+#+begin_src R :exports both
 mtcars %>% verify(nrow(.) > 100)
 ## mtcars %>% verify(nrow(.) > 10)
 #+end_src
