@@ -5,6 +5,7 @@
 #+BEGIN_QUOTE
 - [[#what-is-a-factor-][What is a factor ?]]
 - [[#basics][Basics]]
+- [[#links][Links]]
 #+END_QUOTE
 
 * What is a factor ?
@@ -88,3 +89,6 @@ m f
 3 0
 #+end_src
 \\
+* Links
+
+- [[file:../package/tidyverse/forcats.org][ ={forcats}= ]]
