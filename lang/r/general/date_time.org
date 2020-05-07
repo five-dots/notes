@@ -3,30 +3,27 @@
 
 * Date and Time in ={base}= package                                  :noexport:
 
-R での日時の扱いは煩雑な面がある。似たような複数の型が存在していたり、名前が直感的にわかりにくかったりするからだ。幸い ={lubridate}= などの便利なパッケージのお陰で、そうした不便を軽減することはできる。しかし ={lubridate}= は ={tidyverse}= のコアパッケージではないし、どんな時も利用できる、というわけではないだろう。そんな時のために、ここでは ={base}= パッケージの中で最低限押さえて置くべきことをまとめておく。
+R での日時の扱いは煩雑な面がある。
+似たような複数の型が存在していたり、名前が直感的にわかりにくかったりするからだ。幸い ={lubridate}= などの便利なパッケージのお陰で、そうした不便を軽減することはできる。しかし ={lubridate}= は ={tidyverse}= のコアパッケージではないし、どんな時も利用できる、というわけではないだろう。そんな時のために、ここでは ={base}= パッケージの中で最低限押さえて置くべきことをまとめておく。
 
 * Table of Contents :quote:toc:
 #+BEGIN_QUOTE
 - [[#date-time-types-in-r][Date Time Types in R]]
-- [[#date-class][Date Class]]
-  - [[#新規作成][新規作成]]
-  - [[#for-loop-で-date-が-numeric-になる問題][for loop で Date が numeric になる問題]]
-- [[#posixct-class][POSIXct class]]
-  - [[#新規作成-1][新規作成]]
-  - [[#date-から-posixct-への変換][Date から POSIXct への変換]]
-  - [[#posixct-から-date-への変換で日付がずれる問題][POSIXct から Date への変換で日付がずれる問題]]
-  - [[#ミリ秒の丸め問題][ミリ秒の丸め問題]]
-- [[#タイムゾーン][タイムゾーン]]
-- [[#フォーマット][フォーマット]]
-  - [[#基本][基本]]
-  - [[#フォーマット一覧][フォーマット一覧]]
-  - [[#文字列から日時への変換][文字列から日時への変換]]
-  - [[#日時から文字列への変換][日時から文字列への変換]]
-  - [[#ロケールの変更][ロケールの変更]]
-- [[#参考情報][参考情報]]
+  - [[#summary][Summary]]
+  - [[#date-class][Date Class]]
+  - [[#posixct-class][POSIXct class]]
+- [[#timezone][Timezone]]
+- [[#format][Format]]
+  - [[#basics][Basics]]
+  - [[#list-of-formats][List of Formats]]
+  - [[#strptime][strptime()]]
+  - [[#strftime][strftime()]]
+  - [[#locale][Locale]]
+- [[#references][References]]
 #+END_QUOTE
 
 * Date Time Types in R
+** Summary
 
 - base R には、日時を扱う 4 つの class が存在する
 |---------+-------------------------------------------------------------|
@@ -40,24 +37,24 @@ R での日時の扱いは煩雑な面がある。似たような複数の型が
 
 - R の日時を扱う型は、Unix エポックからの経過時間で表現される (origin = "1970-01-01")
 - 日時は、基本的に =POSIXct= class を利用しておけば良い
-- R には時刻のみ扱うクラスはない (パッケージとして、 ={hms}= がある)
-- =POSIXct= は =double= の実装なので、マイクロ秒の粒度までしか扱うことができない (パッケージとして ={nanotime}= がある)
+- R には時刻のみ扱うクラスはない
+  - パッケージとして、 ={hms}= がある
+- =POSIXct= は =double= の実装なので、マイクロ秒の粒度までしか扱うことができない
+  - パッケージとして ={nanotime}= がある
 - =tibble= では、日付<date>、時刻<time>、日時<dttm>で表示される
 
-* Date Class
-** 新規作成
+** Date Class
+*** 新規作成
 
 - 今日を取得
-#+begin_src R :exports both :results output code
+#+begin_src R :exports both
 td <- Sys.Date()
 td
 #+end_src
 
 #+RESULTS:
-#+begin_src R
-
-[1] "2020-05-07"
-#+end_src
+:
+: [1] "2020-05-07"
 \\
 
 - ~Date~ はエポックからの日数で表現されている
@@ -67,8 +64,8 @@ num_dates
 #+end_src
 
 #+RESULTS:
-: 
-: [1] 18186
+:
+: [1] 18389
 \\
 
 - 当然、エポック時間に経過日数を足せば、今日の日付になる
@@ -78,8 +75,8 @@ epoch + num_dates
 #+end_src
 
 #+RESULTS:
-: 
-: [1] "2019-10-17"
+:
+: [1] "2020-05-07"
 \\
 
 - 数値から ~Date~ を作成するには ~origin~ を指定する
@@ -88,19 +85,20 @@ as.Date(num_dates, origin = "1970-01-01")
 #+end_src
 
 #+RESULTS:
-: [1] "2019-10-17"
+: [1] "2020-05-07"
 \\
 
-** for loop で Date が numeric になる問題
+*** for loop で Date が numeric になる問題
 
-- ~for~ loop 内で class attribute が欠落してしまう問題 ([[https://www.r-bloggers.com/for-loops-in-r-can-lose-class-information/][参考]])
+- =for= loop 内で class attribute が欠落してしまう問題
+  - [[https://www.r-bloggers.com/for-loops-in-r-can-lose-class-information/][For loops in R can lose class information@R-bloggers]]
 #+begin_src R :exports both
 dates <- c(as.Date("2019-01-01"), as.Date("2019-01-02"))
 for (date in dates) print(date)
 #+end_src
 
 #+RESULTS:
-: 
+:
 : [1] 17897
 : [1] 17898
 \\
@@ -115,8 +113,8 @@ for (date in as.list(dates)) print(date)
 : [1] "2019-01-02"
 \\
 
-* POSIXct class
-** 新規作成
+** POSIXct class
+*** 新規作成
 
 - 現在日時を取得
 #+begin_src R :exports both
@@ -124,62 +122,62 @@ Sys.time()
 #+end_src
 
 #+RESULTS:
-: [1] "2019-10-17 15:36:05 JST"
+: [1] "2020-05-07 13:16:38 JST"
 \\
 
-- ~POSIXct~ は Unix エポックからの経過 *秒数* で表現される
+- =POSIXct= は Unix エポックからの経過 *秒数* で表現される
 #+begin_src R :exports both
 td <- Sys.time()
 unclass(td)
 #+end_src
 
 #+RESULTS:
-: 
-: [1] 1571314959
+:
+: [1] 1588825007
 \\
 
-- ~POSIXct~ を ~format~ を指定して作成
+- =POSIXct= を =format= を指定して作成
 #+begin_src R :exports both
 as.POSIXct("2019-01-28 15:35:10", format = "%Y-%m-%d %H:%M:%S",
             tz = "Asia/Tokyo")
 #+end_src
 
 #+RESULTS:
-: 
+:
 : [1] "2019-01-28 15:35:10 JST"
 \\
 
-** Date から POSIXct への変換
+*** Date から POSIXct への変換
 
-- ~Date~ から ~POSIXct~ への変換
+- =Date= から =POSIXct= への変換
 - デフォルトの JST が使われるため、GMT+9 になる
 #+begin_src R :exports both
 as.POSIXct(Sys.Date())
 #+end_src
 
 #+RESULTS:
-: [1] "2019-10-17 09:00:00 JST"
+: [1] "2020-05-07 09:00:00 JST"
 \\
 
-- ~lubridate::as_datetime()~ なら UTC で 00:00 に変換できる
+- =lubridate::as_datetime()= なら UTC で 00:00 に変換できる
 #+begin_src R :exports both
 lubridate::as_datetime(Sys.Date())
 #+end_src
 
 #+RESULTS:
-: [1] "2019-10-17 UTC"
+: [1] "2020-05-07 UTC"
 \\
 
-** POSIXct から Date への変換で日付がずれる問題
+*** POSIXct から Date への変換で日付がずれる問題
 
-- [[https://qiita.com/kota9/items/657c8c0ac5092e3ec1ff][ここ]]での議論
+- [[https://qiita.com/kota9/items/657c8c0ac5092e3ec1ff][R: POSIXct -> Date で日付がズレる@Qiita]] での議論
 #+begin_src R :exports both
 td <- as.POSIXct("2016-09-23")
 as.Date(td)
 #+end_src
 
 #+RESULTS:
-: 
+:
 : [1] "2016-09-22"
 \\
 
@@ -213,9 +211,10 @@ lubridate::tz(lubridate::as_date(td)) # 時間情報を削除して、UTCに変�
 : [1] "UTC"
 \\
 
-** ミリ秒の丸め問題
+*** ミリ秒の丸め問題
 
-- 文字列から ~POSIXct~ を作成する際に、ミリ秒のがずれる (切り捨てられる。[[https://stackoverflow.com/questions/10931972/r-issue-with-rounding-milliseconds][ここでの議論]])
+- 文字列から =POSIXct= を作成する際に、ミリ秒のがずれる (切り捨てられる)
+  - [[https://stackoverflow.com/questions/10931972/r-issue-with-rounding-milliseconds][R issue with rounding milliseconds@Stackoverflow]]
 #+begin_src R :exports both
 options(digits.secs = 3)
 ms_dt <- as.POSIXct("2019-06-28 12:34:01.123", format = "%Y-%m-%d %H:%M:%OS")
@@ -223,7 +222,7 @@ ms_dt
 #+end_src
 
 #+RESULTS:
-: 
+:
 : [1] "2019-06-28 12:34:01.122 JST"
 \\
 
@@ -234,10 +233,12 @@ lubridate::ymd_hms("2019-06-28 12:34:01.123", tz = "Asia/Tokyo")
 #+end_src
 
 #+RESULTS:
+:
 : [1] "2019-06-28 12:34:01.123 JST"
 \\
 
-- ミリ秒単位の経過時間を POSIXct に変換する ([[https://stackoverflow.com/questions/49828433/r-how-to-convert-milliseconds-from-origin-to-date-and-keep-the-milliseconds][ここでの議論]])
+- ミリ秒単位の経過時間を POSIXct に変換する
+  - [[https://stackoverflow.com/questions/49828433/r-how-to-convert-milliseconds-from-origin-to-date-and-keep-the-milliseconds][R How to convert milliseconds from origin to date and keep the milliseconds@Stackoverflow]]
 - 株価のティックデータなどで必要になる手法
 - 1000 で割って秒数に換算する (+0.0005 を足すことで丸め誤差を消すことができる)
 #+begin_src R :exports both
@@ -247,6 +248,7 @@ format(dt + 0.0005, "%Y-%m-%d %H:%M:%OS3")
 #+end_src
 
 #+RESULTS:
+:
 : [1] "2017-09-25 17:27:28.123"
 \\
 
@@ -259,7 +261,7 @@ lubridate::as_datetime(msec/1000 + 0.0005)
 : [1] "2017-09-25 22:27:28.123 UTC"
 \\
 
-* タイムゾーン
+* Timezone
 
 - システムのタイムゾーンを取得
 #+begin_src R :exports both
@@ -277,12 +279,13 @@ head(OlsonNames(), 10)
 
 #+RESULTS:
 :  [1] "Africa/Abidjan"     "Africa/Accra"       "Africa/Addis_Ababa"
-:  [4] "Africa/Algiers"     "Africa/Asmara"      "Africa/Asmera"     
-:  [7] "Africa/Bamako"      "Africa/Bangui"      "Africa/Banjul"     
+:  [4] "Africa/Algiers"     "Africa/Asmara"      "Africa/Asmera"
+:  [7] "Africa/Bamako"      "Africa/Bangui"      "Africa/Banjul"
 : [10] "Africa/Bissau"
 \\
 
-- タイムゾーンは、"Area/Locality" の形式で指定すべき ([[https://stackoverflow.com/questions/37205128/understanding-timezone-strings-in-r][参考]])
+- タイムゾーンは、"Area/Locality" の形式で指定すべき
+  - [[https://stackoverflow.com/questions/37205128/understanding-timezone-strings-in-r][Understanding timezone strings in R@Stackoverflow]]
 - つまり "JST" ではなく、"Asia/Tokyo" の形式で指定する
 #+begin_src R :exports both
 as.POSIXct("2019-01-01 13:14:15", tz = "Asia/Tokyo")
@@ -292,18 +295,17 @@ as.POSIXct("2019-01-01 13:14:15", tz = "Asia/Tokyo")
 : [1] "2019-01-01 13:14:15 JST"
 \\
 
-* フォーマット
-** 基本
+* Format
+** Basics
 
 - 文字列 から 日時
-  - ~strptime()~
-  - ~as.Date()~, ~as.POSIXct()~, ~as.POSIXlt()~ も format を指定できる
+  - =strptime()=
+  - =as.Date()=, =as.POSIXct()=, =as.POSIXlt()= も format を指定できる
 
 - 日時 から 文字列
-  - ~format()~, ~as.character()~, ~strftime()~
-\\
-  
-** フォーマット一覧
+  - =format()=, =as.character()=, =strftime()=
+
+** List of Formats
 
 #+begin_src R :exports both :colnames yes :results value
 options(digits.secs = 3)
@@ -332,7 +334,7 @@ formats <- c(
   "Locale specific date"  = "%x",
   "UTC offset"            = "%z",
   "Timezone"              = "%Z")
-purrr::imap_dfr(formats, ~ data.frame(name = .y, foramt = .x, value = format(today, format = .x)))
+purrr::imap_dfr(formats, = data.frame(name = .y, foramt = .x, value = format(today, format = .x)))
 #+end_src
 
 #+RESULTS:
@@ -359,15 +361,15 @@ purrr::imap_dfr(formats, ~ data.frame(name = .y, foramt = .x, value = format(tod
 | Second+Millisecond    | %OS    |     21.122 |
 | Locale specific AM/PM | %p     |         PM |
 | Locale specific date  | %x     | 01/28/2019 |
-| UTC offset            | %z     |      +0900 |
+| UTC offset            | %z     |        900 |
 | Timezone              | %Z     |        JST |
 \\
 
-** 文字列から日時への変換
+** strptime()
 
-- ~strptime(x, format, tz = "")~
-- p = "Parse"
-- 型は ~POSIXlt~
+- =strptime(x, format, tz = "")=
+  - p = "Parse"
+  - 型は =POSIXlt=
 #+begin_src R :exports both
 strptime("2019-01-28 14:23:12", format = "%Y-%m-%d %H:%M:%S")
 #+end_src
@@ -376,11 +378,11 @@ strptime("2019-01-28 14:23:12", format = "%Y-%m-%d %H:%M:%S")
 : [1] "2019-01-28 14:23:12 JST"
 \\
 
-** 日時から文字列への変換
+** strftime()
 
-- ~strftime(x, format = "", tz = "", usetz = FALSE, ...)~
-- f = "Format
-- ~strftime()~ = ~format.POSIXlt()~ のラッパー
+- =strftime(x, format = "", tz = "", usetz = FALSE, ...)=
+  - f = "Format
+  - =strftime()= = =format.POSIXlt()= のラッパー
 #+begin_src R :exports both
 strftime(Sys.Date(), format = "Century = %Cth, Weekday = %a")
 #+end_src
@@ -389,9 +391,9 @@ strftime(Sys.Date(), format = "Century = %Cth, Weekday = %a")
 : [1] "Century = 20th, Weekday = Thu"
 \\
 
-** ロケールの変更
+** Locale
 
-- ~Sys.setlocale(category = "LC_ALL", locale = "")~
+- =Sys.setlocale(category = "LC_ALL", locale = "")=
 - 曜日などの出力形式を変更したい場合は、ロケールを変更する
 \\
 
@@ -402,7 +404,7 @@ strftime(Sys.Date(), format = "Weekday = %A")
 #+end_src
 
 #+RESULTS:
-: 
+:
 : [1] "Weekday = 木曜日"
 \\
 
@@ -413,11 +415,11 @@ strftime(Sys.Date(), format = "Weekday = %A")
 #+end_src
 
 #+RESULTS:
-: 
+:
 : [1] "Weekday = Thursday"
 \\
 
-* 参考情報
+* References
 
 - [[http://www.okadajp.org/RWiki/?%E6%97%A5%E4%BB%98%E3%80%81%E6%99%82%E9%96%93%E9%96%A2%E6%95%B0Tips%E5%A4%A7%E5%85%A8][日付、時間関数Tips大全@RWiki]]
 - [[https://www.r-bloggers.com/for-loops-in-r-can-lose-class-information/][For loops in R can lose class information@R-bloggers]]
