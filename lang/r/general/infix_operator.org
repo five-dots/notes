@@ -229,8 +229,8 @@ data.frame(z = rnorm(100)) %$%
   ts.plot(z) # ts.plot() は data.frame をそのまま引数にとることができない
 #+end_src
 
-#+RESULTS[2916e893e54d49f2401643fe01c02f08dd7b0a06]:
-[[file:../../../img/babel/fig-dajz3X.png]]
+#+RESULTS:
+[[file:../../../img/babel/fig-gbDglt.png]]
 \\
 
 ** rlang package
