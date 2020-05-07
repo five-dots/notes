@@ -15,8 +15,9 @@ lang/python/other/DLFS/
 # Emacs Lisp
 lang/emacs-lisp/temp.el
 
-private/
 corp/
-work/
-org/
+img/
 kaggle/
+org/
+private/
+work/
