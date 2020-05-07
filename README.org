@@ -25,7 +25,7 @@ Babel の実行には適切な ~org-babel-load-language~ の設定が必要で�
 * Table of Contents :toc_2:quote:
 #+BEGIN_QUOTE
 - [[#programming-language][Programming Language]]
-  - [[#r-setup][R (Setup)]]
+  - [[#r-environment-setup][R (Environment Setup)]]
   - [[#python][Python]]
   - [[#emacs-lisp][Emacs Lisp]]
 - [[#development-environment][Development Environment]]
@@ -34,7 +34,7 @@ Babel の実行には適切な ~org-babel-load-language~ の設定が必要で�
 #+END_QUOTE
 
 * Programming Language
-** R ([[file:./lang/r/R_env.org][Setup]])
+** R ([[file:./lang/r/R_env.org][Environment Setup]])
 
 #+begin_src R :results silent :exports none
 org_links <- function(sub_dir = "lang/r/general", collapse = " | ", package = FALSE) {

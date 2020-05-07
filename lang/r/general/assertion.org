@@ -1,7 +1,14 @@
 #+STARTUP: folded indent inlineimages latexpreview
-#+PROPERTY: header-args:R :results output :session *R:assertion* :width 640 :height 480 :colnames yes
+#+PROPERTY: header-args:R :results output :exports both :session *R:assertion*
 
-* ライブラリの読み込み
+* Table of Contents :toc_2:quote:
+#+BEGIN_QUOTE
+- [[#library][Library]]
+- [[#assertion-patterns][Assertion Patterns]]
+- [[#links][Links]]
+#+END_QUOTE
+
+* Library
 
 #+begin_src R :results silent
 library(tidyverse)
@@ -10,7 +17,7 @@ library(assertthat)
 library(assertr)
 #+end_src
 
-* アサーションのパターン
+* Assertion Patterns
 
 - =if= + =stop()=
 #+begin_src R
@@ -21,7 +28,8 @@ if (is.null(NULL)) stop("NULL!!")
 : Error: NULL!!
 
 - =stopifnot()=
-- base で使うことができる。簡易的。メッセージがわかりにくい。
+  - base で使うことができる。簡易的。
+  - メッセージがわかりにくい。
 #+begin_src R
 stopifnot(!is.null(NULL))
 #+end_src
@@ -42,7 +50,7 @@ assert_that(!is.null(NULL), msg = "NULL はだめよ")
 : Error: NULL はだめよ
 
 - =assertr::assert_that()=
-- data.frame の内容検査。パイプと組み合わせて使う。問題なければ、そのまま df を返す。
+  - data.frame の内容検査。パイプと組み合わせて使う。問題なければ、そのまま df を返す。
 #+begin_src R
 mtcars %>% verify(nrow(.) > 100)
 ## mtcars %>% verify(nrow(.) > 10)
@@ -58,7 +66,8 @@ mtcars %>% verify(nrow(.) > 100)
 : 
 : Error: assertr stopped execution
 
-* [[file:../package/assertthat.org][ ={assertthat}= ]]
-* [[file:../package/assertr.org][ ={assertr}= ]]
-* [[file:../package/r-lib/rlang.org][ ={rlang}= ]]
-* 参考
+* Links
+
+- [[file:../package/assertthat.org][ ={assertthat}= ]]
+- [[file:../package/assertr.org][ ={assertr}= ]]
+- [[file:../package/r-lib/rlang.org][ ={rlang}= ]]
