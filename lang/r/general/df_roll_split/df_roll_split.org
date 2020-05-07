@@ -1,5 +1,5 @@
 #+STARTUP: folded indent
-#+PROPERTY: header-args:R :results output :exports both :colnames yes
+#+PROPERTY: header-args:R :results output code :exports both :colnames yes
 #+PROPERTY: header-args:R+ :session *R:blog* :eval never-export
 #+OPTIONS: author:nil H:6 toc:nil
 #+HUGO_BASE_DIR: ~/Dropbox/repos/github/five-dots/blog
@@ -21,7 +21,8 @@ R で時系列データを交差検証用に分割する際には[[https://githu
 
 * 更新履歴
 
-- *[2019/11/22 追記]* 週単位のグループ化コードのバグ修正
+- *[2020/05/07]* 記事の体裁を修正
+- *[2019/11/22]* 週単位のグループ化コードのバグ修正
 
 * 時系列データの交差検証
 
@@ -50,11 +51,15 @@ library(rsample)
 library(tidyquant)
 #+end_src
 
+#+begin_src R :results silent :exports none
+options(crayon.enabled = FALSE)
+#+end_src
+
 * 利用するデータ
 
 データは ={tidyquant}= パッケージに収録されている =FANG= データセットを利用する。Facebook, Amazon, Netflix, Goolge 4 社の株価データだ。今回はこのデータを「 *週単位* 」で利用するという想定でやってみたい。
 
-#+begin_src R :results value
+#+begin_src R :results value :exports both
 data(FANG)
 FANG2 <- FANG %>%
   ## 例示に必要な列のみ選択する
@@ -66,7 +71,7 @@ FANG2 <- FANG %>%
 head(FANG2)
 #+end_src
 
-#+RESULTS[72b84b2d063f22903d982cdfe1f39d1521b05168]:
+#+RESULTS:
 | symbol |       date |  adjusted |    volume | dayOfWeek |
 |--------+------------+-----------+-----------+-----------|
 | FB     | 2013-01-02 |        28 |  69846400 | Wed       |
@@ -98,7 +103,7 @@ FANG_nested
 *[2019/11/22 追記]*
 上記の =group_by(year = year(date), week = isoweek(date))= という書き方は、12 月最終週も week 1 に分類されてしまう可能性があり、意図しない結果を招いていた。素直に =lubridate::ceiling_date()= を利用するほうが、コードが直感的かつ、このようなバグも発生しないので修正した。 =unit= にまとめたい単位 (例 ="week"=, ="month"= など) を指定すれば良い。
 
-#+begin_src R
+#+begin_src R :exports both
 FANG_nested <- FANG2 %>%
   group_by(week = ceiling_date(date, unit = "week")) %>%
   ## グループのキーとして、週末日を利用する
@@ -113,10 +118,10 @@ FANG_nested
 #+end_src
 
 #+RESULTS:
-#+begin_example
+#+begin_src R
 # A tibble: 209 x 2
-   weekend    data             
-   <date>     <list>           
+   weekend    data
+   <date>     <list>
  1 2013-01-04 <tibble [12 × 5]>
  2 2013-01-11 <tibble [20 × 5]>
  3 2013-01-18 <tibble [20 × 5]>
@@ -128,13 +133,13 @@ FANG_nested
  9 2013-03-01 <tibble [20 × 5]>
 10 2013-03-08 <tibble [20 × 5]>
 # … with 199 more rows
-#+end_example
+#+end_src
 
 これで、週単位でネストさせることができた。キーは、グループの最終日 (この例では週末日) に設定したが、この辺りは各自の好みで良いと思う。
 
 念の為、ネストの中を見てみると、きちんと月曜から金曜までのデータが含まれていることが確認できる。
 
-#+begin_src R :results value
+#+begin_src R :results value :exports both
 FANG_nested$data[[2]] 
 ## インデックス1は、水曜からのデータなので、わかりやすい2を表示した
 #+end_src
@@ -167,17 +172,17 @@ FANG_nested$data[[2]]
 
 それでは、交差検証用に =rolling_origin()= を適応してみよう。今回は訓練データとして 52 週 (1 年)、検証データとして 13 週 (3 ヶ月) という想定でやってみる。個人的には、元データの行数で考えるよりも、より直感的に指定できるようになったと思う。
 
-#+begin_src R
+#+begin_src R :exports both
 FANG_rolled <- rolling_origin(FANG_nested, initial = 52, assess = 13, cumulative = FALSE)
 FANG_rolled
 #+end_src
 
 #+RESULTS:
-#+begin_example
-# Rolling origin forecast resampling 
+#+begin_src R
+# Rolling origin forecast resampling
 # A tibble: 145 x 2
-   splits          id      
-   <list>          <chr>   
+   splits          id
+   <list>          <chr>
  1 <split [52/13]> Slice001
  2 <split [52/13]> Slice002
  3 <split [52/13]> Slice003
@@ -189,19 +194,19 @@ FANG_rolled
  9 <split [52/13]> Slice009
 10 <split [52/13]> Slice010
 # … with 135 more rows
-#+end_example
+#+end_src
 
 実際に、訓練データ・検証データを取り出すには、通常通り =analysis()=, =assessment()= で OK だ。
-#+begin_src R
+#+begin_src R :exports both
 FANG_analysis1 <- analysis(FANG_rolled$splits[[1]])
 FANG_analysis1
 #+end_src
 
 #+RESULTS:
-#+begin_example
+#+begin_src R
 # A tibble: 52 x 2
-   weekend    data             
-   <date>     <list>           
+   weekend    data
+   <date>     <list>
  1 2013-01-04 <tibble [12 × 5]>
  2 2013-01-11 <tibble [20 × 5]>
  3 2013-01-18 <tibble [20 × 5]>
@@ -213,11 +218,11 @@ FANG_analysis1
  9 2013-03-01 <tibble [20 × 5]>
 10 2013-03-08 <tibble [20 × 5]>
 # … with 42 more rows
-#+end_example
+#+end_src
 
 取り出したデータは、週単位でネストされてしまっているので、分析に利用するためには =dplyr::bind_rows()= でフラットな =data.frame= に再変換する。 =bind_rows()= は *list of data.frame* をそのまま受け取ることができるので、このケースでは非常に使い勝手が良い。
 
-#+begin_src R :results value
+#+begin_src R :results value :exports both
 bind_rows(FANG_analysis1$data) %>% head(n = 20)
 #+end_src
 
@@ -247,7 +252,7 @@ bind_rows(FANG_analysis1$data) %>% head(n = 20)
 
 分割毎にモデルを作成したい場合は =purrr::map()= 内で =analysis()= -> =bind_rows()= でデータを取り出した上で、モデル化を行えばよい。
 
-#+begin_src R
+#+begin_src R :exports both
 FANG_rolled <- FANG_rolled %>%
   mutate(lm_model = map(splits, ~ {
     d <- bind_rows(analysis(.)$data)
@@ -257,23 +262,23 @@ FANG_rolled
 #+end_src
 
 #+RESULTS[9fe38fa5b8b99f3f52466e5d3a7baddd2c67ba28]:
-#+begin_example
-# Rolling origin forecast resampling 
+#+begin_src R
+# Rolling origin forecast resampling
 # A tibble: 145 x 3
    splits          id       lm_model
- * <list>          <chr>    <list>  
- 1 <split [52/13]> Slice001 <lm>    
- 2 <split [52/13]> Slice002 <lm>    
- 3 <split [52/13]> Slice003 <lm>    
- 4 <split [52/13]> Slice004 <lm>    
- 5 <split [52/13]> Slice005 <lm>    
- 6 <split [52/13]> Slice006 <lm>    
- 7 <split [52/13]> Slice007 <lm>    
- 8 <split [52/13]> Slice008 <lm>    
- 9 <split [52/13]> Slice009 <lm>    
-10 <split [52/13]> Slice010 <lm>    
+ * <list>          <chr>    <list>
+ 1 <split [52/13]> Slice001 <lm>
+ 2 <split [52/13]> Slice002 <lm>
+ 3 <split [52/13]> Slice003 <lm>
+ 4 <split [52/13]> Slice004 <lm>
+ 5 <split [52/13]> Slice005 <lm>
+ 6 <split [52/13]> Slice006 <lm>
+ 7 <split [52/13]> Slice007 <lm>
+ 8 <split [52/13]> Slice008 <lm>
+ 9 <split [52/13]> Slice009 <lm>
+10 <split [52/13]> Slice010 <lm>
 # … with 135 more rows
-#+end_example
+#+end_src
 
 当然、検証用データも同じ手法で取り出すことが可能だ。
 

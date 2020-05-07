@@ -1,12 +1,17 @@
+[GitHub](https://github.com/five-dots/notes/blob/master/lang/r/general/df_roll_split/df_roll_split.org) | [Blog](https://objective-boyd-9b8f29.netlify.app/2019/11/df_roll_split/) | [Qiita](https://qiita.com/five-dots/items/46fc5c9505b111106e1c)
+
 R で時系列データを交差検証用に分割する際には[ `{rsample}` ](https://github.com/tidymodels/rsample)パッケージを利用すると便利だ。このパッケージの `rolling_origin()` 関数で、訓練データと検証データを時系列にスライドさせながら抽出することができる。
 
 ただし、この関数では訓練・検証のデータ件数を `data.frame` の行数でしか指定できない。これでは、時系列データを、月・週といったカレンダーの単位で分割したいケースに対応しづらい。例えば過去 12 ヶ月のデータでモデルを作成し、その後 3 ヶ月で予測の精度を評価する、といったケースだ。
 
 今回は `{tidyverse}` のパッケージ群と `{lubridate}` を `{rsample}` と組み合わせて、これを実現する方法を紹介する。なお `{rsample}` 全般の利用方法については、[この記事](https://blog.hoxo-m.com/entry/2019/06/08/220307)が詳しいので、一読をおすすめする。
 
+
 # 更新履歴
 
--   **[2019/11/22 追記]** 週単位のグループ化コードのバグ修正
+-   **[2020/05/07]** 記事の体裁を修正
+-   **[2019/11/22]** 週単位のグループ化コードのバグ修正
+
 
 # 時系列データの交差検証
 
@@ -24,6 +29,7 @@ R で時系列データを交差検証用に分割する際には[ `{rsample}` ]
 
 `rsampel::rolling_origin()` では、引数で `cumulative = FALSE` (デフォルト) とすれば、1 の方法、 `TRUE` にすれば 2 の方法で抽出することができる。
 
+
 # ライブラリの読み込み
 
 それでは、具体的に R での実現方法に移っていこう。まずは、必要なライブラリの読み込みから。
@@ -34,6 +40,7 @@ library(lubridate)
 library(rsample)
 library(tidyquant)
 ```
+
 
 # 利用するデータ
 
@@ -59,6 +66,7 @@ head(FANG2)
 | FB     | 2013-01-07 | 29.42     | 83781800  | Mon       |
 | FB     | 2013-01-08 | 29.059999 | 45871300  | Tue       |
 | FB     | 2013-01-09 | 30.59     | 104787700 | Wed       |
+
 
 # 週単位でネストされた data.frame を作成する
 
@@ -95,20 +103,22 @@ FANG_nested <- FANG2 %>%
 FANG_nested
 ```
 
-    # A tibble: 209 x 2
-       weekend    data             
-       <date>     <list>           
-     1 2013-01-04 <tibble [12 × 5]>
-     2 2013-01-11 <tibble [20 × 5]>
-     3 2013-01-18 <tibble [20 × 5]>
-     4 2013-01-25 <tibble [16 × 5]>
-     5 2013-02-01 <tibble [20 × 5]>
-     6 2013-02-08 <tibble [20 × 5]>
-     7 2013-02-15 <tibble [20 × 5]>
-     8 2013-02-22 <tibble [16 × 5]>
-     9 2013-03-01 <tibble [20 × 5]>
-    10 2013-03-08 <tibble [20 × 5]>
-    # … with 199 more rows
+```R
+# A tibble: 209 x 2
+   weekend    data
+   <date>     <list>
+ 1 2013-01-04 <tibble [12 × 5]>
+ 2 2013-01-11 <tibble [20 × 5]>
+ 3 2013-01-18 <tibble [20 × 5]>
+ 4 2013-01-25 <tibble [16 × 5]>
+ 5 2013-02-01 <tibble [20 × 5]>
+ 6 2013-02-08 <tibble [20 × 5]>
+ 7 2013-02-15 <tibble [20 × 5]>
+ 8 2013-02-22 <tibble [16 × 5]>
+ 9 2013-03-01 <tibble [20 × 5]>
+10 2013-03-08 <tibble [20 × 5]>
+# … with 199 more rows
+```
 
 これで、週単位でネストさせることができた。キーは、グループの最終日 (この例では週末日) に設定したが、この辺りは各自の好みで良いと思う。
 
@@ -142,6 +152,7 @@ FANG_nested$data[[2]]
 | GOOG   | 2013-01-10 | 370.370261 | 3685000   | Thu       |
 | GOOG   | 2013-01-11 | 369.626004 | 2579900   | Fri       |
 
+
 # 交差検証用のデータを抽出
 
 それでは、交差検証用に `rolling_origin()` を適応してみよう。今回は訓練データとして 52 週 (1 年)、検証データとして 13 週 (3 ヶ月) という想定でやってみる。個人的には、元データの行数で考えるよりも、より直感的に指定できるようになったと思う。
@@ -151,21 +162,23 @@ FANG_rolled <- rolling_origin(FANG_nested, initial = 52, assess = 13, cumulative
 FANG_rolled
 ```
 
-    # Rolling origin forecast resampling 
-    # A tibble: 145 x 2
-       splits          id      
-       <list>          <chr>   
-     1 <split [52/13]> Slice001
-     2 <split [52/13]> Slice002
-     3 <split [52/13]> Slice003
-     4 <split [52/13]> Slice004
-     5 <split [52/13]> Slice005
-     6 <split [52/13]> Slice006
-     7 <split [52/13]> Slice007
-     8 <split [52/13]> Slice008
-     9 <split [52/13]> Slice009
-    10 <split [52/13]> Slice010
-    # … with 135 more rows
+```R
+# Rolling origin forecast resampling
+# A tibble: 145 x 2
+   splits          id
+   <list>          <chr>
+ 1 <split [52/13]> Slice001
+ 2 <split [52/13]> Slice002
+ 3 <split [52/13]> Slice003
+ 4 <split [52/13]> Slice004
+ 5 <split [52/13]> Slice005
+ 6 <split [52/13]> Slice006
+ 7 <split [52/13]> Slice007
+ 8 <split [52/13]> Slice008
+ 9 <split [52/13]> Slice009
+10 <split [52/13]> Slice010
+# … with 135 more rows
+```
 
 実際に、訓練データ・検証データを取り出すには、通常通り `analysis()`, `assessment()` で OK だ。
 
@@ -174,20 +187,22 @@ FANG_analysis1 <- analysis(FANG_rolled$splits[[1]])
 FANG_analysis1
 ```
 
-    # A tibble: 52 x 2
-       weekend    data             
-       <date>     <list>           
-     1 2013-01-04 <tibble [12 × 5]>
-     2 2013-01-11 <tibble [20 × 5]>
-     3 2013-01-18 <tibble [20 × 5]>
-     4 2013-01-25 <tibble [16 × 5]>
-     5 2013-02-01 <tibble [20 × 5]>
-     6 2013-02-08 <tibble [20 × 5]>
-     7 2013-02-15 <tibble [20 × 5]>
-     8 2013-02-22 <tibble [16 × 5]>
-     9 2013-03-01 <tibble [20 × 5]>
-    10 2013-03-08 <tibble [20 × 5]>
-    # … with 42 more rows
+```R
+# A tibble: 52 x 2
+   weekend    data
+   <date>     <list>
+ 1 2013-01-04 <tibble [12 × 5]>
+ 2 2013-01-11 <tibble [20 × 5]>
+ 3 2013-01-18 <tibble [20 × 5]>
+ 4 2013-01-25 <tibble [16 × 5]>
+ 5 2013-02-01 <tibble [20 × 5]>
+ 6 2013-02-08 <tibble [20 × 5]>
+ 7 2013-02-15 <tibble [20 × 5]>
+ 8 2013-02-22 <tibble [16 × 5]>
+ 9 2013-03-01 <tibble [20 × 5]>
+10 2013-03-08 <tibble [20 × 5]>
+# … with 42 more rows
+```
 
 取り出したデータは、週単位でネストされてしまっているので、分析に利用するためには `dplyr::bind_rows()` でフラットな `data.frame` に再変換する。 `bind_rows()` は **list of data.frame** をそのまま受け取ることができるので、このケースでは非常に使い勝手が良い。
 
@@ -229,21 +244,23 @@ FANG_rolled <- FANG_rolled %>%
 FANG_rolled
 ```
 
-    # Rolling origin forecast resampling 
-    # A tibble: 145 x 3
-       splits          id       lm_model
-     * <list>          <chr>    <list>  
-     1 <split [52/13]> Slice001 <lm>    
-     2 <split [52/13]> Slice002 <lm>    
-     3 <split [52/13]> Slice003 <lm>    
-     4 <split [52/13]> Slice004 <lm>    
-     5 <split [52/13]> Slice005 <lm>    
-     6 <split [52/13]> Slice006 <lm>    
-     7 <split [52/13]> Slice007 <lm>    
-     8 <split [52/13]> Slice008 <lm>    
-     9 <split [52/13]> Slice009 <lm>    
-    10 <split [52/13]> Slice010 <lm>    
-    # … with 135 more rows
+```R
+# Rolling origin forecast resampling
+# A tibble: 145 x 3
+   splits          id       lm_model
+ * <list>          <chr>    <list>
+ 1 <split [52/13]> Slice001 <lm>
+ 2 <split [52/13]> Slice002 <lm>
+ 3 <split [52/13]> Slice003 <lm>
+ 4 <split [52/13]> Slice004 <lm>
+ 5 <split [52/13]> Slice005 <lm>
+ 6 <split [52/13]> Slice006 <lm>
+ 7 <split [52/13]> Slice007 <lm>
+ 8 <split [52/13]> Slice008 <lm>
+ 9 <split [52/13]> Slice009 <lm>
+10 <split [52/13]> Slice010 <lm>
+# … with 135 more rows
+```
 
 当然、検証用データも同じ手法で取り出すことが可能だ。
 
@@ -273,6 +290,7 @@ bind_rows(assessment(FANG_rolled$splits[[1]])$data) %>% head(n = 20)
 | FB     | 2014-01-07 | 57.919998  | 77207400 | Tue       |
 | FB     | 2014-01-08 | 58.23      | 56682400 | Wed       |
 | FB     | 2014-01-09 | 57.220001  | 92253300 | Thu       |
+
 
 # まとめ
 
