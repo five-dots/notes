@@ -28,7 +28,6 @@ if (is.null(NULL)) stop("NULL!!")
 #+begin_src R
 Error: NULL!!
 #+end_src
-\\
 
 - =stopifnot()=
   - base で使うことができる。簡易的。
@@ -74,7 +73,6 @@ verification [nrow(.) > 100] failed! (1 failure)
 
 Error: assertr stopped execution
 #+end_src
-\\
 
 * Links
 
