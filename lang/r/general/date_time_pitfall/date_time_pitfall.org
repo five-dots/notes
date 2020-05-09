@@ -4,16 +4,18 @@
 #+HUGO_BASE_DIR: ~/Dropbox/repos/github/five-dots/blog
 #+HUGO_SECTION: post/2020/05/
 
-#+TITLE: R の Date/POSIXct 型ではまったこと
+#+TITLE: R の Date/POSIXct 型でハマったこと
 #+DATE: 2020-05-09
 #+HUGO_CATEGORIES: programming
 #+HUGO_TAGS: r
 #+HUGO_CUSTOM_FRONT_MATTER: :toc true
 
-R の Date 型、POSIXct 型を利用していて過去にはまったポイントを備忘録として整理しておく。
+R の =Date= / =POSIXct= 型を利用していて過去にハマったポイントを備忘録として整理しておく。
 
-* for loop 内で =Date= が =numeric= になってしまう問題
+* =for= loop 内で =Date= が =numeric= になってしまう問題
+** 現象
 
+- =Date= =vector= に対して =for= loop でアクセスすると意図した結果にならない
 - =for= loop 内で class attribute が欠落してしまうことが原因
   - [[https://www.r-bloggers.com/for-loops-in-r-can-lose-class-information/][For loops in R can lose class information@R-bloggers]]
   - =Date= は =numeric= に class attribute を追加したものであるため
@@ -32,7 +34,8 @@ for (date in dates) {
 #+end_src
 \\
 
-- 対策 1: ~list~ に変換してからループする
+** 対策 1: =list= に変換してからループする
+
 #+begin_src R :exports both
 for (date in as.list(dates)) {
   print(date)
@@ -46,7 +49,8 @@ for (date in as.list(dates)) {
 #+end_src
 \\
 
-- 対策 2: インデックスでアクセスする
+** 対策 2: インデックスでアクセスする
+
 #+begin_src R :exports both
 for (i in seq_along(dates)) {
   print(dates[i])
@@ -58,8 +62,10 @@ for (i in seq_along(dates)) {
 [1] "2020-05-01"
 [1] "2020-05-02"
 #+end_src
+\\
 
 * =POSIXct= から =Date= への変換で日付がずれる問題
+** 現象
 
 - 参考: [[https://qiita.com/kota9/items/657c8c0ac5092e3ec1ff][R: POSIXct -> Date で日付がズレる@Qiita]]
 #+begin_src R :exports both
@@ -69,7 +75,7 @@ as.Date(td)
 
 #+RESULTS:
 #+begin_src R
-[1] "2020-05-01"
+[1] "2020-04-30"
 #+end_src
 \\
 
@@ -89,8 +95,11 @@ as.Date(as.POSIXct("2020-05-01 9:00:00")) # 2020-05-01 00:00 へ変換されて�
 #+end_src
 \\
 
-- 対策 1： ~tz~ を指定すれば問題ない
-  - 変換前と変換後のタイムゾーンを揃えることを意識しておけば良い
+** 対策 1: =tz= を指定する
+
+- 変換前と変換後のタイムゾーンを揃えることを意識しておけば良い
+  - タイムゾーンは、"Area/Locality" の形式で指定すべき
+    - [[https://stackoverflow.com/questions/37205128/understanding-timezone-strings-in-r][Understanding timezone strings in R@Stackoverflow]]
 #+begin_src R :exports both
 # UTC に統一して変換
 td <- as.POSIXct("2020-05-01", tz = "UTC")
@@ -107,8 +116,9 @@ as.Date(td)
 #+end_src
 \\
 
-- 対策 2: =lubridate::as_date()= を利用する
-  - =lubridate::as_Date()= は、元の =POSIXct= のタイムゾーンを保持して変換してくれる
+** 対策 2: =lubridate::as_date()= を利用する
+
+- =lubridate::as_Date()= は、元の =POSIXct= のタイムゾーンを保持して変換してくれる
 #+begin_src R :exports both
 td <- as.POSIXct("2020-05-01")
 lubridate::as_date(td)
@@ -121,63 +131,98 @@ lubridate::as_date(td)
 \\
 
 * ミリ秒の丸め問題
+** 現象
 
 - 文字列から =POSIXct= を作成する際に、ミリ秒がずれる (切り捨てられる)
   - [[https://stackoverflow.com/questions/10931972/r-issue-with-rounding-milliseconds][R issue with rounding milliseconds@Stackoverflow]]
+  - =format= の =%OS= は ="second.millisecond"= の形式
 #+begin_src R :exports both
 options(digits.secs = 3)
-ms_dt <- as.POSIXct("2019-06-28 12:34:01.123", format = "%Y-%m-%d %H:%M:%OS")
+ms_dt <- as.POSIXct("2020-05-01 00:00:00.123", format = "%Y-%m-%d %H:%M:%OS")
 ms_dt
 #+end_src
 
 #+RESULTS:
 #+begin_src R
-[1] "2019-06-28 12:34:01.122 JST"
+[1] "2020-05-01 00:00:00.122 JST"
 #+end_src
 \\
 
-- 対策 1: ~lubridate::ymd_hms()~ ならずれない
+** 対策 1: =lubridate::ymd_hms()= を使う
+
 #+begin_src R :exports both
 options(digits.secs = 3)
-lubridate::ymd_hms("2019-06-28 12:34:01.123", tz = "Asia/Tokyo")
+lubridate::ymd_hms("2020-05-01 00:00:00.123", tz = "Asia/Tokyo")
 #+end_src
 
 #+RESULTS:
 #+begin_src R
-[1] "2019-06-28 12:34:01.123 JST"
+[1] "2020-05-01 00:00:00.123 JST"
 #+end_src
 \\
 
-- ミリ秒単位の経過時間を POSIXct に変換する
-  - 株価のティックデータなどで必要になる手法
-  - [[https://stackoverflow.com/questions/49828433/r-how-to-convert-milliseconds-from-origin-to-date-and-keep-the-milliseconds][R How to convert milliseconds from origin to date and keep the milliseconds@Stackoverflow]]
-  - 1000 で割って秒数に換算する (+0.0005 を足すことで丸め誤差を消すことができる)
+** [番外] ミリ秒単位の経過時間を =POSIXct= に変換する
+
+- [[https://stackoverflow.com/questions/49828433/r-how-to-convert-milliseconds-from-origin-to-date-and-keep-the-milliseconds][R How to convert milliseconds from origin to date and keep the milliseconds@Stackoverflow]]
+- 株価のティックデータなど、ミリ秒単位の経過時間で表現されるデータがある
+- 1000 で割って秒数に換算する
+- +0.0005 を足すことで丸め誤差を消すことができる
 #+begin_src R :exports both
-msec <- 1506378448123
-dt <- as.POSIXct(msec/1000, origin = "1970-01-01", tz = "America/Chicago")
-format(dt + 0.0005, "%Y-%m-%d %H:%M:%OS3")
+msec <- 1588291200123 # 2020-05-01 00:00:00.123 JST
+dt <- as.POSIXct(msec/1000, origin = "1970-01-01", tz = "JST")
+format(dt + 0.0005, "%Y-%m-%d %H:%M:%OS")
 #+end_src
 
 #+RESULTS:
 #+begin_src R
-[1] "2017-09-25 17:27:28.123"
+[1] "2020-05-01 00:00:00.123"
 #+end_src
 \\
 
-- ~lubridate::as_datetime()~ でも同じようにずれる
+- =lubridate::as_datetime()= でも同じようにずれるので、+0.0005 する
 #+begin_src R :exports both
-lubridate::as_datetime(msec/1000 + 0.0005)
+lubridate::as_datetime(msec/1000 + 0.0005, tz = "JST")
 #+end_src
 
 #+RESULTS:
 #+begin_src R
-[1] "2017-09-25 22:27:28.123 UTC"
+[1] "2020-05-01 00:00:00.123 JST"
 #+end_src
 \\
 
+* セッション情報
 
-* Footnotes
-* COMMENT Local Variables                          :ARCHIVE:
+#+begin_src R :exports both
+sessionInfo()
+#+end_src
+
+#+RESULTS:
+#+begin_src R
+R version 3.6.3 (2020-02-29)
+Platform: x86_64-pc-linux-gnu (64-bit)
+Running under: Ubuntu 18.04.4 LTS
+
+Matrix products: default
+BLAS:   /usr/lib/x86_64-linux-gnu/blas/libblas.so.3.7.1
+LAPACK: /usr/lib/x86_64-linux-gnu/lapack/liblapack.so.3.7.1
+
+locale:
+ [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C
+ [3] LC_TIME=en_US.UTF-8        LC_COLLATE=C
+ [5] LC_MONETARY=en_US.UTF-8    LC_MESSAGES=C
+ [7] LC_PAPER=en_US.UTF-8       LC_NAME=C
+ [9] LC_ADDRESS=C               LC_TELEPHONE=C
+[11] LC_MEASUREMENT=en_US.UTF-8 LC_IDENTIFICATION=C
+
+attached base packages:
+[1] stats     graphics  grDevices utils     datasets  methods   base
+
+loaded via a namespace (and not attached):
+[1] compiler_3.6.3  generics_0.0.2  tools_3.6.3     Rcpp_1.0.4.6
+[5] lubridate_1.7.8
+#+end_src
+
+* COMMENT Local Variables :ARCHIVE:
 # Local Variables:
 # eval: (org-hugo-auto-export-mode)
 # End:
