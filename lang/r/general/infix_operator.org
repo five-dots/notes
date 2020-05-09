@@ -51,20 +51,20 @@ ls()
 *** =<-= と =<<-= の違い
 
 - =<<-=
-  - 親環境をさかのぼって変更する
-  - 通常は利用しない方が良いが、Closure と組み合わせて使うと便利
+- 親環境をさかのぼって変更する
+- 通常は利用しない方が良いが、Closure と組み合わせて使うと便利
 #+begin_src R :exports both
 x <- 10
 f <- function(x) {
-  x <- 20 # グローバル変数は書き換えない
-  x
+x <- 20 # グローバル変数は書き換えない
+x
 }
 f(x)
 x
 
 f <- function(x) {
-  x <<- 20 # グローバル変数を書き換える
-  x
+x <<- 20 # グローバル変数を書き換える
+x
 }
 f(x)
 x
@@ -86,10 +86,10 @@ x
 *** =::=, =:::= の違い
 
 - =pkg::obj=
-  - Exported object
+- Exported object
 - =pkg:::obj=
-  - Internal object
-  - Internal のオブジェクトにアクセスするのは、非推奨
+- Internal object
+- Internal のオブジェクトにアクセスするのは、非推奨
 \\
 
 *** =%%= 剰余
@@ -152,7 +152,7 @@ iris %>% head(2)
 
 #+RESULTS:
 #+begin_src R
-  Sepal.Length Sepal.Width Petal.Length Petal.Width Species
+Sepal.Length Sepal.Width Petal.Length Petal.Width Species
 1          5.1         3.5          1.4         0.2  setosa
 2          4.9         3.0          1.4         0.2  setosa
 #+end_src
@@ -168,19 +168,19 @@ iris$Sepal.Length
 #+RESULTS:
 #+begin_src R
 
-  [1] 2.258318 2.213594 2.167948 2.144761 2.236068 2.323790 2.144761 2.236068
-  [9] 2.097618 2.213594 2.323790 2.190890 2.190890 2.073644 2.408319 2.387467
- [17] 2.323790 2.258318 2.387467 2.258318 2.323790 2.258318 2.144761 2.258318
- [25] 2.190890 2.236068 2.236068 2.280351 2.280351 2.167948 2.190890 2.323790
- [33] 2.280351 2.345208 2.213594 2.236068 2.345208 2.213594 2.097618 2.258318
- [41] 2.236068 2.121320 2.097618 2.236068 2.258318 2.190890 2.258318 2.144761
- [49] 2.302173 2.236068 2.645751 2.529822 2.626785 2.345208 2.549510 2.387467
- [57] 2.509980 2.213594 2.569047 2.280351 2.236068 2.428992 2.449490 2.469818
- [65] 2.366432 2.588436 2.366432 2.408319 2.489980 2.366432 2.428992 2.469818
- [73] 2.509980 2.469818 2.529822 2.569047 2.607681 2.588436 2.449490 2.387467
- [81] 2.345208 2.345208 2.408319 2.449490 2.323790 2.449490 2.588436 2.509980
- [89] 2.366432 2.345208 2.345208 2.469818 2.408319 2.236068 2.366432 2.387467
- [97] 2.387467 2.489980 2.258318 2.387467 2.509980 2.408319 2.664583 2.509980
+[1] 2.258318 2.213594 2.167948 2.144761 2.236068 2.323790 2.144761 2.236068
+[9] 2.097618 2.213594 2.323790 2.190890 2.190890 2.073644 2.408319 2.387467
+[17] 2.323790 2.258318 2.387467 2.258318 2.323790 2.258318 2.144761 2.258318
+[25] 2.190890 2.236068 2.236068 2.280351 2.280351 2.167948 2.190890 2.323790
+[33] 2.280351 2.345208 2.213594 2.236068 2.345208 2.213594 2.097618 2.258318
+[41] 2.236068 2.121320 2.097618 2.236068 2.258318 2.190890 2.258318 2.144761
+[49] 2.302173 2.236068 2.645751 2.529822 2.626785 2.345208 2.549510 2.387467
+[57] 2.509980 2.213594 2.569047 2.280351 2.236068 2.428992 2.449490 2.469818
+[65] 2.366432 2.588436 2.366432 2.408319 2.489980 2.366432 2.428992 2.469818
+[73] 2.509980 2.469818 2.529822 2.569047 2.607681 2.588436 2.449490 2.387467
+[81] 2.345208 2.345208 2.408319 2.449490 2.323790 2.449490 2.588436 2.509980
+[89] 2.366432 2.345208 2.345208 2.469818 2.408319 2.236068 2.366432 2.387467
+[97] 2.387467 2.489980 2.258318 2.387467 2.509980 2.408319 2.664583 2.509980
 [105] 2.549510 2.756810 2.213594 2.701851 2.588436 2.683282 2.549510 2.529822
 [113] 2.607681 2.387467 2.408319 2.529822 2.549510 2.774887 2.774887 2.449490
 [121] 2.626785 2.366432 2.774887 2.509980 2.588436 2.683282 2.489980 2.469818
@@ -195,9 +195,9 @@ iris$Sepal.Length
 - RHS の結果を返すのではなく、LHS の結果をスルーして返す
 #+begin_src R :exports both
 rnorm(200) %>%
-  matrix(ncol = 2) %T>%
-  plot() %>% # plot は通常返り値が無い
-  colSums()
+matrix(ncol = 2) %T>%
+plot() %>% # plot は通常返り値が無い
+colSums()
 #+end_src
 
 #+RESULTS:
@@ -213,20 +213,19 @@ rnorm(200) %>%
 - data 引数を持たない関数に名前を渡すのに便利
 #+begin_src R :exports both
 iris %>%
-  subset(Sepal.Length > mean(Sepal.Length)) %$%
-  cor(Sepal.Length, Sepal.Width)
+subset(Sepal.Length > mean(Sepal.Length)) %$%
+cor(Sepal.Length, Sepal.Width)
 #+end_src
 
 #+RESULTS:
 #+begin_src R
-
 [1] 0.3365679
 #+end_src
 \\
 
-#+begin_src R :results output graphics file :file (my/get-babel-file2) :exports both
+#+begin_src R :results output graphics file :file (my/babel-file) :exports both
 data.frame(z = rnorm(100)) %$%
-  ts.plot(z) # ts.plot() は data.frame をそのまま引数にとることができない
+ts.plot(z) # ts.plot() は data.frame をそのまま引数にとることができない
 #+end_src
 
 #+RESULTS:
@@ -358,7 +357,7 @@ ymd("1999-01-01") %within% int
 #+begin_src R :exports both
 ttime <- ymd_hms("2019-03-31 12:31:12")
 rth <- interval(make_datetime(year(ttime), month(ttime), day(ttime), 9, 30, 0),
-                make_datetime(year(ttime), month(ttime), day(ttime), 16, 0, 0))
+            make_datetime(year(ttime), month(ttime), day(ttime), 16, 0, 0))
 ttime %within% rth
 #+end_src
 
@@ -372,12 +371,12 @@ ttime %within% rth
 *** =%<d-%= Delayed Binding
 
 - Delayed binding -> =promise= (遅延評価) を作成する
-  - =base::delayedAssign()=
+- =base::delayedAssign()=
 #+begin_src R :exports both
 library(pryr)
 system.time(b %<d-% {
-  Sys.sleep(1)
-  1
+Sys.sleep(1)
+1
 })
 system.time(b) # ここを実行した時点で、%<d-% のブロックが実行される
 #+end_src
@@ -385,18 +384,18 @@ system.time(b) # ここを実行した時点で、%<d-% のブロックが実行
 #+RESULTS:
 #+begin_src R
 
-   user  system elapsed
-      0       0       0
+user  system elapsed
+    0       0       0
 
-   user  system elapsed
-  0.000   0.000   1.002
+user  system elapsed
+0.000   0.000   1.002
 #+end_src
 \\
 
 *** =%<a-%= Active Binding
 
 - Active binding => アクセスされる毎に再計算される
-  - =base::makeActiveBinding()=
+- =base::makeActiveBinding()=
 #+begin_src R :exports both
 x %<a-% runif(1)
 x

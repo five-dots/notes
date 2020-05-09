@@ -1,4 +1,4 @@
-#+STARTUP: folded indent inlineimages latexpreview
+#+STARTUP: folded indent noinlineimages latexpreview
 #+PROPERTY: header-args:R :results output :cache yes :session *R:blog* :width 640 :height 480
 #+OPTIONS: author:nil H:6 toc:nil
 #+HUGO_BASE_DIR: ~/Dropbox/repos/github/five-dots/blog
@@ -296,8 +296,7 @@ library(ggplot2)
 ggplot(iris, aes(x = Sepal.Length, y = Sepal.Width)) + geom_point()
 #+end_src
 
-#+RESULTS:
-[[file:./img/iris.png]]
+#+RESULTS[e4856685f70e30ca8d9ff6dd553592fcaf2afafe]:
 
 #+attr_html:
 [[https://dl.dropboxusercontent.com/s/4j5jstkg1fsvdiw/iris.png]]

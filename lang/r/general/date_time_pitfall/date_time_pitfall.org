@@ -1,0 +1,183 @@
+#+STARTUP: folded indent
+#+PROPERTY: header-args:R :results output code :eval never-export :session *R:blog*
+#+OPTIONS: author:nil H:6 toc:nil
+#+HUGO_BASE_DIR: ~/Dropbox/repos/github/five-dots/blog
+#+HUGO_SECTION: post/2020/05/
+
+#+TITLE: R の Date/POSIXct 型ではまったこと
+#+DATE: 2020-05-09
+#+HUGO_CATEGORIES: programming
+#+HUGO_TAGS: r
+#+HUGO_CUSTOM_FRONT_MATTER: :toc true
+
+R の Date 型、POSIXct 型を利用していて過去にはまったポイントを備忘録として整理しておく。
+
+* for loop 内で =Date= が =numeric= になってしまう問題
+
+- =for= loop 内で class attribute が欠落してしまうことが原因
+  - [[https://www.r-bloggers.com/for-loops-in-r-can-lose-class-information/][For loops in R can lose class information@R-bloggers]]
+  - =Date= は =numeric= に class attribute を追加したものであるため
+#+begin_src R :exports both
+dates <- c(as.Date("2020-05-01"), as.Date("2020-05-02"))
+
+for (date in dates) {
+  print(date)
+}
+#+end_src
+
+#+RESULTS:
+#+begin_src R
+[1] 18383
+[1] 18384
+#+end_src
+\\
+
+- 対策 1: ~list~ に変換してからループする
+#+begin_src R :exports both
+for (date in as.list(dates)) {
+  print(date)
+}
+#+end_src
+
+#+RESULTS:
+#+begin_src R
+[1] "2020-05-01"
+[1] "2020-05-02"
+#+end_src
+\\
+
+- 対策 2: インデックスでアクセスする
+#+begin_src R :exports both
+for (i in seq_along(dates)) {
+  print(dates[i])
+}
+#+end_src
+
+#+RESULTS:
+#+begin_src R
+[1] "2020-05-01"
+[1] "2020-05-02"
+#+end_src
+
+* =POSIXct= から =Date= への変換で日付がずれる問題
+
+- 参考: [[https://qiita.com/kota9/items/657c8c0ac5092e3ec1ff][R: POSIXct -> Date で日付がズレる@Qiita]]
+#+begin_src R :exports both
+td <- as.POSIXct("2020-05-01")
+as.Date(td)
+#+end_src
+
+#+RESULTS:
+#+begin_src R
+[1] "2020-05-01"
+#+end_src
+\\
+
+- これは =as.Date()= は元の =POSIXct= のタイムゾーンを意識せず、デフォルトで UTC へ変換してしまうことが原因
+  - =as.POSIXct()= で作成した場合、デフォルトでシステムのタイムゾーンを利用する (この場合は、JST)
+  - そのため、JST から 9 時間分の差が発生する
+- 以下の例を見れば、違いが良くわかる
+#+begin_src R :exports both
+as.Date(as.POSIXct("2020-05-01 8:00:00")) # 2020-04-30 23:00 へ変換されてから、時間情報が削除されている
+as.Date(as.POSIXct("2020-05-01 9:00:00")) # 2020-05-01 00:00 へ変換されてから、時間情報が削除されている
+#+end_src
+
+#+RESULTS:
+#+begin_src R
+[1] "2020-04-30"
+[1] "2020-05-01"
+#+end_src
+\\
+
+- 対策 1： ~tz~ を指定すれば問題ない
+  - 変換前と変換後のタイムゾーンを揃えることを意識しておけば良い
+#+begin_src R :exports both
+# UTC に統一して変換
+td <- as.POSIXct("2020-05-01", tz = "UTC")
+as.Date(td)
+
+# もしくは、JST に統一して変換
+## td <- as.POSIXct("2020-05-01")
+## as.Date(td, tz = "Asia/Tokyo")
+#+end_src
+
+#+RESULTS:
+#+begin_src R
+[1] "2020-05-01"
+#+end_src
+\\
+
+- 対策 2: =lubridate::as_date()= を利用する
+  - =lubridate::as_Date()= は、元の =POSIXct= のタイムゾーンを保持して変換してくれる
+#+begin_src R :exports both
+td <- as.POSIXct("2020-05-01")
+lubridate::as_date(td)
+#+end_src
+
+#+RESULTS:
+#+begin_src R
+[1] "2020-05-01"
+#+end_src
+\\
+
+* ミリ秒の丸め問題
+
+- 文字列から =POSIXct= を作成する際に、ミリ秒がずれる (切り捨てられる)
+  - [[https://stackoverflow.com/questions/10931972/r-issue-with-rounding-milliseconds][R issue with rounding milliseconds@Stackoverflow]]
+#+begin_src R :exports both
+options(digits.secs = 3)
+ms_dt <- as.POSIXct("2019-06-28 12:34:01.123", format = "%Y-%m-%d %H:%M:%OS")
+ms_dt
+#+end_src
+
+#+RESULTS:
+#+begin_src R
+[1] "2019-06-28 12:34:01.122 JST"
+#+end_src
+\\
+
+- 対策 1: ~lubridate::ymd_hms()~ ならずれない
+#+begin_src R :exports both
+options(digits.secs = 3)
+lubridate::ymd_hms("2019-06-28 12:34:01.123", tz = "Asia/Tokyo")
+#+end_src
+
+#+RESULTS:
+#+begin_src R
+[1] "2019-06-28 12:34:01.123 JST"
+#+end_src
+\\
+
+- ミリ秒単位の経過時間を POSIXct に変換する
+  - 株価のティックデータなどで必要になる手法
+  - [[https://stackoverflow.com/questions/49828433/r-how-to-convert-milliseconds-from-origin-to-date-and-keep-the-milliseconds][R How to convert milliseconds from origin to date and keep the milliseconds@Stackoverflow]]
+  - 1000 で割って秒数に換算する (+0.0005 を足すことで丸め誤差を消すことができる)
+#+begin_src R :exports both
+msec <- 1506378448123
+dt <- as.POSIXct(msec/1000, origin = "1970-01-01", tz = "America/Chicago")
+format(dt + 0.0005, "%Y-%m-%d %H:%M:%OS3")
+#+end_src
+
+#+RESULTS:
+#+begin_src R
+[1] "2017-09-25 17:27:28.123"
+#+end_src
+\\
+
+- ~lubridate::as_datetime()~ でも同じようにずれる
+#+begin_src R :exports both
+lubridate::as_datetime(msec/1000 + 0.0005)
+#+end_src
+
+#+RESULTS:
+#+begin_src R
+[1] "2017-09-25 22:27:28.123 UTC"
+#+end_src
+\\
+
+
+* Footnotes
+* COMMENT Local Variables                          :ARCHIVE:
+# Local Variables:
+# eval: (org-hugo-auto-export-mode)
+# End:

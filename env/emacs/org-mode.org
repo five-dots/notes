@@ -176,6 +176,8 @@ org-export-before-parsing-hook
 - Filters
   - =org-export-filter-TYPE-functions=
   - 様々な TYPE が定義されている
+  - TYPE x Backend の組み合せで定義していく
+  - Backend 毎ではなく、ファイル毎に適応することも可能
 
 ** ox-hugo
 *** Reference
@@ -263,6 +265,15 @@ Hatena/Qiita 向けに org-mode から共通の Markdown を出力するため�
 - [[https://cwcode.wordpress.com/2013/05/21/vignette/][Writing R vignettes in emacs org mode using ox-ravel]]
 - [[https://github.com/chasberry/orgmode-accessories/blob/org-9-plus/ox-ravel.org][ox-ravel]]
 - org から knitr を出力する
+** qiita に画像を貼る
+
+- Dropbox のリンクを貼る
+#+attr_html:
+[[https://dl.dropboxusercontent.com/s/4j5jstkg1fsvdiw/iris.png]]
+
+- Github のリンクを貼る
+#+attr_html:
+[[https://github.com/five-dots/notes/blob/master/lang/org-mode/org-for-hugo-qiita/img/iris.png?raw=true]]
 
 * TODOs
 

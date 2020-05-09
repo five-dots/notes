@@ -520,6 +520,7 @@ In readLines(file, warn = TRUE) :
 * github/markup 向けの書き方
 
 - =:exports both=
+  - [[https://github.com/github/markup/issues/413][orgmode results are not displayed #413]]
   - デフォルトでは =:exports code= なので、これを設定しないと結果が表示されない
   - トップの Header に追加しただけでは、反映されない。個別のブロックに設定する必要あり。
 

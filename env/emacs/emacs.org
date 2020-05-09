@@ -19,10 +19,128 @@ sudo apt remove --purge emacs25-common
 sudo apt remove --purge emacs25
 #+end_src
 
-* TODO emacs 27
+* emacs 27 build from source
+** 手順
 
-- ソースからのビルド方法
-- 主な機能
+- [[https://www.reddit.com/r/emacs/comments/eu7s5e/how_to_update_to_emacs_27/][How to update to emacs 27?]]
+
+#+begin_src shell :eval never
+git clone https://github.com/emacs-mirror/emacs.git
+cd emacs
+git checkout emacs-27
+
+./autogen.sh
+./configure --with-mailutils --with-cairo --with-xwidgets --with-imagemagick --without-xaw3d
+make
+
+./src/emacs --version
+make install
+#+end_src
+
+** configure options
+
+- Should Emacs use a relocating allocator for buffers?
+  - [[https://stackoverflow.com/questions/26192944/what-is-relocating-allocator-for-buffers-in-emacs][What is relocating allocator for buffers in Emacs?@Stackoverflow]]
+  - no のままで良さそう
+
+- Should Emacs use mmap(2) for buffer allocation?
+  - [[https://stackoverflow.com/questions/6328002/emacs-buffer-allocation-using-mmap][Emacs Buffer Allocation using mmap@Stackoverflow]]
+
+- 必要なオプションが有効になっていない場合は、依存関係をインストールする
+  - jansson (JSON) - =libjansson-dev=
+  - rsvg - =librsvg2-dev=
+  - cairo (絵文字などの画像表示) - =libcairo2-dev= & =--with-cairo=
+  - Xaw3d (X Athena Widgets) - 依存関係が不明のため =--without-xaw3d=
+  - Xwidgets - =libwebkit2gtk-4.0-dev= & =--with-xwidgets=
+  - lcms2 (Little CMS) - =liblcms2-dev=
+  - imagemagick - =libmagickwand-dev= & =--with-imagemagick=
+  - gpm (Console Mouse Support) - =libgpm-dev=
+  - gconf - Gsetting が有効なため不要
+  - access control list - =libacl1-dev=
+  - selinux - =libselinux1-dev=
+  - otf - =libotf-dev=
+  - xtf - =libxtf-dev= をインストールしても有効にならず
+  - m17n-flt - =libm17n-dev=
+  - systemd - =libsystemd-dev=
+
+- X Toolkit は特に指定しなければ =--with-x-toolkit=gtk3=
+#+begin_quote
+Where should the build process find the source code?    .
+What compiler should emacs be built with?               gcc -g3 -O2
+Should Emacs use the GNU version of malloc?             no
+  (The GNU allocators don't work with this system configuration.)
+Should Emacs use a relocating allocator for buffers?    no
+Should Emacs use mmap(2) for buffer allocation?         no
+What window system should Emacs use?                    x11
+What toolkit should Emacs use?                          GTK3
+Where do we find X Windows header files?                Standard dirs
+Where do we find X Windows libraries?                   Standard dirs
+Does Emacs use -lXaw3d?                                 no
+Does Emacs use -lXpm?                                   yes
+Does Emacs use -ljpeg?                                  yes
+Does Emacs use -ltiff?                                  yes
+Does Emacs use a gif library?                           yes -lgif
+Does Emacs use a png library?                           yes -lpng16 -lz
+Does Emacs use -lrsvg-2?                                yes
+Does Emacs use cairo?                                   yes
+Does Emacs use -llcms2?                                 yes
+Does Emacs use imagemagick?                             yes
+Does Emacs support sound?                               yes
+Does Emacs use -lgpm?                                   yes
+Does Emacs use -ldbus?                                  yes
+Does Emacs use -lgconf?                                 no
+Does Emacs use GSettings?                               yes
+Does Emacs use a file notification library?             yes -lglibc (inotify)
+Does Emacs use access control lists?                    yes -lacl
+Does Emacs use -lselinux?                               yes
+Does Emacs use -lgnutls?                                yes
+Does Emacs use -lxml2?                                  yes
+Does Emacs use -lfreetype?                              yes
+Does Emacs use HarfBuzz?                                yes
+Does Emacs use -lm17n-flt?                              yes
+Does Emacs use -lotf?                                   yes
+Does Emacs use -lxft?                                   no
+Does Emacs use -lsystemd?                               yes
+Does Emacs use -ljansson?                               yes
+Does Emacs use -lgmp?                                   yes
+Does Emacs directly use zlib?                           yes
+Does Emacs have dynamic modules support?                yes
+Does Emacs use toolkit scroll bars?                     yes
+Does Emacs support Xwidgets (requires gtk3)?            yes
+Does Emacs have threading support in lisp?              yes
+Does Emacs support the portable dumper?                 yes
+Does Emacs support legacy unexec dumping?               no
+Which dumping strategy does Emacs use?                  pdumper
+#+end_quote
+
+** GTK+ error
+
+- [[https://tamurashingo.github.io/post/2019/03/19/emacs-install-succeeded/][Emacs 26.1のインストール(成功編)]]
+
+- GTK+3 を入れたことによるエラーの模様
+#+begin_quote
+configure: WARNING: Your version of Gtk+ will have problems with
+       closing open displays.  This is no problem if you just use
+       one display, but if you use more than one and close one of them
+       Emacs may crash.
+       See https://bugzilla.gnome.org/show_bug.cgi?id=85715
+#+end_quote
+
+** system-configuration-options
+
+#+begin_src emacs-lisp
+emacs-version
+#+end_src
+
+#+RESULTS:
+: 26.3
+
+#+begin_src emacs-lisp
+system-configuration-options
+#+end_src
+
+#+RESULTS:
+: --build=x86_64-linux-gnu --prefix=/usr '--includedir=${prefix}/include' '--mandir=${prefix}/share/man' '--infodir=${prefix}/share/info' --sysconfdir=/etc --localstatedir=/var --disable-silent-rules '--libdir=${prefix}/lib/x86_64-linux-gnu' '--libexecdir=${prefix}/lib/x86_64-linux-gnu' --disable-maintainer-mode --disable-dependency-tracking --prefix=/usr --sharedstatedir=/var/lib --program-suffix=26 --with-modules --with-file-notification=inotify --with-mailutils --with-x=yes --with-x-toolkit=gtk3 --with-xwidgets --with-lcms2 'CFLAGS=-g -O2 -fdebug-prefix-map=/build/emacs26-TP6iDo/emacs26-26.3~1.git96dd019=. -fstack-protector-strong -Wformat -Werror=format-security -no-pie' 'CPPFLAGS=-Wdate-time -D_FORTIFY_SOURCE=2' 'LDFLAGS=-Wl,-Bsymbolic-functions -Wl,-z,relro -no-pie'
 
 * Windows
 ** 日本語パッチ -> *Official を使った方が実際はトラブルが少かった*

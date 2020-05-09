@@ -1,12 +1,21 @@
 #+STARTUP: folded indent inlineimages latexpreview
 #+PROPERTY: header-args:R :results output :colnames yes :session *R:mail*
 
-* {gmailr} package
+* Table of Contents :quote:toc:
+#+BEGIN_QUOTE
+- [[#by-package][By Package]]
+  - [[#gmailr-package][gmailr package]]
+  - [[#gmailr-package-1][gmailR package]]
+  - [[#mailr-package][mailR package]]
+#+END_QUOTE
+
+* By Package
+** gmailr package
 
 - r-lib
 - [[https://github.com/r-lib/gmailr][Github]]
 
-#+begin_src R
+#+begin_src R :eval never :exports both
 library(gmailr)
 
 test_email <- gm_mime() %>%
@@ -22,11 +31,11 @@ gm_create_draft(test_email)
 gm_send_message(test_email)
 #+end_src
 
-* {gmailR} package
+** gmailR package
 
 - [[http://d.hatena.ne.jp/dichika/20140217/p1][Rからメールを送りたい（ただしGmailで）]]
 
-#+begin_src R
+#+begin_src R :eval never :exports both
 library(gmailR)
 
 from     <- settings$gmail_address
@@ -41,13 +50,12 @@ attachment <- ""
 gmail(to, password, subject, message, from, username = username)
 #+end_src
 
-
-* {mailR} package
+** mailR package
 
 - [[https://cran.r-project.org/web/packages/mailR/index.html][CRAN]]
 - [[https://github.com/rpremraj/mailR][Github]]
 
-#+begin_src R
+#+begin_src R :eval never :exports both
 library(mailR)
 
 send.mail(from = "syun.asai@gmail.com",

@@ -210,12 +210,16 @@ git log
 *** =remote=
 
 - =git remote add origin "url"=
-  _remote 追跡ブランチ_ を追加する
-  origin が url の別名になっている
+  - _remote 追跡ブランチ_ を追加する (リモート追跡ブランチ = リモートリポジトリのコピー)
+  - origin が url の別名になっている
 
-用語
-- master         = local master branch
-- origin/master  = remote origin master branch
+_用語_
+- master = local master branch
+- origin/master  = remote origin master branch (リモート追跡ブランチの master という意味)
+
+- マージ手法
+  - Fast-Forward
+  - Non-Fast-Forward
 
 #+begin_src shell :results output :session "*git*"
 cd ~/git-test/
@@ -272,7 +276,9 @@ git clone https://github.com/five-dots/git-test.git git-test2
 - git-test2 側であらかじめ変更を加えておく 
 
 - =git fetch=
-  remote の変更を取り込む
+  - remote の変更を *リモート追跡ブランチ* に取り込む
+  - *リモート追跡ブランチ* とは、リモートブランチのコピーをローカルに保持したもの
+  - ローカルのワーキングツリーは変更されない
 
 #+begin_src shell :results output :session "*git*"
 cd ~/git-test1/
@@ -290,7 +296,8 @@ git fetch
 
 *** =merge=
 
-- fetch した remote の変更内容を local repo に取り込む
+- 現在のブランチに別のブランチの内容を結合する時に使う
+- fetch した リモート追跡ブランチの変更内容を local repo に取り込む際によく使われる
 - もしくは、feature branch での変更を master branch に反映させる際に使う
 
 - =git merge orgin/master=
@@ -307,9 +314,27 @@ git merge origin/master
 :  hoge.txt | 1 +
 :  1 file changed, 1 insertion(+)
 
+*** =rebase=
+
+- hoge ブランチを master ブランチにリベースしたい場合
+#+begin_src shell
+git checkout hoge
+git rebase master
+#+end_src
+
+- 実際に行なわれること
+  - hoge と master の差分を一時的に保存して退避させる
+  - =git reset --hard master= して hoge を master と同期させる
+  - 一時退避させていた変更を hoge ブランチに再度乗せる
+
+- fetch -> merge のフローと違い、差分のコミット id などがリベース後で変わる
+
 *** =pull=
 
-- pull = fetch + merge
+- =pull= = fetch + merge
+- =pull --rebase= = fetch + rebase
+
+- =push= する前に =pull --rebase= してから、というルールが多い模様
 
 ** @gold-kou@qiita (develop branch case)
 
@@ -329,8 +354,8 @@ git merge origin/master
 * Merge conflict
 
 - どちらの branch を優先させるかが決まっている場合
-  =git checkout --ours hoge.txt= (local を優先)
-  =git checkout --theirs hoge.txt= (remote を優先)
+  - =git checkout --ours hoge.txt= (local を優先)
+  - =git checkout --theirs hoge.txt= (remote を優先)
   
   - その後
     - add -> commit -> push
@@ -350,6 +375,7 @@ git merge origin/master
 
 - 以前の変更点に戻る
 - [[https://qiita.com/shuntaro_tamura/items/db1aef9cf9d78db50ffe][[git reset (--hard/--soft)]ワーキングツリー、インデックス、HEADを使いこなす方法@Qiita]]
+- [[https://qiita.com/forest1/items/f7c821565a7a7d64d60f][git reset 解説@Qiita]]
 
 - =git reset --hard HEAD^= (全て消えてしまうので注意)
 - =git reset --soft HEAD^=
