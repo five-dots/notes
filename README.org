@@ -6,9 +6,18 @@
 - [[#programming-language][Programming Language]]
   - [[#r-environment-setup][R (Environment Setup)]]
   - [[#python-environment-setup][Python (Environment Setup)]]
+  - [[#stan][Stan]]
   - [[#emacs-lisp][Emacs Lisp]]
+  - [[#shell-script][Shell Script]]
+  - [[#sql-environment-setup][SQL (Environment Setup)]]
   - [[#c-environment-setup][C++ (Environment Setup)]]
   - [[#c-environment-setup-1][C# (Environment Setup)]]
+  - [[#clojure-environment-setup][Clojure (Environment Setup)]]
+  - [[#go-environment-setup][Go (Environment Setup)]]
+  - [[#haskell-environment-setup][Haskell (Environment Setup)]]
+  - [[#java-environment-setup][Java (Environment Setup)]]
+  - [[#nodejs-environment-setup][node.js (Environment Setup)]]
+  - [[#rust-environment-setup][Rust (Environment Setup)]]
 - [[#development-environment][Development Environment]]
 - [[#finance][Finance]]
 - [[#trading-strategy][Trading Strategy]]
@@ -34,7 +43,6 @@ org_links <- function(sub_dir = "lang/r/general", collapse = " | ", package = FA
 #+end_src
 
 ** R ([[file:./lang/r/R_env.org][Environment Setup]])
-
 *** General
 
 
@@ -82,6 +90,16 @@ org_links("lang/python/package")
 #+RESULTS:
 [[file:./lang/python/package/matplotlib.org][matplotlib]] | [[file:./lang/python/package/numpy.org][numpy]] | [[file:./lang/python/package/scikit-learn/dataset.org][dataset]]
 
+** Stan
+*** General
+
+#+begin_src R :results raw :exports results
+org_links("lang/stan/general")
+#+end_src
+
+#+RESULTS:
+[[file:./lang/stan/general/basic.org][basic]]
+
 ** Emacs Lisp
 *** General
 
@@ -100,6 +118,26 @@ org_links("lang/emacs-lisp/package")
 
 #+RESULTS:
 [[file:./lang/emacs-lisp/package/dash.org][dash]] | [[file:./lang/emacs-lisp/package/f.org][f]] | [[file:./lang/emacs-lisp/package/kv.el.org][kv.el]]
+
+** Shell Script
+*** General
+
+#+begin_src R :results raw :exports results
+org_links("lang/shell_script/general")
+#+end_src
+
+#+RESULTS:
+[[file:./lang/shell_script/general/basic.org][basic]]
+
+** SQL ([[file:./lang/sql/sql_env.org][Environment Setup]])
+*** General
+
+#+begin_src R :results raw :exports results
+org_links("lang/sql/general")
+#+end_src
+
+#+RESULTS:
+[[file:./lang/sql/general/basic.org][basic]]
 
 ** C++ ([[file:./lang/cpp/cpp_env.org][Environment Setup]])
 *** General
@@ -120,6 +158,12 @@ org_links("lang/csharp/general")
 #+RESULTS:
 [[file:./lang/csharp/general/basic.org][basic]] | [[file:./lang/csharp/general/wpf.org][wpf]]
 
+** Clojure ([[file:./lang/clojure/clojure_env.org][Environment Setup]])
+** Go ([[file:./lang/go/go_env.org][Environment Setup]])
+** Haskell ([[file:./lang/haskell/haskell_env.org][Environment Setup]])
+** Java ([[file:./lang/java/java_env.org][Environment Setup]])
+** node.js ([[file:./lang/nodejs/nodejs_env.org][Environment Setup]])
+** Rust ([[file:./lang/rust/rust_env.org][Environment Setup]])
 * Development Environment
 * Finance
 * Trading Strategy
