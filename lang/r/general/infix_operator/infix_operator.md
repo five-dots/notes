@@ -1,4 +1,4 @@
-[GitHub](https://github.com/five-dots/notes/blob/master/lang/r/general/infix_operator/infix_operator.org) | [Blog](https://objective-boyd-9b8f29.netlify.app/2019/11/df_roll_split/) | [Qiita](https://qiita.com/five-dots/items/616c5f07d7a68ec70f62)
+[GitHub](https://github.com/five-dots/notes/blob/master/lang/r/general/infix_operator/infix_operator.org) | [Blog](https://objective-boyd-9b8f29.netlify.app/2020/05/infix_operator/) | [Qiita](https://qiita.com/five-dots/items/616c5f07d7a68ec70f62)
 
 みんな大好き `%>%` でおなじみの **Infix Operator**. 調べてみると `{magrittr}` 以外にも、この形式の関数を収録しているパッケージは多数存在する。その中でも、知っておくと便利そう、というものを紹介していきたい。
 
@@ -33,8 +33,6 @@ Infix とは、あまり聞き慣れない言葉だが、Prefix (接頭)・ Suff
 [1] 3
 ```
 
-
-
 前述の Advanced R の記事でも述べられている通り、R の全ての関数呼び出しは、Prefix form で書き直すことが可能なため **Infix form でないと書くことができない処理は存在しない**. それでも、2 つの値を比較したりする処理は、Infix Operator を使って書くと、コードがより簡潔に記述できる、という点がメリットではないかと思う。
 
 # 紹介する演算子まとめ
@@ -49,8 +47,8 @@ Infix とは、あまり聞き慣れない言葉だが、Prefix (接頭)・ Suff
 | `%$%`          | `{magrittr}`  | 左辺のオブジェクトに名前でアクセスする | `mtcars %$% cor(mpg, disp)`           |
 | `%<-%`         | `{zeallot}`   | `vector` や `list` を分解して代入 | `c(x, y) %<-% c(0, 1)`                |
 | `%@%`          | `{rlang}`     | 属性を抽出                | `mtcars %@% class`                    |
-| `%¦¦%`         | `{rlang}`     | `NULL` のデフォルト値     | `NULL %¦¦% "default"`                 |
-| `%¦%`          | `{rlang}`     | `NA` のデフォルト値       | `c("hoge", NA, "fuga") %¦% "default"` |
+| `%¦¦%` \*      | `{rlang}`     | `NULL` のデフォルト値     | `NULL %¦¦% "default"`                 |
+| `%¦%` \*       | `{rlang}`     | `NA` のデフォルト値       | `c("hoge", NA, "fuga") %¦% "default"` |
 | `%--%`         | `{lubridate}` | 時間の引き算              | `arrival %--% leave`                  |
 | `%m-%`, `%m+%` | `{lubridate}` | 月末日の違いやうるう年を考慮して月を加減 | `ymd("2020-01-31") %m+% months(1)`    |
 | `%within%`     | `{lubridate}` | 日付・日時が `Interval` に含まれるか | `today() %winthn% interval`           |
@@ -271,6 +269,8 @@ jan %m+% months(1:3)
 [1] "2020-02-29" "2020-03-31" "2020-04-30"
 ```
 
+
+
 -   うるう年も考慮してくれる
 
 ```R
@@ -302,6 +302,8 @@ ymd("1999-01-01") %within% int1
 [1] TRUE
 [1] FALSE
 ```
+
+
 
 ```R
 ttime <- ymd_hms("2019-03-31 12:31:12")
