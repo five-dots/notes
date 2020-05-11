@@ -19,7 +19,7 @@ sudo apt remove --purge emacs25-common
 sudo apt remove --purge emacs25
 #+end_src
 
-* emacs 27 build from source
+* build from source
 ** 手順
 
 - [[https://www.reddit.com/r/emacs/comments/eu7s5e/how_to_update_to_emacs_27/][How to update to emacs 27?]]
@@ -30,7 +30,13 @@ cd emacs
 git checkout emacs-27
 
 ./autogen.sh
-./configure --with-mailutils --with-cairo --with-xwidgets --with-imagemagick --without-xaw3d
+
+# emacs 27
+./configure --prefix=$HOME/emacs/emacs-27.0.91 --with-mailutils --with-cairo --with-xwidgets --with-imagemagick --without-xaw3d
+
+# emacs 26
+./configure --prefix=$HOME/emacs --with-mailutils --with-cairo --with-xwidgets --with-modules --without-xaw3d
+
 make
 
 ./src/emacs --version
@@ -59,7 +65,7 @@ make install
   - access control list - =libacl1-dev=
   - selinux - =libselinux1-dev=
   - otf - =libotf-dev=
-  - xtf - =libxtf-dev= をインストールしても有効にならず
+  - xtf - =libxtf-dev=
   - m17n-flt - =libm17n-dev=
   - systemd - =libsystemd-dev=
 
@@ -140,7 +146,7 @@ system-configuration-options
 #+end_src
 
 #+RESULTS:
-: --build=x86_64-linux-gnu --prefix=/usr '--includedir=${prefix}/include' '--mandir=${prefix}/share/man' '--infodir=${prefix}/share/info' --sysconfdir=/etc --localstatedir=/var --disable-silent-rules '--libdir=${prefix}/lib/x86_64-linux-gnu' '--libexecdir=${prefix}/lib/x86_64-linux-gnu' --disable-maintainer-mode --disable-dependency-tracking --prefix=/usr --sharedstatedir=/var/lib --program-suffix=26 --with-modules --with-file-notification=inotify --with-mailutils --with-x=yes --with-x-toolkit=gtk3 --with-xwidgets --with-lcms2 'CFLAGS=-g -O2 -fdebug-prefix-map=/build/emacs26-TP6iDo/emacs26-26.3~1.git96dd019=. -fstack-protector-strong -Wformat -Werror=format-security -no-pie' 'CPPFLAGS=-Wdate-time -D_FORTIFY_SOURCE=2' 'LDFLAGS=-Wl,-Bsymbolic-functions -Wl,-z,relro -no-pie'
+: --with-mailutils --with-cairo --with-xwidgets --with-modules --without-xaw3d
 
 * Windows
 ** 日本語パッチ -> *Official を使った方が実際はトラブルが少かった*

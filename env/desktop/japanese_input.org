@@ -101,14 +101,12 @@ sudo make install でインストール
 - [[http://d.hatena.ne.jp/sifue/20120411/1334161078][escape を IME キャンセルに割り当てる for vim binding]]
 - [[https://github.com/google/mozc][Official repo]]
   
-** デフォルト英数を半角に設定する
+** 設定
 
-- GUI の設定画面から
+- =~/Dropbox/mozc= を =~/.mozc= へリンク
+- Henkan で IME をトグル
 
-** escape を IME キャンセルに割り当てる
-
-- http://d.hatena.ne.jp/sifue/20120411/1334161078 for vim binding
-- デフォルト英数を半角に設定する
+- [[http://d.hatena.ne.jp/sifue/20120411/1334161078][SSHを介してVimを使う人に感動的なESCキーを押すとESCキーが効きつつIMEがオフになる設定(Google日本語入力とVimの相性は最強！)]]
 
 ** Mozc Installation
 
@@ -119,7 +117,7 @@ sudo make install でインストール
 
 - ctrl-space で IME の有効化・無効化
 - Escpae で IME の無効化
-- Muhenkan で IME の無効化
+- Henkan で IME の無効化
 
 ** Mozc En-Ja Mapping
 *** 変換表を作成

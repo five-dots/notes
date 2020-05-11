@@ -243,6 +243,7 @@ systemctl --user start xremap
     - Super (Win) + x
 - Emacs 内では、Hyper 修飾キーを利用
 
+
 * Mac
 ** karabiner-element
 * Emacs
