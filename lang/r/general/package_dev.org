@@ -103,6 +103,17 @@ devtools::check()
 devtools::install()
 #+end_src
 
+* CRAN 登録
+
+- [[https://cran.r-project.org/doc/manuals/R-exts.html][Writing R Extensions]]
+- [[https://cran.r-project.org/submit.html][CRAN Repository Policy]]
+- [[http://r-pkgs.had.co.nz/][R packages by Hadley Wickham]]
+
+- [[https://www.slideshare.net/teramonagi/ss-55844535][闇と向き合う]]
+- [[http://sinhrks.hatenablog.com/entry/2015/11/21/223846][R パッケージを CRAN で公開する@StatsFragments]]
+- [[https://notchained.hatenablog.com/entry/2016/03/28/073529][estatapiパッケージがCRANで公開されました。@Technically, technophobic.]]
+- [[http://tkdmah.hatenablog.com/entry/2013/02/16/132610][Rパッケージを作ってCRANで公開する]]
+
 * 参考
 
 - [[https://qiita.com/Masutani/items/405d6473aff6d2b82bfd][R tools for Visual StudioでRライブラリ開発]]

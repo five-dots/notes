@@ -2,9 +2,13 @@
 
 * Package list
 
-- [[https://github.com/rstudio/RStartHere][RStartHere]]
-- [[https://awesome-r.com/][Awesome R]]
+- [[https://github.com/rstudio/RStartHere][RStartHere by RStudio]]
+- [[https://github.com/qinwf/awesome-R][awesome-R@GitHub]]
+- [[https://support.rstudio.com/hc/en-us/articles/201057987-Quick-list-of-useful-R-packages][Quick list of useful R packages@RStudio]]
 - [[https://github.com/jdblischak/r-project-workflows][List of workflow tools for R projects@github]]
+
+- [[https://qiita.com/paithiov909/items/10e2aa79982a974f9d6d][ã‚ªãƒ¬ã‚ªãƒ¬ãŠã™ã™ã‚Rãƒ‘ãƒƒã‚±ãƒ¼ã‚¸ãƒªã‚¹ãƒˆ@Qiita]]
+- [[https://qiita.com/hoxo_m/items/ce478bf0debe963d9e40][CRAN ã« R ãƒ‘ãƒƒã‚±ãƒ¼ã‚¸ã‚’ç™»éŒ²ã—ã¦ã„ã‚‹æ—¥æœ¬äººã¾ã¨ã‚@Qiita #rstatsj]]
 
 * tidyverse
 
@@ -104,28 +108,29 @@
 - pkgdown
 - usethis
 - rlang
-‘¼‘½”
+ä»–å¤šæ•°
+
+* cloudyr project
+* Bioconductor project
+
+- BiocManager
 
 * Workflow
 
-_R ‚Ìƒ[ƒNƒtƒ[ƒpƒbƒP[ƒW_
-- R Package ‚Ì\‘¢‚ğ—˜—p‚µ‚ÄAƒvƒƒWƒFƒNƒg‚ÌƒfƒBƒŒƒNƒgƒŠ\‘¢‚ğ©“®ì¬‚·‚é‚à‚Ì
-- ƒf[ƒ^‚ÌŠÇ— (ƒLƒƒƒbƒVƒ…E©“®“Ç‚İ‚İ) ‹@”\‚ğ‚à‚Â‚à‚Ì
-- RMarkdonw/knitr ‚ğ—˜—p‚µ‚ÄƒŒƒ|[ƒeƒBƒ“ƒO‚ğ©“®‰»‚·‚é‚à‚Ì
-- git ‚ğg‚Á‚ÄAƒR[ƒh‚¾‚¯‚Å‚È‚­AƒŠƒT[ƒ`Œ‹‰Ê‚àƒo[ƒWƒ‡ƒ“ŠÇ—‚·‚é‚à‚Ì
+_R ã®ãƒ¯ãƒ¼ã‚¯ãƒ•ãƒ­ãƒ¼ãƒ‘ãƒƒã‚±ãƒ¼ã‚¸_
+- R Package ã®æ§‹é€ ã‚’åˆ©ç”¨ã—ã¦ã€ãƒ—ãƒ­ã‚¸ã‚§ã‚¯ãƒˆã®ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªæ§‹é€ ã‚’è‡ªå‹•ä½œæˆã™ã‚‹ã‚‚ã®
+- ãƒ‡ãƒ¼ã‚¿ã®ç®¡ç† (ã‚­ãƒ£ãƒƒã‚·ãƒ¥ãƒ»è‡ªå‹•èª­ã¿è¾¼ã¿) æ©Ÿèƒ½ã‚’ã‚‚ã¤ã‚‚ã®
+- RMarkdonw/knitr ã‚’åˆ©ç”¨ã—ã¦ãƒ¬ãƒãƒ¼ãƒ†ã‚£ãƒ³ã‚°ã‚’è‡ªå‹•åŒ–ã™ã‚‹ã‚‚ã®
+- git ã‚’ä½¿ã£ã¦ã€ã‚³ãƒ¼ãƒ‰ã ã‘ã§ãªãã€ãƒªã‚µãƒ¼ãƒçµæœã‚‚ãƒãƒ¼ã‚¸ãƒ§ãƒ³ç®¡ç†ã™ã‚‹ã‚‚ã®
 
-| DataPackageR    |  114 | reproducible research ‚Ì‚½‚ß‚Ìƒf[ƒ^‚ÌƒpƒbƒP[ƒW‰»                 |
+| DataPackageR    |  114 | reproducible research ã®ãŸã‚ã®ãƒ‡ãƒ¼ã‚¿ã®ãƒ‘ãƒƒã‚±ãƒ¼ã‚¸åŒ–                 |
 | _drake_           |  946 |                                                                    |
-| knowledge-repo  | 4000 | ƒf[ƒ^•ªÍƒvƒƒWƒFƒNƒg‚Ì‹¤—LƒŠƒ|ƒWƒgƒŠ                             |
+| knowledge-repo  | 4000 | ãƒ‡ãƒ¼ã‚¿åˆ†æãƒ—ãƒ­ã‚¸ã‚§ã‚¯ãƒˆã®å…±æœ‰ãƒªãƒã‚¸ãƒˆãƒª                             |
 | _ProjectTemplate_ |  550 | A template utility for R projects that provides a skeletal project |
 | remake          |  324 | Make-like declarative workflows in R                               |
 | rrtools         |  348 | Tools for Writing Reproducible Research in R                       |
 | usethis         |  454 | Set up commonly used package components                            |
 | workflowr       |  352 | Organize your project into a research website                      |
-
-* Bioconductor project
-
-- BiocManager
 
 * File I/O
 
@@ -153,65 +158,65 @@ _R ‚Ìƒ[ƒNƒtƒ[ƒpƒbƒP[ƒW_
 
 * Modeling 
 
-ˆê”Ê‰»‰Á–@ƒ‚ƒfƒ‹ (Generalized Addictive Model)
+ä¸€èˆ¬åŒ–åŠ æ³•ãƒ¢ãƒ‡ãƒ« (Generalized Addictive Model)
 - mgcv
 
-ƒƒoƒXƒg‰ñ‹A
+ãƒ­ãƒã‚¹ãƒˆå›å¸°
 - robustbase
 - MASS::rlm()
   
-üŒ`¬‡ƒ‚ƒfƒ‹ (Linear Mixed-Effects Model)
+ç·šå½¢æ··åˆãƒ¢ãƒ‡ãƒ« (Linear Mixed-Effects Model)
 - lme4
  
-”ñüŒ`¬‡ƒ‚ƒfƒ‹
+éç·šå½¢æ··åˆãƒ¢ãƒ‡ãƒ«
 - nlme
 
 * Time-Series Modeling
 
-ARIMA ƒ‚ƒfƒ‹
+ARIMA ãƒ¢ãƒ‡ãƒ«
 - arfima
 - forecast
 - rugarch
 
-GARCH ƒ‚ƒfƒ‹ (’P•Ï—Ê)
+GARCH ãƒ¢ãƒ‡ãƒ« (å˜å¤‰é‡)
 - fGarch
 - rugarch
 
-GARCH ƒ‚ƒfƒ‹ (‘½•Ï—Ê)
+GARCH ãƒ¢ãƒ‡ãƒ« (å¤šå¤‰é‡)
 - mgarch (BEKK)
 - rmgarch (DCC, GO-GARCH, Copula-GARCH)
   https://stackoverflow.com/questions/35035857/multivariate-garch1-1-in-r/35039163
-- ccgarch (DCC) (by ’†’J •üº)
+- ccgarch (DCC) (by ä¸­è°· æœ‹æ˜­)
   https://eprints.lib.hokudai.ac.jp/dspace/bitstream/2115/42903/1/RAE65_007.pdf
 - copula
 - fCopulae
 - MSGARCH
 
-VAR ƒ‚ƒfƒ‹
+VAR ãƒ¢ãƒ‡ãƒ«
 - vars
 - rmgarch::varx()
 - MSBVAR (Malkov Swiching Bayesian VAR)
 
-SV ƒ‚ƒfƒ‹
+SV ãƒ¢ãƒ‡ãƒ«
 - stochvol
 
-ƒ}ƒ‹ƒRƒtƒXƒCƒbƒ`ƒ‚ƒfƒ‹
+ãƒãƒ«ã‚³ãƒ•ã‚¹ã‚¤ãƒƒãƒãƒ¢ãƒ‡ãƒ«
 - depmixS4
 - MSwM
-- RHmm (CRAN ‚É‚Í‚È‚¢. http://r-forge.r-project.org/R/?group_id=85)
+- RHmm (CRAN ã«ã¯ãªã„. http://r-forge.r-project.org/R/?group_id=85)
 - MSGARCH
 
-ó‘Ô‹óŠÔƒ‚ƒfƒ‹
+çŠ¶æ…‹ç©ºé–“ãƒ¢ãƒ‡ãƒ«
 - dlm
 - KFAS
 
-’PˆÊªŒŸ’è
+å˜ä½æ ¹æ¤œå®š
 - fUnitRoots
 - urca
 - CADFtest
 - tseries
 
-‚»‚Ì‘¼
+ãã®ä»–
 - fracdiff
 - timsac
 - pro
@@ -219,13 +224,13 @@ SV ƒ‚ƒfƒ‹
 
 Recommneded by TJO
 https://tjo.hatenablog.com/entry/2013/07/04/190139
-- forecast # ’P•Ï—ÊŒn—ñƒ‚ƒfƒŠƒ“ƒOŒü‚¯BARIMA Ÿ”„’è‚â‚»‚Ì—\‘ª‚È‚Ç
-- tseries  # ”Ä—pƒpƒbƒP[ƒWB’PˆÊª‚Ì ADF ŒŸ’è‚È‚ÇŒn—ñ‚Ì«¿‚ğ’²‚×‚éÛ‚Ég‚¤
-- vars     # ‘½•Ï—ÊiƒxƒNƒgƒ‹jŒn—ñƒ‚ƒfƒŠƒ“ƒOŒü‚¯BƒYƒoƒŠ VAR ƒ‚ƒfƒ‹‚â‚»‚Ì—\‘ªAGranger ˆö‰Ê‚È‚Ç
-- urca     # ‹¤˜a•ªƒ‚ƒfƒŠƒ“ƒOŒü‚¯BVECM „’è‚È‚Ç
-- tsDyn    # ”ñüŒ`’P•Ï—ÊŒn—ñƒ‚ƒfƒŠƒ“ƒOŒü‚¯BSETAR ƒ‚ƒfƒ‹‚È‚Ç
-- MSwM     # ’P•Ï—ÊŒn—ñ‚Ìƒ}ƒ‹ƒRƒtó‘Ô“]Š·ƒ‚ƒfƒ‹„’è
-- MSBVAR   # ‘½•Ï—ÊŒn—ñ‚Ìƒ}ƒ‹ƒRƒtó‘Ô“]Š·ƒ‚ƒfƒ‹„’è (Œ»İ‚ÍŠJ”­’â~)
+- forecast # å˜å¤‰é‡æ™‚ç³»åˆ—ãƒ¢ãƒ‡ãƒªãƒ³ã‚°å‘ã‘ã€‚ARIMA æ¬¡æ•°æ¨å®šã‚„ãã®äºˆæ¸¬ãªã©
+- tseries  # æ±ç”¨ãƒ‘ãƒƒã‚±ãƒ¼ã‚¸ã€‚å˜ä½æ ¹ã® ADF æ¤œå®šãªã©æ™‚ç³»åˆ—ã®æ€§è³ªã‚’èª¿ã¹ã‚‹éš›ã«ä½¿ã†
+- vars     # å¤šå¤‰é‡ï¼ˆãƒ™ã‚¯ãƒˆãƒ«ï¼‰æ™‚ç³»åˆ—ãƒ¢ãƒ‡ãƒªãƒ³ã‚°å‘ã‘ã€‚ã‚ºãƒãƒª VAR ãƒ¢ãƒ‡ãƒ«ã‚„ãã®äºˆæ¸¬ã€Granger å› æœãªã©
+- urca     # å…±å’Œåˆ†ãƒ¢ãƒ‡ãƒªãƒ³ã‚°å‘ã‘ã€‚VECM æ¨å®šãªã©
+- tsDyn    # éç·šå½¢å˜å¤‰é‡æ™‚ç³»åˆ—ãƒ¢ãƒ‡ãƒªãƒ³ã‚°å‘ã‘ã€‚SETAR ãƒ¢ãƒ‡ãƒ«ãªã©
+- MSwM     # å˜å¤‰é‡æ™‚ç³»åˆ—ã®ãƒãƒ«ã‚³ãƒ•çŠ¶æ…‹è»¢æ›ãƒ¢ãƒ‡ãƒ«æ¨å®š
+- MSBVAR   # å¤šå¤‰é‡æ™‚ç³»åˆ—ã®ãƒãƒ«ã‚³ãƒ•çŠ¶æ…‹è»¢æ›ãƒ¢ãƒ‡ãƒ«æ¨å®š (ç¾åœ¨ã¯é–‹ç™ºåœæ­¢)
 
 * Machine Learning
 
@@ -236,31 +241,31 @@ https://tjo.hatenablog.com/entry/2013/07/04/190139
 - caret
 
 - tidymodels
-  - ƒŠƒTƒ“ƒvƒŠƒ“ƒO       ={rsample}=
-  - ‘Oˆ—               ={recipes}=
-  - ƒpƒ‰ƒƒ^ƒ`ƒ…[ƒjƒ“ƒO ={dials}= + ={tune}=
-  - ƒ‚ƒfƒ‹               ={parsnip}=
-  - •]‰¿                 ={yardstick}=
-  - ƒ[ƒNƒtƒ[         ={workflows}=
+  - ãƒªã‚µãƒ³ãƒ—ãƒªãƒ³ã‚°       ={rsample}=
+  - å‰å‡¦ç†               ={recipes}=
+  - ãƒ‘ãƒ©ãƒ¡ã‚¿ãƒãƒ¥ãƒ¼ãƒ‹ãƒ³ã‚° ={dials}= + ={tune}=
+  - ãƒ¢ãƒ‡ãƒ«               ={parsnip}=
+  - è©•ä¾¡                 ={yardstick}=
+  - ãƒ¯ãƒ¼ã‚¯ãƒ•ãƒ­ãƒ¼         ={workflows}=
 
 - mlr3
-  - ƒŠƒTƒ“ƒvƒŠƒ“ƒO       ={mlr3}=
-  - ‘Oˆ—               ={mlr3pipelines}= + ={mlr3filters}=
-  - ƒpƒ‰ƒƒ^ƒ`ƒ…[ƒjƒ“ƒO ={mlr3tuning}= + ={paradox}=
-  - ƒ‚ƒfƒ‹               ={mlr3}=
-  - •]‰¿                 ={mlr3}=
-  - ƒ[ƒNƒtƒ[         ={mlr3pipelines}=
-  - ‰Â‹‰»               ={mlr3viz}=
+  - ãƒªã‚µãƒ³ãƒ—ãƒªãƒ³ã‚°       ={mlr3}=
+  - å‰å‡¦ç†               ={mlr3pipelines}= + ={mlr3filters}=
+  - ãƒ‘ãƒ©ãƒ¡ã‚¿ãƒãƒ¥ãƒ¼ãƒ‹ãƒ³ã‚° ={mlr3tuning}= + ={paradox}=
+  - ãƒ¢ãƒ‡ãƒ«               ={mlr3}=
+  - è©•ä¾¡                 ={mlr3}=
+  - ãƒ¯ãƒ¼ã‚¯ãƒ•ãƒ­ãƒ¼         ={mlr3pipelines}=
+  - å¯è¦–åŒ–               ={mlr3viz}=
 
 * Finance
 
-ƒ|[ƒgƒtƒHƒŠƒI
+ãƒãƒ¼ãƒˆãƒ•ã‚©ãƒªã‚ª
 - fPortfolio
 - PortfolioAnalytics
 - RiskPortfolios
 - portfolio
 
-ƒpƒtƒH[ƒ}ƒ“ƒX
+ãƒ‘ãƒ•ã‚©ãƒ¼ãƒãƒ³ã‚¹
 - PerformanceAnalytics
 
 * other
