@@ -1,16 +1,17 @@
 #+STARTUP: showall indent
 
 * CSS Selector
+
  * (すべての要素)
 #id
 .class
 
-E F     Eの子孫関係にあるF
-E > F   Eの親子関係にあるF
-E + F   Eの隣り合わせにあるF
-E ~ F   EのあとにあるF
+E F     E の子孫関係にある F
+E > F   E の親子関係にある F
+E + F   E の隣り合わせにある F
+E ~ F   E のあとにある F
 
-E[foo]  foo という属性をもつE
+E[foo]  foo という属性をもつ E
 E[^foo]
 
 :not(selector)
