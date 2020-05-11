@@ -8,6 +8,10 @@ work/
 # ignore blog article my ox-gfm
 *.md
 
+# anyenv
+.python-version
+.Renv-version
+
 # R
 lang/r/temp.R
 lang/r/cheat_sheet/

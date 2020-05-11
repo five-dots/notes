@@ -19,8 +19,15 @@
   - [[#nodejs-environment-setup][node.js (Environment Setup)]]
   - [[#rust-environment-setup][Rust (Environment Setup)]]
 - [[#development-environment][Development Environment]]
+  - [[#database][Database]]
+  - [[#desktop][Desktop]]
+  - [[#emacs][Emacs]]
+  - [[#tool][Tool]]
+  - [[#windows][Windows]]
 - [[#finance][Finance]]
-- [[#trading-strategy][Trading Strategy]]
+  - [[#general][General]]
+  - [[#market][Market]]
+  - [[#strategy][Strategy]]
 #+END_QUOTE
 
 * Programming Language
@@ -44,7 +51,6 @@ org_links <- function(sub_dir = "lang/r/general", collapse = " | ", package = FA
 
 ** R ([[file:./lang/r/R_env.org][Environment Setup]])
 *** General
-
 
 #+begin_src R :results raw :exports results
 org_links("lang/r/general")
@@ -165,7 +171,70 @@ org_links("lang/csharp/general")
 ** node.js ([[file:./lang/nodejs/nodejs_env.org][Environment Setup]])
 ** Rust ([[file:./lang/rust/rust_env.org][Environment Setup]])
 * Development Environment
+** Database
+
+#+begin_src R :results raw :exports results
+org_links("env/database")
+#+end_src
+
+#+RESULTS:
+[[file:./env/database/mssql.org][mssql]] | [[file:./env/database/mysql.org][mysql]] | [[file:./env/database/sqlite.org][sqlite]]
+
+** Desktop 
+
+#+begin_src R :results raw :exports results
+org_links("env/desktop")
+#+end_src
+
+#+RESULTS:
+[[file:./env/desktop/display.org][display]] | [[file:./env/desktop/dropbox.org][dropbox]] | [[file:./env/desktop/enpass.org][enpass]] | [[file:./env/desktop/font.org][font]] | [[file:./env/desktop/japanese_input.org][japanese_input]] | [[file:./env/desktop/keybindings.org][keybindings]] | [[file:./env/desktop/touchpad.org][touchpad]] | [[file:./env/desktop/tws.org][tws]]
+
+** Emacs
+
+#+begin_src R :results raw :exports results
+org_links("env/emacs")
+#+end_src
+
+#+RESULTS:
+[[file:./env/emacs/auto-complete.org][auto-complete]] | [[file:./env/emacs/backup_autosave.org][backup_autosave]] | [[file:./env/emacs/emacs.org][emacs]] | [[file:./env/emacs/ess.org][ess]] | [[file:./env/emacs/font.org][font]] | [[file:./env/emacs/org-babel/org-babel.org][org-babel]] | [[file:./env/emacs/org-for-hugo-qiita/org-for-hugo-qiita.org][org-for-hugo-qiita]] | [[file:./env/emacs/org-mode.org][org-mode]] | [[file:./env/emacs/package_management.org][package_management]] | [[file:./env/emacs/spacemacs_vs_doom.org][spacemacs_vs_doom]] | [[file:./env/emacs/tramp.org][tramp]] | [[file:./env/emacs/workspace.org][workspace]]
+
+** Tool
+
+#+begin_src R :results raw :exports results
+org_links("env/tool")
+#+end_src
+
+#+RESULTS:
+[[file:./env/tool/css_selector.org][css_selector]] | [[file:./env/tool/curl.org][curl]] | [[file:./env/tool/docker.org][docker]] | [[file:./env/tool/ffmpeg.org][ffmpeg]] | [[file:./env/tool/full_text_search.org][full_text_search]] | [[file:./env/tool/gcloug.org][gcloug]] | [[file:./env/tool/git.org][git]] | [[file:./env/tool/hugo.org][hugo]] | [[file:./env/tool/screen.org][screen]] | [[file:./env/tool/shell.org][shell]] | [[file:./env/tool/ssh.org][ssh]] | [[file:./env/tool/task_scheduler.org][task_scheduler]] | [[file:./env/tool/tex.org][tex]] | [[file:./env/tool/virtualbox.org][virtualbox]]
+
+** Windows
+
+#+begin_src R :results raw :exports results
+org_links("env/windows")
+#+end_src
+
+#+RESULTS:
+[[file:./env/windows/application_list.org][application_list]] | [[file:./env/windows/wsl.org][wsl]]
+
 * Finance
-* Trading Strategy
+** General
+
+#+begin_src R :results raw :exports results
+org_links("finance/general")
+#+end_src
+
+#+RESULTS:
+[[file:./finance/general/asset_pricing/asset_pricing.org][asset_pricing]] | [[file:./finance/general/asset_return_risk/asset_return_risk.org][asset_return_risk]] | [[file:./finance/general/portfolio_thoery/portfolio_theory.org][portfolio_theory]] | [[file:./finance/general/price_adjustment/price_adjustment.org][price_adjustment]] | [[file:./finance/general/r_dataset_finance/r_dataset_finance.org][r_dataset_finance]] | [[file:./finance/general/us-etf-research/us-etf-research.org][us-etf-research]]
+
+** Market
+
+#+begin_src R :results raw :exports results
+org_links("finance/market")
+#+end_src
+
+#+RESULTS:
+[[file:./finance/market/bubble.org][bubble]] | [[file:./finance/market/can-slim-vca.org][can-slim-vca]] | [[file:./finance/market/china_stock.org][china_stock]] | [[file:./finance/market/continuous_future.org][continuous_future]] | [[file:./finance/market/crude_oil_fundamentals.org][crude_oil_fundamentals]] | [[file:./finance/market/data_vender.org][data_vender]] | [[file:./finance/market/daylight_saving_time.org][daylight_saving_time]] | [[file:./finance/market/exchange.org][exchange]] | [[file:./finance/market/fred.org][fred]] | [[file:./finance/market/market_data.org][market_data]] | [[file:./finance/market/market_risk.org][market_risk]] | [[file:./finance/market/moving_avg.org][moving_avg]] | [[file:./finance/market/ninjatrader_indicator.org][ninjatrader_indicator]] | [[file:./finance/market/ninjatrader_state.org][ninjatrader_state]] | [[file:./finance/market/open_gap_strat.org][open_gap_strat]] | [[file:./finance/market/opening_auction.org][opening_auction]] | [[file:./finance/market/pivot.org][pivot]] | [[file:./finance/market/polygon-io.org][polygon-io]] | [[file:./finance/market/price_action.org][price_action]] | [[file:./finance/market/sector.org][sector]] | [[file:./finance/market/spread.org][spread]] | [[file:./finance/market/spread_strat.org][spread_strat]] | [[file:./finance/market/stocksharp.org][stocksharp]] | [[file:./finance/market/strategy_component.org][strategy_component]] | [[file:./finance/market/strategy_idea.org][strategy_idea]] | [[file:./finance/market/trading_tool.org][trading_tool]] | [[file:./finance/market/vca.org][vca]]
+
+** Strategy
 
 - [[https://github.com/five-dots/etf-gmv-strat][ETF GMV Allocation]]
