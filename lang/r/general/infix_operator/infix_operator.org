@@ -1,0 +1,535 @@
+#+STARTUP: folded indent
+#+PROPERTY: header-args:R :results output code :colnames yes :session *R:blog* :eval never-export
+#+OPTIONS: author:nil H:6 toc:nil
+#+HUGO_BASE_DIR: ~/Dropbox/repos/github/five-dots/blog
+#+HUGO_SECTION: post/2020/05/
+
+#+TITLE: R の知っておくと便利な Infix Operator 達
+#+DATE: 2020-05-11
+#+HUGO_CATEGORIES: programming
+#+HUGO_TAGS: r
+#+HUGO_CUSTOM_FRONT_MATTER: :toc true
+
+[[https://github.com/five-dots/notes/blob/master/lang/r/general/df_roll_split/df_roll_split.org][GitHub]] | [[https://objective-boyd-9b8f29.netlify.app/2019/11/df_roll_split/][Blog]] | [[https://qiita.com/five-dots/items/616c5f07d7a68ec70f62][Qiita]]
+
+みんな大好き =%>%= (Pipe) でおなじみの *Infix Operator*. 調べてみると ={magrittr}= 以外にも、この形式の関数を収録しているパッケージは多数存在する。その中でも、知っておくと便利そう、というものを紹介していきたい。
+
+* Infix Operator とは？
+
+「神」こと Hadley Wichham の Advanced R [[https://adv-r.hadley.nz/functions.html#function-forms][6.8 Function forms]] によると、R の関数呼び出しの方法には、全部で 4 つの形態がある。
+
+1. *Prefix form*: 関数名の後に引数が続く、最も一般的な方法. =hoge(a, b)= の形態。
+2. *Infix form*: 関数名が 2 つの引数の間に置かれる呼び出し方法. =a %hoge% b= の形態。
+3. *Replacement form*: 値を変更するための関数. =hoge(x) <- c(a, b)= の形態。
+4. *Special form*: =for=, =while= や =[=, =[[= のような特別な形態。
+
+2 つ目の形態が今回のトピックだ。2つの値の位置を明確にするために =LHS(右辺) %hoge% RHS(左辺)= という書き方がされることもある。
+
+Infix とは、あまり聞き慣れない言葉だが、Prefix (接頭)・ Suffix (接尾) という単語の仲間で「接中」という意味だと考えれば、理解しやすいのではないかと思う。
+
+自身で定義する場合も簡単で、この 3 つの条件を守ればよい。
+  1. 引数は 2 つ
+  2. 関数名は =%= ではじまり =%= で終わる
+  3. R の関数命名規則から外れるので、さらに =`= で囲む
+#+begin_src R :exports both
+`%add%` <- function(lhs, rhs) {
+  lhs + rhs
+}
+
+1 %add% 2
+#+end_src
+
+#+RESULTS:
+#+begin_src R
+[1] 3
+#+end_src
+\\
+
+前述の Advanced R の記事でも述べられている通り、R の全ての関数呼び出しは、Prefix form で書き直すことが可能なため *Infix form でないと書くことができない処理は存在しない*. それでも、2 つの値を比較したりする処理は、Infix Operator を使って書くと、コードがより簡潔に記述できる、という点がメリットではないかと思う。
+
+* 紹介する演算子まとめ
+
+今回紹介する関数を一覧にまとめるとこのようになる。(={base}= に含まれるものは除外している。) 今後も有用なものが見つかり次第、更新していきたい。
+
+| Operator         | Package     | Description                              | Example                             |
+|------------------+-------------+------------------------------------------+-------------------------------------|
+| [[=%>%= パイプ演算子][ =%>%= ]]            | ={magrittr}=  | 左辺を右辺の第 1 引数へ渡す              | =mtcars %>% head()=                   |
+| [[=%<>%= 代入演算子][ =%<>%= ]]           | ={magrittr}=  | 右辺の結果を左辺に代入する               | =mtcars$mpg %<>% log()=               |
+| [[=%T>%= Tee 演算子][ =%T>%= ]]           | ={magrittr}=  | 右辺ではなく、左辺の結果を次に渡す       | =mtcars$mpg %T>% plot() %>% mean()=   |
+| [[=%$%= Exposition 演算子][ =%$%= ]]            | ={magrittr}=  | 左辺のオブジェクトに名前でアクセスする   | =mtcars %$% cor(mpg, disp)=           |
+|------------------+-------------+------------------------------------------+-------------------------------------|
+| [[=%<-%= 演算子][ =%<-%= ]]           | ={zeallot}=   | =vector= や =list= を分解して代入            | =c(x, y) %<-% c(0, 1)=                |
+|------------------+-------------+------------------------------------------+-------------------------------------|
+| [[=%@%= 演算子][ =%@%= ]]            | ={rlang}=     | 属性を抽出                               | =mtcars %@% class=                    |
+| [[=%¦%= 演算子][ =%¦¦%= ]]           | ={rlang}=     | =NULL= のデフォルト値                      | =NULL %¦¦% "default"=                 |
+| [[=%¦¦%= 演算子][ =%¦%= ]]            | ={rlang}=     | =NA= のデフォルト値                        | =c("hoge", NA, "fuga") %¦% "default"= |
+|------------------+-------------+------------------------------------------+-------------------------------------|
+| [[=%--%=  演算子][ =%--%= ]]           | ={lubridate}= | 時間の引き算                             | =arrival %--% leave=                  |
+| [[=%m-%=, =%m+%= 演算子][ =%m-%=, =%m+%= ]] | ={lubridate}= | 月末日の違いやうるう年を考慮して月を加減 | =ymd("2020-01-31") %m+% months(1)=    |
+| [[=%within%= 演算子][ =%within%= ]]       | ={lubridate}= | 日付・日時が =Interval= に含まれるか       | =today() %winthn% interval=           |
+|------------------+-------------+------------------------------------------+-------------------------------------|
+| [[=%<d-%= 演算子][ =%<d-%= ]]          | ={pryr}=      | 遅延評価される変数を作成                 | 下記参照                            |
+| [[=%<a-%= 演算子][ =%<a-%= ]]          | ={pryr}=      | 活性束縛を作成                           | =x %<a-% runif(1)=                    |
+
+※ =¦= は =|= に読み替えていただきたい。(org-mode の Table レイアウトがくずれてしまうため)
+
+* ライブラリの読み込み
+
+この記事で利用するパッケージを読み込む。
+#+begin_src R :results silent
+library(tidyverse)
+library(magrittr)
+library(zeallot)
+library(rlang)
+library(lubridate)
+library(pryr)
+#+end_src
+
+* 個別の紹介
+** =%>%= パイプ演算子
+
+- おなじみのパイプ演算子
+- 左辺を右辺の第 1 引数として渡す (=.= を利用すれば、第 1 引数以外にも渡すことが可能)
+#+begin_src R :exports both
+mtcars %>% head(2)
+#+end_src
+
+#+RESULTS:
+#+begin_src R
+              mpg cyl disp  hp drat    wt  qsec vs am gear carb
+Mazda RX4      21   6  160 110  3.9 2.620 16.46  0  1    4    4
+Mazda RX4 Wag  21   6  160 110  3.9 2.875 17.02  0  1    4    4
+#+end_src
+\\
+
+** =%<>%= 代入演算子
+
+- 右辺の処理結果を元の左辺のオブジェクトに代入する
+  - パイプの先頭で利用する
+
+例えば、以下のように処理の結果を同じ変数名で保持したい場合は、
+#+begin_src R :exports both :eval never
+mtcars <- mtcars %>%
+  mutate(mpg = log(mpg))
+#+end_src
+\\
+
+代入演算子を使って、以下のように簡潔に書き換えることができる
+#+begin_src R :exports both
+mtcars$mpg %<>% log()
+
+head(mtcars)
+#+end_src 
+
+#+RESULTS:
+#+begin_src R
+
+         mpg cyl disp  hp drat    wt  qsec vs am gear carb
+1 0.10736815   6  160 110 3.90 2.620 16.46  0  1    4    4
+2 0.10736815   6  160 110 3.90 2.875 17.02  0  1    4    4
+3 0.13102607   4  108  93 3.85 2.320 18.61  1  1    4    1
+4 0.11290221   6  258 110 3.08 3.215 19.44  1  0    3    1
+5 0.07185393   8  360 175 3.15 3.440 17.02  0  0    3    2
+6 0.06137734   6  225 105 2.76 3.460 20.22  1  0    3    1
+#+end_src
+\\
+
+** =%T>%= Tee 演算子
+
+- 右辺ではなく、左辺の結果をそのままスルーする
+- 返り値が無い、副作用を目的とした処理を挟んでも、処理を止めないために利用する
+- 基本形: =(オブジェクト) %T>% (副作用を目的とした処理) %>% (本来の処理に戻る)=
+#+begin_src R :exports both
+mtcars$mpg %T>% # 次の plot() は返り値がないため、%T>% を使ってスルーさせる
+  plot() %>%
+  mean()
+#+end_src
+
+#+RESULTS:
+#+begin_src R
+[1] 0.0719204
+#+end_src
+\\
+
+** =%$%= Exposition 演算子
+
+- 左辺のオブジェクトの名前を右辺で参照できる
+- data 引数を持たない関数に名前を渡すのに便利
+#+begin_src R :exports both
+mtcars %$% cor(mpg, disp)
+#+end_src
+
+#+RESULTS:
+#+begin_src R
+[1] -0.8475514
+#+end_src
+\\
+
+** =%<-%= 演算子
+
+- =vector= や =list= を分解して代入してくれる
+  - Python のアンパックに相当する機能を提供
+  - =data.frame= であれば、列単位に分解してくれる
+#+begin_src R :exports both
+c(x, y) %<-% c(0, 1)
+x
+y
+#+end_src
+
+#+RESULTS:
+#+begin_src R
+[1] 0
+[1] 1
+#+end_src
+\\
+
+- 「以降全て」を =...rest= で表現できる
+#+begin_src R :exports both
+c(first, ...rest) %<-% list("a", "b", "c", "d")
+rest
+#+end_src
+
+#+RESULTS:
+#+begin_src R
+[[1]]
+[1] "b"
+
+[[2]]
+[1] "c"
+
+[[3]]
+[1] "d"
+#+end_src
+\\
+
+** =%@%= 演算子
+
+- 左辺の属性を抽出できる
+#+begin_src R :exports both
+# attr(mtcars, "class") と同じ
+mtcars %@% class
+#+end_src
+
+#+RESULTS:
+#+begin_src R
+[1] "data.frame"
+#+end_src
+\\
+
+** =%¦¦%= 演算子
+
+- 左辺が NULL の場合、右辺に指定した値を返す
+  - 他の言語での NULL 合体演算子に相当
+#+begin_src R :exports both
+1 %||% "default"
+NULL %||% "default"
+#+end_src
+
+#+RESULTS:
+#+begin_src R
+[1] 1
+[1] "default"
+#+end_src
+\\
+
+** =%¦%= 演算子
+
+- =%||%= の =NA= 版
+  - 右辺で設定したデフォルト値で =NA= を置き換えてくれる
+#+begin_src R :exports both
+c("hoge", NA_character_, "fuga") %|% "default"
+#+end_src
+
+#+RESULTS:
+#+begin_src R
+[1] "hoge"    "default" "fuga"
+#+end_src
+\\
+
+** =%--%=  演算子
+
+- 左辺から右辺を引いた時間を lubridate の =Interval= class で返す
+#+begin_src R :exports both
+arrival <- ymd_hms("2011-06-04 12:00:00", tz = "Asia/Tokyo")
+leave <- ymd_hms("2011-08-20 14:00:00", tz = "Asia/Tokyo")
+arrival %--% leave
+#+end_src
+
+#+RESULTS:
+#+begin_src R
+[1] 2011-06-04 12:00:00 JST--2011-08-20 14:00:00 JST
+#+end_src
+\\
+
+** =%m-%=, =%m+%= 演算子
+
+- 月を安全に加算・減算する
+- 月末日やうるう年を考慮
+
+通常、以下の例だと、2/31, 4/31 は存在しないので =NA= になってしまう。
+#+begin_src R :exports both
+jan <- ymd("2020-01-31")
+jan + months(1:3)
+#+end_src
+
+#+RESULTS:
+#+begin_src R
+[1] NA           "2020-03-31" NA
+#+end_src
+\\
+
+- =%m+%=, =%m-%= であれば、月末日のズレを考慮して加算・減算してくれる
+#+begin_src R :exports both
+jan %m+% months(1:3)
+#+end_src
+
+#+RESULTS:
+#+begin_src R
+[1] "2020-02-29" "2020-03-31" "2020-04-30"
+#+end_src
+
+- うるう年も考慮してくれる
+#+begin_src R :exports both
+leap <- ymd("2020-02-29")
+leap %m+% years(1)
+leap %m-% years(1)
+#+end_src
+
+#+RESULTS:
+#+begin_src R
+[1] "2021-02-28"
+[1] "2019-02-28"
+#+end_src
+\\
+
+** =%within%= 演算子
+
+- 日付/日時が =Interval= に含まれているかどうか
+#+begin_src R :exports both
+int1 <- interval(ymd("2001-01-01"), ymd("2002-01-01"))
+int2 <- interval(ymd("2001-06-01"), ymd("2002-01-01"))
+
+ymd("2001-05-03") %within% int1
+int2 %within% int1
+ymd("1999-01-01") %within% int1
+#+end_src
+
+#+RESULTS:
+#+begin_src R
+[1] TRUE
+[1] TRUE
+[1] FALSE
+#+end_src
+
+#+begin_src R :exports both
+ttime <- ymd_hms("2019-03-31 12:31:12")
+rth <- interval(make_datetime(year(ttime), month(ttime), day(ttime), 9, 30, 0),
+                make_datetime(year(ttime), month(ttime), day(ttime), 16, 0, 0))
+ttime %within% rth
+#+end_src
+
+#+RESULTS:
+#+begin_src R
+[1] TRUE
+#+end_src
+\\
+
+** =%<d-%= 演算子
+
+- Delayed binding (遅延評価, =promise=) を作成する
+- =base::delayedAssign()= と同等
+#+begin_src R :exports both
+system.time(b %<d-% {
+Sys.sleep(1)
+1
+})
+system.time(b) # ここを実行した時点で、%<d-% のブロックが実行される
+#+end_src
+
+#+RESULTS:
+#+begin_src R
+
+user  system elapsed
+    0       0       0
+
+user  system elapsed
+0.000   0.000   1.002
+#+end_src
+\\
+
+** =%<a-%= 演算子
+
+- Active binding (活性束縛) の変数を作成する。(アクセスされる毎に再計算される変数
+- =base::makeActiveBinding()= と同等
+#+begin_src R :exports both
+x %<a-% runif(1)
+x
+x
+#+end_src
+
+#+RESULTS:
+#+begin_src R
+[1] 0.1833575
+[1] 0.05578229
+#+end_src
+\\
+
+* base package :noexport:
+** List
+
+- =:=, =::=, =:::=, =$=, =@=, =^=, =*=, =/=, =+=, =-=, =>=, =>==, =<=, =<==, ~=~, =!==, =!=, =&=, =&&=, =|=, =||=, =~=, =<-=, =<<-=
+- =%%=, =%*%=, =%/%=, =%in%=, =%o%=, =%x%=
+
+** =<-= 束縛
+
+- ?Reserved ワード以外は利用可能
+#+begin_src R :exports both
+`a + b` <- 3
+`:)` <- "smile"
+`    ` <- "spaces"
+ls()
+#+end_src
+
+#+RESULTS:
+#+begin_src R
+[1] "    "     ":)"       "a + b"    "settings"
+#+end_src
+\\
+
+** =<-= と =<<-= の違い
+
+- =<<-=
+- 親環境をさかのぼって変更する
+- 通常は利用しない方が良いが、Closure と組み合わせて使うと便利
+#+begin_src R :exports both
+x <- 10
+f <- function(x) {
+x <- 20 # グローバル変数は書き換えない
+x
+}
+f(x)
+x
+
+f <- function(x) {
+x <<- 20 # グローバル変数を書き換える
+x
+}
+f(x)
+x
+#+end_src
+
+#+RESULTS:
+#+begin_src R
+
+[1] 20
+
+[1] 10
+
+[1] 20
+
+[1] 20
+#+end_src
+\\
+
+** =::=, =:::= の違い
+
+- =pkg::obj=
+- Exported object
+- =pkg:::obj=
+- Internal object
+- Internal のオブジェクトにアクセスするのは、非推奨
+\\
+
+** =%%= 剰余
+
+#+begin_src R :exports both
+10 %% 3
+#+end_src
+
+#+RESULTS:
+#+begin_src R
+[1] 1
+#+end_src
+\\
+
+** =%/%= 整数の割り算
+
+#+begin_src R :exports both
+10 %/% 3
+10 / 3
+#+end_src
+
+#+RESULTS:
+#+begin_src R
+[1] 3
+
+[1] 3.333333
+#+end_src
+\\
+
+** =%in%= Matching operator
+
+#+begin_src R :exports both
+"hoge" %in% c("fuga", "hoge", "xxxx")
+#+end_src
+
+#+RESULTS:
+#+begin_src R
+[1] TRUE
+#+end_src
+\\
+
+* Links :noexport:
+
+- [[file:../stats/math.org][math 行列計算関連 =%*%=, =%x%=, =%o%=, =*= ]]
+* セッション情報
+
+#+begin_src R :exports both
+sessionInfo()
+#+end_src
+
+#+RESULTS:
+#+begin_src R
+R version 3.6.3 (2020-02-29)
+Platform: x86_64-pc-linux-gnu (64-bit)
+Running under: Ubuntu 18.04.4 LTS
+
+Matrix products: default
+BLAS:   /usr/lib/x86_64-linux-gnu/blas/libblas.so.3.7.1
+LAPACK: /usr/lib/x86_64-linux-gnu/lapack/liblapack.so.3.7.1
+
+locale:
+ [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C              
+ [3] LC_TIME=en_US.UTF-8        LC_COLLATE=C              
+ [5] LC_MONETARY=en_US.UTF-8    LC_MESSAGES=C             
+ [7] LC_PAPER=en_US.UTF-8       LC_NAME=C                 
+ [9] LC_ADDRESS=C               LC_TELEPHONE=C            
+[11] LC_MEASUREMENT=en_US.UTF-8 LC_IDENTIFICATION=C       
+
+attached base packages:
+[1] stats     graphics  grDevices utils     datasets  methods   base     
+
+other attached packages:
+ [1] pryr_0.1.4      lubridate_1.7.8 rlang_0.4.6     zeallot_0.1.0  
+ [5] magrittr_1.5    forcats_0.5.0   stringr_1.4.0   dplyr_0.8.5    
+ [9] purrr_0.3.4     readr_1.3.1     tidyr_1.0.3     tibble_3.0.1   
+[13] ggplot2_3.3.0   tidyverse_1.3.0
+
+loaded via a namespace (and not attached):
+ [1] Rcpp_1.0.4.6     cellranger_1.1.0 pillar_1.4.4     compiler_3.6.3  
+ [5] dbplyr_1.4.3     tools_3.6.3      jsonlite_1.6.1   lifecycle_0.2.0 
+ [9] nlme_3.1-147     gtable_0.3.0     lattice_0.20-41  pkgconfig_2.0.3 
+[13] reprex_0.3.0     cli_2.0.2        rstudioapi_0.11  DBI_1.1.0       
+[17] haven_2.2.0      withr_2.2.0      xml2_1.3.2       httr_1.4.1      
+[21] fs_1.4.1         generics_0.0.2   vctrs_0.2.4      hms_0.5.3       
+[25] grid_3.6.3       tidyselect_1.0.0 glue_1.4.0       R6_2.4.1        
+[29] fansi_0.4.1      readxl_1.3.1     pacman_0.5.1     modelr_0.1.7    
+[33] codetools_0.2-16 backports_1.1.6  scales_1.1.0     ellipsis_0.3.0  
+[37] rvest_0.3.5      assertthat_0.2.1 colorspace_1.4-1 stringi_1.4.6   
+[41] munsell_0.5.0    broom_0.5.6      crayon_1.3.4
+#+end_src
+
+* COMMENT Local Variables                                           :ARCHIVE:
+# Local Variables:
+# eval: (org-hugo-auto-export-mode)
+# End:
