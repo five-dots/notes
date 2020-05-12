@@ -87,7 +87,7 @@
   The value should be either (t . nil) to preserve the width of the chosen window, (nil . t) to preserve its height or (t . t) to preserve its height and width in future changes of the window configuration. `window-parameters' -- The value specifies an alist of window parameters to give the chosen window.
 
 - =allow-no-window=
-    A non-nil value means that display-buffer may not display the buffer and return nil immediately.
+  A non-nil value means that display-buffer may not display the buffer and return nil immediately.
 
 ** =display-buffer-overriding-action=
 
@@ -107,47 +107,7 @@ display-buffer-alist
 #+end_src
 
 #+RESULTS:
-- ("^\\*Table: " (+popup-buffer) (actions display-buffer-reuse-window display-buffer-below-selected) (side . bottom) (size) (window-width . 40) (window-height . 0.7) (slot) (vslot) (window-parameters (ttl . 5) (quit . t) (select . ignore) (modeline) (autosave)))
-- ("^\\*ess-describe" (+popup-buffer) (actions display-buffer-reuse-window display-buffer-below-selected) (side . bottom) (size) (window-width . 40) (window-height . 0.5) (slot) (vslot) (window-parameters (ttl . 5) (quit . t) (select . ignore) (modeline) (autosave)))
-- ("^\\*R view\\*$" (+popup-buffer) (actions) (side . bottom) (size . 0.5) (window-width . 40) (window-height . 0.16) (slot) (vslot) (window-parameters (ttl . 5) (quit . t) (select . ignore) (modeline) (autosave)))
-- ("^\\*R dired" (+popup-buffer) (actions display-buffer-reuse-window display-buffer-below-selected) (side . bottom) (size) (window-width . 40) (window-height . 0.3) (slot) (vslot) (window-parameters (ttl . 5) (quit . t) (select) (modeline . t) (autosave) (transient . t) (no-other-window . t)))
-- ("^\\*R" nil)
-- ("^\\*ivy-occur" (+popup-buffer) (actions) (side . bottom) (size . 0.35) (window-width . 40) (window-height . 0.16) (slot) (vslot) (window-parameters (ttl . 0) (quit) (select . ignore) (modeline) (autosave)))
-- ("^\\*xref\\*$" nil)
-- ("^\\(?:\\*magit\\|magit:\\| \\*transient\\*\\)" nil)
-- ("^\\*image-dired" (+popup-buffer) (actions) (side . bottom) (size . 0.8) (window-width . 40) (window-height . 0.16) (slot . 20) (vslot) (window-parameters (ttl . 0) (quit) (select . t) (modeline) (autosave)))
-- ("^CAPTURE-.*\\.org$" (+popup-buffer) (actions) (side . bottom) (size . 0.25) (window-width . 40) (window-height . 0.16) (slot) (vslot) (window-parameters (ttl . 5) (quit) (select . t) (modeline) (autosave . t)))
-- ("^\\*Org-Babel" (+popup-buffer) (actions) (side . bottom) (size) (window-width . 40) (window-height . 0.16) (slot) (vslot) (window-parameters (ttl . 5) (quit . t) (select . ignore) (modeline) (autosave)))
-- ("^\\*Org Src" (+popup-buffer) (actions) (side . bottom) (size . 0.4) (window-width . 40) (window-height . 0.16) (slot) (vslot) (window-parameters (ttl) (quit) (select . t) (modeline . t) (autosave . t)))
-- ("^\\*Org Agenda" nil)
-- ("^\\*Org \\(?:Select\\|Attach\\)" (+popup-buffer) (actions) (side . bottom) (size . 0.25) (window-width . 40) (window-height . 0.16) (slot . -1) (vslot . -2) (window-parameters (ttl . 0) (quit . t) (select . ignore) (modeline) (autosave)))
-- ("^ ?\\*\\(?:Agenda Com\\|Calendar\\|Org Export Dispatcher\\)" (+popup-buffer) (actions) (side . bottom) (size function +popup-shrink-to-fit) (window-width . 40) (window-height . 0.16) (slot . -1) (vslot . -1) (window-parameters (ttl . 0) (quit . t) (select . ignore) (modeline) (autosave)))
-- ("^\\*Org Links" (+popup-buffer) (actions) (side . bottom) (size . 2) (window-width . 40) (window-height . 0.16) (slot . -1) (vslot . -1) (window-parameters (ttl . 0) (quit . t) (select . ignore) (modeline) (autosave)))
-- ("^\\*Flycheck error messages\\*" (+popup-buffer) (actions) (side . bottom) (size) (window-width . 40) (window-height . 0.16) (slot) (vslot) (window-parameters (ttl . 5) (quit . t) (select) (modeline) (autosave)))
-- ("^\\*lsp session\\*$" nil)
-- ("^\\*General Keybindings\\*$" nil)
-- ("^\\*Command Line" (+popup-buffer) (actions) (side . bottom) (size . 8) (window-width . 40) (window-height . 0.16) (slot) (vslot) (window-parameters (ttl . 5) (quit . t) (select . ignore) (modeline) (autosave)))
-- ("^\\*evil-registers" (+popup-buffer) (actions) (side . bottom) (size . 0.3) (window-width . 40) (window-height . 0.16) (slot) (vslot) (window-parameters (ttl . 5) (quit . t) (select . ignore) (modeline) (autosave)))
-- ((closure (t) (bufname _) (if (boundp (quote +eval-repl-mode)) (progn (buffer-local-value (quote +eval-repl-mode) (get-buffer bufname))))) (+popup-buffer) (actions) (side . bottom) (size . 0.25) (window-width . 40) (window-height . 0.16) (slot) (vslot) (window-parameters (ttl closure (t) (buf) (if (plist-get +eval-repl-plist :persist) nil (let* ((process (and t (get-buffer-process buf)))) (if process (progn (set-process-query-on-exit-flag process nil) (kill-process process) (kill-buffer buf)) nil)))) (quit) (select . ignore) (modeline) (autosave)))
-- ("^\\*F\\(?:d\\|ind\\)\\*$" nil)
-- ("^\\*\\(?:Proced\\|timer-list\\|Process List\\|Abbrevs\\|Output\\|Occur\\|unsent mail\\)\\*" nil)
-- ("^\\*Memory-Profiler-Report " (+popup-buffer) (actions) (side . bottom) (size) (window-width . 0.5) (window-height . 0.4) (slot . 2) (vslot . 100) (window-parameters (ttl . 5) (quit) (select . ignore) (modeline) (autosave)))
-- ("^\\*CPU-Profiler-Report " (+popup-buffer) (actions) (side . bottom) (size) (window-width . 0.5) (window-height . 0.4) (slot . 1) (vslot . 100) (window-parameters (ttl . 5) (quit) (select . ignore) (modeline) (autosave)))
-- ("^\\*Backtrace" (+popup-buffer) (actions) (side . bottom) (size . 0.4) (window-width . 40) (window-height . 0.16) (slot) (vslot . 99) (window-parameters (ttl . 5) (quit) (select . ignore) (modeline) (autosave)))
-- ("^\\*Warnings" (+popup-buffer) (actions) (side . bottom) (size . 0.25) (window-width . 40) (window-height . 0.16) (slot) (vslot . 99) (window-parameters (ttl . 5) (quit . t) (select . ignore) (modeline) (autosave)))
-- ("^\\*info\\*$" (+popup-buffer) (actions) (side . bottom) (size . 0.45) (window-width . 40) (window-height . 0.16) (slot . 2) (vslot . 2) (window-parameters (ttl . 5) (quit . t) (select . t) (modeline) (autosave)))
-- ("^\\*eww\\*" (+popup-buffer) (actions) (side . bottom) (size . 0.35) (window-width . 40) (window-height . 0.16) (slot) (vslot . -11) (window-parameters (ttl . 5) (quit . t) (select . t) (modeline) (autosave)))
-- ("^\\*[Hh]elp" (+popup-buffer) (actions) (side . bottom) (size . 0.35) (window-width . 40) (window-height . 0.16) (slot . 2) (vslot . -8) (window-parameters (ttl . 5) (quit . t) (select . t) (modeline) (autosave)))
-- ("^ \\*undo-tree\\*" (+popup-buffer) (actions) (side . left) (size . 20) (window-width . 40) (window-height . 0.16) (slot . 2) (vslot) (window-parameters (ttl . 5) (quit . t) (select . t) (modeline) (autosave)))
-- ("^\\*Customize" (+popup-buffer) (actions) (side . right) (size) (window-width . 40) (window-height . 0.16) (slot . 2) (vslot) (window-parameters (ttl . 5) (quit . t) (select . t) (modeline) (autosave)))
-- ("^\\*Calc" (+popup-buffer) (actions) (side . bottom) (size . 0.4) (window-width . 40) (window-height . 0.16) (slot) (vslot . -7) (window-parameters (ttl . 0) (quit) (select . t) (modeline) (autosave)))
-- ("^\\*\\(?:Wo\\)?Man " (+popup-buffer) (actions) (side . bottom) (size . 0.45) (window-width . 40) (window-height . 0.16) (slot) (vslot . -6) (window-parameters (ttl . 0) (quit . t) (select . t) (modeline) (autosave)))
-- ("^\\*doom:\\(?:v?term\\|e?shell\\)-popup" (+popup-buffer) (actions) (side . bottom) (size . 0.35) (window-width . 40) (window-height . 0.16) (slot) (vslot . -5) (window-parameters (ttl) (quit) (select . t) (modeline) (autosave)))
-- ("^\\*doom:" (+popup-buffer) (actions) (side . bottom) (size . 0.35) (window-width . 40) (window-height . 0.16) (slot) (vslot . -4) (window-parameters (ttl . t) (quit) (select . t) (modeline . t) (autosave . t)))
-- ("^\\*\\(?:doom \\|Pp E\\)" (+popup-buffer) (actions) (side . bottom) (size . +popup-shrink-to-fit) (window-width . 40) (window-height . 0.16) (slot) (vslot . -3) (window-parameters (ttl . 0) (quit . t) (select . ignore) (modeline) (autosave . t)))
-- ("^\\*\\(?:[Cc]ompil\\(?:ation\\|e-Log\\)\\|Messages\\)" (+popup-buffer) (actions) (side . bottom) (size . 0.3) (window-width . 40) (window-height . 0.16) (slot) (vslot . -2) (window-parameters (ttl) (quit . t) (select . ignore) (modeline) (autosave . t)))
-- ("^\\*Local variables\\*$" (+popup-buffer) (actions) (side . bottom) (size . +popup-shrink-to-fit) (window-width . 40) (window-height . 0.16) (slot . 1) (vslot . -1) (window-parameters (ttl . 5) (quit . t) (select . ignore) (modeline) (autosave)))
-- ("^\\*Completions" nil)
+- ("^\\*Ilist\\*$" imenu-list-display-buffer)
 
 ** =display-buffer-base-action=
 

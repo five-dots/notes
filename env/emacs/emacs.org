@@ -35,7 +35,7 @@ git checkout emacs-27
 ./configure --prefix=$HOME/emacs/emacs-27.0.91 --with-mailutils --with-cairo --with-xwidgets --with-imagemagick --without-xaw3d
 
 # emacs 26
-./configure --prefix=$HOME/emacs --with-mailutils --with-cairo --with-xwidgets --with-modules --without-xaw3d
+./configure --prefix=$HOME/emacs/emacs-26.3 --with-mailutils --with-cairo --with-xwidgets --with-modules --without-xaw3d
 
 make
 

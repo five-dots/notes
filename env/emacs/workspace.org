@@ -22,6 +22,8 @@
 - 指定した window では、特定の purpose を持つ mode のバッファしか開かないようにする
 - _spacemacs-purpose layar_
 
+- window レイアウトの保存
+
 ** perspective.el, 417 stars
 ** elscreen.el, 144 stars
 ** perspeen.el, 61 stars

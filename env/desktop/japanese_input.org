@@ -100,7 +100,17 @@ sudo make install でインストール
 - [[https://solist.work/blog/posts/mozc/][Google 日本語入力(Mozc)]]
 - [[http://d.hatena.ne.jp/sifue/20120411/1334161078][escape を IME キャンセルに割り当てる for vim binding]]
 - [[https://github.com/google/mozc][Official repo]]
-  
+
+** Emacs + ibus + mozc
+
+- [[https://skalldan.wordpress.com/2012/05/11/emacs-ibus-mozc-%E3%81%A7%E6%97%A5%E6%9C%AC%E8%AA%9E%E5%85%A5%E5%8A%9B/][Emacs + iBus + Mozc で日本語入力]]
+
+python ibus module
+- https://ubuntu.pkgs.org/14.04/ubuntu-main-amd64/python-ibus_1.5.5-1ubuntu3_all.deb.html
+
+以下のエラーで未だに使えない
+- =ibus-query-surrounding-text-cb: Wrong type argument: stringp, nil= 
+
 ** 設定
 
 - =~/Dropbox/mozc= を =~/.mozc= へリンク

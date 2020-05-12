@@ -1,5 +1,6 @@
 #+STARTUP: folded indent latexpreview
 #+ATTR_ORG: :width 480
+#+PROPERTY: header-args:R :results output :colnames yes :session *R:org-babel*
 
 - [[https://orgmode.org/manual/][The Org Manual]]
 
@@ -106,8 +107,8 @@ org-babel-default-header-args
 #+end_src
 
 #+RESULTS:
-: GNU Emacs 26.3 (build 2, x86_64-pc-linux-gnu, GTK+ Version 3.22.30)
-:  of 2019-09-17
+: GNU Emacs 27.0.91 (build 5, x86_64-pc-linux-gnu, GTK+ Version 3.22.30, cairo version 1.15.10)
+:  of 2020-05-11
 
 ** shell
 
@@ -184,9 +185,16 @@ head(iris)
 
 *** plot (graphics)
 
-- ~:results graphics :file hoge.png~ でプロット作成
-- doom-emacs では ~:results graphics file~ にする必要あり
-- ~:width 640~ ~:height 480~ のようにサイズを指定できる (数字を文字列にしては NG)
+- =:results graphics :file hoge.png= でプロット作成
+- doom-emacs では =:results graphics file= にする必要あり
+- =:width 640= ~:height 480~ のようにサイズを指定できる (数字を文字列にしては NG)
+
+- =grDevice::svg()= が利用できれば、SVG で出力できる
+- ただし、cairo が必要
+- 画像のサイズ指定方法が SVG と PNG 等では異なる
+  - png/jpeg が画像サイズをピクセルで指定する
+  - Display のインチで指定
+  - -> 異なる DPI のディスプレイでも見た目を統一することができるか？
 
 #+begin_src R :results graphics file :file babel-img/R-test-1.png
 plot(1:100)

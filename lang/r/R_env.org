@@ -73,12 +73,12 @@ capabilities()
 #+end_src
 
 #+RESULTS:
-:        jpeg         png        tiff       tcltk         X11        aqua
-:        TRUE        TRUE        TRUE        TRUE        TRUE       FALSE
-:    http/ftp     sockets      libxml        fifo      cledit       iconv
-:        TRUE        TRUE        TRUE        TRUE       FALSE        TRUE
-:         NLS     profmem       cairo         ICU long.double     libcurl
-:        TRUE       FALSE        TRUE        TRUE        TRUE        TRUE
+:        jpeg         png        tiff       tcltk         X11        aqua 
+:        TRUE        TRUE        TRUE        TRUE        TRUE       FALSE 
+:    http/ftp     sockets      libxml        fifo      cledit       iconv 
+:        TRUE        TRUE        TRUE        TRUE       FALSE        TRUE 
+:         NLS     profmem       cairo         ICU long.double     libcurl 
+:        TRUE       FALSE        TRUE        TRUE        TRUE        TRUE 
 
 * WSL
 
