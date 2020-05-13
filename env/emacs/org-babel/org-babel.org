@@ -157,7 +157,8 @@ a + b
 #+end_src
 
 #+RESULTS:
-: 70
+: 
+: [1] 70
 
 - 変数を参照できる
 #+begin_src R :session *hoge*
