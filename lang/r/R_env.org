@@ -41,8 +41,9 @@
   - 環境構築時の利用を想定
 
 * Build R from Source
+** Overview
 
-- [[https://support.rstudio.com/hc/en-us/articles/218004217-Building-R-from-source][Building R from source]]
+- [[https://support.rstudio.com/hc/en-us/articles/218004217-Building-R-from-source][Building R from source@RStudio]]
 - [[https://stats.biopapyrus.jp/r/devel/r-install.html][ソースコードをコンパイルして R をインストール@biostatistics]]
 
 - [[https://cran.ism.ac.jp/][CRAN]] から必要なバージョンのソースをダウンロード
@@ -52,11 +53,13 @@
   - mac の場合は、texinfo の PATH を通す
 - cairo の機能が skipped になるケースがある
 
-#+begin_src shell
+#+begin_src shell :eval never
 
 # anyenv を利用する場合は、以下のようにインストール先を指定
 # --enable-R-shlib は R Studio Server から R shared library にアクセスするために必要
 ./configure --prefix=/home/shun/.anyenv/envs/Renv/versions/4.0.0 --enable-R-shlib
+--with-blas
+--with-lapack
 
 # mac
 # ./configure --prefix=/Users/shun/.anyenv/envs/Renv/versions/4.0.0 --enable-R-shlib
@@ -79,6 +82,140 @@ capabilities()
 :        TRUE        TRUE        TRUE        TRUE       FALSE        TRUE 
 :         NLS     profmem       cairo         ICU long.double     libcurl 
 :        TRUE       FALSE        TRUE        TRUE        TRUE        TRUE 
+
+** BLAS/LAPACK
+*** Overview
+
+参考
+- [[https://csantill.github.io/RPerformanceWBLAS/][Improving R Perfomance by installing optimized BLAS/LAPACK libraries]]
+  - ベンチマーク比較があり詳細
+- [[https://qiita.com/hoxo_m/items/aa04b9d3d7a32cb6a1a3][OpenBLAS で R を高速化 - Qiita]]
+  - BLAS を OpenBLAS に切り替えて速度向上を図る
+- [[https://www.r-bloggers.com/why-is-r-slow-some-explanations-and-mklopenblas-setup-to-try-to-fix-this/][Why is R slow? some explanations and MKL/OpenBLAS setup to try to fix this | ...]]
+- [[https://blog.revolutionanalytics.com/2015/10/edge-cases-in-using-the-intel-mkl-and-parallel-programming.html][Edge cases in using the Intel MKL and parallel programming (Revolutions)]]
+  - BLAS ライブラリが並列化パッケージと干渉してしまう場合のコア数制限方法
+ 
+- BLAS (Basic Linear Algebra Subprograms)
+  - 行列計算用のライブラリ
+  - Ubuntu パッケージは =libblas3=
+
+- LAPACK
+  - Fortran 製
+  - Ubuntu パッケージは =liblapack3=
+  - 連立一次方程式・最小二乗法・固有値問題・特異値問題
+  - LU, Cholesky, QR, SVD, Schur, generalized Schur
+
+- 選択肢
+  - OpenBLAS
+  - AtlasBLAS
+  - GotoBLAS
+  - Intel MKL: Intel CPU では当然速い
+    - [[https://software.intel.com/content/www/us/en/develop/articles/installing-intel-free-libs-and-python-apt-repo.html][Installing Intel® Performance Libraries and Intel® Distribution for...]] 
+    - [[https://qiita.com/f0o0o/items/d79971215fd37c3a5d36][Intel MKL を apt からインストールする - Qiita]]
+    - [[http://dirk.eddelbuettel.com/blog/2018/04/15/][Thinking inside the box]]
+  - Microsoft R Open
+- 選択肢 (Mac)
+  - veclib
+
+- 利用方法
+  - R を =--with-blas= でビルド
+  - =update-alternatives= で利用するライブラリを選択
+
+- 現在の設定を確認
+#+begin_src R :exports both :results output
+sessionInfo() 
+#+end_src
+
+#+RESULTS:
+#+begin_example
+R version 3.6.3 (2020-02-29)
+Platform: x86_64-pc-linux-gnu (64-bit)
+Running under: Ubuntu 18.04.4 LTS
+
+Matrix products: default
+BLAS:   /home/shun/.anyenv/envs/Renv/versions/3.6.3/lib/R/lib/libRblas.so
+LAPACK: /home/shun/.anyenv/envs/Renv/versions/3.6.3/lib/R/lib/libRlapack.so
+
+locale:
+ [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C              
+ [3] LC_TIME=en_US.UTF-8        LC_COLLATE=C              
+ [5] LC_MONETARY=en_US.UTF-8    LC_MESSAGES=C             
+ [7] LC_PAPER=en_US.UTF-8       LC_NAME=C                 
+ [9] LC_ADDRESS=C               LC_TELEPHONE=C            
+[11] LC_MEASUREMENT=en_US.UTF-8 LC_IDENTIFICATION=C       
+
+attached base packages:
+[1] stats     graphics  grDevices utils     datasets  methods   base     
+
+loaded via a namespace (and not attached):
+[1] compiler_3.6.3
+#+end_example
+
+*** update-alternatives
+
+- 複数のライブラリの切り替えに必要な設定
+- system の R 向けの設定 
+#+begin_src shell
+sudo alternatives --install /usr/lib/x86_64-linux-gnu/blas/libblas.so.3 libblas.so.3 /usr/lib/x86_64-linux-gnu/blas/libblas.so.3.7.1 10
+
+sudo update-alternatives --install /usr/lib/x86_64-linux-gnu/blas/libblas.so.3 libblas.so.3 /opt/intel/mkl/lib/intel64/libmkl_rt.so 50
+
+sudo alternatives --install /usr/lib/x86_64-linux-gnu/liblapack.a liblapack.a /usr/lib/x86_64-linux-gnu/lapack/liblapack.a
+#+end_src
+
+- anyenv 環境での利用を想定
+#+begin_src shell
+sudo alternatives --install /usr/lib64/libblas.so.3 libblas.so.3 /usr/lib64/libblas.so.3.5.0 10
+
+sudo update-alternatives --install /home/shun/.anyenv/envs/Renv/versions/3.6.3/lib/R/lib/libRblas.so libRblas.so /home/shun/.anyenv/envs/Renv/versions/3.6.3/lib/R/lib/libRblas.so 
+
+sudo update-alternatives --install /home/shun/.anyenv/envs/Renv/versions/3.6.3/lib/R/lib/libRblas.so libRblas.so /opt/intel/mkl/lib/intel64/libmkl_rt.so 50
+#+end_src
+  
+*** ベンチマーク
+
+- [[https://github.com/pachamaltese/r-with-intel-mkl/blob/master/00-benchmark-scripts/1-r-benchmark-25.R][r-with-intel-mkl/1-r-benchmark-25.R at master · pachamaltese/r-with-intel-mkl...]] 
+#+BEGIN_QUOTE
+quote
+   R Benchmark 2.5
+   ===============
+Number of times each test is run__________________________:  3
+
+   I. Matrix calculation
+   ---------------------
+Creation, transp., deformation of a 2500x2500 matrix (sec):  0.586333333333333 
+2400x2400 normal distributed random matrix ^1000____ (sec):  0.45 
+Sorting of 7,000,000 random values__________________ (sec):  0.702333333333334 
+2800x2800 cross-product matrix (b = a' * a)_________ (sec):  13.1966666666667 
+Linear regr. over a 3000x3000 matrix (c = a \ b')___ (sec):  6.10233333333333 
+                      --------------------------------------------
+                 Trimmed geom. mean (2 extremes eliminated):  1.3595481632573 
+
+   II. Matrix functions
+   --------------------
+FFT over 2,400,000 random values____________________ (sec):  0.266666666666666 
+Eigenvalues of a 640x640 random matrix______________ (sec):  0.623666666666665 
+Determinant of a 2500x2500 random matrix____________ (sec):  2.46199999999999 
+Cholesky decomposition of a 3000x3000 matrix________ (sec):  4.66266666666666 
+Inverse of a 1600x1600 random matrix________________ (sec):  2.455 
+                      --------------------------------------------
+                Trimmed geom. mean (2 extremes eliminated):  1.55631448400477 
+
+   III. Programmation
+   ------------------
+3,500,000 Fibonacci numbers calculation (vector calc)(sec):  0.413666666666662 
+Creation of a 3000x3000 Hilbert matrix (matrix calc) (sec):  0.187666666666663 
+Grand common divisors of 400,000 pairs (recursion)__ (sec):  0.184999999999993 
+Creation of a 500x500 Toeplitz matrix (loops)_______ (sec):  0.0360000000000108 
+Escoufier's method on a 45x45 matrix (mixed)________ (sec):  0.217999999999989 
+                      --------------------------------------------
+                Trimmed geom. mean (2 extremes eliminated):  0.196338342671326 
+
+
+Total time for all 15 tests_________________________ (sec):  32.548 
+Overall mean (sum of I, II and III trimmed means/3)_ (sec):  0.746160679340756 
+                      --- End of test ---
+#+end_quote
 
 * WSL
 
