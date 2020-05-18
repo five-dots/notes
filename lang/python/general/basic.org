@@ -806,6 +806,46 @@ print("hoge", "fuga", "piyo")
 #+RESULTS:
 : ['hoge', ' fuga', ' piyo']
 
+*** 変数の埋め込み
+
+- =f-string= (3.6 からの機能)
+#+begin_src python
+name = "Shun"
+s = f"{name} desu."
+print(s)
+#+end_src
+
+#+RESULTS:
+: Shun desu.
+
+- 変数名を自動で表示 (3.8 からの機能)
+#+begin_src python
+s = f"{name=} desu."
+print(s)
+#+end_src
+
+#+RESULTS:
+: name='Shun' desu.
+
+- =str.format()=
+#+begin_src python
+s = "{} desu.".format("Shun")
+print(s)
+#+end_src
+
+#+RESULTS:
+: Shun desu.
+
+- =%= で指定
+#+begin_src python
+name = "Shun"
+s = "%s desu." % name
+print(s)
+#+end_src
+
+#+RESULTS:
+: Shun desu.
+
 ** セット (集合)
 *** 作成
 
@@ -865,6 +905,44 @@ print(a ^ b)
 : {'r', 'l', 'm', 'z', 'c', 'a', 'b', 'd'}
 : {'a', 'c'}
 : {'b', 'r', 'l', 'm', 'z', 'd'}
+
+** 内包表記
+
+- List 内包表記
+#+begin_src python
+list1 = [i for i in range(10)]
+print(list1)
+#+end_src
+
+#+RESULTS:
+: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+
+- Set 内包表記
+#+begin_src python
+set1 = {i for i in range(10)}
+print(set1)
+#+end_src
+
+#+RESULTS:
+: {0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
+
+- Dict 内包表記
+#+begin_src python
+dict1 = {str(i): i for i in range(10)}
+print(dict1)
+#+end_src
+
+#+RESULTS:
+: {'0': 0, '1': 1, '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9}
+
+- =(= はタプルの内包表記ではなく、ジェネレーター式と呼ばれる
+#+begin_src python
+gen1 = (i for i in range(10))
+print(gen1)
+#+end_src
+
+#+RESULTS:
+: <generator object <genexpr> at 0x7f069cd31ac0>
 
 * 制御構文
 ** if
@@ -984,6 +1062,26 @@ list(rng)
 
 #+RESULTS:
 : [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+
+** =:\equal= 演算子 (セイウチ演算子)
+
+- 以下のように書くケース
+#+begin_src python
+name = "Shun"
+if name == "Shun": print("Hello Shun!")
+#+end_src
+
+#+RESULTS:
+: Hello Shun!
+
+- 3.8 からは以下のように書ける。事前に変数を用意しなくてよい。
+#+begin_src python
+if name := "Shun" == "Shun": print("Hello Shun!")
+#+end_src
+
+#+RESULTS:
+: 
+: Hello Shun!
 
 * クラス
 ** 基本
@@ -1416,10 +1514,10 @@ print(a) # グローバルの値が書き換わる
 
 ** 関数アノテーション
 
-- Type Hint (from Python 3.5-)
-- 引数のあとに : xxx
-- 関数の戻り値 -> xxx
-- 単に期待する情報なので、 _従わなくてもエラーにならない_
+- Type Hint (from Python 3.5)
+  - 引数のあとに : xxx
+  - 関数の戻り値 -> xxx
+  - 単に期待する情報なので、 _従わなくてもエラーにならない_
 #+begin_src python
 def add(a: int = 10, b: int = 20) -> int:
     return(a + b)

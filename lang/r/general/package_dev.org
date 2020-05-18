@@ -103,7 +103,81 @@ devtools::check()
 devtools::install()
 #+end_src
 
+* パッケージの状態
+
+- ソースパッケージ
+
+- バンドルパッケージ
+  - =devtools::buiild()= で作成
+  - =.tar.gz= でまとめられた状態
+  - =.Rbuildignore= のファイルは除外
+
+- バイナリパッケージ
+  - =devtools::buiild(binary = TRUE)= で作成
+  - =.R= ファイルが存在しない. R にオブジェクトをロードして =save()= した状態
+  - プラットフォーム依存
+
+- インストール済みのパッケージ
+  - バイナリパッケージが解凍されたもの
+
+- インメモリパッケージ
+  - *Attach*: パッケージを Search Path におく (=require()= もしくは =library()=)
+    - =require()= と =library()= の違いはパッケージが存在しないときにエラーになるかどうか
+    - パッケージ内部で利用可否をチェック: =requireNamespace("x", quietly=TRUE)= を使う
+    - =.onAttach()= が実行される
+  - *Load*: コード・データ・ DLL がロードされ =.onLoad()= が実行される
+    - =::= で関数にアクセスするか =loadNamespace()= すると Load される
+    - =package::fun= で関数を実行すると、Load はされるが、Attach はされない
+
+- DESCRIPTION
+  - Depends = Attach まで行う
+  - Import = Load はするが、Attach はしない (=package::fun= の形式で使う)
+
+- =zzz.R= に書かれるべき関数
+  - =.onAttach()=
+    - パッケージの Startup Message を =pacakgeStartupMessage()= で設定する
+  - =.onLoad()=
+    - パッケージ固有のオプションを設定する
+
 * CRAN 登録
+** フロー
+
+- 名前が既に登録されていないか確認
+  - https://cran.r-project.org/web/packages/Package_Name
+
+- バージョン番号決定 (はじめは 0.1.0 あたりから)
+
+- =devtools::check()= を通す (R CMD check)
+  - Windows 環境は =devtools::check_win_devel()= で確認
+    - Windows 向けに CRAN でビルドと R CMD check をしてくれる
+
+- CRAN ポリシーの確認
+  - 有効な Mail Address
+  - ライセンス
+  - 2 つ以上のプラットフォームでテスト
+
+- =cran-comment.md= を作成 (.Rbuildignore する)
+  - テスト環境, R CMD check の結果などについてコメント
+
+- =README.md=
+  - 新規ユーザー向けの説明
+  - =README.org= から gfm 生成
+
+- =NEWS.md=
+  - 既存ユーザー向けの説明
+  
+- =devtools::release()= で投稿する
+
+- github でリリースバージョンの tag を設定
+
+- DESCRIPTION の番号を更新しておく (0.1.0.9000 など)
+
+- 新しいバージョンをリリースする
+  - Downstream Depedencies (自分のパッケージを利用している他のパッケージ)
+    - =revdepcheck::revdep_check()=
+  - =devtools::submit_cran()= で更新版を投稿
+ 
+** 参考
 
 - [[https://cran.r-project.org/doc/manuals/R-exts.html][Writing R Extensions]]
 - [[https://cran.r-project.org/submit.html][CRAN Repository Policy]]

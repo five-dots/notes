@@ -1,0 +1,5 @@
+#+STARTUP: folded indent inlineimages latexpreview
+
+* R + SVG
+
+ - [[https://gist.github.com/myuhe/1825991][R-SVG.org · GitHub]] 
