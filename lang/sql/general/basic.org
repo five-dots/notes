@@ -1,33 +1,6 @@
 #+STARTUP: showall indent
 #+PROPERTY: header-args:sql :engine mysql :dbhost 127.0.0.1 :dbuser root :dbpassword test
 
-* Docker instance
-
-- [[file:~/Dropbox/repos/github/five-dots/notes/env/tool/docker.org][docker]]
-
-#+begin_src shell :results output
-docker ps
-#+end_src
-
-#+RESULTS:
-: CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS              PORTS                               NAMES
-: 1f63d7706cca        mysql:latest        "docker-entrypoint.s…"   29 minutes ago      Up 29 minutes       0.0.0.0:3306->3306/tcp, 33060/tcp   mysqd
-: efe988933021        postgres:latest     "docker-entrypoint.s…"   About an hour ago   Up About an hour    0.0.0.0:54320->5432/tcp             postgres-example
-
-- MySQL を起動
-#+begin_src shell
-docker run --name mysql -e MYSQL_ROOT_PASSWORD=test -p 3306:3306 -d mysql:latest
-#+end_src
-
-- PostgreSQL を起動
-#+begin_src shell
-docker run --name postgres -e POSTGRES_PASSWORD=test -p 54320:5432 -d postgres:latest
-#+end_src
-
-* Reference
-
-- [[https://qiita.com/okamuuu/items/c4efb7dc606d9efe4282][MySQL 入門@Qiita]]
-
 * DATABASES
 
 #+begin_src sql

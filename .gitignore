@@ -35,3 +35,6 @@ lang/haskell/hello-world/
 # Rust
 lang/rust/hello_world
 
+# SQL
+lang/sql/SQL_Recipe/
+lang/sql/temp.sql

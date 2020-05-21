@@ -1,17 +1,57 @@
 #+STARTUP: folded indent inlineimages latexpreview
 
-* Reference
+* Docker instance
 
-- [[https://qiita.com/tstomoki/items/e7a62e21473caee1ce2e][EmacsでインタラクティブにSQLを使うための設定(sql.el)@Qiita]]
-- [[https://suzuki.tdiary.net/20150817.html][sql-mode で Emacs の中からクエリを実行する]]
-- [[https://sximada.qrunch.io/entries/kzaXf4WV7SkfxhfG][EmacSQLでMySQLに接続する]]
+- [[file:~/Dropbox/repos/github/five-dots/notes/env/tool/docker.org][docker]]
+#+begin_src shell
+docker images
+#+end_src
+
+#+RESULTS:
+| REPOSITORY       | TAG    | IMAGE        | ID | CREATED | SIZE |        |
+| mysql            | latest | a7a67c95e831 |  3 | weeks   | ago  | 541MB  |
+| ubuntu           | latest | 1d622ef86b13 |  3 | weeks   | ago  | 73.9MB |
+| ubuntu           | 18.04  | c3c304cb4f22 |  3 | weeks   | ago  | 64.2MB |
+| postgres         | latest | 0f10374e5170 |  3 | weeks   | ago  | 314MB  |
+| jaikumarm/iqfeed | v6011  | 245ce40c4372 | 11 | months  | ago  | 1.66GB |
+| hello-world      | latest | fce289e99eb9 | 16 | months  | ago  | 1.84kB |
+
+#+begin_src shell :results output
+docker ps
+#+end_src
+
+#+RESULTS:
+: CONTAINER ID        IMAGE                    COMMAND                  CREATED             STATUS              PORTS                                                                                            NAMES
+: 5e63ae2e2d94        jaikumarm/iqfeed:v6011   "/usr/bin/supervisord"   10 months ago       Up 2 days           0.0.0.0:5901->5901/tcp, 0.0.0.0:5009->5010/tcp, 0.0.0.0:9100->9101/tcp, 0.0.0.0:9300->9301/tcp   angry_nash
+
+- MySQL を起動
+#+begin_src shell
+docker run --name mysql -e MYSQL_ROOT_PASSWORD=test -p 3306:3306 -d mysql:latest
+#+end_src
+
+- PostgreSQL を起動
+#+begin_src shell
+docker run --name postgres -e POSTGRES_PASSWORD=test -p 5432:5432 -d postgres:latest
+#+end_src
 
 * MySQL
 
-- [[file:~/Dropbox/repos/github/five-dots/notes/env/database/mysql.org::*Install][Install]]
-- Docker: [[file:~/Dropbox/repos/github/five-dots/notes/env/tool/docker.org::*MySQL][MySQL]]
+- Bare [[file:~/Dropbox/repos/github/five-dots/notes/env/database/mysql.org::*Install][Install]]
+- Docker [[file:~/Dropbox/repos/github/five-dots/notes/env/tool/docker.org::*MySQL][MySQL]]
 
 - GUI Client: mysql-workbench
 #+begin_src shell
 sudo apt install mysql-workbench
 #+end_src
+
+* Reference
+
+Emacs
+- [[https://qiita.com/tstomoki/items/e7a62e21473caee1ce2e][EmacsでインタラクティブにSQLを使うための設定(sql.el)@Qiita]]
+- [[https://suzuki.tdiary.net/20150817.html][sql-mode で Emacs の中からクエリを実行する]]
+- [[https://sximada.qrunch.io/entries/kzaXf4WV7SkfxhfG][EmacSQLでMySQLに接続する]]
+
+MySQL
+- [[https://qiita.com/okamuuu/items/c4efb7dc606d9efe4282][MySQL 入門@Qiita]]
+
+

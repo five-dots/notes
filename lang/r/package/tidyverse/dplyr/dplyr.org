@@ -22,7 +22,7 @@ ver. 0.8.3 の ~{dplyr}~ には *262 個* もの関数が含まれている。(�
 
 - [[file:./dplyr_scoped-verbs-variants.org][Scoped Verbs の亜種と {tidyselect}]] :: *Scoped verbs* の末尾に ~_if()~, ~_all()~, ~_at()~ が付く亜種と ~_at()~ 系の関数と組み合わせて利用するために ~{tidyselect}~ パッケージからインポートされたヘルパー関数群がここに含まれる。
 
-- [[file:./dplyr_db-backends.org][DB バックエンド]] :: バックエンドとして、データベースを利用するための関数群がここに含まれる。
+- DB バックエンド:: バックエンドとして、データベースを利用するための関数群がここに含まれる。
 
 - [[file:./dplyr_nse-programming.org][NSE プログラミングと {rlang}]] :: ~{dplyr}~ を *NSE (Non Standard Evaluation)* でプログラミングをするために ~{rlang}~ パッケージからインポートされた関数群がここに含まれる。
 

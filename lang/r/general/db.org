@@ -1,0 +1,679 @@
+#+STARTUP: folded indent inlineimages latexpreview
+#+PROPERTY: header-args:R :results output :colnames yes :session *R:db-backends*
+
+* Library
+
+- ライブラリの位置付け
+  - ={DBI}= がデータベースの基本操作を提供
+    - ={RPostgres}= などの個別のドライバを用いて接続
+  - ={dbplyr}= はデータベース操作のための ={dplyr}= のバックエンド
+  - ={dplyr}= で src として Database を指定することで =SELECT= 文を生成してくれる
+
+  - ={RODBC}= を利用して接続する方法もある
+#+begin_src R :exports both :results silent
+library(tidyverse)
+library(dbplyr)
+library(DBI)
+library(RODBC)
+#+end_src
+
+* ={DBI}= workflow
+** 接続 〜 テーブル作成 〜 テーブル一覧
+
+#+begin_src R :exports both
+con <- DBI::dbConnect(RSQLite::SQLite(), dbname = ":memory:")
+DBI::dbWriteTable(con, "mtcars", mtcars)
+DBI::dbListTables(con)
+#+end_src
+
+#+RESULTS:
+: [1] "mtcars"
+
+** フィールド一覧
+
+#+begin_src R :exports both
+DBI::dbListFields(con, "mtcars")
+#+end_src
+
+#+RESULTS:
+:  [1] "mpg"  "cyl"  "disp" "hp"   "drat" "wt"   "qsec" "vs"   "am"   "gear"
+: [11] "carb"
+
+** テーブルを取得
+
+#+begin_src R :exports both
+DBI::dbReadTable(con, "mtcars")
+#+end_src
+
+#+RESULTS:
+#+begin_example
+    mpg cyl  disp  hp drat    wt  qsec vs am gear carb
+1  21.0   6 160.0 110 3.90 2.620 16.46  0  1    4    4
+2  21.0   6 160.0 110 3.90 2.875 17.02  0  1    4    4
+3  22.8   4 108.0  93 3.85 2.320 18.61  1  1    4    1
+4  21.4   6 258.0 110 3.08 3.215 19.44  1  0    3    1
+5  18.7   8 360.0 175 3.15 3.440 17.02  0  0    3    2
+6  18.1   6 225.0 105 2.76 3.460 20.22  1  0    3    1
+7  14.3   8 360.0 245 3.21 3.570 15.84  0  0    3    4
+8  24.4   4 146.7  62 3.69 3.190 20.00  1  0    4    2
+9  22.8   4 140.8  95 3.92 3.150 22.90  1  0    4    2
+10 19.2   6 167.6 123 3.92 3.440 18.30  1  0    4    4
+11 17.8   6 167.6 123 3.92 3.440 18.90  1  0    4    4
+12 16.4   8 275.8 180 3.07 4.070 17.40  0  0    3    3
+13 17.3   8 275.8 180 3.07 3.730 17.60  0  0    3    3
+14 15.2   8 275.8 180 3.07 3.780 18.00  0  0    3    3
+15 10.4   8 472.0 205 2.93 5.250 17.98  0  0    3    4
+16 10.4   8 460.0 215 3.00 5.424 17.82  0  0    3    4
+17 14.7   8 440.0 230 3.23 5.345 17.42  0  0    3    4
+18 32.4   4  78.7  66 4.08 2.200 19.47  1  1    4    1
+19 30.4   4  75.7  52 4.93 1.615 18.52  1  1    4    2
+20 33.9   4  71.1  65 4.22 1.835 19.90  1  1    4    1
+21 21.5   4 120.1  97 3.70 2.465 20.01  1  0    3    1
+22 15.5   8 318.0 150 2.76 3.520 16.87  0  0    3    2
+23 15.2   8 304.0 150 3.15 3.435 17.30  0  0    3    2
+24 13.3   8 350.0 245 3.73 3.840 15.41  0  0    3    4
+25 19.2   8 400.0 175 3.08 3.845 17.05  0  0    3    2
+26 27.3   4  79.0  66 4.08 1.935 18.90  1  1    4    1
+27 26.0   4 120.3  91 4.43 2.140 16.70  0  1    5    2
+28 30.4   4  95.1 113 3.77 1.513 16.90  1  1    5    2
+29 15.8   8 351.0 264 4.22 3.170 14.50  0  1    5    4
+30 19.7   6 145.0 175 3.62 2.770 15.50  0  1    5    6
+31 15.0   8 301.0 335 3.54 3.570 14.60  0  1    5    8
+32 21.4   4 121.0 109 4.11 2.780 18.60  1  1    4    2
+#+end_example
+
+** クエリの実行
+
+#+begin_src R :exports both
+res <- dbSendQuery(con, "SELECT * FROM mtcars WHERE cyl = 4")
+dbFetch(res) # 全件取得
+dbClearResult(res) # リソースを開放 (local + remote)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+    mpg cyl  disp  hp drat    wt  qsec vs am gear carb
+1  22.8   4 108.0  93 3.85 2.320 18.61  1  1    4    1
+2  24.4   4 146.7  62 3.69 3.190 20.00  1  0    4    2
+3  22.8   4 140.8  95 3.92 3.150 22.90  1  0    4    2
+4  32.4   4  78.7  66 4.08 2.200 19.47  1  1    4    1
+5  30.4   4  75.7  52 4.93 1.615 18.52  1  1    4    2
+6  33.9   4  71.1  65 4.22 1.835 19.90  1  1    4    1
+7  21.5   4 120.1  97 3.70 2.465 20.01  1  0    3    1
+8  27.3   4  79.0  66 4.08 1.935 18.90  1  1    4    1
+9  26.0   4 120.3  91 4.43 2.140 16.70  0  1    5    2
+10 30.4   4  95.1 113 3.77 1.513 16.90  1  1    5    2
+11 21.4   4 121.0 109 4.11 2.780 18.60  1  1    4    2
+#+end_example
+
+** クエリの実行 (Chunk 毎)
+
+#+begin_src R :exports both
+res <- dbSendQuery(con, "SELECT * FROM mtcars WHERE cyl = 4")
+while(!dbHasCompleted(res)){
+  chunk <- dbFetch(res, n = 5)
+  print(nrow(chunk))
+}
+#+end_src
+
+#+RESULTS:
+: Warning message:
+: Closing open result set, pending rows
+: [1] 5
+: [1] 5
+: [1] 1
+
+** トランザクション
+
+- =dbBegin()=
+  - 以降に SQL を実行
+- =dbCommit()= or =dbRollback()=
+  - 実行した SQL 群が問題なければ、commit, 問題あれば rollback で一括で元に戻す
+#+begin_src R :exports both
+library(DBI)
+
+con <- dbConnect(RSQLite::SQLite(), ":memory:")
+dbWriteTable(con, "cash", data.frame(amount = 100))
+dbWriteTable(con, "account", data.frame(amount = 2000))
+
+# All operations are carried out as logical unit:
+dbBegin(con)
+withdrawal <- 300
+dbExecute(con, "UPDATE cash SET amount = amount + ?", list(withdrawal))
+dbExecute(con, "UPDATE account SET amount = amount - ?", list(withdrawal))
+dbCommit(con)
+
+dbReadTable(con, "cash")
+dbReadTable(con, "account")
+
+# Rolling back after detecting negative value on account:
+dbBegin(con)
+withdrawal <- 5000
+dbExecute(con, "UPDATE cash SET amount = amount + ?", list(withdrawal))
+dbExecute(con, "UPDATE account SET amount = amount - ?", list(withdrawal))
+if (dbReadTable(con, "account")$amount >= 0) {
+  dbCommit(con)
+} else {
+  dbRollback(con)
+}
+
+dbReadTable(con, "cash")
+dbReadTable(con, "account")
+
+dbDisconnect(con)
+#+end_src
+
+** 切断
+
+#+begin_src R :exports both
+dbClearResult(res)
+#+end_src
+
+#+RESULTS:
+
+* ={RODBC}= workflow
+** MS SQL Server
+
+#+begin_src R :exports both
+channel <- RODBC::odbcDriverConnect(settings$strategy.db)
+sql  <- "SELECT * FROM open_gap"
+
+data <- data.frame(
+  id = 1,
+  p_range = "2009-01-01::2009-12-31",
+  p_sma_len = 0,
+  p_sd_len = 50,
+  p_ato_len = 200,
+  p_ogc_len = 10,
+  p_side = "Long",
+  p_sd_l_thres = 0.01,
+  p_sd_h_thres = 0.05,
+  p_ato_l_thres = 10000000,
+  p_ato_h_thres = 100000000,
+  p_ogc_thres = 0,
+  p_stop_thres = 0.3,
+  p_min_thres = 10,
+  p_slippage = 0.001,
+  p_num_trades = 10,
+  p_lot = 10000,
+  r_ttl_win = 100000,
+  r_ttl_lose = 50000,
+  r_drawdown = -20000,
+  r_win_days = 150,
+  r_lose_days = 200
+)
+
+data <- data.frame(
+  id = 1,
+  p_range = "2009-01-01::2009-12-31",
+  p_sma_len = 10
+)
+
+ColumnsOfTable       <- sqlColumns(channel, "test")
+varTypes             <- as.character(ColumnsOfTable$TYPE_NAME) 
+names(varTypes)      <- as.character(ColumnsOfTable$COLUMN_NAME) 
+colnames(data) <- as.character(ColumnsOfTable$COLUMN_NAME)
+
+typeInfo <- c("Integer", "character", "double")
+typeInfo <- c("numeric", "character", "numeric")
+names(typeInfo) <- colnames(data)
+
+RODBC::sqlSave(channel, data, tablename = "test", rownames = FALSE,
+               typeInfo = typeInfo, append = TRUE, verbose = TRUE)
+
+RODBC::sqlUpdate(channel, data, tablename = "test")
+RODBC::sql
+
+RODBC::sqlQuery(channel, sql, stringsAsFactors = FALSE)
+
+odbcClose(channel)
+
+#+end_src
+
+** SQLite
+
+#+begin_src R :exports both
+library(RODBC)
+library(RSQLite)
+
+channel <- odbcDriverConnect(settings$sharadar.db)
+channel <- odbcDriverConnect(settings$quotemedia.db)
+channel <- odbcDriverConnect(settings$trade.db)
+channel <- odbcDriverConnect(settings$strat.result.db)
+
+sql  <- "SELECT [Ticker] FROM DailyOHLCVs"
+sql  <- "SELECT * FROM IBInstruments"
+sql  <- "SELECT * FROM tickers"
+
+sql  <- "SELECT * FROM DailyOHLCVs"
+sql  <- "SELECT [Range],[SDLength],[AvgToverLength],
+                [Side],[ToverThres],[StopThres],[MinEntryThres]
+        FROM GapStrategy01"
+
+result <- sqlQuery(channel, sql, stringsAsFactors = FALSE) %>% data.table()
+
+odbcClose(channel)
+
+insts[Symbol == ""]
+insts[Exchange == ""]
+insts[CompanyName == ""]
+insts[is.na(RefreshedAt)]
+insts[is.na(FromDate)]
+insts[is.na(ToDate)]
+
+insts <- sqlQuery(channel, "SELECT * FROM Instruments") %>% data.table()
+insts <- insts[, .(Id, Symbol)]
+
+items <- sqlQuery(channel, "SELECT * FROM Items")
+items <- data.table(items)[, .(Id, Name)]
+
+result$Ticker %>% unique() %>% str_length()
+#+end_src
+
+* Connection
+
+- =src_*()= を使った接続方法はもう利用しない。代わりに =DBI::dbConnect(drv)= を使う。
+
+- ={RMariaDB}= connects to MySQL and MariaDB
+  - [[https://db.rstudio.com/best-practices/managing-credentials][Securing Credentials]] を参考にセキュアに接続情報を扱う必要がある
+#+begin_src R :exports both
+con <- DBI::dbConnect(
+  RMariaDB::MariaDB(),
+  host = "database.rstudio.com",
+  user = "hadley",
+  password = rstudioapi::askForPassword("Database password")
+)
+#+end_src
+
+- ={RPostgres}= connects to Postgres and Redshift.
+  - AWS Redshift は Postgres 互換なのでこれで接続できる
+#+begin_src R :exports both
+con <- dbConnect(
+  PostgreSQL(),
+  host = "localhost",
+  port = 5432,
+  dbname = "shop",
+  user = "your_user_name",
+  password = "your_password"
+)
+#+end_src
+  
+- ={RSQLite}= embeds a SQLite database.
+#+begin_src R :exports both
+con <- DBI::dbConnect(RSQLite::SQLite(), dbname = ":memory:")
+con <- DBI::dbConnect(RSQLite::SQLite(), dbname = "path-to-sqlite-file")
+#+end_src
+
+- ={odbc}= connects to many commercial databases via the open database connectivity protocol.
+  - Oracle や [[https://docs.microsoft.com/en-us/sql/connect/odbc/linux-mac/installing-the-microsoft-odbc-driver-for-sql-server?view=sql-server-ver15#ubuntu][MS SQL Server]] に接続可能
+#+begin_src R :exports both
+con <- dbConnect(
+  odbc::odbc(),
+  driver = "PostgreSQL Driver",
+  database = "test_db",
+  uid = "postgres",
+  pwd = "password",
+  host = "localhost",
+  port = 5432)
+#+end_src
+
+- ={bigrquery}= connects to Google’s BigQuery.
+#+begin_src R :exports both
+con <- dbConnect(
+  bigrquery::bigquery(),
+  project = "publicdata",
+  dataset = "samples",
+  billing = billing
+)
+#+end_src
+
+* [[https://cran.r-project.org/web/packages/dbplyr/vignettes/dbplyr.html][Introduction to dbplyr]]
+** 接続 〜 テーブル取得
+
+- テスト用に SQLite DB をメモリ上に作成する
+#+begin_src R :exports both
+con <- DBI::dbConnect(RSQLite::SQLite(), dbname = ":memory:")
+con
+#+end_src
+
+#+RESULTS:
+: 
+: <SQLiteConnection>
+:   Path: :memory:
+:   Extensions: TRUE
+
+- flights dataset をコピーする
+#+begin_src R :exports both
+copy_to(con, nycflights13::flights, "flights",
+        temporary = FALSE,
+        indexes = list(
+          c("year", "month", "day"),
+          "carrier", "tailnum", "dest"
+        ))
+
+flights_db <- tbl(con, "flights")
+flights_db
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+Error: Table `flights` exists in database, and both overwrite and append are FALSE
+
+# Source:   lazy query [?? x 19]
+# Database: sqlite 3.30.1 [:memory:]
+   year month   day dep_time sched_dep_time dep_delay arr_time sched_arr_time
+  <int> <int> <int>    <int>          <int>     <dbl>    <int>          <int>
+1  2013     1     1      517            515         2      830            819
+2  2013     1     1      533            529         4      850            830
+3  2013     1     1      542            540         2      923            850
+4  2013     1     1      544            545        -1     1004           1022
+5  2013     1     1      554            600        -6      812            837
+6  2013     1     1      554            558        -4      740            728
+# … with 11 more variables: arr_delay <dbl>, carrier <chr>, flight <int>,
+#   tailnum <chr>, origin <chr>, dest <chr>, air_time <dbl>, distance <dbl>,
+#   hour <dbl>, minute <dbl>, time_hour <dbl>
+#+end_example
+
+#+begin_src R :exports both
+class(flights_db)
+#+end_src
+
+#+RESULTS:
+: [1] "tbl_SQLiteConnection" "tbl_dbi"              "tbl_sql"             
+: [4] "tbl_lazy"             "tbl"
+
+** 注意点
+
+- 極力 Lazy に振る舞うので、DB の全体像がわからないと取得できない関数は実行できない
+#+begin_src R :exports both
+nrow(flights_db) # NA が返る
+tail(flights_db) # Error
+#+end_src
+
+#+RESULTS:
+: 
+: [1] NA
+: 
+: Error: tail() is not supported by sql sources
+
+** クエリ
+
+- 普通の dplyr として書ける
+- ただし、DB へ SQL は飛んでいない
+#+begin_src R :exports both
+flights_db %>% select(year:day, dep_delay, arr_delay)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+# Source:   lazy query [?? x 5]
+# Database: sqlite 3.30.1 [:memory:]
+    year month   day dep_delay arr_delay
+   <int> <int> <int>     <dbl>     <dbl>
+ 1  2013     1     1         2        11
+ 2  2013     1     1         4        20
+ 3  2013     1     1         2        33
+ 4  2013     1     1        -1       -18
+ 5  2013     1     1        -6       -25
+ 6  2013     1     1        -4        12
+ 7  2013     1     1        -5        19
+ 8  2013     1     1        -3       -14
+ 9  2013     1     1        -3        -8
+10  2013     1     1        -2         8
+# … with more rows
+#+end_example
+
+- =show_query()=, =explain()= で確認
+#+begin_src R :exports both
+tailnum_delay_db <- flights_db %>%
+  group_by(tailnum) %>%
+  summarise(
+    delay = mean(arr_delay),
+    n = n()
+  ) %>%
+  arrange(desc(delay)) %>%
+  filter(n > 100)
+
+# SQL を確認
+tailnum_delay_db %>% show_query()
+## tailnum_delay <- tailnum_delay_db %>% explain()
+#+end_src
+
+#+RESULTS:
+#+begin_example
+<SQL>
+SELECT *
+FROM (SELECT *
+FROM (SELECT `tailnum`, AVG(`arr_delay`) AS `delay`, COUNT() AS `n`
+FROM `flights`
+GROUP BY `tailnum`)
+ORDER BY `delay` DESC)
+WHERE (`n`
+100.0)
+#+end_example
+
+- =collect()= で SQL を実行
+#+begin_src R :exports both
+tailnum_delay <- tailnum_delay_db %>% collect()
+tailnum_delay
+#+end_src
+
+#+RESULTS:
+#+begin_example
+# A tibble: 1,201 x 3
+   tailnum delay     n
+   <chr>   <dbl> <int>
+ 1 N11119   30.3   148
+ 2 N16919   29.9   251
+ 3 N14998   27.9   230
+ 4 N15910   27.6   280
+ 5 N13123   26.0   121
+ 6 N11192   25.9   154
+ 7 N14950   25.3   219
+ 8 N21130   25.0   126
+ 9 N24128   24.9   129
+10 N22971   24.7   230
+# … with 1,191 more rows
+#+end_example
+
+* DB functions
+** 全関数 ={dbplyr}=
+
+#+begin_src R :exports both
+library(pacman)
+p_funs(dbplyr)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+  [1] ".__T__$:base"          ".__T__$<-:base"        ".__T__[:base"         
+  [4] ".__T__[<-:base"        ".__T__[[<-:base"       "add_op_single"        
+  [7] "as.sql"                "base_agg"              "base_no_win"          
+ [10] "base_odbc_agg"         "base_odbc_scalar"      "base_odbc_win"        
+ [13] "base_scalar"           "base_win"              "build_sql"            
+ [16] "copy_lahman"           "copy_nycflights13"     "db_collect"           
+ [19] "db_compute"            "db_copy_to"            "db_sql_render"        
+ [22] "escape"                "escape_ansi"           "has_lahman"           
+ [25] "has_nycflights13"      "ident"                 "ident_q"              
+ [28] "in_schema"             "is.ident"              "is.sql"               
+ [31] "join_query"            "lahman_mysql"          "lahman_postgres"      
+ [34] "lahman_sqlite"         "lahman_srcs"           "lazy_frame"           
+ [37] "memdb_frame"           "named_commas"          "nycflights13_postgres"
+ [40] "nycflights13_sqlite"   "op_base"               "op_double"            
+ [43] "op_frame"              "op_grps"               "op_single"            
+ [46] "op_sort"               "op_vars"               "partial_eval"         
+ [49] "remote_con"            "remote_name"           "remote_query"         
+ [52] "remote_query_plan"     "remote_src"            "select_query"         
+ [55] "semi_join_query"       "set_op_query"          "simulate_access"      
+ [58] "simulate_dbi"          "simulate_hive"         "simulate_impala"      
+ [61] "simulate_mssql"        "simulate_mysql"        "simulate_odbc"        
+ [64] "simulate_oracle"       "simulate_postgres"     "simulate_sqlite"      
+ [67] "simulate_teradata"     "sql"                   "sql_aggregate"        
+ [70] "sql_aggregate_2"       "sql_build"             "sql_call2"            
+ [73] "sql_cast"              "sql_cot"               "sql_escape_date"      
+ [76] "sql_escape_datetime"   "sql_escape_logical"    "sql_expr"             
+ [79] "sql_infix"             "sql_log"               "sql_not_supported"    
+ [82] "sql_optimise"          "sql_paste"             "sql_paste_infix"      
+ [85] "sql_prefix"            "sql_quote"             "sql_render"           
+ [88] "sql_str_sub"           "sql_substr"            "sql_translator"       
+ [91] "sql_variant"           "sql_vector"            "src_dbi"              
+ [94] "src_memdb"             "src_sql"               "src_test"             
+ [97] "tbl_lazy"              "tbl_memdb"             "tbl_sql"              
+[100] "test_frame"            "test_load"             "test_register_con"    
+[103] "test_register_src"     "translate_sql"         "translate_sql_"       
+[106] "win_absent"            "win_aggregate"         "win_aggregate_2"      
+[109] "win_cumulative"        "win_current_frame"     "win_current_group"    
+[112] "win_current_order"     "win_over"              "win_rank"             
+[115] "win_recycled"          "window_frame"          "window_order"
+#+end_example
+
+** 全関数 ={DBI}=
+
+#+begin_src R :exports both
+library(pacman)
+p_funs(DBI)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+  [1] ".SQL92Keywords"                ".__C__DBIConnection"          
+  [3] ".__C__DBIConnector"            ".__C__DBIDriver"              
+  [5] ".__C__DBIObject"               ".__C__DBIResult"              
+  [7] ".__C__SQL"                     ".__T__$:base"                 
+  [9] ".__T__$<-:base"                ".__T__SQLKeywords:DBI"        
+ [11] ".__T__[:base"                  ".__T__[<-:base"               
+ [13] ".__T__[[<-:base"               ".__T__dbAppendTable:DBI"      
+ [15] ".__T__dbBegin:DBI"             ".__T__dbBind:DBI"             
+ [17] ".__T__dbCallProc:DBI"          ".__T__dbCanConnect:DBI"       
+ [19] ".__T__dbClearResult:DBI"       ".__T__dbColumnInfo:DBI"       
+ [21] ".__T__dbCommit:DBI"            ".__T__dbConnect:DBI"          
+ [23] ".__T__dbCreateTable:DBI"       ".__T__dbDataType:DBI"         
+ [25] ".__T__dbDisconnect:DBI"        ".__T__dbDriver:DBI"           
+ [27] ".__T__dbExecute:DBI"           ".__T__dbExistsTable:DBI"      
+ [29] ".__T__dbFetch:DBI"             ".__T__dbGetConnectArgs:DBI"   
+ [31] ".__T__dbGetException:DBI"      ".__T__dbGetInfo:DBI"          
+ [33] ".__T__dbGetQuery:DBI"          ".__T__dbGetRowCount:DBI"      
+ [35] ".__T__dbGetRowsAffected:DBI"   ".__T__dbGetStatement:DBI"     
+ [37] ".__T__dbHasCompleted:DBI"      ".__T__dbIsReadOnly:DBI"       
+ [39] ".__T__dbIsValid:DBI"           ".__T__dbListConnections:DBI"  
+ [41] ".__T__dbListFields:DBI"        ".__T__dbListObjects:DBI"      
+ [43] ".__T__dbListResults:DBI"       ".__T__dbListTables:DBI"       
+ [45] ".__T__dbQuoteIdentifier:DBI"   ".__T__dbQuoteLiteral:DBI"     
+ [47] ".__T__dbQuoteString:DBI"       ".__T__dbReadTable:DBI"        
+ [49] ".__T__dbRemoveTable:DBI"       ".__T__dbRollback:DBI"         
+ [51] ".__T__dbSendQuery:DBI"         ".__T__dbSendStatement:DBI"    
+ [53] ".__T__dbSetDataMappings:DBI"   ".__T__dbUnloadDriver:DBI"     
+ [55] ".__T__dbUnquoteIdentifier:DBI" ".__T__dbWithTransaction:DBI"  
+ [57] ".__T__dbWriteTable:DBI"        ".__T__fetch:DBI"              
+ [59] ".__T__isSQLKeyword:DBI"        ".__T__make.db.names:DBI"      
+ [61] ".__T__show:methods"            ".__T__sqlAppendTable:DBI"     
+ [63] ".__T__sqlCreateTable:DBI"      ".__T__sqlData:DBI"            
+ [65] ".__T__sqlInterpolate:DBI"      ".__T__sqlParseVariables:DBI"  
+ [67] "ANSI"                          "Id"                           
+ [69] "SQL"                           "SQLKeywords"                  
+ [71] "dbAppendTable"                 "dbBegin"                      
+ [73] "dbBind"                        "dbBreak"                      
+ [75] "dbCallProc"                    "dbCanConnect"                 
+ [77] "dbClearResult"                 "dbColumnInfo"                 
+ [79] "dbCommit"                      "dbConnect"                    
+ [81] "dbCreateTable"                 "dbDataType"                   
+ [83] "dbDisconnect"                  "dbDriver"                     
+ [85] "dbExecute"                     "dbExistsTable"                
+ [87] "dbFetch"                       "dbGetConnectArgs"             
+ [89] "dbGetDBIVersion"               "dbGetException"               
+ [91] "dbGetInfo"                     "dbGetQuery"                   
+ [93] "dbGetRowCount"                 "dbGetRowsAffected"            
+ [95] "dbGetStatement"                "dbHasCompleted"               
+ [97] "dbIsReadOnly"                  "dbIsValid"                    
+ [99] "dbListConnections"             "dbListFields"                 
+[101] "dbListObjects"                 "dbListResults"                
+[103] "dbListTables"                  "dbQuoteIdentifier"            
+[105] "dbQuoteLiteral"                "dbQuoteString"                
+[107] "dbReadTable"                   "dbRemoveTable"                
+[109] "dbRollback"                    "dbSendQuery"                  
+[111] "dbSendStatement"               "dbSetDataMappings"            
+[113] "dbUnloadDriver"                "dbUnquoteIdentifier"          
+[115] "dbWithTransaction"             "dbWriteTable"                 
+[117] "fetch"                         "isSQLKeyword"                 
+[119] "isSQLKeyword.default"          "make.db.names"                
+[121] "make.db.names.default"         "show"                         
+[123] "sqlAppendTable"                "sqlAppendTableTemplate"       
+[125] "sqlColumnToRownames"           "sqlCommentSpec"               
+[127] "sqlCreateTable"                "sqlData"                      
+[129] "sqlInterpolate"                "sqlParseVariables"            
+[131] "sqlParseVariablesImpl"         "sqlQuoteSpec"                 
+[133] "sqlRownamesToColumn"
+#+end_example
+
+** External data source
+*** =tbl(src, ...)=
+*** =is.tbl(x)=
+*** =as.tbl(x, ...)=
+*** =as.tbl_cube(x, ...)=
+*** =tbl_cube(dimensions, measures)=
+*** =make_tbl(subclass, ...)=
+*** =tbl_vars(x)=
+*** =tbl_nongroup_vars(x)=
+*** =is.src(x)=
+*** =src(subclass, ...)=
+*** =src_local(tbl, pkg = NULL, env = NULL)=
+*** =src_df(pkg = NULL, env = NULL)=
+*** =src_tbls(x)=
+** SQL
+*** =db_analyze(con, table, ...)=
+*** =db_begin(con, ...)=
+*** =db_commit(con, ...)=
+*** =db_create_index(con, table, columns, name = NULL, unique = FALSE, ...)=
+*** =db_create_indexes(con, table, indexes = NULL, unique = FALSE, ...)=
+*** =db_create_table(con, table, types, temporary = FALSE, ...)=
+*** =db_data_type(con, fields)=
+*** =db_desc(x)=
+*** =db_drop_table(con, table, force = FALSE, ...)=
+*** =db_explain(con, sql, ...)=
+*** =db_has_table(con, table)=
+*** =db_insert_into(con, table, values, ...)=
+*** =db_list_tables(con)=
+*** =db_query_fields(con, sql, ...)=
+*** =db_query_rows(con, sql, ...)=
+*** =db_rollback(con, ...)=
+*** =db_save_query(con, sql, name, temporary = TRUE, ...)=
+*** =db_write_table(con, table, types, values, temporary = FALSE, ...)=
+*** =sql(...)=
+*** =sql_escape_ident(con, x)=
+*** =sql_escape_string(con, x)=
+*** =sql_join(con, x, y, vars, type = "inner", by = NULL, ...)=
+*** =sql_select(con, select, from, where = NULL, group_by = NULL, having = NULL, order_by = NULL, limit = NULL, distinct = FALSE, ...)=
+*** =sql_semi_join(con, x, y, anti = FALSE, by = NULL, ...)=
+*** =sql_set_op(con, x, y, method)=
+*** =sql_subquery(con, from, name = random_table_name(), ...)=
+*** =sql_translate_env(con)=
+** Utilty
+*** =auto_copy(x, y, copy = FALSE, ...)=
+*** =bench_tbls(tbls, op, ..., times = 10)=
+*** =compare_tbls(tbls, op, ref = NULL, compare = equal_data_frame, ...)=
+*** =compare_tbls2(tbls_x, tbls_y, op, ref = NULL, compare = equal_data_frame, ...)=
+*** =eval_tbls(tbls, op)=
+*** =eval_tbls2(tbls_x, tbls_y, op)=
+*** =check_dbplyr()=
+*** =wrap_dbplyr_obj(obj_name)=
+*** =compute(x, name = random_table_name(), ...)=
+*** =collect(x, ...)=
+*** =collapse(x, ...)=
+*** =copy_to(dest, df, name = deparse(substitute(df)), overwrite = FALSE, ...)=
+*** =explain(x, ...)=
+*** =show_query(x, ...)=
+*** =ident(...)=
+*** =same_src(x, y)=
+* Reference
+
+- [[https://cran.r-project.org/web/packages/dbplyr/index.html][CRAN - Package dbplyr]]
+- Vignette
+  - [[https://cran.r-project.org/web/packages/dbplyr/vignettes/dbplyr.html][Introduction to dbplyr]]
+  - [[https://cran.r-project.org/web/packages/dbplyr/vignettes/new-backend.html][Adding a new DBI backend]]
+  - [[https://cran.r-project.org/web/packages/dbplyr/vignettes/reprex.html][Reprexes for dbplyr]]
+  - [[https://cran.r-project.org/web/packages/dbplyr/vignettes/sql.html][Writing SQL with dbplyr]]
+  - [[https://cran.r-project.org/web/packages/dbplyr/vignettes/translation-function.html][Function translation]]
+  - [[https://cran.r-project.org/web/packages/dbplyr/vignettes/translation-verb.html][Verb translation]]
+
+- [[https://db.rstudio.com/best-practices/managing-credentials][Securing Credentials]] 
