@@ -23,7 +23,8 @@ lang/r/package/ProjectTemplate/test-project/
 
 # Python
 lang/python/other/DLFS/
-# lang/python/temp.py
+lang/python/temp.py
+.mypy_cache/
 
 # Emacs Lisp
 lang/emacs-lisp/temp.el
