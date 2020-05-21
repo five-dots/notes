@@ -401,11 +401,10 @@ geom_line(aes(y = fitted5), color = "green")
 - 多項式回帰入門。線形回帰に飽きたらない人へ
 http://funyakofunyao.click/2017/07/08/%e5%a4%9a%e9%a0%85%e5%bc%8f%e5%9b%9e%e5%b8%b0%e5%85%a5%e9%96%80%e3%80%82%e7%b7%9a%e5%bd%a2%e5%9b%9e%e5%b8%b0%e3%81%ab%e9%a3%bd%e3%81%8d%e3%81%9f%e3%82%89%e3%81%aa%e3%81%84%e4%ba%ba%e3%81%b8/
 
-* mgcv::gam() 一般化加法モデル(GAM)
+* =mgcv::gam()= 一般化加法モデル(GAM)
 ** Reference
 
-- 平滑化スプラインと加法モデル
-  https://logics-of-blue.com/%E5%B9%B3%E6%BB%91%E5%8C%96%E3%82%B9%E3%83%97%E3%83%A9%E3%82%A4%E3%83%B3%E3%81%A8%E5%8A%A0%E6%B3%95%E3%83%A2%E3%83%87%E3%83%AB/
+- [[https://logics-of-blue.com/%E5%B9%B3%E6%BB%91%E5%8C%96%E3%82%B9%E3%83%97%E3%83%A9%E3%82%A4%E3%83%B3%E3%81%A8%E5%8A%A0%E6%B3%95%E3%83%A2%E3%83%87%E3%83%AB/][平滑化スプラインと加法モデル | Logics of Blue]]
 
 ** Overview
 
@@ -418,6 +417,7 @@ http://funyakofunyao.click/2017/07/08/%e5%a4%9a%e9%a0%85%e5%bc%8f%e5%9b%9e%e5%b8
 => この 2 つのトレードオフを勘案して、平滑化パラメター(グネグネ度) を決める
 
 - GCV (一般化クロスバリデーション) を使ってグネグネ度を推定する
+  - ={mgcv}=: Mixed GAM
 
  モデル式
 - 説明変数に関数を噛ませる
@@ -426,7 +426,7 @@ http://funyakofunyao.click/2017/07/08/%e5%a4%9a%e9%a0%85%e5%bc%8f%e5%9b%9e%e5%b8
 $y = a + f_1(x_1) + f_2(x_2) + \dots + f_n(x_n) + \epsilon$
 
 ** Logics of Blue の例
-*** Data (mgcv::airquality)
+*** Data (=mgcv::airquality=)
 
 #+begin_src R :results graphics :file (get-babel-file)
 data(airquality)
@@ -436,7 +436,7 @@ ggplot(airquality, aes(x = Temp, y = Ozone)) + geom_point()
 #+RESULTS:
 [[file:/home/shun/Dropbox/memo/img/babel/fig-WA7QMT.png]]
 
-*** mgcv::gam()
+*** =mgcv::gam()=
 
 #+begin_src R
 gam(
@@ -583,7 +583,7 @@ gam.check(gam_fit)
 [[file:/home/shun/Dropbox/memo/img/babel/fig-KaPcCn.png]]
 
 *** Thin-Plate Spline (薄板平滑化スプライン)
-***** Model
+**** Model
 
 - オゾンへの影響を風と気温の交互作用を調べる
 #+begin_src R
@@ -616,7 +616,7 @@ R-sq.(adj) =   0.78   Deviance explained = 82.5%
 GCV = 302.27  Scale est. = 239.07    n = 116
 #+end_example
 
-***** Plot (3D)
+**** Plot (3D)
 
 #+begin_src R :results graphics :file (get-babel-file)
 vis.gam(gam_fit2, color="cm", theta=45)
@@ -625,7 +625,7 @@ vis.gam(gam_fit2, color="cm", theta=45)
 #+RESULTS:
 [[file:/home/shun/Dropbox/memo/img/babel/fig-EWuYTB.png]]
 
-***** Plot (等高線)
+**** Plot (等高線)
 
 #+begin_src R :results graphics :file (get-babel-file)
 vis.gam(gam_fit2, color="cm", plot.type = "contour")
@@ -634,7 +634,7 @@ vis.gam(gam_fit2, color="cm", plot.type = "contour")
 #+RESULTS:
 [[file:/home/shun/Dropbox/memo/img/babel/fig-FMcYrS.png]]
 
-***** Model2
+**** Model2
 
 - s() で囲んだものが、交互作用項になる
 - c() で囲んで、特定の変数だけ抜き出してプロットできる
@@ -686,3 +686,11 @@ lines(lowess(x1, y1, f=0.1), col=5,lwd=2)
 #+RESULTS:
 [[file:/home/shun/Dropbox/memo/img/babel/fig-jsBzBC.png]]
 
+* ={gam}= Package
+
+- [[https://cran.r-project.org/web/packages/gam/index.html][CRAN - Package gam]]
+
+- [[http://ushi-goroshi.hatenablog.com/entry/2019/10/16/115747][GAMをもう少し理解したい - 統計コンサルの議事メモ]]
+  - GLM に非線形の特徴を盛り込む
+  - the gold standard for intelligibility when low-dimensional terms are considered
+  - 解釈性を保ちつつ、高い精度

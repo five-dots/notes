@@ -351,6 +351,9 @@ git rebase master
  9. リモートにアップロード =git push origin develop=
 10. =pull request=
 
+- その他の参考
+  - [[https://gist.github.com/fujimaki-k/21196aa7cdad40a6e6e5b323c73fa714][リリースまでの流れ · GitHub]]
+
 * Merge conflict
 
 - どちらの branch を優先させるかが決まっている場合
@@ -478,7 +481,7 @@ Use 6 branch
 - develop  mater から派生させる。 _develop branch での作業は NG_
 - release  develop から派生させる。リリース作業を行う。master/develop にマージする。
 - feature  develop から派生させる。機能追加を行う。develop にマージする。
-- hotfix   master から派生させる。リリース済みのものへの緊急修正。master/devleo へマージする。
+- hotfix   master から派生させる。リリース済みのものへの緊急修正。master/devlop へマージする。
 - support  旧バージョンをサポートするためのブランチ
 
 ** Github Flow
@@ -506,6 +509,24 @@ edit, add, commit
 - 外部のリポジトリを自分のリポジトリの配下に置く
 
 - ブランチ単位での管理ではなく、submodule は _commit id_ 単位での管理
+
+* tag
+
+- [[https://qiita.com/growsic/items/ed67e03fda5ab7ef9d08][git tagの使い方まとめ - Qiita]] 
+
+- History の中の特定のポイント (commit) に tag をつける
+  - commit を指定しなければ、現在のブランチの最新の commit に tag をつける
+#+begin_src shell :eval never
+git tag -a v0.1.0 -m "comment" commit-id
+
+git push origin v0.1.0 # tag は作成しただけでは、リモートに反映されないので、push する
+
+# タグの一覧
+git tag
+
+# タグの詳細
+git show v0.1.0
+#+end_src
 
 * gitignore
 

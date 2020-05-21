@@ -1,0 +1,93 @@
+#+STARTUP: folded indent inlineimages latexpreview
+
+* ={roxygen2}=
+* タグ一覧
+
+#+begin_quote
+# メタ ------------------------------------------------------
+# (段落を空ければ、タグを使わなくても同様の表示になる)
+
+#' @title タイトル
+#' @description 概要
+#' @details 詳細
+
+#' @aliases 別名 (このヘルプを検索する別名)
+#' @keywords key1 key2 ... (internal キーワード以外は有用ではない)
+#' @include file.R (事前に読み込むファイル)
+#' @template template_name (man-roxygen/ にテンプレートとなる .R を置く)
+
+#' @section Section:
+#' @inheritSection rd_name section_name
+
+# 外部依存関係 ----------------------------------------------
+
+#' @import magrittr
+#' @importFrom magrittr `%>%` `%<>%`
+
+# 関数 ------------------------------------------------------
+
+#' @param arg description
+#' @return description
+#' @examples code
+#' @export
+
+#' @inheritParams
+
+# 参照 ------------------------------------------------------
+
+#' @family hoge fuga (自動的に seealso を生成)
+#' @seealso \code{\link{[pkg_name]{func_name}]}
+
+# Rd ファイルをまとめる -------------------------------------
+
+#' @rdname rdname
+#' @describIn rdname description
+
+#+end_quote
+
+* 書式
+
+- \url{}
+- \code{}
+- \link{}
+  - =\link{[pkg_name]{func_name}]}=
+- \CRANpkg{}
+
+- \tabular{}
+  - \tab, \cr
+  - l, c r で列の寄せを指定
+#+begin_quote
+\tabular{rrrrr}{
+  6 \tab 160 \tab 110 \tab 3.90\cr
+  6 \tab 160 \tab 110 \tab 3.90\cr
+  8 \tab 360 \tab 175 \tab 3.15
+}
+#+end_quote 
+
+- Markdown 形式もサポートされている
+  - [[https://roxygen2.r-lib.org/articles/markdown.html][Write R Documentation in Markdown • roxygen2]]
+
+* Collate
+
+- DESCRIPTION の =Collate:= でファイルの Load Order を制御
+  - =roxygen2::update_collate()= で DESCRIPTION に自動追記
+  - 実際には上記のコマンドを打つ必要すらない
+
+- 記入例
+  - ファイルの冒頭に記載する
+  - オブジェクトの情報ではなく、ファイルに対する情報のため
+#+begin_quote
+#' If `example-a.R', `example-b.R' and `example-c.R' live in R/
+#' and we're in `example-a.R`, then the following @include statement
+#' ensures that example-b and example-c are sourced before example-a.
+#' @include example-b.R example-c.R
+NULL
+#+end_quote
+
+* 参考
+
+- [[https://cran.r-project.org/web/packages/roxygen2/index.html][CRAN - Package roxygen2]] 
+- [[https://github.com/r-lib/roxygen2][GitHub - r-lib/roxygen2: Generate R package documentation from inline R comments]]
+  
+- [[https://heavywatal.github.io/rstats/devtools.html][devtools: Rパッケージ作成支援 - Heavy Watal]]
+- [[https://blog.atusy.net/2018/08/28/roxygen2matome/][roxygen2タグまとめ | Atusy's blog]]  

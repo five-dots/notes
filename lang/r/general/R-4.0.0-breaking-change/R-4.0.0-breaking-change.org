@@ -1,0 +1,162 @@
+#+STARTUP: folded indent inlineimages latexpreview
+#+PROPERTY: header-args:R :results output :exports both :eval never-export
+#+PROPERTY: header-args:R+ :session *R:blog* :width 640 :height 480
+#+OPTIONS: author:nil H:6 toc:nil
+#+HUGO_BASE_DIR: ~/Dropbox/repos/github/five-dots/blog
+#+HUGO_SECTION: post/2020/05/
+
+#+TITLE: R 4.0.0 の破壊的変更まとめ
+#+DATE: 2020-05-20
+#+HUGO_CATEGORIES: programming
+#+HUGO_TAGS: r
+#+HUGO_CUSTOM_FRONT_MATTER: :toc true
+
+#+begin_src shell :results silent :exports none
+# 検証用にバージョンをスイッチする
+# Renv local 3.6.3
+Renv local 4.0.0
+#+end_src
+
+約 1 ヶ月ほど前に R-4.0.0 がリリースされた。
+メジャーバージョンアップということで、いくつか破壊的な変更があるようだ。
+今後、本格的に移行していくのに備えて、実際の挙動を確認しておきたい。
+
+尚、この記事には新機能の紹介は含まれていない。また、破壊的な変更点も何か漏れがあるかもしれない。気になる方は [[https://cran.r-project.org/doc/manuals/r-release/NEWS.html][CHANGES IN 4.0.0]] をご覧いただきたい。
+  
+* =stringsAsFactors = FALSE= がデフォルトに
+
+- もともと嫌われることの多かったこの仕様が、遂にデフォルトで =FALSE= になる。
+  - tidyverse の ={tibble}= や ={readr}= を使って =data.frame= を作成・読み込みしていたのなら影響はない。
+#+begin_src R :exports both
+df <- data.frame(letters = letters)
+str(df)
+#+end_src
+
+#+RESULTS:
+: 
+: 'data.frame':	26 obs. of  1 variable:
+:  $ letters: chr  "a" "b" "c" "d" ...
+\\
+
+- デフォルトを =TRUE= に変更しようとすると Warning が出る。将来的にはこのオプション自体がなくなる可能性もありそう。
+#+begin_src R :exports both
+options(stringsAsFactors = TRUE)
+#+end_src
+
+#+RESULTS:
+: Warning message:
+: In options(stringsAsFactors = TRUE) :
+:   'options(stringsAsFactors = TRUE)' is deprecated and will be disabled
+\\
+
+- 注意すべきケース
+  - =data.frame()= や =read.csv()= を使っていて、明示的に =stringsAsFactors= を指定していない場合
+
+* =matrix= が =array= を継承するようになる
+
+- =matrix= は 2d の =array= なので、自然な変更
+#+begin_src R :exports both
+matrix_obj <- matrix()
+class(matrix_obj)
+#+end_src
+
+#+RESULTS:
+: 
+: [1] "matrix" "array"
+\\
+
+- 注意すべきケース
+  - =class(matrix_obj)= の結果として length 1 を期待している場合
+  - =array= の S3 メソッドを利用しているが =matrix= の S3 が存在している場合 (=matrix= の S3 が呼ばれてしまう)
+
+* =plot()= ジェネリック関数が ={graphics}= から ={base}= へ移動
+
+- 互換性を維持するために、現時点では ={graphics}= からも re-export されているが、今後は廃止される可能性がある
+#+begin_src R :exports both
+environment(plot)
+#+end_src
+
+#+RESULTS:
+: <environment: namespace:base>
+
+- 注意すべきケース
+  - ={graphics}= から =plot= を Import しているパッケージを開発している場合
+
+* 正規表現ライブラリが PCRE1 から PCRE2 へ移行
+
+- PCRE1 は既に開発が終了しているため
+- PCRE = Perl 5 compatible Regular Expression Library
+  - PCRE1: PCRE <= 8
+  - PCRE2: PCRE >= 10
+
+#+begin_src R :exports both
+extSoftVersion()["PCRE"]
+#+end_src
+
+#+RESULTS:
+:               PCRE 
+: "10.31 2018-02-12"
+
+- 注意すべきケース
+  - PCRE1 ではサポートされていた記法で利用できなくなるものがある (正規表現に詳しくないので詳細割愛)
+
+* 参考
+
+- [[https://cran.r-project.org/doc/manuals/r-release/NEWS.html][CHANGES IN 4.0.0]]
+- [[https://blog.revolutionanalytics.com/2020/04/r-400-is-released.html][R 4.0.0 now available, and a look back at R's history (Revolutions)]]
+- [[https://qiita.com/taiyodayo/items/250483de6228eb298c80][R 4.0.0 にさっさと移行しようと思ったたった一つの理由：新しいraw string記法【 r"" 】 - Qiita]] 
+
+* NEW FEATURES :noexport:
+** =assertError()=, =assertWarning()= from {tools}
+
+- 第二引数で =classes= を指定できるようになった
+#+begin_src R :exports both
+assertError(sqrt("abc"), classes = "error")
+assertWarning(sqrt(matrix(1:8, 4, 3)))
+#+end_src
+
+** =DF2formula()=
+
+- now works without parsing and explicit evaluation, starting from Suharto Anggono's suggestion in PR#17555.
+#+begin_src R :exports both
+DF2formula(iris)
+#+end_src
+
+#+RESULTS:
+: Sepal.Length ~ Sepal.Width + Petal.Length + Petal.Width + Species
+
+** =approxfun()=, =approx()= の =na.rm = TRUE= がデフォルトに
+
+- interpolation = 補間 
+#+begin_src R :exports both
+
+#+end_src
+
+** =for= loop で Long vector がサポートされる
+
+- 3.6.3 ではエラー
+#+begin_src R :exports both
+vec <- 1:2^31
+for (i in vec) {}
+#+end_src
+
+#+RESULTS:
+: 
+: Error in for (i in vec) { : long vectors not supported yet: eval.c:6367
+
+- 4.0.0 では OK
+#+begin_src R :exports both
+vec <- 1:2^31
+for (i in vec) {}
+#+end_src
+
+** =str()= に =deparse.line= 引数が追加される
+
+#+begin_src R :exports both
+
+#+end_src
+
+* COMMENT Local Variables                                           :ARCHIVE:
+  # Local Variables:
+  # eval: (org-hugo-auto-export-mode)
+  # End:

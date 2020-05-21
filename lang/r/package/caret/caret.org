@@ -1,0 +1,236 @@
+#+STARTUP: folded indent inlineimages latexpreview
+#+PROPERTY: header-args:R :results output :colnames yes :session *R:caret*
+
+* ={caret}=
+* ライブラリ
+
+#+begin_src R :exports both :results silent
+library(tidyverse)
+library(caret)
+library(doParallel)
+library(tictoc)
+library(mlbench)
+library(e1071)
+library(modelr)
+#+end_src
+
+#+begin_src R :exports both
+packageVersion("caret")
+#+end_src
+
+#+RESULTS:
+: 6.0.86
+
+* 関数一覧
+
+#+begin_src R :exports both
+pacman::p_funs(caret)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+  [1] "BoxCoxTrans"           "F_meas"                "LPH07_1"              
+  [4] "LPH07_2"               "MAE"                   "MeanSD"               
+  [7] "R2"                    "RMSE"                  "SLC14_1"              
+ [10] "SLC14_2"               "anovaScores"           "avNNet"               
+ [13] "bag"                   "bagControl"            "bagEarth"             
+ [16] "bagEarthStats"         "bagFDA"                "best"                 
+ [19] "calibration"           "caretFuncs"            "caretGA"              
+ [22] "caretSA"               "caretSBF"              "caretTheme"           
+ [25] "cforestStats"          "checkConditionalX"     "checkInstall"         
+ [28] "checkResamples"        "class2ind"             "classDist"            
+ [31] "cluster"               "compare_models"        "confusionMatrix"      
+ [34] "confusionMatrix.train" "contr.dummy"           "contr.ltfr"           
+ [37] "createDataPartition"   "createFolds"           "createModel"          
+ [40] "createMultiFolds"      "createResample"        "createTimeSlices"     
+ [43] "ctreeBag"              "defaultSummary"        "dotPlot"              
+ [46] "downSample"            "dummyVars"             "expandParameters"     
+ [49] "expoTrans"             "extractPrediction"     "extractProb"          
+ [52] "featurePlot"           "filterVarImp"          "findCorrelation"      
+ [55] "findLinearCombos"      "flatTable"             "gafs"                 
+ [58] "gafs.default"          "gafsControl"           "gafs_initial"         
+ [61] "gafs_lrSelection"      "gafs_raMutation"       "gafs_rwSelection"     
+ [64] "gafs_spCrossover"      "gafs_tourSelection"    "gafs_uCrossover"      
+ [67] "gamFormula"            "gamFuncs"              "gamScores"            
+ [70] "getModelInfo"          "getSamplingInfo"       "getTrainPerf"         
+ [73] "ggplot.gafs"           "ggplot.safs"           "groupKFold"           
+ [76] "hasTerms"              "icr"                   "index2vec"            
+ [79] "ipredStats"            "knn3"                  "knn3Train"            
+ [82] "knnreg"                "knnregTrain"           "ldaBag"               
+ [85] "ldaFuncs"              "ldaSBF"                "learning_curve_dat"   
+ [88] "lift"                  "lmFuncs"               "lmSBF"                
+ [91] "lrFuncs"               "maxDissim"             "minDiss"              
+ [94] "mnLogLoss"             "modelCor"              "modelLookup"          
+ [97] "multiClassSummary"     "nbBag"                 "nbFuncs"              
+[100] "nbSBF"                 "nearZeroVar"           "negPredValue"         
+[103] "nnetBag"               "nullModel"             "nzv"                  
+[106] "oneSE"                 "outcome_conversion"    "panel.calibration"    
+[109] "panel.lift"            "panel.lift2"           "panel.needle"         
+[112] "pcaNNet"               "pickSizeBest"          "pickSizeTolerance"    
+[115] "pickVars"              "plot.gafs"             "plot.rfe"             
+[118] "plot.safs"             "plot.train"            "plotClassProbs"       
+[121] "plotObsVsPred"         "plsBag"                "plsda"                
+[124] "posPredValue"          "postResample"          "prSummary"            
+[127] "preProcess"            "precision"             "predict.bagEarth"     
+[130] "predict.gafs"          "predict.train"         "predictionFunction"   
+[133] "predictors"            "print.train"           "probFunction"         
+[136] "progress"              "recall"                "resampleHist"         
+[139] "resampleSummary"       "resampleWrapper"       "resamples"            
+[142] "rfFuncs"               "rfGA"                  "rfSA"                 
+[145] "rfSBF"                 "rfStats"               "rfe"                  
+[148] "rfeControl"            "rfeIter"               "safs"                 
+[151] "safsControl"           "safs_initial"          "safs_perturb"         
+[154] "safs_prob"             "sbf"                   "sbfControl"           
+[157] "sbfIter"               "sensitivity"           "sortImp"              
+[160] "spatialSign"           "specificity"           "splsda"               
+[163] "sumDiss"               "summary.bagEarth"      "svmBag"               
+[166] "thresholder"           "tolerance"             "train"                
+[169] "trainControl"          "treebagFuncs"          "treebagGA"            
+[172] "treebagSA"             "treebagSBF"            "twoClassSim"          
+[175] "twoClassSummary"       "upSample"              "varImp"               
+[178] "var_seq"               "well_numbered"
+#+end_example
+* フロー
+** =createDataPartition()=
+
+- 訓練データ・テストデータに分割
+
+#+begin_src R :exports both :results silent
+data(Sonar)
+set.seed(423)
+inTrain <- createDataPartition(y = Sonar$Class,p = .75,list = F)
+df_Train <- Sonar[inTrain,]
+df_Test <- Sonar[-inTrain,]
+#+end_src
+    
+** =modelLookup()= でモデルのパラメタを確認
+
+- =getModelInfo("rf")= でモデルのコードも確認可能
+#+begin_src R :exports both
+modelLookup("rf")
+#+end_src
+
+#+RESULTS:
+:   model parameter                         label forReg forClass probModel
+: 1    rf      mtry #Randomly Selected Predictors   TRUE     TRUE      TRUE
+
+** パラメータ grid 作成
+
+- =expand.grid()= などお好みの方法で
+
+#+begin_src R :exports both :results silent
+grid <- expand.grid(mtry=1:8)
+#+end_src
+
+** =trainControl()= で評価方法を設定
+
+#+begin_src R :exports both :results silent
+ctrl <- trainControl(method = "repeatedcv",
+                     number = 10, #10-fold
+                     repeats=3, #3回繰り返す
+                     selectionFunction = "oneSE")
+#+end_src
+
+** =train()= を実行
+
+#+begin_src R :exports both
+set.seed(423)
+cl <- makePSOCKcluster(4)
+registerDoParallel(cl)
+
+model_rf <- train(Class ~ ., data=df_Train, mothod="rf", trControl = ctrl, tuneGrid = grid)
+model_rf
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+Random Forest 
+
+157 samples
+ 60 predictor
+  2 classes: 'M', 'R' 
+
+No pre-processing
+Resampling: Cross-Validated (10 fold, repeated 3 times) 
+Summary of sample sizes: 140, 142, 141, 142, 142, 142, ... 
+Resampling results across tuning parameters:
+
+  mtry  Accuracy   Kappa    
+  1     0.8170425  0.6274782
+  2     0.8252533  0.6449192
+  3     0.8144363  0.6221680
+  4     0.8081699  0.6097693
+  5     0.7967974  0.5862718
+  6     0.8166422  0.6269526
+  7     0.8015033  0.5966719
+  8     0.8080310  0.6099961
+
+Accuracy was used to select the optimal model using  the one SE rule.
+The final value used for the model was mtry = 1.
+#+end_example
+
+** 変数重要度の確認
+
+#+begin_src R :results output graphics file :file (my/get-babel-file)
+varImp(model_rf, scale = FALSE) %>% plot(top = 20)
+#+end_src
+
+#+RESULTS:
+[[file:/home/shun/Dropbox/memo/img/babel/fig-SP8NLa.png]]
+
+** =predict()= を実行
+
+#+begin_src R :exports both
+pred_rf <- predict(model_rf,newdata = df_Test)
+pred_rf
+#+end_src
+
+#+RESULTS:
+: 
+:  [1] R R R R R R R R M R R R R R R R R R R R R M R R M M M M M M M M M M M M M M
+: [39] M M M M M M M M M M M M M
+: Levels: M R
+
+** 予測の精度を確認
+
+#+begin_src R :exports both
+confusionMatrix(data = df_Test$Class, pred_rf)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+Confusion Matrix and Statistics
+
+          Reference
+Prediction  M  R
+         M 27  0
+         R  2 22
+                                          
+               Accuracy : 0.9608          
+                 95% CI : (0.8654, 0.9952)
+    No Information Rate : 0.5686          
+    P-Value [Acc
+NIR] : 2.425e-10       
+                                          
+                  Kappa : 0.9209          
+                                          
+ Mcnemar's Test P-Value : 0.4795          
+                                          
+            Sensitivity : 0.9310          
+            Specificity : 1.0000          
+         Pos Pred Value : 1.0000          
+         Neg Pred Value : 0.9167          
+             Prevalence : 0.5686          
+         Detection Rate : 0.5294          
+   Detection Prevalence : 0.5294          
+      Balanced Accuracy : 0.9655          
+                                          
+       'Positive' Class : M
+#+end_example
+
+* 参考
+
+- [[https://github.com/topepo/caret][GitHub - topepo/caret: caret (Classification And Regression Training) R packa...]]
+- [[http://topepo.github.io/caret/index.html][The caret Package]]
+  - [[http://topepo.github.io/caret/available-models.html][6 Available Models | The caret Package]]

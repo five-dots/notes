@@ -95,6 +95,8 @@ cv.kknn(
   ...)
 #+end_src
 
+** ={KernelKnn}= Package
+** ={FNN}= Package
 * 教師なし
 ** 階層型クラスタリング (ユークリッド距離 * ウォード法など)
 *** 概要
@@ -231,6 +233,17 @@ table
 - k-means 法が最もメジャー
 
 ** トピックモデル (LDA など)
+
+- トピックモデル
+  - 教師なしでデータをグループに分割する
+  - 例: テキストマイニングで記事の分類
+    - スポーツなら「サッカー」、「野球」のような用語
+    - 料理なら「献立」、「レシピ」のような用語
+    - そのようなキーワードの集まりをトピックという
+  
+- LDA: Latent Dirichlet Allocation
+- =topicmodels::LDA()= (Latent Dirichlet Allocation)
+ 
 * 参考
 
 - [[https://qiita.com/Haruka-Ogawa/items/fcda36cc9060ba851225][R言語でクラスタリングしてみた@Qiita]]

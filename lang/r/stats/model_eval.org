@@ -225,14 +225,18 @@ pred <- c(1, 0, 0, 0, 0, 1, 1, 0, 1, 0, 0)
 
 *** 混同行列 (Confusion Matrix)
 
+- [[https://qiita.com/TsutomuNakamura/items/a1a6a02cb9bb0dcbb37f][混同行列(Confusion Matrix) とは 〜 2 値分類の機械学習のクラス分類について - Qiita]]
+
 - 予測値と正解・不正解をマトリックで表現する
   - TP (True Positive)  正解 by 1
   - TN (True Negative)  正解 by 0
   - FP (False Positive) 不正解 by 1
   - FN (False Negative) 不正解 by 0
 
-| TP | FP |
-| FN | FP |
+|   | P  | N  |
+|---+----+----|
+| P | TP | FP |
+| N | FN | FP |
 
 *** 正答率 (Accuracy), 誤答率 (Error Rate)
 

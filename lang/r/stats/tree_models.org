@@ -255,8 +255,10 @@ plot(as.party(fit2))
 - ={ranger}= C++, 高速
 - ={h2o}= Java, Early stopping
 - ={Rborist}=
+- ={party}= =cforest()= Conditional Random Forest
 
-** データ
+** ={ranger}=
+*** データ
 
 - spam データ
 - type = spam or nonspam
@@ -270,7 +272,7 @@ dim(spam)
 : 
 : [1] 4601   58
 
-** =ranger::ranger()= 関数
+*** =ranger::ranger()= 関数
 
 #+begin_src R :results silent
 ranger(
@@ -311,7 +313,7 @@ ranger(
 )
 #+end_src
 
-** 当てはめ
+*** 当てはめ
 
 #+begin_src R
 fit <- ranger(type ~ ., data = spam, num.trees = 1000, seed = 123)
@@ -336,6 +338,11 @@ Variable importance mode:         none
 Splitrule:                        gini 
 OOB prediction error:             4.54 %
 #+end_example
+
+** ={party}=, =cforest()=
+
+- [[https://cran.r-project.org/web/packages/party/index.html][CRAN - Package party]]
+- [[http://party.r-forge.r-project.org/][party]]
 
 * ERT (Extremely Randomize Trees)
 ** 概要
@@ -806,6 +813,19 @@ parsnip::xgb_train(
 ** [[file:../package/xgboost/xgboost.org][ ={xgboost}= ]]
 ** [[file:../package/lightgbm.org][ ={lightgbm}= ]]
 ** [[file:../package/catboost.org][ ={catboost}= ]]
+** ={gbm}=
+
+- Generalized Boosted Model
+- 現在は、開発が終了しメンテナンスのみ
+  - 後継は ={gbm3}=
+- [[https://cran.r-project.org/web/packages/gbm/index.html][CRAN - Package gbm]]
+- [[https://github.com/gbm-developers/gbm][GitHub - gbm-developers/gbm: gbm: the old gbm package]]
+
+** ={gbm3}=
+* BART (Bayesian Additive Regression Trees)
+
+- ={bartMachine}=
+  
 * モデルの解釈
 ** 変数重要度 (Feature Importance)
 

@@ -937,6 +937,21 @@ V20         -1.1268620
 #+end_example
 
 *** [[https://web.stanford.edu/~hastie/glmnet/glmnet_alpha.html][Glmnet Vignette]]
+** ={biglasso}=
+
+- [[https://cran.r-project.org/web/packages/biglasso/index.html][CRAN - Package biglasso]]
+- [[https://github.com/YaohuiZeng/biglasso][GitHub - YaohuiZeng/biglasso: biglasso: Extending Lasso Model Fitting to Big ...]]
+** ={arm}= package =bayesglm()=
+
+- [[https://cran.r-project.org/web/packages/arm/index.html][CRAN - Package arm]] 
+- 変数の係数に事前分布を設定する
+  - =prior.scale=, =prior.df= で指定 (どちらも =Inf= にすると glm の結果と一致)
+  - [[http://ushi-goroshi.hatenablog.com/entry/2018/01/15/172010][Bayesian GLMで過適合を避ける - 統計コンサルの議事メモ]] 
+** ={LogicReg}=
+
+- [[https://cran.r-project.org/web/packages/LogicReg/index.html][CRAN - Package LogicReg]]
+- 特徴量がバイナリばかりのデータに使う
+- バイナリ同士の相互作用で重要なものの探索に利用する
 
 ** ロジスティック回帰
 *** 概要
@@ -1447,6 +1462,19 @@ mses = cv_libFM(train, Rating ~ User + Movie,
                 exe_loc = "/usr/local/share/libFM/bin")
 mses
 #+end_src
+
+* Multivariate Adaptive Regression Spline (MARS)
+
+- 回帰モデルの拡張
+  - 非線形性と相互作用を盛り込むことが可能
+  
+- [[https://cran.r-project.org/web/packages/earth/index.html][CRAN - Package earth]]
+- [[http://www.milbo.users.sonic.net/earth/][Multivariate Adaptive Regression Splines]]
+- MARS という名前が商標なので、earth という名前を使っている模様
+
+* Non Negative Least Square (NNLS)
+
+- [[https://cran.r-project.org/web/packages/nnls/index.html][CRAN - Package nnls]]
 
 * ガウス過程回帰
 

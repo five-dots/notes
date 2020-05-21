@@ -3,7 +3,7 @@
 
 * 非推奨とされている関数群
 
-| dplyr function    | sucesssor                                          |
+| Function          | Sucesssor                                          |
 |-------------------+----------------------------------------------------|
 | ~add_rownames()~    | ~tibble::rownames_to_column()~                       |
 | ~current_vars()~    |                                                    |

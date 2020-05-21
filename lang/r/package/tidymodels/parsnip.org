@@ -1,10 +1,15 @@
 #+STARTUP: folded indent
 #+PROPERTY: header-args:R :results output :colnames yes :session *R:parsnip*
 
-* ~{parsnip}~: A tidy unified interface to models                    :noexport:
+* ={parsnip}=: A tidy unified interface to models                    :noexport:
 
-~{parsnip}~ は複数のモデリングパッケージをラップするパッケージ。
-\\
+={parsnip}= は複数のモデリングパッケージをラップするパッケージ。
+
+{parsnip} 以外にも類似のアルゴリズムを提供するパッケージ
+- {baguette}
+- {discrim}
+- {poissonreg}
+- {plsmod}
 
 * 目次                                                                :quote:
 * ライブラリの読み込みとバージョンの確認
@@ -21,7 +26,7 @@ packageVersion("parsnip")
 #+end_src
 
 #+RESULTS:
-: [1] ‘0.0.5.9000’
+: [1] ‘0.1.1’
 
 * 全関数リスト
 
@@ -31,42 +36,48 @@ pacman::p_funs(parsnip)
 
 #+RESULTS:
 #+begin_example
- [1] ".cols"                     ".dat"                     
- [3] ".facts"                    ".lvls"                    
- [5] ".obs"                      ".preds"                   
- [7] ".x"                        ".y"                       
- [9] "%>%"                       "add_rowindex"             
-[11] "boost_tree"                "C5.0_train"               
-[13] "check_empty_ellipse"       "decision_tree"            
-[15] "fit"                       "fit_control"              
-[17] "fit_xy"                    "fit_xy.model_spec"        
-[19] "fit.model_spec"            "get_dependency"           
-[21] "get_fit"                   "get_from_env"             
-[23] "get_model_env"             "get_pred_type"            
-[25] "has_multi_predict"         "keras_mlp"                
-[27] "linear_reg"                "logistic_reg"             
-[29] "make_classes"              "mars"                     
-[31] "min_grid"                  "min_grid.boost_tree"      
-[33] "min_grid.linear_reg"       "min_grid.logistic_reg"    
-[35] "min_grid.mars"             "min_grid.multinom_reg"    
-[37] "min_grid.nearest_neighbor" "mlp"                      
-[39] "model_printer"             "multi_predict"            
-[41] "multi_predict_args"        "multinom_reg"             
-[43] "nearest_neighbor"          "null_model"               
-[45] "nullmodel"                 "pred_value_template"      
-[47] "predict.model_fit"         "rand_forest"              
-[49] "rpart_train"               "set_args"                 
-[51] "set_dependency"            "set_engine"               
-[53] "set_env_val"               "set_fit"                  
-[55] "set_in_env"                "set_mode"                 
-[57] "set_model_arg"             "set_model_engine"         
-[59] "set_model_mode"            "set_new_model"            
-[61] "set_pred"                  "show_call"                
-[63] "show_model_info"           "surv_reg"                 
-[65] "svm_poly"                  "svm_rbf"                  
-[67] "tidy.model_fit"            "translate"                
-[69] "varying"                   "varying_args"             
-[71] "xgb_train"
+ [1] "%>%"                         ".cols"                      
+ [3] ".dat"                        ".facts"                     
+ [5] ".lvls"                       ".obs"                       
+ [7] ".preds"                      ".x"                         
+ [9] ".y"                          "C5.0_train"                 
+[11] "add_rowindex"                "boost_tree"                 
+[13] "check_empty_ellipse"         "check_final_param"          
+[15] "control_parsnip"             "convert_args"               
+[17] "convert_stan_interval"       "decision_tree"              
+[19] "eval_args"                   "fit"                        
+[21] "fit.model_spec"              "fit_control"                
+[23] "fit_xy"                      "fit_xy.model_spec"          
+[25] "get_dependency"              "get_fit"                    
+[27] "get_from_env"                "get_model_env"              
+[29] "get_pred_type"               "has_multi_predict"          
+[31] "is_varying"                  "keras_mlp"                  
+[33] "linear_reg"                  "logistic_reg"               
+[35] "make_classes"                "mars"                       
+[37] "mlp"                         "model_printer"              
+[39] "multi_predict"               "multi_predict_args"         
+[41] "multinom_reg"                "nearest_neighbor"           
+[43] "new_model_spec"              "null_model"                 
+[45] "null_value"                  "nullmodel"                  
+[47] "pred_value_template"         "predict.model_fit"          
+[49] "predict_class.model_fit"     "predict_classprob.model_fit"
+[51] "predict_confint.model_fit"   "predict_numeric"            
+[53] "predict_numeric.model_fit"   "predict_quantile.model_fit" 
+[55] "predict_raw"                 "predict_raw.model_fit"      
+[57] "rand_forest"                 "rpart_train"                
+[59] "set_args"                    "set_dependency"             
+[61] "set_engine"                  "set_env_val"                
+[63] "set_fit"                     "set_in_env"                 
+[65] "set_mode"                    "set_model_arg"              
+[67] "set_model_engine"            "set_model_mode"             
+[69] "set_new_model"               "set_pred"                   
+[71] "show_call"                   "show_fit"                   
+[73] "show_model_info"             "surv_reg"                   
+[75] "svm_poly"                    "svm_rbf"                    
+[77] "tidy"                        "translate"                  
+[79] "translate.default"           "update_dot_check"           
+[81] "update_main_parameters"      "varying"                    
+[83] "varying_args"                "xgb_train"
 #+end_example
 
 * 概要

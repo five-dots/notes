@@ -22,6 +22,8 @@ library(tidymodels)
 
 - *欠損を補完するためのモデルを作成する*
   - 本来の目的変数は除外し、テストデータも含めてモデル化する
+  - 線形や定数での補完 =stats::approx()=, =stats::approxfun()=
+  - スプライン補完 =stats::spline()=
   - =step_knnimpute()= や =step_bagimpute()= など
 
 - *欠損かどうか自体を特徴量に変換する*
@@ -208,6 +210,7 @@ hist(bcPower(Wool$cycles, p1$roundlam))
 - リード特徴量
   - 将来の値 (の予測) が特徴量になりえる
   - たとえば、明日の天気 (予報) や将来のイベントの有無など
+
 * 次元の削減
 
 - *相関係数*
@@ -256,6 +259,9 @@ hist(bcPower(Wool$cycles, p1$roundlam))
 
 - *線形判別分析 (LDA; Linear Discriminant Analysis)*
   - 分類タスクを教師ありで次元削減
+  - 学習データをうまく分類できるような低次元の特徴量を探す
+  - =MASS::lda()=
+  - =MASS::qda()= だと Quadratic Discriminant Analysis
 
 - *t-SNE (t-Distributed Neighbor Embedding)*
   - 高次元のデータを 2 次元に圧縮して可視化する手法

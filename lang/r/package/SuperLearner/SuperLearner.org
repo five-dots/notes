@@ -1,0 +1,72 @@
+#+STARTUP: folded indent
+#+PROPERTY: header-args:R :results output :colnames yes :session *R:SuperLearner*
+
+* ={SuperLearner}=
+
+#+begin_src R :exports both :results silent
+library(SuperLearner)
+library(tidyverse)
+#+end_src
+
+* 特徴 from GitHub Top Page
+
+- CV 評価で自動的に特徴量をアンサンブル
+- XGBoost, Random Forest, GBM, Lasso, SVM, BART, KNN, Decision Trees, Neural Networks, and more.
+- *caret との統合* により、多くのアルゴリズムをサポート
+- カスタムのアルゴリズムをアンサンブルに追加するための仕組み
+- パフォーマンス可視化のためのプロット関数
+- ハイパーパラメターの追加・変更・確認
+- 特徴量選択 (Screening)
+  - univariate association, Random Forest, Elastic Net, et al. or custom screening algorithms.
+- 並列処理
+- External cross-validation to estimate the performance of the ensembling predictor.
+- メトリックの変更
+  - mean-squared error, AUC, log likelihood, etc.
+- スタッキングのための損失関数をカスタマイズ
+
+* 概要
+
+- =SL.library= (アルゴリズム) x screening (変数選択)
+- =method= でモデルアンサンブルの重み付けのアルゴリズムを選択
+
+- parsnip のように モデル x タスク で別れていない
+
+* List
+
+#+begin_src R :exports both
+listWrappers()
+#+end_src
+
+#+RESULTS:
+#+begin_example
+All prediction algorithm wrappers in SuperLearner:
+
+ [1] "SL.bartMachine"      "SL.bayesglm"         "SL.biglasso"        
+ [4] "SL.caret"            "SL.caret.rpart"      "SL.cforest"         
+ [7] "SL.earth"            "SL.extraTrees"       "SL.gam"             
+[10] "SL.gbm"              "SL.glm"              "SL.glm.interaction" 
+[13] "SL.glmnet"           "SL.ipredbagg"        "SL.kernelKnn"       
+[16] "SL.knn"              "SL.ksvm"             "SL.lda"             
+[19] "SL.leekasso"         "SL.lm"               "SL.loess"           
+[22] "SL.logreg"           "SL.mean"             "SL.nnet"            
+[25] "SL.nnls"             "SL.polymars"         "SL.qda"             
+[28] "SL.randomForest"     "SL.ranger"           "SL.ridge"           
+[31] "SL.rpart"            "SL.rpartPrune"       "SL.speedglm"        
+[34] "SL.speedlm"          "SL.step"             "SL.step.forward"    
+[37] "SL.step.interaction" "SL.stepAIC"          "SL.svm"             
+[40] "SL.template"         "SL.xgboost"         
+
+All screening algorithm wrappers in SuperLearner:
+
+[1] "All"
+[1] "screen.SIS"            "screen.corP"           "screen.corRank"       
+[4] "screen.glmnet"         "screen.randomForest"   "screen.template"      
+[7] "screen.ttest"          "write.screen.template"
+#+end_example
+
+* 参考
+
+- [[https://cran.r-project.org/web/packages/SuperLearner/index.html][CRAN - Package SuperLearner]]
+- [[https://github.com/ecpolley/SuperLearner][GitHub - ecpolley/SuperLearner: Current version of the SuperLearner R package]]
+- [[https://cran.r-project.org/web/packages/SuperLearner/vignettes/Guide-to-SuperLearner.html][Guide to SuperLearner]] 
+  

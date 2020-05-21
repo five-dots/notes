@@ -150,6 +150,9 @@ devtools::install()
 - =devtools::check()= を通す (R CMD check)
   - Windows 環境は =devtools::check_win_devel()= で確認
     - Windows 向けに CRAN でビルドと R CMD check をしてくれる
+  - =devtools::check_rhub()= は R-hub builder でチェックを行ってくれる
+    - 以下のエラーが出る場合は =devtools::check_rhub(env_vars=c(R_COMPILE_AND_INSTALL_PACKAGES = "always"))=
+      - Error in loadNamespace(name) : there is no package called 'utf8'
 
 - CRAN ポリシーの確認
   - 有効な Mail Address
@@ -165,10 +168,13 @@ devtools::install()
 
 - =NEWS.md=
   - 既存ユーザー向けの説明
-  
+
 - =devtools::release()= で投稿する
+  - チェック項目を確認されるので、漏れているものは実施する
+  - メールの確認が来るので、リンク先へ飛んで submit
 
 - github でリリースバージョンの tag を設定
+  - "v0.1.0" のようにバージョン指定
 
 - DESCRIPTION の番号を更新しておく (0.1.0.9000 など)
 
@@ -176,7 +182,7 @@ devtools::install()
   - Downstream Depedencies (自分のパッケージを利用している他のパッケージ)
     - =revdepcheck::revdep_check()=
   - =devtools::submit_cran()= で更新版を投稿
- 
+
 ** 参考
 
 - [[https://cran.r-project.org/doc/manuals/R-exts.html][Writing R Extensions]]
