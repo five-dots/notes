@@ -36,7 +36,7 @@
 # 参照 ------------------------------------------------------
 
 #' @family hoge fuga (自動的に seealso を生成)
-#' @seealso \code{\link{[pkg_name]{func_name}]}
+#' @seealso \code{\link[pkg_name]{func_name}}
 
 # Rd ファイルをまとめる -------------------------------------
 
@@ -50,7 +50,7 @@
 - \url{}
 - \code{}
 - \link{}
-  - =\link{[pkg_name]{func_name}]}=
+  - =\link[pkg_name]{func_name}=
 - \CRANpkg{}
 
 - \tabular{}

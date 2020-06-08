@@ -4,7 +4,9 @@
 
 - [[http://boxofpapers.hatenablog.com/entry/2018/10/06/210602][いまどきのClojureのはじめかた]]
 
+
 - 公式の手順 (以下がインストールされる)
+  - [[https://clojure.org/guides/getting_started#_installation_on_linux][Clojure - Getting Started]] 
   - =/usr/local/bin/clj=
   - =/usr/local/bin/clojure=
   - =/usr/local/lib/clojure=

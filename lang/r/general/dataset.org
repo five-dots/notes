@@ -6,12 +6,77 @@
 - [[#library][Library]]
 - [[#by-package][By Package]]
   - [[#datasets-package][datasets package]]
+    - [[#list][List]]
+    - [[#iris][iris]]
+    - [[#mtcars][mtcars]]
+    - [[#sleep][sleep]]
+    - [[#warpbreaks-poisson][warpbreaks (poisson)]]
   - [[#ggplot2-package][ggplot2 package]]
+    - [[#list-1][List]]
+    - [[#mpg][mpg]]
   - [[#dplyr-package][dplyr package]]
+    - [[#list-2][List]]
   - [[#mlbench-package][mlbench package]]
+    - [[#list-3][List]]
+    - [[#bostonhousing-regression][BostonHousing (regression)]]
+    - [[#breastcancer-binary][BreastCancer (binary)]]
+    - [[#dna-multiclass][DNA (multiclass)]]
+    - [[#glass-multiclass][Glass (multiclass)]]
+    - [[#housevotes84-binary][HouseVotes84 (binary)]]
+    - [[#ionosphere-binary][Ionosphere (binary)]]
+    - [[#letterrecognition-multiclass][LetterRecognition (multiclass)]]
+    - [[#ozone][Ozone]]
+    - [[#pimaindiansdiabetes-binary][PimaIndiansDiabetes (binary)]]
+    - [[#satellite-multiclass][Satellite (multiclass)]]
+    - [[#servo-regression][Servo (regression)]]
+    - [[#shuttle-multiclass][Shuttle (multiclass)]]
+    - [[#sonar-binary][Sonar (binary)]]
+    - [[#soybean-multiclass][Soybean (multiclass)]]
+    - [[#vehicle-multiclass][Vehicle (multiclass)]]
+    - [[#vowel-multiclass][Vowel (multiclass)]]
+    - [[#zoo-multiclass][Zoo (multiclass)]]
   - [[#modeldata-package][modeldata package]]
+    - [[#list-4][List]]
+    - [[#chicago-regression-time-series][Chicago (regression, time-series)]]
+    - [[#sacramento-regression][Sacramento (regression)]]
+    - [[#smithsonian-geo-data][Smithsonian (geo data)]]
+    - [[#ad_data][ad_data]]
+    - [[#attrition-binary][attrition (binary)]]
+    - [[#biomass-regression][biomass (regression)]]
+    - [[#car_prices-regression][car_prices (regression)]]
+    - [[#cells-binary][cells (binary)]]
+    - [[#check_times-regression][check_times (regression)]]
+    - [[#concrete-regression][concrete (regression)]]
+    - [[#covers][covers]]
+    - [[#credit_data-binary][credit_data (binary)]]
+    - [[#drinks-time-series][drinks (time-series)]]
+    - [[#hpc_cv-multiclass][hpc_cv (multiclass)]]
+    - [[#hpc_data-multiclass][hpc_data (multiclass)]]
+    - [[#lending_club-binary][lending_club (binary)]]
+    - [[#meats-regression][meats (regression)]]
+    - [[#mlc_churn-binary][mlc_churn (binary)]]
+    - [[#oils-multiclass][oils (multiclass)]]
+    - [[#okc-binary][okc (binary)]]
+    - [[#okc_test-natural-language][okc_test (natural language)]]
+    - [[#parabolic-binary][parabolic (binary)]]
+    - [[#pathology-binary][pathology (binary)]]
+    - [[#pd_speech][pd_speech]]
+    - [[#scat][scat]]
+    - [[#solubility_test-regression][solubility_test (regression)]]
+    - [[#stackoverflow][stackoverflow]]
+    - [[#two_class_dat-binary][two_class_dat (binary)]]
+    - [[#two_class_example-binary][two_class_example (binary)]]
+    - [[#wa_churn-binary][wa_churn (binary)]]
   - [[#nycflights13-package][nycflights13 package]]
+    - [[#list-5][List]]
+    - [[#flights][flights]]
+    - [[#weather][weather]]
+    - [[#planes][planes]]
+    - [[#airports][airports]]
+    - [[#airlnes][airlnes]]
   - [[#faraway-package][faraway package]]
+    - [[#list-6][List]]
+    - [[#gala][gala]]
 - [[#simulation-data][Simulation Data]]
   - [[#binary-task][Binary Task]]
   - [[#multiclass-task][Multiclass Task]]
@@ -25,6 +90,7 @@
   - [[#poisson-regression-task-1][Poisson Regression Task]]
   - [[#time-series-task][Time-Series Task]]
   - [[#natural-language-task][Natural Language Task]]
+- [[#kaggle][Kaggle]]
 - [[#links][Links]]
 #+END_QUOTE
 
@@ -2731,6 +2797,28 @@ data_poisson() %>% head() %>% mutate_if(is.numeric, round, digits=3)
 
 - okc_text (750 x 10)
 - imdb (internet movie database)
+* Kaggle
+
+- Regression
+  - House Prices
+  - FIFA 19
+
+- Binary
+  - Titanic
+  - NCAA
+  - Bank Marketing
+
+- Multi-class
+  - FIFA 19
+
+- Poisson
+
+- Survival
+
+- Time-series
+  - Predict Future Sales
+  - Two-Sigma Financial Modeling
+
 * Links
 
 - [[file:../../../finance/r_dataset_finance/r_dataset_finance.org][R Finance Dataset]]

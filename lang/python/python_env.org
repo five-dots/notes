@@ -55,6 +55,13 @@ jupyter contrib nbextension install --user
 jupyter nbextensions_configurator enable --user
 #+end_src
 
+- Jupyter で R も使う
+#+begin_src R :exports both
+library(devtools)
+library(IRkernel)
+installspec()
+#+end_src
+
 ** mypy
 
 - python 3.5 から対応のアノテーション機能を利用した静的構文解析
@@ -64,7 +71,6 @@ jupyter nbextensions_configurator enable --user
 ** Ubuntu + apt
 
 - =/usr/lib/python3/dist-packages/pandas= の形式
-
 #+begin_src shell
 ls /usr/lib/python3/dist-packages
 #+end_src
@@ -355,7 +361,8 @@ ls /usr/lib/python3/dist-packages
 
 - pip = "Pip Installs Package/Python"
 - =pip install --user numpy= で user install すると以下のディレクトリに配置される
-    =~/.local/lib/python3.6/site-packages=
+  - =~/.local/lib/python3.6/site-packages=
+  - =~/.local/bin/= にバイナリが配置される  
 - =anyenv=, =pyenv= を利用している場合は =PYENV_ROOT= 以下にインストールされる
 
 - 以下のコマンドでインストール先などの情報を入手可能
@@ -756,28 +763,31 @@ pprint.pprint(sys.path)
 ** 概要
 
 - [[https://qiita.com/KRiver1/items/c1788e616b77a9bad4dd][pyenv、pyenv-virtualenv、venv、Anaconda、Pipenv。私はPipenvを使う。@Qiita]]
-  |------------------+----------------+--------------+----------------+----------|
-  |                  | バージョン管理 | 仮想環境管理 | パッケージ管理 |          |
-  |                  |      <c>       |     <c>      |      <c>       |          |
-  |------------------+----------------+--------------+----------------+----------|
-  | pyenv            |       ○        |              |                |          |
-  | virtualenv       |                |      ○       |     (pip)      |          |
-  | pip              |                |              |       ○        | Official |
-  | venv (pyvenv)    |                |      ○       |     (pip)      | Official |
-  | pyenv-virtualenv |       ○        |      ○       |     (pip)      |          |
-  | Anaconda         |       ○        |      ○       |       ○        |          |
-  | Pipenv           |                |      ○       |       ○        |          |
-  |------------------+----------------+--------------+----------------+----------|
+- [[https://qiita.com/sk217/items/43c994640f4843a18dbe][2020 年の Python パッケージ管理ベストプラクティス - Qiita]]
+|------------------+----------------+--------------+----------------+---------------|
+|                  | バージョン管理 | 仮想環境管理 | パッケージ管理 |               |
+|                  |      <c>       |     <c>      |      <c>       |               |
+|------------------+----------------+--------------+----------------+---------------|
+| pyenv            |       ○        |              |                |               |
+| virtualenv       |                |      ○       |     (pip)      |               |
+| pip              |                |              |       ○        | Official      |
+| venv (pyvenv)    |                |      ○       |     (pip)      | Official      |
+| pyenv-virtualenv |       ○        |      ○       |     (pip)      |               |
+| Anaconda         |       ○        |      ○       |       ○        |               |
+| Pipenv           |                |      ○       |       ○        |               |
+| poetry           |                |              |                | 要調査        |
+| Pyflow           |                |              |                | 要調査 Rust 製 |
+|------------------+----------------+--------------+----------------+---------------|
 
 - keras でインストールされる環境 (reticulate 向け) は、virtualenv を利用
 
 - インストール先まとめ
-  |------------+--------------------------------------+---------------|
-  | pyenv      | =~/.anyenv/envs/pyenv/versions=        | anyenv を利用 |
-  | virtualenv | =~/.virtualenvs=                       |               |
-  | pip        | =~/.local/lib/python3.x/site-packages= |               |
-  | Pipenv     | =~.local/share/virtualenvs=            |               |
-  |------------+--------------------------------------+---------------|
+|------------+--------------------------------------+---------------|
+| pyenv      | =~/.anyenv/envs/pyenv/versions=        | anyenv を利用 |
+| virtualenv | =~/.virtualenvs=                       |               |
+| pip        | =~/.local/lib/python3.x/site-packages= |               |
+| Pipenv     | =~.local/share/virtualenvs=            |               |
+|------------+--------------------------------------+---------------|
 
 ** インタプリタ管理
 *** pyenv
@@ -809,6 +819,7 @@ _Pyenv を用いる利点_
 
 **** Install
 
+#+begin_src shell :eval never
 $ git clone https://github.com/pyenv/pyenv.git ~/.pyenv
 $ echo 'export PYENV_ROOT="$HOME/.pyenv"' >> ~/.profile
 $ echo 'export PATH="$PYENV_ROOT/bin:$PATH"' >> ~/.profile
@@ -819,6 +830,7 @@ $ echo -e 'if command -v pyenv 1>/dev/null 2>&1; then\n  eval "$(pyenv init -)"\
 $ sudo apt install libffi-dev
 $ sudo apt install tk-dev
 $ sudo apt install python3-tk
+#+end_src
 
 **** Version
 
@@ -1260,8 +1272,11 @@ Available versions:
 
 **** Install 
 
-#+begin_src shell
-pyenv install 2.7.16
+- [[https://stackoverflow.com/questions/54043607/how-to-set-pyenv-python-for-reticulate][r - How to set pyenv python for reticulate - Stack Overflow]]
+  - =--enable-shared= をつけてビルドする
+
+#+begin_src shell :eval never
+env PYTHON_CONFIGURE_OPTS="--enable-shared" pyenv install 3.8.3
 #+end_src
 
 #+begin_src shell :results output

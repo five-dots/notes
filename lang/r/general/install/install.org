@@ -1,4 +1,17 @@
-#+STARTUP: content indent
+#+STARTUP: folded indent inlineimages latexpreview
+#+PROPERTY: header-args:R :results output :exports both :cache yes
+#+PROPERTY: header-args:R+ :session *R:blog* :width 640 :height 480
+#+OPTIONS: author:nil H:6 toc:nil
+#+HUGO_BASE_DIR: ~/Dropbox/repos/github/five-dots/blog
+#+HUGO_SECTION: post/2020/05/
+
+#+TITLE: R の環境構築
+#+DATE: 2020-05-22
+#+HUGO_CATEGORIES: programming
+#+HUGO_TAGS: r
+#+HUGO_CUSTOM_FRONT_MATTER: :toc true
+
+R の環境構築
 
 * Requirements
 
@@ -42,20 +55,6 @@
 
 - github パッケージも =install.packages()= で扱うための設定
   - ={drat}=
-
-- R docker (rocker?) + GCP (GCE or GKE)
-
-- 追加機能
-  - BLAS/LAPACK
-
-* Component
-
-- R 本体
-  - BLAS/LAPACK
-- R Packages
-  - renv
-  - drat
-- REPL - radian
   
 * Build R from Source
 ** Overview
@@ -333,12 +332,6 @@ sudo apt install r-cran-tidyverse
   - =.libPaths()= で設定する
   - =R_LIBS_USER= に設定する
 
-* radian
-
-- python 製の R REPL
-- IPython のように REPL を拡張したもの
-- =.radian_profile= で =options()= の設定を読み込む
-
 * RTVS Daemon
 ** Install
 
@@ -373,3 +366,7 @@ GCP Console で Firewall rule 追加
 - RTVSD 自動起動
 - デフォルトの Linux ユーザー名
 - ファイル転送(ファイル共有)とパス設定
+* COMMENT Local Variables                          :ARCHIVE:
+  # Local Variables:
+  # eval: (org-hugo-auto-export-mode)
+  # End:

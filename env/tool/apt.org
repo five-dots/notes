@@ -1,0 +1,200 @@
+#+STARTUP: folded indent inlineimages latexpreview
+
+* apt (Advanced Packaging Tool)
+
+- [[https://qiita.com/SUZUKI_Masaya/items/1fd9489e631c78e5b007][aptコマンドチートシート - Qiita]]
+  
+* GPG (GNU privacy Guard)
+** Overview
+
+  - 暗号化ソフトウェア
+
+** Key List
+
+- [[http://manpages.ubuntu.com/manpages/trusty/ja/man8/apt-key.8.html][Ubuntu Manpage: apt-key - APT キー管理ユーティリティ]]
+
+- インストール済みの Public Key 一覧
+#+begin_src shell :results output
+apt-key list
+#+end_src
+
+#+RESULTS:
+#+begin_example
+/etc/apt/trusted.gpg
+--------------------
+pub   dsa1024 2007-03-08 [SC]
+      4CCA 1EAF 950C EE4A B839  76DC A040 830F 7FAC 5991
+uid           [ unknown] Google, Inc. Linux Package Signing Key <linux-packages-keymaster@google.com>
+sub   elg2048 2007-03-08 [E]
+
+pub   rsa4096 2016-04-12 [SC]
+      EB4C 1BFD 4F04 2F6D DDCC  EC91 7721 F63B D38B 4796
+uid           [ unknown] Google Inc. (Linux Packages Signing Authority) <linux-packages-keymaster@google.com>
+sub   rsa4096 2019-07-22 [S] [expires: 2022-07-21]
+
+pub   rsa2048 2010-10-19 [SCA] [expires: 2020-10-16]
+      E298 A3A8 25C0 D65D FD57  CBB6 5171 6619 E084 DAB9
+uid           [ unknown] Michael Rutter <marutter@gmail.com>
+sub   rsa2048 2010-10-19 [E] [expires: 2020-10-16]
+
+pub   rsa2048 2014-08-04 [SC]
+      3FA7 E032 8081 BFF6 A14D  A29A A6A1 9B38 D3D8 31EF
+uid           [ unknown] Xamarin Public Jenkins (auto-signing) <releng@xamarin.com>
+sub   rsa2048 2014-08-04 [E]
+
+pub   rsa4096 2017-02-22 [SCEA]
+      9DC8 5822 9FC7 DD38 854A  E2D8 8D81 803C 0EBF CD88
+uid           [ unknown] Docker Release (CE deb) <docker@docker.com>
+sub   rsa4096 2017-02-22 [S]
+
+pub   rsa2048 2010-02-11 [SC]
+      1C61 A265 6FB5 7B7E 4DE0  F4C1 FC91 8B33 5044 912E
+uid           [ unknown] Dropbox Automatic Signing Key <linux@dropbox.com>
+
+pub   rsa4096 2013-03-11 [SC]
+      6084 F3CF 814B 57C1 CF12  EFD5 15CF 4D18 AF4F 7421
+uid           [ unknown] Sylvestre Ledru - Debian LLVM packages <sylvestre@debian.org>
+sub   rsa4096 2013-03-11 [E]
+
+pub   rsa2048 2017-10-27 [SC] [expires: 2022-03-05]
+      A4B8 3CD0 5FDF 5C51 7848  2D4A 1488 EB46 E192 A257
+uid           [ unknown] home:manuelschneid3r OBS Project <home:manuelschneid3r@build.opensuse.org>
+
+pub   rsa2048 2019-09-30 [SC] [expires: 2023-09-30]
+      52AB D6E8 7E42 1793 9718  73FF ACFA 9FC5 7E6C 5DBE
+uid           [ unknown] Intel(R) Software Development Products
+
+pub   rsa2048 2016-09-28 [SC] [expired: 2019-09-27]
+      BF43 85F9 1CA5 FC00 5AB3  9E1C 1A84 97B1 1911 E097
+uid           [ expired] "CN = Intel(R) Software Development Products", O=Intel Corporation
+
+pub   rsa2048 2018-04-01 [SCE] [expires: 2021-03-31]
+      54A6 47F9 048D 5688 D7DA  2ABE 6A03 0B21 BA07 F4FB
+uid           [ unknown] Google Cloud Packages Automatic Signing Key <gc-team@google.com>
+
+pub   rsa4096 2016-04-22 [SC]
+      B9F8 D658 297A F3EF C18D  5CDF A2F6 83C5 2980 AECF
+uid           [ unknown] Oracle Corporation (VirtualBox archive signing key) <info@virtualbox.org>
+sub   rsa4096 2016-04-22 [E]
+
+pub   rsa4096 2014-01-13 [SCEA] [expired: 2019-01-12]
+      418A 7F2F B0E1 E6E7 EABF  6FE8 C2E7 3424 D590 97AB
+uid           [ expired] packagecloud ops (production key) <ops@packagecloud.io>
+
+pub   rsa4096 2016-02-18 [SCEA]
+      DB08 5A08 CA13 B8AC B917  E0F6 D938 EC0D 0386 51BD
+uid           [ unknown] https://packagecloud.io/slacktechnologies/slack (https://packagecloud.io/docs#gpg_signing) <support@packagecloud.io>
+sub   rsa4096 2016-02-18 [SEA]
+
+/etc/apt/trusted.gpg.d/fish-shell_ubuntu_release-3.gpg
+------------------------------------------------------
+pub   rsa1024 2013-08-21 [SC]
+      59FD A1CE 1B84 B3FA D893  66C0 2755 7F05 6DC3 3CA5
+uid           [ unknown] Launchpad PPA for Fish shell maintainers
+
+/etc/apt/trusted.gpg.d/graphics-drivers_ubuntu_ppa.gpg
+------------------------------------------------------
+pub   rsa4096 2015-08-12 [SC]
+      2388 FF3B E10A 76F6 38F8  0723 FCAE 110B 1118 213C
+uid           [ unknown] Launchpad PPA for Graphics Drivers Team
+
+/etc/apt/trusted.gpg.d/irie_ubuntu_elisp.gpg
+--------------------------------------------
+pub   rsa1024 2010-03-04 [SC]
+      09E5 1E20 2436 DC9B E083  78AA 4683 0400 C4A1 00CF
+uid           [ unknown] Launchpad PPA for Irie's Elisp
+
+/etc/apt/trusted.gpg.d/kelleyk_ubuntu_emacs.gpg
+-----------------------------------------------
+pub   rsa4096 2015-04-10 [SC]
+      8735 03A0 9075 0CDA EB07  54D9 3FF0 E01E EAAF C9CD
+uid           [ unknown] Launchpad PPA for Kevin Kelley
+
+/etc/apt/trusted.gpg.d/linuxgndu_ubuntu_sqlitebrowser.gpg
+---------------------------------------------------------
+pub   rsa1024 2014-01-29 [SC]
+      9413 5383 0DA8 0B6A 0627  6736 B0C3 F48A 7F25 83EA
+uid           [ unknown] Launchpad PPA for Gajj GNDU
+
+/etc/apt/trusted.gpg.d/maarten-baert_ubuntu_simplescreenrecorder.gpg
+--------------------------------------------------------------------
+pub   rsa1024 2013-05-26 [SC]
+      4DED B3E0 5F04 3CA1 8517  6AC0 409C 8B51 283E C8CD
+uid           [ unknown] Launchpad PPA for Maarten Baert
+
+/etc/apt/trusted.gpg.d/marutter_ubuntu_c2d4u3_5.gpg
+---------------------------------------------------
+pub   rsa1024 2010-11-14 [SC]
+      C9A7 585B 49D5 1698 710F  3A11 5E25 F516 B04C 661B
+uid           [ unknown] Launchpad PPA for marutter
+
+/etc/apt/trusted.gpg.d/marutter_ubuntu_c2d4u.gpg
+------------------------------------------------
+pub   rsa1024 2010-11-14 [SC]
+      C9A7 585B 49D5 1698 710F  3A11 5E25 F516 B04C 661B
+uid           [ unknown] Launchpad PPA for marutter
+
+/etc/apt/trusted.gpg.d/microsoft.gpg
+------------------------------------
+pub   rsa2048 2015-10-28 [SC]
+      BC52 8686 B50D 79E3 39D3  721C EB3E 94AD BE12 29CF
+uid           [ unknown] Microsoft (Release signing) <gpgsecurity@microsoft.com>
+
+/etc/apt/trusted.gpg.d/microsoft-prod.gpg
+-----------------------------------------
+pub   rsa2048 2015-10-28 [SC]
+      BC52 8686 B50D 79E3 39D3  721C EB3E 94AD BE12 29CF
+uid           [ unknown] Microsoft (Release signing) <gpgsecurity@microsoft.com>
+
+/etc/apt/trusted.gpg.d/neovim-ppa_ubuntu_stable.gpg
+---------------------------------------------------
+pub   rsa4096 2014-12-11 [SC]
+      9DBB 0BE9 3669 64F1 3485  5E22 55F9 6FCF 8231 B6DD
+uid           [ unknown] Launchpad PPA for Neovim PPA Team
+
+/etc/apt/trusted.gpg.d/numix_ubuntu_ppa.gpg
+-------------------------------------------
+pub   rsa1024 2013-08-13 [SC]
+      43E0 7612 1739 DEE5 FB96  BBED 52B7 0972 0F16 4EEB
+uid           [ unknown] Launchpad PPA for Numix Maintainers
+
+/etc/apt/trusted.gpg.d/papirus_ubuntu_papirus.gpg
+-------------------------------------------------
+pub   rsa4096 2017-01-15 [SC]
+      9461 9994 46FA F0DF 770B  FC9A E58A 9D36 647C AE7F
+uid           [ unknown] Launchpad PPA for Papirus
+
+/etc/apt/trusted.gpg.d/tista_ubuntu_adapta.gpg
+----------------------------------------------
+pub   rsa1024 2011-05-01 [SC]
+      EAC0 D406 E5D7 9A82 ADEE  DFDF B76E 5365 2D87 398A
+uid           [ unknown] Launchpad PPA for tista
+
+/etc/apt/trusted.gpg.d/ubuntu-elisp_ubuntu_ppa.gpg
+--------------------------------------------------
+pub   rsa1024 2009-01-18 [SC]
+      0D7B AE43 5ADB C6C3 E491  8A74 062D 648F D62F CE72
+uid           [ unknown] Launchpad PPA for Ubuntu Emacs Lisp
+
+/etc/apt/trusted.gpg.d/ubuntu-keyring-2012-archive.gpg
+------------------------------------------------------
+pub   rsa4096 2012-05-11 [SC]
+      790B C727 7767 219C 42C8  6F93 3B4F E6AC C0B2 1F32
+uid           [ unknown] Ubuntu Archive Automatic Signing Key (2012) <ftpmaster@ubuntu.com>
+
+/etc/apt/trusted.gpg.d/ubuntu-keyring-2012-cdimage.gpg
+------------------------------------------------------
+pub   rsa4096 2012-05-11 [SC]
+      8439 38DF 228D 22F7 B374  2BC0 D94A A3F0 EFE2 1092
+uid           [ unknown] Ubuntu CD Image Automatic Signing Key (2012) <cdimage@ubuntu.com>
+
+/etc/apt/trusted.gpg.d/ubuntu-keyring-2018-archive.gpg
+------------------------------------------------------
+pub   rsa4096 2018-09-17 [SC]
+      F6EC B376 2474 EDA9 D21B  7022 8719 20D1 991B C93C
+uid           [ unknown] Ubuntu Archive Automatic Signing Key (2018) <ftpmaster@ubuntu.com>
+
+#+end_example
+* apt-clone
+
+- [[https://github.com/mvo5/apt-clone][GitHub - mvo5/apt-clone: Create a "state" file for Debian/Ubuntu systems with...]]

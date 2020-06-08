@@ -6,19 +6,33 @@
 
 - 上記 repo では 64bit しか提供されていないため、以下の内容に修正
   - [[https://kledgeb.blogspot.com/2018/05/virtualbox-83-ubuntu.html][Ubuntu 18.04向けVirtualBoxリポジトリー]]
-  - sources.list には以下のように記述する
 
+- sources.list には以下のように記述する
 #+begin_quote
 deb [arch=amd64] https://download.virtualbox.org/virtualbox/debian bionic contrib
 #+end_quote
 
-- BIOS で Intenl Virtualization Technology を Enable にする
+- BIOS で Intel Virtualization Technology を Enable にする
+
+#+begin_src shell
+wget -q https://www.virtualbox.org/download/oracle_vbox_2016.asc -O- | sudo apt-key add -
+
+sudo apt update
+sudo apt install virtualbox-6.1
+#+end_src
 
 * Windows 10 on Ubuntu
 
 - [[https://webnetforce.net/virtualboxdeubuntuno-shangdewindows10wo-chao-gao-s/][VirtualBoxでUbuntuの上でWindows10を超高速に動かす]]
+  - ディスクは VDI (VirtualBox Disk Image) + 固定 (Fixed Size)
+  - チップセットは ICH9 に設定
+  - 準仮想化インタフェースは、KVM
 
 - Host only adapter が Windows 側で認識されない件
   - [[https://blog.goo.ne.jp/rxn10223/e/3b79ae1a809177cf6a8fbb735dfd98fe][Virtualboxにおけるネットワークの不具合について]]
 
 - Multicharts.NET が異常終了する問題あり
+
+共有フォルダ
+- [[https://qiita.com/skyzhao/items/20e04dff1cf277d330a1][【Virtual Box】共有フォルダ作成 - Qiita]]
+- [[https://qiita.com/SUZUKI_Masaya/items/3444a010cf9903a088b3][VirtualBoxにおいて、ホストOSとゲストOS (Ubuntu) 間の共有フォルダを作成する方法 - Qiita]]

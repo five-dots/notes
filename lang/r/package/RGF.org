@@ -1,0 +1,257 @@
+#+STARTUP: folded indent inlineimages latexpreview
+
+* ={RGF}=
+
+- R6 class での実装 (4 つのクラス)
+  - Classifier x Regressor
+  - RGF x FastRGF
+    - FastRGF の方は、計算を簡易的にしてある。Feature Importance などは計算できない。
+
+- Python パッケージの ={reticulate}= 版
+#+begin_src R
+pacman::p_funs(RGF)
+#+end_src
+
+#+RESULTS:
+: [1] "FastRGF_Classifier"     "FastRGF_Regressor"      "mat_2scipy_sparse"     
+: [4] "RGF_Classifier"         "RGF_cleanup_temp_files" "RGF_Regressor"         
+: [7] "TO_scipy_sparse"
+
+* Hyper Parameters
+
+- *max_leaf*
+  - Forest の枝葉の数がこの数に達したらストップ
+  - デフォルト: 回帰 500, 分類 1,000
+  - 範囲: 500/1,000 - 10,000
+
+- *loss*
+  - 損失関数
+  - "LS" (Square Loss), "Log" (Logistic Loss), "Expo" (Exponential Loss)
+    - メトリックに合わせて選ぶ
+      - RMSE = "LS"
+      - logloss = "LS" or "Log"
+      - AUC = "Log" or "LS"
+  - デフォルト: 回帰 "LS", 分類 "Log"
+  - 基本はデフォルトのままでよい
+
+- *algorithm*
+  - "RGF" = RGF with L2 regularization with leaf-only models
+  - "RGF_Opt" = RTF with min-penalty regularization
+  - "RGF_Sib" = RGF with min-penalty regularization with the sum-to-zero sibling constraints
+  - デフォルト: "RGF"
+  - 範囲: 3 つを全て試す
+
+- *l2*
+  - L2 正則化の度合い
+  - デフォルト: 0.1
+  - 範囲: 1.0, 0.1, 0.01 で試す
+    - loss="LS"(回帰) でない場合は、1e-20 や
+    - log10[0 ~ -20]
+
+- *reg_depth*
+  - "RGF_Opt"/"RGF_Sib" で利用. 1.0 以上の値。大きいとよりペナルティ。
+  - デフォルト: 1.0
+
+- n_iter,
+  - Default: "LS"=10, "Expo"/"Log"=5
+
+- *n_jobs*
+  - 並列処理のスレッド数を指定 (FastRGF を利用する場合と n_jobs の違いがよくわからない)
+  - n_jobs = 1: parallel なし
+  - n_jobs = -1 & classes_ >= # of CPU: 全 CPU を使う
+  - n_jobs = -2: 全 CPU - 1 を使う (-3 だと 全 CPU -2)
+
+* Reference
+
+#+begin_src R
+RGF_Classifier$new(
+  max_leaf         = 1000,
+  test_interval    = 100,
+  algorithm        = "RGF",
+  loss             = "Log",
+  reg_depth        = 1.0,
+  l2               = 0.1,
+  sl2              = NULL,
+  normalize        = FALSE,
+  min_samples_leaf = 10,
+  n_iter           = NULL,
+  n_tree_search    = 1,
+  opt_interval     = 100,
+  learning_rate    = 0.5,
+  calc_prob        = "sigmoid",
+  n_jobs           = 1,
+  memory_policy    = "generous",
+  verbose          = 0,
+  init_model       = NULL
+)
+
+FastRGF_Classifier$new(
+  n_estimators          = 500,
+  max_depth             = 6,
+  max_leaf              = 50,
+  tree_gain_ratio       = 1.0,
+  min_samples_leaf      = 5,
+  loss                  = "LS",
+  l1                    = 1.0,
+  l2                    = 1000.0,
+  opt_algorithm         = "rgf",
+  learning_rate         = 0.001,
+  max_bin               = NULL,
+  min_child_weight      = 5.0,
+  data_l2               = 2.0,
+  sparse_max_features   = 80000,
+  sparse_min_occurences = 5,
+  calc_prob             ="sigmoid",
+  n_jobs                = 1,
+  verbose               = 0
+)
+
+RGF_Regressor$new(
+  max_leaf         = 500,
+  test_interval    = 100,
+  algorithm        = "RGF",
+  loss             = "LS",
+  reg_depth        = 1.0,
+  l2               = 0.1,
+  sl2              = NULL,
+  normalize        = TRUE,
+  min_samples_leaf = 10,
+  n_iter           = NULL,
+  n_tree_search    = 1,
+  opt_interval     = 100,
+  learning_rate    = 0.5,
+  memory_policy    = "generous",
+  verbose          = 0,
+  init_model       = NULL
+)
+
+init <- FastRGF_Regressor$new(
+  n_estimators          = 500,
+  max_depth             = 6,
+  max_leaf              = 50,
+  tree_gain_ratio       = 1.0,
+  min_samples_leaf      = 5,
+  l1                    = 1.0,
+  l2                    = 1000.0,
+  opt_algorithm         = "rgf",
+  learning_rate         = 0.001,
+  max_bin               = NULL,
+  min_child_weight      = 5.0,
+  data_l2               = 2.0,
+  sparse_max_features   = 80000,
+  sparse_min_occurences = 5,
+  n_jobs                = 1,
+  verbose               = 0
+)
+
+fit(
+  x, # R matrix or Python sparse matrix
+  y, # vector
+  sample_weight = NULL
+)
+
+predict(x)
+#+end_src
+
+* Example
+
+#+begin_src R
+if (reticulate::py_available() && reticulate::py_module_available("rgf.sklearn")) {
+  library(RGF)
+  set.seed(1)
+  x = matrix(runif(1000), nrow = 100, ncol = 10)
+  y = runif(100)
+  RGF_regr = RGF_Regressor$new(max_leaf = 50)
+  RGF_regr$fit(x, y)
+  preds = RGF_regr$predict(x)
+  preds
+}
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+  [1] 0.49904628 0.53054259 0.37823519 0.65015003 0.28237780 0.32578929
+  [7] 0.42742188 0.67789300 0.81275145 0.56683717 0.86246630 0.44146534
+ [13] 0.30966619 0.86912026 0.39423005 0.59233958 0.75937386 0.33769451
+ [19] 0.17165301 0.29106848 0.19036818 0.84902767 0.30204687 0.79023824
+ [25] 0.27223651 0.59376335 0.58293087 0.37368556 0.34517288 0.57162829
+ [31] 0.50619602 0.52269530 0.47475714 0.81928324 0.71866106 0.28643596
+ [37] 0.26419444 0.56782731 0.78763572 0.27805723 0.26434042 0.29344809
+ [43] 0.60150748 0.49553377 0.23272578 0.32484645 0.56314727 0.31888084
+ [49] 0.49268585 0.75377083 0.38022353 0.59131515 0.50944858 0.76051372
+ [55] 0.69133149 0.38261791 0.61411388 0.34762013 0.49727026 0.34505810
+ [61] 0.36096908 1.00266500 0.66689200 0.31784834 0.49545754 0.75716753
+ [67] 0.38565739 0.33245540 0.82948434 0.41684414 0.33059278 0.08479362
+ [73] 0.50730572 0.44180673 0.75747757 0.52189359 0.58720786 0.14495983
+ [79] 0.47259584 0.40021364 0.33783650 0.37639006 0.59954268 0.11690545
+ [85] 0.81996344 0.77367500 0.47221177 0.32773896 0.76009445 0.47126303
+ [91] 0.45462108 0.65641926 0.30770253 0.35194861 0.59853740 0.75467860
+ [97] 0.05136116 0.54359386 0.50476601 0.69662802
+#+end_example
+
+* [[https://cran.r-project.org/web/packages/RGF/vignettes/the_RGF_package.html][Regularized Greedy Forest in R (Vigette)]]
+** データ (R matrix から scipy sparse matrix へ変換)
+
+- =matrix= から scipy sparse matrix への変換 = =mat_2scipy_sparse()=
+#+begin_src R
+set.seed(1)
+x <- matrix(runif(1000), nrow = 100, ncol = 10)
+x_sparse <- mat_2scipy_sparse(x, format = "sparse_row_matrix")
+print(dim(x))
+print(x_sparse$shape)
+#+end_src
+
+#+RESULTS:
+: 
+: [1] 100  10
+: 
+: (100, 10)
+
+- =dgCMatrix= から scipy sparse matrix への変換 = =TO_scipy_sparse()=
+#+begin_src R
+data <- c(1, 0, 2, 0, 0, 3, 4, 5, 6)
+dgcM <- Matrix::Matrix(data = data, nrow = 3, ncol = 3,
+                       byrow = TRUE, sparse = TRUE)
+print(dim(dgcM))
+x_sparse <- TO_scipy_sparse(dgcM)
+print(x_sparse$shape)
+#+end_src
+
+#+RESULTS:
+: 
+: [1] 3 3
+: 
+: (3, 3)
+
+- =dgRMatrix= から scipy sparse matrix への変換
+#+begin_src R
+dgrM <- as(dgcM, "RsparseMatrix")
+class(dgrM)
+print(dim(dgrM))
+res_dgr <- TO_scipy_sparse(dgrM)
+print(res_dgr$shape)
+#+end_src
+
+#+RESULTS:
+: 
+: [1] "dgRMatrix"
+: attr(,"package")
+: [1] "Matrix"
+: 
+: [1] 3 3
+: 
+: (3, 3)
+* 参考
+
+- Official
+  - [[https://cran.r-project.org/web/packages/RGF/index.html][CRAN - Package RGF]] 
+  - [[https://github.com/RGF-team/rgf][GitHub - RGF-team/rgf: Home repository for the Regularized Greedy Forest (RGF...]]
+  - [[https://github.com/RGF-team/rgf/blob/master/AWESOME_RGF.md][rgf/AWESOME_RGF.md at master · RGF-team/rgf · GitHub]]
+  - Vigette
+    - [[https://cran.r-project.org/web/packages/RGF/vignettes/the_RGF_package.html][Regularized Greedy Forest in R]] 
+
+- Blog
+  - [[http://segafreder.hatenablog.com/entry/2016/06/12/211050][【機械学習】Regularized Greedy Forest(RGF)で多クラス分類を試してみました - verilog書く人]] 
+  - [[http://puyokw.hatenablog.com/entry/2016/07/17/210021][Regurarized Greedy Forest - puyokwの日記]]
+  - [[https://cran.r-project.org/web/packages/RGF/vignettes/the_RGF_package.html][Regularized Greedy Forest in R ({RGF} Vigette)]]

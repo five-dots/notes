@@ -10,6 +10,12 @@
 - [[https://qiita.com/paithiov909/items/10e2aa79982a974f9d6d][オレオレおすすめRパッケージリスト@Qiita]]
 - [[https://qiita.com/hoxo_m/items/ce478bf0debe963d9e40][CRAN に R パッケージを登録している日本人まとめ@Qiita #rstatsj]]
 
+* Package management
+
+- renv
+- drat
+- needs
+
 * tidyverse
 
 - Core packages
@@ -61,6 +67,7 @@
 | ~glue~          | Glue strings to data in R. Small, fast, dependency free interpreted string literals |
 | ~multidplyr~    | A dplyr backend that partitions a data frame over multiple processes                |
 | ~tidytemplate~  | A pkgdown template for core tidyverse packages                                      |
+|---------------+-------------------------------------------------------------------------------------|
 
 * tidymodels
 
@@ -99,6 +106,7 @@
 | ~probably~      | Tools for post-processing class probability estimates                                      |
 | ~textrecipes~   | Extra recipes for Text Processing                                                          |
 | ~tune~          | Tools for tidy parameter tuning                                                            |
+|---------------+--------------------------------------------------------------------------------------------|
 
 * r-lib project
 
@@ -108,6 +116,7 @@
 - pkgdown
 - usethis
 - rlang
+- fs
 他多数
 
 * cloudyr project

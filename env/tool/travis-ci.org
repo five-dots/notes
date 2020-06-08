@@ -1,0 +1,35 @@
+#+STARTUP: folded indent inlineimages latexpreview
+
+* Travis-CI
+
+- [[https://travis-ci.org/][Travis CI - Test and Deploy Your Code with Confidence]]
+
+* R
+
+- [[https://docs.travis-ci.com/user/languages/r/][Building an R Project - Travis CI]]
+
+- =usethis::use_travis()= で =.travis.yml= の雛形を作成
+- =.travis.yml= を用意して、Dashboard から GitHub のプロジェクトを選択
+- コミットされる毎に自動でビルド & テストを走らせてくれる
+  - Ubuntu 16.04 の立ち上げ
+  - R と 依存パッケージのインストール
+  - R CMD check
+
+- サンプルの =.travis.yml=
+#+begin_quote
+language: R
+cache: packages
+#+end_quote
+
+#+begin_quote
+language: r
+r:
+  - oldrel
+  - release
+  - devel
+warnings_are_errors: true
+#+end_quote
+
+* 参考
+
+- [[https://notchained.hatenablog.com/entry/2015/10/17/235715][r-travisでRのCIを高速化 - Technically, technophobic.]]

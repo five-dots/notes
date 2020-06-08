@@ -2,12 +2,22 @@
 
 * Tools
 
+- apt
+  - =sudo apt install golang=
+
+- 基本
+  - 公式からバイナリを入手して =/usr/local/go= に配置
+  - PATH を通す
+
 - [[https://github.com/syndbg/goenv][goenv@Github]]
   - pyenv ライクなバージョン管理
 
 - =go mod= (Go Modules)
 
 * GOPATH
+
+- デフォルトでは =$HOME/go=
+- =go get= した場合に配置されるディレクトリ
 
 #+begin_src shell
 echo $GOPATH

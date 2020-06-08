@@ -10,7 +10,6 @@
 - 操作が失敗した際はエラーを投げる (~{base}~ の中には、warning だけのものがある)
 - 全てを UTF-8 で扱う
 - 関数名がわかりやすい (~dir_~, ~file_~, ~link_~, ~path_~)
-\\
 
 * 目次                                                                :quote:
 #+BEGIN_QUOTE

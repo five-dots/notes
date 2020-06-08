@@ -984,7 +984,7 @@ plot(x)
 
 ** Relu
 
-- Rectified Linear Uni
+- Rectified Linear Unit
 - ニューラルネットワークの活性化関数としてよく使われる
 - 特徴
   - max(0,x) 単純ゆえに早い

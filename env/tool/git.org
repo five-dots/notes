@@ -68,7 +68,7 @@
 | cherry-pick |                      |                    |                                       |
 |-------------+----------------------+--------------------+---------------------------------------|
 
-* Work flow
+* ワークフロー
 ** General workflow
 *** overview
 
@@ -354,7 +354,7 @@ git rebase master
 - その他の参考
   - [[https://gist.github.com/fujimaki-k/21196aa7cdad40a6e6e5b323c73fa714][リリースまでの流れ · GitHub]]
 
-* Merge conflict
+* コンフリクトの解決
 
 - どちらの branch を優先させるかが決まっている場合
   - =git checkout --ours hoge.txt= (local を優先)
@@ -375,8 +375,8 @@ git rebase master
   >>>>>>> 29ec90c91c6e1f18d36e629b927cc66abf708f26
  
 * Reset commit
+** 以前の変更点に戻る
 
-- 以前の変更点に戻る
 - [[https://qiita.com/shuntaro_tamura/items/db1aef9cf9d78db50ffe][[git reset (--hard/--soft)]ワーキングツリー、インデックス、HEADを使いこなす方法@Qiita]]
 - [[https://qiita.com/forest1/items/f7c821565a7a7d64d60f][git reset 解説@Qiita]]
 
@@ -389,6 +389,14 @@ git rebase master
 - HEAD^^   = ２つ前
 - HEAD~{n} = n 個前
 - もしくは ID を指定する
+
+** コミットメッセージの書き直し
+
+- 直前のコミットを上書き
+- リモートに Push する前に有効
+#+begin_src shell
+git commit --amend
+#+end_src
 
 * Remove files from repo
 
@@ -501,6 +509,7 @@ Use 6 branch
 #+begin_src shell
 git checkbout -b develop
 #+end_src
+
 edit, add, commit
 
 * submodule
@@ -516,6 +525,8 @@ edit, add, commit
 
 - History の中の特定のポイント (commit) に tag をつける
   - commit を指定しなければ、現在のブランチの最新の commit に tag をつける
+  - tag を GitHub に Push すると、Tag と Release に反映される (zip, tar.zg で DL 可能になる)
+
 #+begin_src shell :eval never
 git tag -a v0.1.0 -m "comment" commit-id
 

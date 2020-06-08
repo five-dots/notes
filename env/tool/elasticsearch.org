@@ -1,0 +1,584 @@
+#+STARTUP: folded indent inlineimages latexpreview
+
+* Elasticsearch
+
+- [[https://vitalify.jp/blog/2017/02/elasticsearch_matome.html][全文検索エンジン「Elasticsearch」を調べて使ってみた色々まとめ | ブログ｜ベトナムでのオフショア開発とスマートフォンアプリ開発のバイタリフィ]]
+
+- [[https://qiita.com/nskydiving/items/1c2dc4e0b9c98d164329][はじめての Elasticsearch - Qiita]]
+
+- Java 製の全文検索エンジン
+  - Apache Lucene という全文検索ライブラリを利用している
+- 全文検索エンジンとしては最も有名
+  - Wikipedia, Facebook, Github などでも採用されている
+- 分散型
+- データ構造が柔軟 (スキーマレス)
+  - JSON 形式を利用
+- REST API or Elasticsearch SQL でデータ操作
+
+- Elastic Stack
+  - Elasticsearch ドキュメントの保存・検索
+  - Kibana        データの可視化
+  - Logstash      データソースからのデータ取り込み・変換
+  - Beats
+  - X-Pack
+
+- 用語
+  - =Node= = 1 サーバー
+  - =Cluster= = Node の集合
+  - =Shard= = シャード, Primary と Replica で構成 (RAID に似ている). Index を各 Node に分散。
+    - Primary 書き込み可能. Primary が Down していると Status が Red になる
+    - Replica 読み込みのみ. Primary とは別の Shard に格納する必要がある。Replica が作成できないと Yellow Status.
+  - =Index= = データベース/テーブル
+  - =Type= = テーブル (version 6 以降は非推奨)
+    - version 6 以降はタイプ名の代わりに =_doc= を入力する
+    - version 8 からは、全廃される模様
+  - =Document= = レコード(行) の概念
+    - =ID= で各データにアクセス
+    - JSON 形式. Json のキーを Field と呼んだりもする
+    - 省略すると自動で割り当てられる
+    - 物理的には、Node 内の Shard に保存されている
+
+* Install
+
+- [[https://www.digitalocean.com/community/tutorials/how-to-install-and-configure-elasticsearch-on-ubuntu-20-04][How To Install and Configure Elasticsearch on Ubuntu 20.04 | DigitalOcean]]
+- [[https://qiita.com/ekzemplaro/items/acc81bc96fdd56eed587][Ubuntu 18.04 に Elasticsearch をインストール - Qiita]]
+- [[https://recology.info/2015/02/secure-elasticsearch/][note to self, secure elasticsearch]]
+
+#+begin_src shell :eval never
+curl -fsSL https://artifacts.elastic.co/GPG-KEY-elasticsearch | sudo apt-key add -
+
+echo "deb https://artifacts.elastic.co/packages/7.x/apt stable main" | sudo tee -a /etc/apt/sources.list.d/elastic-7.x.list
+
+sudo apt update
+sudo apt install elasticsearch
+sudo apt install kibana
+#+end_src
+
+- もしくは、docker を使う
+  - [[https://hub.docker.com/_/elasticsearch][Docker Hub]]
+#+begin_src shell :eval never
+docker pull elasticsearch
+
+docker pull elasticsearch:7.7.7
+#+end_src
+
+* Configuration
+
+- =/etc/elaticsearch/elaticsearch.yml= がメインの設定ファイル
+- [[https://www.elastic.co/guide/en/elasticsearch/reference/index.html][Elasticsearch Reference | Elastic]] 
+
+- =network.host: localhost= に変更する
+
+#+begin_src shell :eval never
+sudo systemctl start elasticsearch
+# sudo systemctl enable elasticsearch # 自動起動
+
+sudo systemctl start kibana
+#+end_src
+
+- REST のテスト
+  - Elasticsearch:
+    - http://localhost:9200
+    - http://localhost:9200/_cat/health?v (クラスタの状態確認)
+    - http://localhost:9200/_cat/indices?v (インデックスの状態確認)
+    - http://localhost:9200/_nodes?pretty (設定情報を抽出)
+  - Kibana: http://localhost:5601
+#+begin_src shell :results output
+curl -X GET 'http://localhost:9200'
+#+end_src
+
+#+RESULTS:
+#+begin_example
+{
+  "name" : "x1",
+  "cluster_name" : "elasticsearch",
+  "cluster_uuid" : "JRS35rxkSiCejoP3OEiojw",
+  "version" : {
+    "number" : "7.7.1",
+    "build_flavor" : "default",
+    "build_type" : "deb",
+    "build_hash" : "ad56dce891c901a492bb1ee393f12dfff473a423",
+    "build_date" : "2020-05-28T16:30:01.040088Z",
+    "build_snapshot" : false,
+    "lucene_version" : "8.5.1",
+    "minimum_wire_compatibility_version" : "6.8.0",
+    "minimum_index_compatibility_version" : "6.0.0-beta1"
+  },
+  "tagline" : "You Know, for Search"
+}
+#+end_example
+
+* CRUD by =curl=
+
+- [[https://qiita.com/nskydiving/items/1c2dc4e0b9c98d164329][はじめての Elasticsearch - Qiita]]
+- [[https://www.elastic.co/guide/en/elasticsearch/reference/current/index.html][API doc]]
+
+- POST
+  - tutorial(=index=)/helloworld(=type=)/1(=ID=)
+#+begin_src shell :results output
+curl -X POST \
+     -H "Content-Type: application/json" 'http://localhost:9200/tutorial/helloworld/1' \
+     -d '{ "message": "Hello World!" }'
+#+end_src
+
+#+RESULTS:
+: {"_index":"tutorial","_type":"helloworld","_id":"1","_version":2,"result":"updated","_shards":{"total":2,"successful":1,"failed":0},"_seq_no":1,"_primary_term":1}
+
+- GET
+#+begin_src shell :results output
+curl -X GET \
+     -H "Content-Type: application/json" 'http://localhost:9200/tutorial/helloworld/1' \
+     -d '{ "message": "Hello World!" }'
+#+end_src
+
+#+RESULTS:
+: {"_index":"tutorial","_type":"helloworld","_id":"1","_version":2,"_seq_no":1,"_primary_term":1,"found":true,"_source":{ "message": "Hello World!" }}
+
+- PUT
+#+begin_src shell :results output
+curl -X PUT -H "Content-Type: application/json"  'localhost:9200/tutorial/helloworld/1?pretty' -d '
+{
+  "message": "Hello, People!"
+}'
+#+end_src
+
+#+RESULTS:
+#+begin_example
+{
+  "_index" : "tutorial",
+  "_type" : "helloworld",
+  "_id" : "1",
+  "_version" : 4,
+  "result" : "updated",
+  "_shards" : {
+    "total" : 2,
+    "successful" : 1,
+    "failed" : 0
+  },
+  "_seq_no" : 3,
+  "_primary_term" : 1
+}
+#+end_example
+
+* Use from R
+
+- [[file:~/Dropbox/repos/github/five-dots/notes/lang/r/package/elastic.org::*={elastic}=][ ={elastic}= ]]
+  - star 211
+
+- [[https://github.com/alexioannides/elasticsearchr][GitHub - AlexIoannides/elasticsearchr: Lightweight Elasticsearch client for R.]]
+  - star 45
+  - Not on CRAN
+
+- ={RODBC}= を使って繋ぐ
+
+* ob-elasticsearch from es-mode
+** Basic
+
+- [[https://github.com/dakrone/es-mode][GitHub - dakrone/es-mode: An Emacs major mode for interacting with Elasticsearch]] 
+  - =.es= ファイルの編集 (Elasticsearch Query DSL)
+  - ob-elasticsearch
+  - option でも指定できる (=:method POST :url localhost:9200/_search?pretty=)
+
+#+begin_src es
+POST /_search?pretty
+{
+  "query": {
+    "match_all" : {}
+  }
+}
+#+end_src
+
+#+RESULTS:
+#+begin_example
+{
+  "took" : 13,
+  "timed_out" : false,
+  "_shards" : {
+    "total" : 4,
+    "successful" : 4,
+    "skipped" : 0,
+    "failed" : 0
+  },
+  "hits" : {
+    "total" : {
+      "value" : 12,
+      "relation" : "eq"
+    },
+    "max_score" : 1.0,
+    "hits" : [
+      {
+        "_index" : ".kibana_1",
+        "_type" : "_doc",
+        "_id" : "config:7.7.1",
+        "_score" : 1.0,
+        "_source" : {
+          "config" : {
+            "buildNum" : 30896
+          },
+          "type" : "config",
+          "references" : [ ],
+          "updated_at" : "2020-06-07T08:00:07.264Z"
+        }
+      },
+      {
+        "_index" : ".kibana_1",
+        "_type" : "_doc",
+        "_id" : "space:default",
+        "_score" : 1.0,
+        "_source" : {
+          "space" : {
+            "name" : "Default",
+            "description" : "This is your default space!",
+            "color" : "#00bfb3",
+            "disabledFeatures" : [ ],
+            "_reserved" : true
+          },
+          "type" : "space",
+          "references" : [ ],
+          "migrationVersion" : {
+            "space" : "6.6.0"
+          },
+          "updated_at" : "2020-06-07T08:00:09.168Z"
+        }
+      },
+      {
+        "_index" : ".kibana_1",
+        "_type" : "_doc",
+        "_id" : "apm-telemetry:apm-telemetry",
+        "_score" : 1.0,
+        "_source" : {
+          "apm-telemetry" : {
+            "counts" : {
+              "error" : {
+                "1d" : 0,
+                "all" : 0
+              },
+              "metric" : {
+                "1d" : 0,
+                "all" : 0
+              },
+              "span" : {
+                "1d" : 0,
+                "all" : 0
+              },
+              "transaction" : {
+                "1d" : 0,
+                "all" : 0
+              },
+              "onboarding" : {
+                "1d" : 0,
+                "all" : 0
+              },
+              "sourcemap" : {
+                "1d" : 0,
+                "all" : 0
+              },
+              "agent_configuration" : {
+                "all" : 0
+              },
+              "max_error_groups_per_service" : {
+                "1d" : 0
+              },
+              "max_transaction_groups_per_service" : {
+                "1d" : 0
+              },
+              "traces" : {
+                "1d" : 0
+              },
+              "services" : {
+                "1d" : 0
+              }
+            },
+            "tasks" : {
+              "processor_events" : {
+                "took" : {
+                  "ms" : 42
+                }
+              },
+              "agent_configuration" : {
+                "took" : {
+                  "ms" : 6
+                }
+              },
+              "services" : {
+                "took" : {
+                  "ms" : 29
+                }
+              },
+              "versions" : {
+                "took" : {
+                  "ms" : 2
+                }
+              },
+              "groupings" : {
+                "took" : {
+                  "ms" : 11
+                }
+              },
+              "integrations" : {
+                "took" : {
+                  "ms" : 6
+                }
+              },
+              "agents" : {
+                "took" : {
+                  "ms" : 22
+                }
+              },
+              "indices_stats" : {
+                "took" : {
+                  "ms" : 13
+                }
+              },
+              "cardinality" : {
+                "took" : {
+                  "ms" : 20
+                }
+              }
+            },
+            "has_any_services" : false,
+            "services_per_agent" : {
+              "java" : 0,
+              "js-base" : 0,
+              "rum-js" : 0,
+              "dotnet" : 0,
+              "go" : 0,
+              "nodejs" : 0,
+              "python" : 0,
+              "ruby" : 0
+            },
+            "integrations" : {
+              "ml" : {
+                "all_jobs_count" : 0
+              }
+            },
+            "agents" : { },
+            "indices" : {
+              "shards" : {
+                "total" : 1
+              },
+              "all" : {
+                "total" : {
+                  "docs" : {
+                    "count" : 0
+                  },
+                  "store" : {
+                    "size_in_bytes" : 208
+                  }
+                }
+              }
+            },
+            "cardinality" : {
+              "transaction" : {
+                "name" : {
+                  "all_agents" : {
+                    "1d" : 0
+                  },
+                  "rum" : {
+                    "1d" : 0
+                  }
+                }
+              },
+              "user_agent" : {
+                "original" : {
+                  "all_agents" : {
+                    "1d" : 0
+                  },
+                  "rum" : {
+                    "1d" : 0
+                  }
+                }
+              }
+            }
+          },
+          "type" : "apm-telemetry",
+          "references" : [ ],
+          "updated_at" : "2020-06-07T08:00:13.998Z"
+        }
+      },
+      {
+        "_index" : ".kibana_1",
+        "_type" : "_doc",
+        "_id" : "ui-metric:kibana-user_agent:Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.97 Safari/537.36",
+        "_score" : 1.0,
+        "_source" : {
+          "ui-metric" : {
+            "count" : 1
+          },
+          "type" : "ui-metric",
+          "references" : [ ],
+          "updated_at" : "2020-06-07T08:01:38.742Z"
+        }
+      },
+      {
+        "_index" : ".kibana_1",
+        "_type" : "_doc",
+        "_id" : "application_usage_transactional:1d8a7c70-a895-11ea-885e-6771769c5f79",
+        "_score" : 1.0,
+        "_source" : {
+          "application_usage_transactional" : {
+            "minutesOnScreen" : 0.0027833333333333334,
+            "numberOfClicks" : 0,
+            "appId" : "home",
+            "timestamp" : "2020-06-07T08:01:38.742Z"
+          },
+          "type" : "application_usage_transactional",
+          "references" : [ ],
+          "updated_at" : "2020-06-07T08:01:38.742Z"
+        }
+      },
+      {
+        "_index" : ".kibana_1",
+        "_type" : "_doc",
+        "_id" : "telemetry:telemetry",
+        "_score" : 1.0,
+        "_source" : {
+          "telemetry" : {
+            "userHasSeenNotice" : true
+          },
+          "type" : "telemetry",
+          "references" : [ ],
+          "updated_at" : "2020-06-07T08:01:38.823Z"
+        }
+      },
+      {
+        "_index" : ".kibana_1",
+        "_type" : "_doc",
+        "_id" : "maps-telemetry:maps-telemetry",
+        "_score" : 1.0,
+        "_source" : {
+          "maps-telemetry" : {
+            "settings" : {
+              "showMapVisualizationTypes" : false
+            },
+            "indexPatternsWithGeoFieldCount" : 0,
+            "mapsTotalCount" : 0,
+            "timeCaptured" : "2020-06-07T08:12:00.034Z",
+            "attributesPerMap" : {
+              "dataSourcesCount" : {
+                "min" : 0,
+                "max" : 0,
+                "avg" : 0
+              },
+              "layersCount" : {
+                "min" : 0,
+                "max" : 0,
+                "avg" : 0
+              },
+              "layerTypesCount" : { },
+              "emsVectorLayersCount" : { }
+            }
+          },
+          "type" : "maps-telemetry",
+          "references" : [ ],
+          "updated_at" : "2020-06-07T08:12:00.035Z"
+        }
+      },
+      {
+        "_index" : ".kibana_task_manager_1",
+        "_type" : "_doc",
+        "_id" : "task:Actions-actions_telemetry",
+        "_score" : 1.0,
+        "_source" : {
+          "migrationVersion" : {
+            "task" : "7.6.0"
+          },
+          "task" : {
+            "taskType" : "actions_telemetry",
+            "retryAt" : null,
+            "runAt" : "2020-06-07T15:00:00.000Z",
+            "startedAt" : null,
+            "state" : "{\"runs\":1,\"count_total\":0,\"count_by_type\":{},\"count_active_total\":0}",
+            "params" : "{}",
+            "ownerId" : null,
+            "scheduledAt" : "2020-06-07T08:00:10.702Z",
+            "attempts" : 0,
+            "status" : "idle"
+          },
+          "references" : [ ],
+          "updated_at" : "2020-06-07T08:00:13.986Z",
+          "type" : "task"
+        }
+      },
+      {
+        "_index" : ".kibana_task_manager_1",
+        "_type" : "_doc",
+        "_id" : "task:Alerting-alerting_telemetry",
+        "_score" : 1.0,
+        "_source" : {
+          "migrationVersion" : {
+            "task" : "7.6.0"
+          },
+          "task" : {
+            "taskType" : "alerting_telemetry",
+            "retryAt" : null,
+            "runAt" : "2020-06-07T15:00:00.000Z",
+            "startedAt" : null,
+            "state" : "{\"runs\":1,\"count_total\":0,\"count_by_type\":{},\"throttle_time\":{\"min\":\"0s\",\"avg\":\"0s\",\"max\":\"0s\"},\"schedule_time\":{\"min\":\"0s\",\"avg\":\"0s\",\"max\":\"0s\"},\"connectors_per_alert\":{\"min\":0,\"avg\":0,\"max\":0},\"count_active_by_type\":{},\"count_active_total\":0,\"count_disabled_total\":0}",
+            "params" : "{}",
+            "ownerId" : null,
+            "scheduledAt" : "2020-06-07T08:00:10.702Z",
+            "attempts" : 0,
+            "status" : "idle"
+          },
+          "references" : [ ],
+          "updated_at" : "2020-06-07T08:00:14.031Z",
+          "type" : "task"
+        }
+      },
+      {
+        "_index" : ".kibana_task_manager_1",
+        "_type" : "_doc",
+        "_id" : "task:apm-telemetry-task",
+        "_score" : 1.0,
+        "_source" : {
+          "migrationVersion" : {
+            "task" : "7.6.0"
+          },
+          "task" : {
+            "schedule" : {
+              "interval" : "720m"
+            },
+            "taskType" : "apm-telemetry-task",
+            "retryAt" : null,
+            "runAt" : "2020-06-07T20:00:13.817Z",
+            "scope" : [
+              "apm"
+            ],
+            "startedAt" : null,
+            "state" : "{}",
+            "params" : "{}",
+            "ownerId" : null,
+            "scheduledAt" : "2020-06-07T08:00:10.702Z",
+            "attempts" : 0,
+            "status" : "idle"
+          },
+          "references" : [ ],
+          "updated_at" : "2020-06-07T08:00:14.159Z",
+          "type" : "task"
+        }
+      }
+    ]
+  }
+}
+#+end_example
+** Table
+
+- 結果を org-table で出力
+#+begin_src es :tablify prices :results raw table
+POST /test/doc/_search
+{
+  "aggs" : {
+    "prices" : {
+      "histogram" : {
+        "field" : "price",
+        "interval" : 20,
+        "min_doc_count": 0
+      }
+    }
+  },
+  "size": 0
+}
+#+end_src
+
+

@@ -158,6 +158,7 @@ devtools::install()
   - 有効な Mail Address
   - ライセンス
   - 2 つ以上のプラットフォームでテスト
+  - Auther が c("aut", "cre", "cph") のロールを持つこと
 
 - =cran-comment.md= を作成 (.Rbuildignore する)
   - テスト環境, R CMD check の結果などについてコメント

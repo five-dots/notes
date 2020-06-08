@@ -1,6 +1,23 @@
 #+STARTUP: folded indent
 #+PROPERTY: header-args:R :results output :colnames yes :session *R:optimize* :width 640 :height 480
 
+* 最適化手法
+
+- [[file:../package/mlr/mlr3.org][mlr3 の最適化]] 
+- [[https://www.slideshare.net/greetech/ss-110811527][機械学習モデルのハイパパラメータ最適化]]
+- [[https://rpubs.com/jeandsantos88/search_methods_for_hyperparameter_tuning_in_r][RPubs - Search Methods for Hyperparameter Tuning in R]] 
+- [[https://cran.r-project.org/web/views/Optimization.html][CRAN Task View: Optimization and Mathematical Programming]]
+
+- グリッドサーチ
+- ランダムサーチ
+- 遺伝的アルゴリズム (GA: Genetic Algorithm)
+- 焼きなまし法, 疑似アニーリング法 (Simulated Annealing)
+- ベイズ最適化
+- 粒子群最適 (PSO: Particle Swarm Optimization)
+- 共分散行列適応進化戦略 (CMA-ES: Covariance Matrix Adaptation Evolution Strategy)
+- 差分進化 (DE: Differential Evolution)
+- Hypberband
+
 * stats::optimize()
 
 - 変数が 1 つのみの場合
@@ -63,16 +80,6 @@ optim(c(10, 2), loglikelihood, y = y, control = list(fnscale = -1))
 fit <- fitdistr(y, "normal")
 logLik(fit)
 #+end_src
-
-* 最適化手法
-
-- [[file:../package/mlr/mlr3.org][mlr3 の最適化]] 
-
-- グリッドサーチ
-- ランダムサーチ
-- 遺伝的アルゴリズム
-- 焼きなまし法 (疑似アーニング法)
-- ベイズ最適化
 
 * ベイズ最適化
 ** 概要

@@ -1,0 +1,15 @@
+#+STARTUP: folded indent inlineimages latexpreview
+
+* Codecov
+
+- [[https://codecov.io/gh][Codecov]]
+- コードのテストカバレッジを計算してくれるクラウドサービス
+- GitHub の REAMDE にカバレッジのバッジを貼ることが目的
+- Travis CI から実行することも可能
+
+- R の =covr= を利用するケース
+  - Travis からは TOKEN は指定しなくてもよい
+#+begin_quote
+after_success:
+  - Rscript -e 'covr::codecov()'
+#+end_quote

@@ -1,0 +1,17 @@
+#+STARTUP: folded indent inlineimages latexpreview
+
+* ={kaggler}=
+
+#+begin_src R :exports both
+library(kaggler)
+#+end_src
+
+#+RESULTS:
+| kaggler   |
+| stats     |
+| graphics  |
+| grDevices |
+| utils     |
+| datasets  |
+| methods   |
+| base      |

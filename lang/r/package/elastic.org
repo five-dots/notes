@@ -1,0 +1,118 @@
+#+STARTUP: folded indent inlineimages latexpreview
+
+* ={elastic}=
+
+- Elasticsearch を R から利用するためのパッケージ
+- [[https://cran.r-project.org/web/packages/elastic/index.html][CRAN - Package elastic]]
+  - Vignette
+    - [[https://cran.r-project.org/web/packages/elastic/vignettes/elastic.html][elastic introduction]]
+    - [[https://cran.r-project.org/web/packages/elastic/vignettes/search.html][elastic searching]] 
+- [[https://github.com/ropensci/elastic][GitHub - ropensci/elastic: R client for the Elasticsearch HTTP API]]
+  - star 211
+  - rOpenSci
+  - [[https://notchained.hatenablog.com/entry/2015/03/29/195924][elasticパッケージでRからElasticsearchを使う - Technically, technophobic.]]
+
+* [[file:~/Dropbox/repos/github/five-dots/notes/env/tool/elasticsearch.org][Elasticsearch]]
+* 全関数
+
+- Search, alias, cat, cluster, docs, field, index, mapping, nodes, percolate, pipeline
+#+begin_src R :exports both :results output
+library(pacman)
+p_funs(elastic)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+  [1] "Search"                   "Search_template"         
+  [3] "Search_template_delete"   "Search_template_get"     
+  [5] "Search_template_register" "Search_template_render"  
+  [7] "Search_uri"               "alias_create"            
+  [9] "alias_delete"             "alias_exists"            
+ [11] "alias_get"                "alias_rename"            
+ [13] "aliases_get"              "cat_"                    
+ [15] "cat_aliases"              "cat_allocation"          
+ [17] "cat_count"                "cat_fielddata"           
+ [19] "cat_health"               "cat_indices"             
+ [21] "cat_master"               "cat_nodeattrs"           
+ [23] "cat_nodes"                "cat_pending_tasks"       
+ [25] "cat_plugins"              "cat_recovery"            
+ [27] "cat_segments"             "cat_shards"              
+ [29] "cat_thread_pool"          "cluster_health"          
+ [31] "cluster_pending_tasks"    "cluster_reroute"         
+ [33] "cluster_settings"         "cluster_state"           
+ [35] "cluster_stats"            "connect"                 
+ [37] "count"                    "docs_bulk"               
+ [39] "docs_bulk_create"         "docs_bulk_delete"        
+ [41] "docs_bulk_index"          "docs_bulk_prep"          
+ [43] "docs_bulk_update"         "docs_create"             
+ [45] "docs_delete"              "docs_delete_by_query"    
+ [47] "docs_get"                 "docs_mget"               
+ [49] "docs_update"              "docs_update_by_query"    
+ [51] "es_parse"                 "explain"                 
+ [53] "field_caps"               "field_mapping_get"       
+ [55] "field_stats"              "index_analyze"           
+ [57] "index_clear_cache"        "index_close"             
+ [59] "index_create"             "index_delete"            
+ [61] "index_exists"             "index_flush"             
+ [63] "index_forcemerge"         "index_get"               
+ [65] "index_open"               "index_optimize"          
+ [67] "index_recovery"           "index_recreate"          
+ [69] "index_segments"           "index_settings"          
+ [71] "index_settings_update"    "index_shrink"            
+ [73] "index_stats"              "index_status"            
+ [75] "index_template_delete"    "index_template_exists"   
+ [77] "index_template_get"       "index_template_put"      
+ [79] "index_upgrade"            "info"                    
+ [81] "mapping_create"           "mapping_delete"          
+ [83] "mapping_get"              "mlt"                     
+ [85] "msearch"                  "mtermvectors"            
+ [87] "nodes_hot_threads"        "nodes_info"              
+ [89] "nodes_shutdown"           "nodes_stats"             
+ [91] "percolate_count"          "percolate_delete"        
+ [93] "percolate_list"           "percolate_match"         
+ [95] "percolate_register"       "ping"                    
+ [97] "pipeline_attachment"      "pipeline_create"         
+ [99] "pipeline_delete"          "pipeline_get"            
+[101] "pipeline_simulate"        "reindex"                 
+[103] "scroll"                   "scroll_clear"            
+[105] "search_shards"            "tasks"                   
+[107] "tasks_cancel"             "termvectors"             
+[109] "tokenizer_set"            "type_exists"             
+[111] "type_remover"             "validate"                
+#+end_example
+
+* Worflow
+
+- connect()
+
+* Connect
+
+- [[https://www.elastic.co/guide/en/elasticsearch/reference/current/index.html][API doc]]
+- デフォルトで localhost , port=9200 に接続
+#+begin_src R :exports both :results output
+library(elastic)
+(con <- connect()) # con = R6 object
+#+end_src
+
+#+RESULTS:
+#+begin_example
+[1] "Elasticsearch" "R6"           
+<Elasticsearch Connection> 
+  transport:  http 
+  host:       127.0.0.1 
+  port:       9200 
+  path:       NULL 
+  username:   NULL 
+  password:   NULL 
+  errors:     simple 
+  headers (names):   
+  cainfo:  NULL 
+#+end_example
+
+- elastic パッケージに含まれるサンプルデータを投入
+#+begin_src R :exports both
+plosdat <- system.file("examples", "plos_data.json", package = "elastic")
+docs_bulk(plosdat)
+#+end_src
+
+#+RESULTS:

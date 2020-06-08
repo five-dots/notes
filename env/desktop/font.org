@@ -76,7 +76,7 @@ fc-match
 #+end_src
 
 #+RESULTS:
-: DejaVu Sans" "Book
+: Ubuntu" "Regular
 
 ** Sans
 
@@ -85,7 +85,7 @@ fc-match sans
 #+end_src
 
 #+RESULTS:
-: DejaVu Sans" "Book
+: Ubuntu" "Regular
 
 ** Serif
 
@@ -94,7 +94,7 @@ fc-match serif
 #+end_src
 
 #+RESULTS:
-: DejaVu Serif" "Book
+: Ubuntu" "Regular
 
 ** Monospace
 
@@ -103,7 +103,7 @@ fc-match monospace
 #+end_src
 
 #+RESULTS:
-: DejaVu Sans Mono" "Book
+: Consolas NF" "Book
 
 ** "Ubuntu" を指定した際に利用されるフォント
 
@@ -117,13 +117,13 @@ fc-match -a "Ubuntu" | head
 Ubuntu-R.ttf: "Ubuntu" "Regular"
 Ubuntu-M.ttf: "Ubuntu" "Medium"
 Ubuntu-L.ttf: "Ubuntu" "Light"
+Ubuntu-Th.ttf: "Ubuntu" "Thin"
 Ubuntu-B.ttf: "Ubuntu" "Bold"
 Ubuntu-RI.ttf: "Ubuntu" "Italic"
 Ubuntu-MI.ttf: "Ubuntu" "Medium Italic"
 Ubuntu-LI.ttf: "Ubuntu" "Light Italic"
 Ubuntu-BI.ttf: "Ubuntu" "Bold Italic"
 DejaVuSans.ttf: "DejaVu Sans" "Book"
-DejaVuSansCondensed.ttf: "DejaVu Sans" "Condensed"
 #+end_example
 
 ** fonts.conf
@@ -132,3 +132,7 @@ DejaVuSansCondensed.ttf: "DejaVu Sans" "Condensed"
 
 - [[https://linuxfan.info/ubuntu-18-04-change-ja-font][Ubuntu 18.04 LTS の日本語フォントを変更する！【詳細解説】]]
 - [[https://endaaman.me/-/fontconfig][俺の fonts.conf を見てくれ]]
+
+* FontForge
+
+

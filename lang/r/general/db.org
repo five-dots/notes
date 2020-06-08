@@ -7,6 +7,7 @@
   - ={DBI}= がデータベースの基本操作を提供
     - ={RPostgres}= などの個別のドライバを用いて接続
   - ={dbplyr}= はデータベース操作のための ={dplyr}= のバックエンド
+  - ={sparklyr}= は Spark 操作のための ={dplyr}= のバックエンド
   - ={dplyr}= で src として Database を指定することで =SELECT= 文を生成してくれる
 
   - ={RODBC}= を利用して接続する方法もある
@@ -166,10 +167,8 @@ dbDisconnect(con)
 ** 切断
 
 #+begin_src R :exports both
-dbClearResult(res)
+dbDisconnect(res)
 #+end_src
-
-#+RESULTS:
 
 * ={RODBC}= workflow
 ** MS SQL Server
@@ -270,7 +269,7 @@ items <- data.table(items)[, .(Id, Name)]
 result$Ticker %>% unique() %>% str_length()
 #+end_src
 
-* Connection
+* Connection by DB
 
 - =src_*()= を使った接続方法はもう利用しない。代わりに =DBI::dbConnect(drv)= を使う。
 
@@ -289,7 +288,7 @@ con <- DBI::dbConnect(
   - AWS Redshift は Postgres 互換なのでこれで接続できる
 #+begin_src R :exports both
 con <- dbConnect(
-  PostgreSQL(),
+  RPostgres::Postgres(),
   host = "localhost",
   port = 5432,
   dbname = "shop",
@@ -323,12 +322,13 @@ con <- dbConnect(
   bigrquery::bigquery(),
   project = "publicdata",
   dataset = "samples",
-  billing = billing
+  billing = bigrquery::bq_test_project()
 )
 #+end_src
 
-* [[https://cran.r-project.org/web/packages/dbplyr/vignettes/dbplyr.html][Introduction to dbplyr]]
-** 接続 〜 テーブル取得
+* ={dbplyr}=
+** [[https://cran.r-project.org/web/packages/dbplyr/vignettes/dbplyr.html][Introduction to dbplyr]]
+*** 接続 〜 テーブル取得
 
 - テスト用に SQLite DB をメモリ上に作成する
 #+begin_src R :exports both
@@ -383,7 +383,7 @@ class(flights_db)
 : [1] "tbl_SQLiteConnection" "tbl_dbi"              "tbl_sql"             
 : [4] "tbl_lazy"             "tbl"
 
-** 注意点
+*** 注意点
 
 - 極力 Lazy に振る舞うので、DB の全体像がわからないと取得できない関数は実行できない
 #+begin_src R :exports both
@@ -397,7 +397,7 @@ tail(flights_db) # Error
 : 
 : Error: tail() is not supported by sql sources
 
-** クエリ
+*** クエリ
 
 - 普通の dplyr として書ける
 - ただし、DB へ SQL は飛んでいない
@@ -476,6 +476,81 @@ tailnum_delay
 10 N22971   24.7   230
 # … with 1,191 more rows
 #+end_example
+
+* ={sparklyr}=
+** Install
+
+- sparklyr から spark をインストールできる
+- =SPARK_HOME= にインストール
+#+begin_src R :exports both
+spark_install(2.3)
+spark_available_versions()
+spark_install_dir()
+#+end_src
+
+** Basic
+
+#+begin_src R :exports both
+library(sparklyr)
+sc <- spark_connect(master = "local")
+
+## データをコピー
+iris_tbl <- copy_to(sc, iris)
+flights_tbl <- copy_to(sc, nycflights13::flights, "flights")
+
+## dbplyr と同様に使い勝手
+delay <- flights_tbl %>%
+  group_by(tailnum) %>%
+  summarise(count = n(), dist = mean(distance), delay = mean(arr_delay)) %>%
+  filter(count > 20, dist < 2000, !is.na(delay)) %>%
+  collect()
+
+## DBI のオブジェクトとしても使える
+DBI::dbListTables(sc)
+#+end_src
+
+* ={bigrquery}=
+** Overview
+
+主に 3 つの機能
+- REST API アクセス =bq_***_***()= の形式
+- DBI interface: =DBI::dbConnect(bigrquery::bigquery(), project, dataset, billing)= で接続
+- dplyr interface: DBI のコネクションを使って =tbl(con, "table")= で DB 操作
+
+** Auth
+
+- 事前に =.Renviron= に =BIGQUERY_TEST_PROJECT= 環境変数を設定しておく
+- 何かしらのクエリを投げると、ブラウザの認証画面が開く
+  - =~/.R/gargle/gargle-oauth= に Token が保存され、以降はこれを利用
+#+begin_src R :exports both
+tb <- bigrquery::bq_project_query(
+  bigrquery::bq_test_project(),
+  "SELECT count(*) FROM publicdata.samples.natality"
+)
+#+end_src
+
+** DBI
+
+- BigQuery に用意されているサンプル DB の一覧を取得する
+  - [[https://cloud.google.com/bigquery/public-data][BigQuery public datasets  |  Google Cloud]]
+  - 1TB までのデータ処理が無料
+#+begin_src R :exports both
+library(DBI)
+library(bigrquery)
+con <- dbConnect(
+  bigrquery::bigquery(),
+  project = "publicdata",
+  dataset = "samples",
+  billing = bq_test_project()
+)
+print(dbListTables(con))
+dbDisconnect(con)
+#+end_src
+
+#+RESULTS:
+: 
+: [1] "github_nested"   "github_timeline" "gsod"            "natality"       
+: [5] "shakespeare"     "trigrams"        "wikipedia"
 
 * DB functions
 ** 全関数 ={dbplyr}=
@@ -667,6 +742,7 @@ p_funs(DBI)
 *** =same_src(x, y)=
 * Reference
 
+dbplyr
 - [[https://cran.r-project.org/web/packages/dbplyr/index.html][CRAN - Package dbplyr]]
 - Vignette
   - [[https://cran.r-project.org/web/packages/dbplyr/vignettes/dbplyr.html][Introduction to dbplyr]]
@@ -676,4 +752,8 @@ p_funs(DBI)
   - [[https://cran.r-project.org/web/packages/dbplyr/vignettes/translation-function.html][Function translation]]
   - [[https://cran.r-project.org/web/packages/dbplyr/vignettes/translation-verb.html][Verb translation]]
 
+sparklyr
+- [[https://spark.rstudio.com/][sparklyr]]
+
+Other
 - [[https://db.rstudio.com/best-practices/managing-credentials][Securing Credentials]] 

@@ -65,30 +65,39 @@ pacman::p_funs(rsample)
 * 対応手法
 
 - =rsplit=
-  - Hold-out
+  - _Hold-out_
     - =initial_splits()=
+
 - =rset=
-  - Bootstrap (splits)
-    - =bootstraps()=
+  - _Bootstrap_ (splits)
+    - =bootstraps(data, times = 25, strata = NULL, breaks = 4, apparent = FALSE, ...)=
     - カラム名 "splits", "id"
-  - Cross-validation (splits)
-    - =vfold_cv()=
-    - =group_vfold_cv()= 同じグループ単位で分割
+
+  - _Cross-validation_ (splits)
+    - =vfold_cv(data, v = 10, repeats = 1, strata = NULL, breaks = 4, ...)=
+    - =group_vfold_cv(data, group = NULL, v = NULL, ...)=
+      - 同じグループ単位で分割
+      - v はグループ数よりも小さい数
     - カラム名 "splits", "id"
     - カラム名 "splits", "id", "id2" (repeats)
-  - Nested CV (splits, innner_resamples)
+
+  - _Nested CV_ (splits, innner_resamples)
     - =nested_cv()=
     - カラム名 "splits", "id", "inner_resamples"
-  - 時系列 CV (splits)
+
+  - _時系列 CV_ (splits)
     - =rolling_origin()=
     - カラム名 "splits", "id"
-  - LOO CV (splits)
+
+  - _LOO CV_ (splits)
     - =loo_cv()=
     - カラム名 "splits", "id"
-  - モンテカルロ CV (splits)
+
+  - _モンテカルロ CV_ (splits)
     - =mc_cv()=    
     - カラム名 "splits", "id"
-  - Apparent (splits)
+
+  - _Apparent_ (splits)
     - =apparent()=
 
 * 関数リスト

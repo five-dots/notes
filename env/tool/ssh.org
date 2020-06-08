@@ -5,8 +5,10 @@
 
 - config
   - 設定ファイル
+
 - authorized_keys
   - サーバー側の公開鍵リスト
+
 - known_hosts
   - 接続したことのあるホストの公開鍵リスト
 
@@ -41,7 +43,13 @@ Host 任意の接続名
     IdentityFile public key への PATH (例えば~/.ssh/hoge.key)
     ServerAliveInterval 60
     ForwardX11 yes
+    
+Host github
+     HostName github.com
+     IdentityFile ~/.ssh/id_rsa
+     User git
 #+end_quote
+
 * Windows
 
 - Windows10 Fall Update から標準機能になった

@@ -1,0 +1,140 @@
+#+STARTUP: folded indent inlineimages latexpreview
+
+* apt
+
+- build-dep
+  - build-dep emacs
+  - build-dep python
+  - build-dep r-base
+- Tools
+  - curl
+  - git
+  - zsh
+  - screen
+  - ruby (2.7)
+  - python-is-python3
+  - r-base (3.6.3)
+  - emacs (26.3)
+  - virtualbox (6.1)
+  - libreoffice-calc
+  - hugo
+  - ffmpeg
+  - ripgrep
+  - fd-find
+  - docker-ce, docker-compose
+  - cmigemo
+  - xterm (for IBC)
+  - openssh-server
+  - shellcheck (linter for shell script)
+  - fontforge
+- Japanese input
+  - ibus-mozc (=~/Dropbox/mozc/.mozc= とリンクしておけば設定も不要)
+  - emacs-mozc-bin
+  - [[https://sicklylife.jp/ubuntu/2004/mozc_ut2.html][Mozc UT2をインストールする - Ubuntu 20.04編]] 
+- Keymap
+  - xcape
+  - autokey-gtk
+- C/C++ 
+  - clang
+  - cmake
+  - ccls (from source?)
+  - ninja-build
+  - llvm
+- Lib
+  - libssl-dev
+  - libglpk-dev
+  - libquantlib0-dev
+  - libgsl-dev
+  - libhdf5r-dev
+  - coinor-libclp-dev
+  - coinor-libsymphony-dev
+- DB
+  - unixodbc-dev
+  - sqlite3
+  - sqlitebroser
+  - postgresql-client
+  - libpq-dev
+  - mariadb-client
+  - mysql-client
+  - libmariadb-dev
+
+* snap
+
+- code (vscode)
+- slack
+- bitwarden
+
+* 個別にでインストールするもの
+
+- Chrome (+apt source)
+- Dropbox (+apt source)
+- Google Could SDK (gcloud)
+- Microsoft dotnet SDK (+apt source)
+- Albert
+- TWS
+- Intel MKL
+- DBeaver
+- Matlab
+
+* ソースからビルドするもの
+
+- anyenv (git clone + config, pyenv, Renv)
+- emacs-26.3, emacs-27
+- Python 3.8.3, 2.7.18 (pyenv global 3.8.3 2.7.18)
+- python-language-server (Dotnet SDK 必要, spacemacs の Python Layer の手順が明快)
+- R-3.6.3, R-4.0.0
+- R package (全てが読み込み可能か確認)
+- xremap
+
+* Rust (=~/.cargo/bin= に配置されるツール群)
+
+- rustup: =curl https://sh.rustup.rs -sSf | sh=
+- exa
+- bat
+
+* Python (pip でインストールするもの. =~/.local/bin= に配置される)
+
+- pipenv
+- radian (R REPL)
+- yapf, black (Formatter)
+- ipython, jupyter (REPL)
+- autoflake, isort, importmagic, epc (Import)
+- flake8, pylint, hlint (Linter)
+- pytest, nose (Test)
+- jedi, json-rpc, service_factory (Anaconda-mode 用)
+- ib-insync
+
+* Node.js (npm でインストールするもの)
+
+- anyenv で nodenv をインストール
+- npm or yarn -> npm を使っておけば良い
+- =npm install -g hoge=
+
+- prettier
+- marked (Markdown parser)
+- vmd
+  
+* Go (go get でインストールするもの. =$GOPATH/bin= に配置される)
+
+- doom-emacs の go の項目参考
+- =go get -u hoge=
+
+- gore
+- gocode
+- godoc
+- goimports
+- gorename
+- guru
+- gotest
+- gomodiytags
+
+* Setup
+
+- zsh
+- ssh
+- sshd
+- emacs
+- cron
+- virtualbox
+- mozc
+  

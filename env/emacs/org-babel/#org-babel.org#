@@ -559,6 +559,5 @@ In readLines(file, warn = TRUE) :
 - =:results output code=
   - =:results output= だけでは、複数行の出力の際 =:= のみの行がそのまま表示されてしまう。
   - =code= にすることで、各言語のシンタックスでハイライトされるメリットもある。
-    - ただし =org-babel-execute-buffer= などで一括実行した場合、output も code として認識され Error になる
 
 - =options(crayon.enabled = FALSE)= で色の出力を停止

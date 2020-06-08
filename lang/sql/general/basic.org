@@ -1,7 +1,49 @@
 #+STARTUP: showall indent
 #+PROPERTY: header-args:sql :engine mysql :dbhost 127.0.0.1 :dbuser root :dbpassword test
 
+* Basics
+
+- [[https://qiita.com/tatsuya4150/items/69c2c9d318e5b93e6ccd][【これだけ覚えてたらOK！】SQL構文まとめ - Qiita]] 
+
+- SHOW
+  - =SHOW DATABASE;= =\l=
+  - =SHOW TABLES;= =\d=
+
+- USE
+  - =USE db_name;= =\c db_name=
+    
+- CREATE
+  - =CREATE DATABASE db_name;=
+  - =CREATE table_name (id SERIAL PRIMARY KEY, body VARCHAR(255));=
+
+- DROP
+  - =DROP DATABASE db_name;=
+  - =DROP TABLE table_name;=
+
+- TRUNCATE (テーブルを空にする)
+  - =TRUNCATE TABLE table_nmae;=
+
+- ALTER
+  - =ALTER TABLE table_name1 RENAME TO table_name2;=
+  - =ALTER TABLE table_name ADD PRIMARY KEY(id);= (主キーを追加)
+  - =ALTER TABLE table_name DROP CONSTRAINT "table_name + _pkey";= (主キーを削除)
+
+- [[*INSERT][INSERT]] 
+  - =INSERT INTO table_name VALUES ("foo", "bar", "baz");=
+  - =INSERT INTO table_name (col1, col2) VALUES ("val1", "val2");=
+
+- [[*UPDATE][UPDATE]]
+  - =UPDATE tables_name SET col_name1 = value1, col_name2 = value2 WHERE id = 1;=
+
+- [[*DELETE][DELETE]] 
+  - =DELETE FROM table_name WHERE id = 1;=
+
+- [[*SELECT][SELECT]] 
+  - =SELECT * FROM table_name;=
+
 * DATABASES
+** PostgreSQL
+** MySQL
 
 #+begin_src sql
 show databases;
@@ -102,6 +144,105 @@ INSERT INTO todos (title, status) VALUES ("粗大ゴミ", 0);
 #+end_src
 
 * SELECT
+** Basics
+
+- AND/OR
+  - =SELECT * FROM table_name WHERE cond1 AND cond2;=
+  - =SELECT * FROM table_name WHERE cond1 OR cond2;=
+
+- 比較演算子 (一般的なものが利用可能. != は <> が使われる)
+  - =SELECT * FROM table_name WHERE price > 1000;=
+
+- NULL Check
+  - =SELECT * FROM table_name WHERE col_name IS NULL;=
+  - =SELECT * FROM table_name WHERE col_name IS NOT NULL;=
+
+- LIKE 
+  - =SELECT * FROM table_name WHERE col_name LIKE '%1月%';=
+  - =SELECT * FROM table_name WHERE col_name LIKE '1月_';=
+  - =%=: 任意の 0 文字以上の文字列
+  - =_=: 任意の 1 文字
+
+- BETWEEN
+  - =SELECT * FROM table_name WHERE price BETWEEN 1000 AND 3000;=
+
+- IN/NOT IN
+  - =SELECT * FROM table_name WHERE col_name IN (value1, value2, value3);=
+  - =SELECT * FROM table_name WHERE col_name NOT IN (value1, value2, value3);=
+
+- ANY/ALL
+  - =SELECT * FROM table_name WHERE col_name =\equal< ANY (value1, value2, value3);=
+  - =SELECT * FROM table_name WHERE col_name =\equal< ALL (value1, value2, value3);=
+
+- DISTINCT
+  - =SELECT DISTINCT col_name FROM table_name;=
+
+- ORDER BY (ASC, DESC)
+  - =SELECT * FROM table_name ORDER BY price DESC;=
+
+- LIMIT (OFFSET は指定数 + 1 番目から抽出する)
+  - =SELECT * FROM table_name ORDER BY price LIMIT 3 OFFSET 2;=
+
+- 集合
+  - =SELECT * FROM table_name1 UNION SELECT * FROM table_name2;= (和集合)
+  - =SELECT * FROM table_name1 EXCEPT SELECT * FROM table_name2;= (差集合)
+  - =SELECT * FROM table_name1 INTERSECT SELECT * FROM table_name2;= (積集合)
+
+- CASE ~ WHEN ~ THEN ~ ELSE ~ END
+#+begin_src sql
+SELECT user_name,
+       CASE age WHEN age < 20 THEN '未成年'
+                WHEN 20 <= age AND age <= 65 THEN '成年'
+                ELSE '高齢者'
+       END AS category
+  FROM table_name;
+#+end_src
+
+- 文字列
+  - LENGTH (文字列の長さを返す)
+    - =SELECT user_name, length(user_name) AS name_length FROM table_name;=
+  - TRIM
+    - =SELECT user_name, TRIM(user_name) as trimmed_user_name FROM table_name;=
+  - REPLACE (指定文字列のマッチを置換)
+    - =UPDATE table_name SET user_name = REPLACE(user_name, 'foo', 'bar');=
+  - SUBSTRING
+    - =SELECT * FROM table_name WHERE SUBSTRING(user_name, 1, 3) LIKE '%fo%';=
+
+- 数値
+  - ROUND
+    - =SELECT price, ROUND(price, -2) as price_in_hundred FROM table_name;=
+  - TRUNC
+    - =SELECT price, TRUNC(price, 1) as trunced_price FROM table_name;=
+  - POWER
+    - =SELECT price, POWER(price, 2) as power2_price FROM table_name;=
+
+- 日付
+  - =INSERT INTO table_name VALUES (CURRENT_DATE, value1, value2);= (現在時刻を挿入)
+  - =SELECT now();= (現在時刻)
+
+- CAST
+  - =SELECT CAST(price as VARCHAR(20)) + '円' AS price_yen FROM table_name;=
+
+- 集約・グループ化
+  - =SELECT SUM(price) as total_price FROM table_name;=
+  - =SELECT COUNT(*) as total_trans FROM table_name;=
+    - =COUNT(*)= は NULL 行含む合計行
+    - =COUNT(col_name)= は NULL行を含まない合計行
+  - =SELECT group, SUM(price) as total_price_by_group FROM table_name GROUP BY group;=
+
+- サブクエリ (副問合せ)
+  - クエリの中にクエリを書く
+  - WITH, CTE (Common Table Expression)
+    - サブクエリを外出しにして変数でアクセスする (ビューのイメージ)
+    - 可読性が高い
+    - 使い回しが可能
+#+begin_src sql
+WITH var_name AS (
+  SELECT col_name FROM table_name1 WHERE cond
+  )
+SELECT * FROM table_name2 JOIN var_name
+#+end_src
+    
 ** testdb.todos table
 
 #+begin_src sql :database testdb
@@ -426,6 +567,7 @@ SELECT * FROM todos;
 |  2 | 買い物   |      1 | 2020-05-06 14:53:09 | 2020-05-06 14:53:09 |
 |  3 | 料理     |      0 | 2020-05-06 14:53:09 | 2020-05-06 14:53:09 |
 |  4 | 粗大ゴミ |      0 | 2020-05-06 14:53:09 | 2020-05-06 14:53:09 |
+
 * DELETE
 
 - =WHERE id = 2= を忘れてしまうと全行が削除されてしまう。

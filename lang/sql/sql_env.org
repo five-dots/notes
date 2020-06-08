@@ -1,49 +1,284 @@
 #+STARTUP: folded indent inlineimages latexpreview
 
-* Docker instance
+* [[file:~/Dropbox/repos/github/five-dots/notes/env/tool/docker.org][docker]]
+* [[file:~/Dropbox/repos/github/five-dots/notes/lang/r/general/db.org][Database from R]]
+* Launch by docker
+** Overview
 
-- [[file:~/Dropbox/repos/github/five-dots/notes/env/tool/docker.org][docker]]
+- [[https://hub.docker.com/][Docker Hub]]
+
 #+begin_src shell
 docker images
 #+end_src
 
 #+RESULTS:
-| REPOSITORY       | TAG    | IMAGE        | ID | CREATED | SIZE |        |
-| mysql            | latest | a7a67c95e831 |  3 | weeks   | ago  | 541MB  |
-| ubuntu           | latest | 1d622ef86b13 |  3 | weeks   | ago  | 73.9MB |
-| ubuntu           | 18.04  | c3c304cb4f22 |  3 | weeks   | ago  | 64.2MB |
-| postgres         | latest | 0f10374e5170 |  3 | weeks   | ago  | 314MB  |
-| jaikumarm/iqfeed | v6011  | 245ce40c4372 | 11 | months  | ago  | 1.66GB |
-| hello-world      | latest | fce289e99eb9 | 16 | months  | ago  | 1.84kB |
+| REPOSITORY  |    TAG | IMAGE        | ID | CREATED | SIZE |        |
+| mysql       | 5.7.30 | a4fdfd462add | 11 | days    | ago  | 448MB  |
+| mysql       | 8.0.20 | 30f937e841c8 | 11 | days    | ago  | 541MB  |
+| postgres    |   12.3 | adf2b126dda8 |  2 | weeks   | ago  | 313MB  |
+| ubuntu      |  18.04 | c3c304cb4f22 |  5 | weeks   | ago  | 64.2MB |
+| hello-world | latest | bf756fb1ae65 |  5 | months  | ago  | 13.3kB |
 
 #+begin_src shell :results output
 docker ps
 #+end_src
 
 #+RESULTS:
-: CONTAINER ID        IMAGE                    COMMAND                  CREATED             STATUS              PORTS                                                                                            NAMES
-: 5e63ae2e2d94        jaikumarm/iqfeed:v6011   "/usr/bin/supervisord"   10 months ago       Up 2 days           0.0.0.0:5901->5901/tcp, 0.0.0.0:5009->5010/tcp, 0.0.0.0:9100->9101/tcp, 0.0.0.0:9300->9301/tcp   angry_nash
+: CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS              PORTS                     NAMES
+: 40a8577601dd        postgres:12.3       "docker-entrypoint.s…"   31 minutes ago      Up 31 minutes       0.0.0.0:54320->5432/tcp   postgres-12.3-test
 
-- MySQL を起動
-#+begin_src shell
-docker run --name mysql -e MYSQL_ROOT_PASSWORD=test -p 3306:3306 -d mysql:latest
+** PostgreSQL
+
+- name "postgres-example", port 54320, passwork "hoge" で起動
+- port は通常 5432 番 =-p 54320:5432= とすることで、ローカルの 54320 にアクセスが コンテナの 5432 にマップされる
+- -v でホスト側のパスを指定することで、データを永続化
+  - 公式リポジトリの PostgreSQL のデータ領域は =/var/lib/postgresql/data=
+  - [[https://qiita.com/yimajo/items/1042078e697113fffc17][dockerのPostgreSQLコンテナのデータを永続化する - Qiita]]
+  - [[https://qiita.com/yohm/items/047b2e68d008ebb0f001][dockerでvolumeをマウントしたときのファイルのowner問題 - Qiita]] 
+
+- ubuntu の postgres-client (=psql=) に合わせて version を指定する
+#+begin_src shell :results silent
+docker run \
+       -d \
+       --name postgres-12.3-test \
+       -e POSTGRES_USER=shun \
+       -e POSTGRES_PASSWORD=shun \
+       -e POSTGRES_DB=test \
+       -p 54320:5432 \
+       -v /home/shun/Dropbox/docker/postgres-12.3-test/data:/var/lib/postgresql/data \
+       postgres:12.3
 #+end_src
 
-- PostgreSQL を起動
-#+begin_src shell
-docker run --name postgres -e POSTGRES_PASSWORD=test -p 5432:5432 -d postgres:latest
+- data の所有権を変更する
+  - 現時点ではうまく動いていない
+  - 以下を参考に =/etc/passwd=, =/etc/group= をマウントした上で、ユーザーを指定する
+  - [[https://qiita.com/yohm/items/047b2e68d008ebb0f001][dockerでvolumeをマウントしたときのファイルのowner問題 - Qiita]] 
+#+begin_src shell :results silent
+docker run \
+       -d \
+       --name postgres-12.3-test \
+       -e POSTGRES_USER=shun \
+       -e POSTGRES_PASSWORD=shun \
+       -e POSTGRES_DB=test \
+       -p 54320:5432 \
+       -v ~/docker/postgres-12.3-test/data:/var/lib/postgresql/data \
+       -v /etc/group:/etc/group:ro \
+       -v /etc/passwd:/etc/passwd:ro \
+       -u 1000:1000 \
+       postgres:10
 #+end_src
 
-* MySQL
+** MySQL
 
-- Bare [[file:~/Dropbox/repos/github/five-dots/notes/env/database/mysql.org::*Install][Install]]
-- Docker [[file:~/Dropbox/repos/github/five-dots/notes/env/tool/docker.org::*MySQL][MySQL]]
-
-- GUI Client: mysql-workbench
 #+begin_src shell
-sudo apt install mysql-workbench
+docker run \
+       -d \
+       --name mysql-8.0.20 \
+       -e MYSQL_ROOT_PASSWORD=test \
+       -p 33060:3306 \
+       mysql:8.0.20
 #+end_src
 
+* Launch by docker-compose
+** PostgreSQL
+
+- service = =postgres-10-test=
+#+begin_src shell
+cd ~/Dropbox/docker/postgres-10-test
+docker-compose up -d
+#+end_src
+
+#+begin_src shell :results output
+cd ~/Dropbox/docker/postgres
+docker-compose ps
+#+end_src
+
+#+RESULTS:
+:     Name                   Command              State            Ports         
+: -------------------------------------------------------------------------------
+: test-postgres   docker-entrypoint.sh postgres   Up      0.0.0.0:54320->5432/tcp
+
+* By Product
+** PostgreSQL
+*** psql
+
+- [[https://www.dbonline.jp/postgresql/connect/][psqlを使ったPostgreSQLへの接続 | PostgreSQLの使い方]]
+- [[https://qiita.com/aosho235/items/c657e2fcd15fa0647471][MySQLとPostgreSQLコマンド比較表 - Qiita]]
+
+- 接続
+  - インストール直後は =postgres= というスーパーユーザーのみ存在
+  - Role (-U) を省略した場合は、OS のユーザー名が使われる
+
+#+begin_src shell
+psql -h localhost -p 5432 -U adimn -d db_name
+#+end_src
+
+*** Command
+
+コマンド
+- =\?= help
+- =\l= データベース一覧
+- =\c db_name= データベース切り替え
+- =\d=, =\d+= テーブル一覧
+- =\d table_name= テーブル定義の確認
+- =\i file_name= 外部ファイルの実行
+- =\conninfo= 接続情報
+- =\x= 拡張表示の ON/OFF
+- =\q= 切断
+
+- =/* comment */=
+- =-- coment=
+
+データベース操作
+- =pg_dump db_name > dump_file= (バックアップ作成)
+- =psql < dump_file= (リストア)
+
+*** Data Types
+
+- [[https://qiita.com/windows222/items/5c5a7ef3beb6f1d8f8aa][PostgreSQLのデータ型とその挙動のまとめ（数値型） - Qiita]]
+
+文字列
+- =VARCHAR(n)= 可変長
+- =CHAR(n)= 固定長
+- =TEXT= 長さ制限なしの可変長
+
+整数 (基本的には =INTEGER= を選択)
+- =SMALLINT= 2bytes                    (-32,768 - 32,767)
+- =INTEGER=  4bytes             (-2,147,483,648 - 2,147,483,647) (20 億)
+- =BIGINT=   8bytes (-9,223,372,036,854,775,808 - 9,223,372,036,854,775,807)
+
+浮動小数点 (基本は =NUMERIC= を選択)
+- =REAL=             4bytes (6 桁までの整数及び少数)
+- =DOUBLE PRECISION= 8bytes (15 桁までの整数及び少数)
+- =NUMERIC=                 (最大 131,072 桁の整数部と 16,383 桁の小数部)
+- =DECIMAL=                 (最大 131,072 桁の整数部と 16,383 桁の小数部)
+  - PostgreSQL では DECIMAL と NUMERIC に差はないので、DECIMAL は使わない
+
+自動採番
+- =SMALLSERIAL= (最大 32,767)
+- =SERIAL=      (最大 2,147,483,647)
+- =BIGSERIAL=   (最大 9,223,372,036,854,775,807)
+
+日付
+- =DATE=      4bytes "2020-05-22"
+- =TIMESTAMP= 8bytes "2020-05-22 15:00:00
+- =TIME= 
+
+バイナリ
+- =bytea= 最大 1GB のバイナリデータ
+
+** MySQL
+
+- [[https://www.yokoweb.net/2018/05/13/ubuntu-18_04-server-mysql/][【Ubuntu 18.04 LTS Server】MySQLサーバを動かす]]
+
+#+begin_src shell
+mysql_secure_installation
+#+end_src
+
+GRANT ALL PRIVILEGES ON *.* TO shun@localhost IDENTIFIED BY 'Bc395ad1453@' WITH GRANT OPTION;
+FLUSH PRIVILEGES;
+
+- 接続
+#+begin_src shell
+mysql -h localhost -P 3306 -u user_name -p
+#+end_src
+
+** SQLite
+*** SQLite tools
+
+- Linux
+#+begin_src shell
+apt install sqlite3
+#+end_src
+
+- Windows
+  - [[https://www.sqlite.org/download.html][SQLite Download Page]]
+
+*** DB Browser for SQLite
+
+#+begin_src shell
+sudo add-apt-repository -y ppa:linuxgndu/sqlitebrowser
+sudo apt-get install sqlitebrowser
+#+end_src
+
+*** Use from C#
+**** 必要なパッケージ
+
+- [[https://qiita.com/koshian2/items/63938474001c510d0b15][C#でSQLite3を使ってみる@Qiita]]
+- System.Data.SQLite は全部入り
+- System.Data.SQLite.Core が最小限
+- その他、System.Data.SQLite.Linq, System.Data.SQLite.EF6 など
+
+*** Available types
+
+- NULL
+- INTEGER
+- REAL
+- BLOB
+- TEXT
+- NUMERIC
+- 日付
+  - SQLite では、日付は TEXT, INTEGER, REAL のいずれかで保存
+  - 取り出す際に、関数で日付に変換して扱う
+  - [[http://wada811.blogspot.com/2012/10/sqlearning-sqlite-datatype-constraint.html][[SQLearning][SQLite]データ型と制約の指定]]
+  - [[https://qiita.com/TomK/items/132831ab45e2aba822a8][SQLiteで日付時刻を扱う際のポイント@Qiita]]
+    - time('now') => '12:04:12'
+    - date('now') => '2016-09-14'
+    - datetime('now') => '2016-09-14 12:04:12'
+    - Unix 時間で欲しい場合 SELECT strftime('%s', "2016-09-08");
+
+*** TRUNCATE
+
+- SQLite は =TRUNCATE= 文をサポートしていない
+
+- 代用
+#+begin_quote
+DELETE FROM table_name
+VACUUM
+#+end_quote
+
+*** BULK INSERT
+
+- =.import <csv> <table>= で行う
+- 事前に =.mode csv= を設定しておく
+  - =.show= で設定内容を確認
+
+- C# から =.import= を実行できないので、sqlite3 commandline tool を利用
+#+begin_src shell
+sqlite3 -csv /path/to/db ".import /path/to/csv db_name"
+#+end_src
+
+** MS SQL Server
+*** sqlcmd
+
+Add ms repo
+- [[https://docs.microsoft.com/ja-jp/sql/linux/sql-server-linux-setup-tools?view=sql-server-2017][Linux に SQL Server コマンドライン ツール sqlcmd および bcp をインストールする]]
+
+#+begin_src shell
+sudo apt install mssql-tools unixodbc-dev
+#+end_src
+
+** Apache Spark
+*** Install
+
+- [[http://tekenuko.hatenablog.com/entry/2018/06/28/221209][Ubuntu16.04LTSにSparkを入れる - データサイエンティスト(仮)]]
+
+#+begin_src shell
+wget https://www.apache.org/dyn/closer.lua/spark/spark-2.4.5/spark-2.4.5-bin-hadoop2.7.tgz
+tar zxvf spark-2.4.5-bin-hadoop2.7.tgz
+sudo mv spark-2.4.5-bin-hadoop2.7 /usr/local/
+sudo ln -s /usr/local/spark-2.4.5-bin-hadoop2.7 /usr/local/spark
+#+end_src
+
+- 環境変数を設定する
+
+*** [[file:~/Dropbox/repos/github/five-dots/notes/lang/r/general/db.org::*={sparklyr}=][ ={sparklyr}= ]]
+** AWS Redshift
+
+- 基本的に PostgreSQL と同じインターフェース
+- [[https://gihyo.jp/admin/serial/01/aws_rsmu/0004][＃4　Amazon Redshiftの無料トライアル開始]]
+  
+** GCP BigQuery
 * Reference
 
 Emacs
@@ -51,7 +286,7 @@ Emacs
 - [[https://suzuki.tdiary.net/20150817.html][sql-mode で Emacs の中からクエリを実行する]]
 - [[https://sximada.qrunch.io/entries/kzaXf4WV7SkfxhfG][EmacSQLでMySQLに接続する]]
 
-MySQL
+MySQL/PostgreSQL
 - [[https://qiita.com/okamuuu/items/c4efb7dc606d9efe4282][MySQL 入門@Qiita]]
-
-
+- [[https://blog.imind.jp/entry/2019/02/15/180512][Ubuntu18.04にDockerを入れてMySQLとPostgreSQLを動かす]]
+- [[https://qiita.com/yimajo/items/1042078e697113fffc17][dockerのPostgreSQLコンテナのデータを永続化する - Qiita]]

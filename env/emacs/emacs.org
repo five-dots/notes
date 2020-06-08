@@ -26,6 +26,10 @@ sudo apt remove --purge emacs25
 
 #+begin_src shell :eval never
 git clone https://github.com/emacs-mirror/emacs.git
+
+# すべての履歴が必要ない場合は、depth 1 でOK
+# git clone --depth 1 git::/git.savannah.gnu.org/emacs.git
+
 cd emacs
 git checkout emacs-27
 
@@ -65,7 +69,7 @@ make install
   - access control list - =libacl1-dev=
   - selinux - =libselinux1-dev=
   - otf - =libotf-dev=
-  - xtf - =libxtf-dev=
+  - xtf - =libxft-dev=
   - m17n-flt - =libm17n-dev=
   - systemd - =libsystemd-dev=
 
@@ -181,6 +185,49 @@ emacsclient -e '(configuration-layer/update-packages t)'
 emacsclient -e '(dotspacemacs/sync-configuration-layers)'
 emacsclient -e '(spacemacs/restart-emacs-resume-layouts)'
 #+end_src
+
 ** Windows 10
 
 - [[http://cpthgli.hatenablog.jp/entry/2016/12/21/Windows10%E3%81%A7Spacemacs%21%21][Windows10でSpacemacs!!]]
+
+* emacs options
+
+- [[http://www.itsenka.com/contents/development/unix-linux/emacs.html][emacs - UNIX/Linuxコマンド - IT専科]] 
+
+- =--batch=       バッチモード (elisp プログラムを実行するため)
+- =--debug-init=  起動時にデバッガを有効にする
+- =-q=            個人用設定ファイルを読み込まない
+- =-nw=           GUI なし
+- =-l hoge.el=    指定したファイルを読み込む。バッチモードと組み合わせる。
+- =-f func=       指定した関数を実行
+
+* package
+
+- [[https://emacs.stackexchange.com/questions/44266/require-vs-package-initialize#:~:text=package%2Dinitialize%20goes%20through%20the,ve%20previously%20installed%20will%20work.][init file - require vs. package-initialize? - Emacs Stack Exchange]] 
+
+- =(pacakge-initialize)=
+  - インストール済みのパッケージの =autoloads= を読み込む
+  - なので、autoload 指定された関数であれば =(require 'hoge)= しなくても利用可能になる
+
+* TODO GC cons threshold
+* TODO Portable Dumper
+
+- [[https://archive.casouri.cat/note/2020/painless-transition-to-portable-dumper/index.html][Painless Transition to Portable Dumper]]
+
+- 基本的な流れ
+#+begin_src shell
+
+# dump file 作成
+# (dump-emacs-portable) 関数はバッチモードでのみ有効
+emacs --batch -q -l ~/.emacs.d/dump.el
+
+# dump を使って起動
+emacs --dump-file="/home/shun/.emacs.d/emacs.pdmp"
+#+end_src  
+
+- その他
+  - [[http://emacs.rubikitch.com/esup/][esup.el : Emacs起動が遅い原因を探れ！init-loader.el対応コードあり]]
+  - [[https://futurismo.biz/archives/2849][Emacs 高速化起動にむけたカイゼンのとりくみ | Futurismo]] 
+
+- Segfault 
+  - [[https://github.com/syl20bnr/spacemacs/issues/10770][syl20bnr/spacemacs#10770 Loading Portable dumper file causing segmentation falut]]

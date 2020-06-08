@@ -1,0 +1,25 @@
+#+STARTUP: folded indent inlineimages latexpreview
+
+* snap command
+
+#+begin_src shell
+snap list
+
+# 検索
+snap find hoge
+snap search hoge
+
+# /snap/bin にインストールされる
+sudo snap install hoge
+sudo snap install hoge --classic
+
+sudo snap remove
+
+# 更新可能なパッケージ一覧
+sudo snap refresh --list
+sudo snap refresh
+sudo snap refresh hoge
+
+#+end_src
+
+

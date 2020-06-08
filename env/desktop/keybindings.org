@@ -23,13 +23,13 @@
 - *xkeysnail*
   - root 権限を利用
   - アプリ毎の設定、SandS なども可能
-  - Hyper を修飾キーとして利用できない
+  - *Hyper を修飾キーとして利用できない*
   - xmodmap と共存が難しい (設定が上書きされる)
 
 - *xremap*
   - アプリのランチャーとしても利用できる
-  - window のスイッチャー としての使い方が便利
-  - Hyper を修飾キーとして利用できない
+  - window スイッチャーとしての使い方が便利
+  - *Hyper を修飾キーとして利用できない*
 
 - *AutoKey*
   - Windows の AutoHotKey の Linux 版
@@ -232,7 +232,7 @@ systemctl --user start xremap
   - xmodmap
 - Multi-purpose キーの設定
   - xcape
-    - SandS
+    - SandS (ddskk 利用時のみ)
     - Ctrl + Escape
     - Hyper + Henkan
 - hjkl 等の汎用ナビゲーション
@@ -243,7 +243,6 @@ systemctl --user start xremap
     - Super (Win) + x
 - Emacs 内では、Hyper 修飾キーを利用
 
-
 * Mac
 ** karabiner-element
 * Emacs
@@ -253,7 +252,16 @@ systemctl --user start xremap
 - [[file::http://michael.peopleofhonoronly.com/vim/][Vim Cheatsheet]]
 - [[https://bitbucket.org/lyro/evil/src/master/evil-maps.el][evil-map.el]]
 
-- Operator
+- Prefix key の候補
+  - space
+  - ,
+  - s
+  - m
+  - g
+  - z
+
+*** Operator
+
 | key | operation |
 |-----+-----------|
 | c   | change    |
@@ -545,3 +553,5 @@ Accepts keyword arguments:
 
 - [[https://github.com/noctuid/evil-guide#keybindings-and-states][evil-guide:Keybindings and States]]
 - [[https://github.com/syl20bnr/spacemacs/wiki/Keymaps-guide][spacemacs keymaps guide]]
+- [[https://gist.github.com/toroidal-code/ec075dd05a23a8fb8af0][Have you a Hyper for Great Good · GitHub]] 
+- [[http://deris.hatenablog.jp/entry/2013/05/02/192415][vimでキーマッピングする際に考えたほうがいいこと - derisの日記]]

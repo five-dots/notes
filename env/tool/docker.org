@@ -27,6 +27,14 @@ sudo groupadd docker
 sudo usermod -aG docker shun
 #+end_src
 
+- 確認
+#+begin_src shell
+groups shun
+#+end_src
+
+#+RESULTS:
+: shun : shun adm cdrom sudo dip plugdev lpadmin sambashare docker
+
 * Hello world
 
 #+begin_src shell
@@ -51,7 +59,7 @@ docker ps -a # -a 停止したコンテナ含む
 
 - 起動 (コンテナに入る)
 #+begin_src shell
-docker run -i -t ubuntu:18.04 /bin/bash # -it interactive, tty
+docker run -i -t ubuntu:18.04 /bin/bash # -i interactive, -t tty
 #+end_src
 
 - バックグラウンドで起動
@@ -82,7 +90,14 @@ docker rmi <Image name>
 docker stop <Container ID>
 #+end_src
 
-* docker compose
+* docker-compose
+** Install
+
+- 複数のコンテナの設定を楽にするためのツール
+- 必要なもの
+  - それぞれのコンテナ向けの =dockerfile=
+  - 複数のコンテナの起動を定義する =docker-compose.yml=
+    - [[https://docs.docker.com/compose/compose-file/][Compose file version 3 reference | Docker Documentation]] 
 
 - [[https://qiita.com/bonkoturyu/items/c4cd08dcce3f2b88d4d4][Ubuntu に Docker(+ Docker-Compose) + MySQL を入れる@Qiita]]
 
@@ -102,6 +117,33 @@ docker-compose --version
 
 #+RESULTS:
 : docker-compose version 1.25.4, build 8d51620a
+
+** Command
+
+- docker-compose.yml のあるディレクトリに移動
+#+begin_src shell
+# docker file を個別に用意している場合
+docker-compose build
+
+# 起動
+docker-compose up -d
+
+# 停止
+docker-compose stop
+docker-compose down # stop then remove
+
+# name はサービス名を指定
+docker-compose exec name bash
+
+# コンテナ削除
+docker-compose rm
+#+end_src
+
+** Reference
+
+- [[https://crudzoo.com/blog/docker-postgres][Docker で作る postgres 環境 | Crudzoo]][[https://crudzoo.com/blog/docker-postgres][Docker で作る postgres 環境 | Crudzoo]]
+- [[https://blog.leko.jp/post/how-to-mount-data-volume-to-local-with-docker-compose/][docker composeでMySQLのデータ領域をローカルにマウントする | WEB EGG]]
+
 * Container
 ** [[https://github.com/jaikumarm/docker-iqfeed][jaikumarm/docker-iqfeed]]
 
@@ -157,94 +199,4 @@ docker port rocker_ssh
 #+begin_src shell
 docker run --rm -e PASSWORD=pass -p 8787:8787 -d -v /home/shun/Dropbox/:/home/rstudio/Dropbox rocker/tidyverse
 #+end_src
-** MySQL
-
-- [[https://blog.imind.jp/entry/2019/02/15/180512][Ubuntu18.04にDockerを入れてMySQLとPostgreSQLを動かす]]
-
-- イメージを入手
-#+begin_src shell
-docker pull mysql:latest
-#+end_src
-
-#+begin_src shell :results output
-docker images
-#+end_src
-
-#+RESULTS:
-: REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
-: mysql               latest              a7a67c95e831        8 days ago          541MB
-: ubuntu              latest              1d622ef86b13        12 days ago         73.9MB
-: ubuntu              18.04               c3c304cb4f22        12 days ago         64.2MB
-: jaikumarm/iqfeed    v6011               245ce40c4372        10 months ago       1.66GB
-: hello-world         latest              fce289e99eb9        16 months ago       1.84kB
-
-- 起動
-  - name "mysql-example", port 33306, passwork "hoge" で起動
-  - port は通常 3306 番
-#+begin_src shell
-docker run --name mysql-example -e MYSQL_ROOT_PASSWORD=hoge -p 33306:3306 -d mysql:latest
-#+end_src
-
-#+RESULTS:
-: 14ef8e555e53225d600698dba7a2ca3672a5cedfd2255a7034abe0562cd9c32c
-
-#+begin_src shell :results output
-docker ps
-#+end_src
-
-#+RESULTS:
-: CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS              PORTS                                NAMES
-: 14ef8e555e53        mysql:latest        "docker-entrypoint.s…"   13 seconds ago      Up 13 seconds       33060/tcp, 0.0.0.0:33306->3306/tcp   mysql-example
-
-- "mysql-example" の mysql に接続
-#+begin_src shell
-docker exec -it mysql-example mysql -p
-# exit; で終了
-#+end_src
-
-- localhost から接続するために IP Address を調査
-#+begin_src shell
-docker inspect mysql-example | grep IPAddress
-#+end_src
-
-** PostgreSQL
-
-- [[https://blog.imind.jp/entry/2019/02/15/180512][Ubuntu18.04にDockerを入れてMySQLとPostgreSQLを動かす]]
-
-- イメージを入手
-#+begin_src shell :results output
-docker pull postgres:latest
-#+end_src
-
-#+RESULTS:
-: latest: Pulling from library/postgres
-: Digest: sha256:d96835c9032988c8a899cb8a3c54467dae81daaa99485de70e8c9bddd5432d92
-: Status: Image is up to date for postgres:latest
-: docker.io/library/postgres:latest
-
-#+begin_src shell :results output
-docker images
-#+end_src
-
-#+RESULTS:
-: REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
-: mysql               latest              a7a67c95e831        8 days ago          541MB
-: ubuntu              latest              1d622ef86b13        12 days ago         73.9MB
-: ubuntu              18.04               c3c304cb4f22        12 days ago         64.2MB
-: postgres            latest              0f10374e5170        12 days ago         314MB
-: jaikumarm/iqfeed    v6011               245ce40c4372        10 months ago       1.66GB
-: hello-world         latest              fce289e99eb9        16 months ago       1.84kB
-
-- 起動
-  - name "postgres-example", port 54320, passwork "hoge" で起動
-  - port は通常 5432 番
-#+begin_src shell
-docker run --name postgres-example -e POSTGRES_PASSWORD=hoge -p 54320:5432 -d postgres:latest
-#+end_src
-
-#+RESULTS:
-: efe9889330213125916a2e7018255748b74481670fbb4f9dd4c0bd002762a220
-
-#+begin_src shell
-docker exec -it postgres-example psql -Upostgres
-#+end_src
+** [[https://github.com/kaggle/docker-rstats][GitHub - Kaggle/docker-rstats: Kaggle R docker image]] 
